@@ -1,0 +1,92 @@
+# tela/proof/benchmark/extension-lib/src/extension.fab
+# Stage 1 U5 benchmark — the extension package's public surface (real package,
+# provider extensionlib). A SEPARATE package from the kernel: own faber.toml,
+# flat single module (G4 rule), importing tela:tela through the public seam.
+#
+# This package contributes (public shape only — no tela/radix edits):
+#   1. one custom view helper — bar_metrum (horizontal bar meter with label
+#      and textual value) returning the kernel's tela.Visus;
+#   2. one namespaced theme token — chart.axis.muted (campaign §5: extension
+#      libraries add namespaced tokens; Tela does not widen a closed Theme)
+#      plus the component style bundle chart_stilum referencing it;
+#   3. the U6 static-render input: the app imports tela:tela + extensionlib:extension
+#      and renders the composition through tela.html_visus / tela.css.
+#
+# Seam posture (recorded G/D workarounds, applied not fought):
+#   - G2: wildcard import + qualified references (bare type binds do not work);
+#   - G1: namespace values via the kernel's html_spatium()/svg_spatium() helpers;
+#   - G3: imported-union construction via kernel-owned constructors
+#     (elementum_omne/elementum_view/...);
+#   - G4 seam (the U5 named escalation): this module's PUBLIC signatures
+#     reference the imported sibling type tela.Visus / tela.Stilum. If the
+#     export snapshot skips them (WARN014.file_interface_export_skipped), the
+#     app falls back to composing with tela constructors + consuming the
+#     token + style bundle — recorded in stage-1-benchmark-static.md; the
+#     contract is not weakened (no duplicated Visus in this extension).
+
+import from "tela:tela" public * ut tela
+
+# --- Namespaced theme token (declared only; theme/token rendering is Stage 2)
+
+class Scopulum {
+    string nomen
+    string valor
+}
+
+fn chart_axis_muted() → Scopulum {
+    return Scopulum { nomen = "chart.axis.muted", valor = "#6b7280" }
+}
+
+# The extension's token collection (what a product assembler would collect;
+# product assembly / cascade ordering is Stage 2).
+fn chart_scopuli() → list<Scopulum> {
+    return [ chart_axis_muted() ]
+}
+
+# --- Custom view helper (G4 seam): horizontal bar meter with label + textual
+# value, returning the kernel's tela.Visus. Behavior stays adjacent and typed
+# (Stage 3); this benchmark is static composition only.
+
+fn bar_metrum(string label, string valor, int latitudo) → tela.Visus {
+    # The Proprietas below (aria-valuenow) is a browser-lane DOM property:
+    # carried in the tree, NOT serialized statically (Stage 1 static
+    # posture; the data-prop: marker is superseded).
+    return tela.elementum_omne(
+        tela.nova_identitas("tela-chart-bar"),
+        tela.html_spatium(),
+        "div",
+        [
+            tela.Attributum { nomen = "role", valor = "meter" },
+            tela.Attributum { nomen = "aria-label", valor = label },
+            tela.Attributum { nomen = "data-latitudo", valor = "§"(latitudo) }
+        ],
+        [
+            tela.Proprietas { nomen = "aria-valuenow", valor = valor }
+        ],
+        [
+            tela.elementum_view(tela.html_spatium(), "span", [ tela.textus_view(label) ]),
+            tela.elementum_view(tela.html_spatium(), "x-bar", [
+                tela.elementum_view(tela.html_spatium(), "x-fill", [ tela.textus_view(valor) ])
+            ])
+        ]
+    )
+}
+
+# --- Component style bundle (G4 seam): returns the kernel's tela.Stilum; the
+# rule references the namespaced token as the CSS custom property
+# --chart-axis-muted (declared, not rendered — token rendering is Stage 2).
+
+fn chart_stilum() → tela.Stilum {
+    return tela.Stilum {
+        regulae = [
+            tela.Regula {
+                selector = "[data-tela='tela-chart-bar']",
+                declarationes = [
+                    tela.Declaratio { nomen = "color", valor = "var(--chart-axis-muted)" },
+                    tela.Declaratio { nomen = "display", valor = "grid" },
+                    tela.Declaratio { nomen = "gap", valor = "0.5rem" }
+                ]
+            }
+        ]
+    }
+}
