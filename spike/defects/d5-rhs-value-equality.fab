@@ -1,0 +1,26 @@
+# tela/spike/defects/d5-rhs-value-equality.fab — minimized repro for
+# fix:codegen002 (the U9 authoring-probe finding, tela-s5-u9).
+#
+# GENUINE GAP: the TS emitter rejects an equality comparison whose RIGHT
+# operand is a variable named `value` — the codegen fails with
+# CODEGEN001 (`est` target type does not correspond to a Valor variant).
+# A variable named `value` on the LEFT (`value ≡ x`) is fine; a RHS
+# variable named `value` in any `≡`/`≠` comparison fails. The name
+# collides with the emitter's own type-check helper variable
+# (write_type_check_expr declares `const value = …`), routing the
+# comparison through the Valor type-test path.
+#
+# Repro: radix emit -t ts --locale en d5-rhs-value-equality.fab
+#   error[CODEGEN001]: code generation failed: `est` target type does not
+#   correspond to a Valor variant
+#
+# The conversion spells the local attr_value in harness_dom.fab (a source
+# work-around, never a weakened target). A radix-lane follow-on (the TS
+# emitter's helper-name hygiene) would retire the marker; out of scope for
+# Stage 5 (no radix-lane fixes in this unit).
+
+fn f(string selector) → bool {
+    const string inner ← selector.sectio(1, selector.longitudo() - 1)
+    const string value ← "x"
+    return inner ≡ value
+}

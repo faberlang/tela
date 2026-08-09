@@ -16,19 +16,20 @@
 #
 # Stage 3 U4: the `behavior` (U1 carriers) + `browser` (U2 mount surface)
 # wiring cases are added — the `*)` default must have NO unknown cases
-# after. The `browser` case binds the dom-shim namespace (export keywords
-# removed) + the U2 mount-proof driver, so the assembled browser exempla
-# executes the full mount proof under `node` (empty mount / hydration /
-# mismatch / duplicate / replace effects / dispose) — the harness-assembly
-# path.
+# after. The `browser` case binds the AUTHORED fake DOM (Stage 5 U9 —
+# scripta/harness_dom.fab emitted to TS; the hand-written dom-shim is
+# deleted) + the relocated mount-proof driver, so the assembled browser
+# exempla executes the full mount proof under `node` (empty mount /
+# hydration / mismatch / duplicate / replace effects / dispose) — the
+# harness-assembly path.
 #
-# Stage 4 U6 (seam restoration): the browser case also binds the DOM_NS
-# const over the dom-shim runtime (the fake-DOM Node host env; the bare
-# Scope/Nodus types come from the shim — the emitted provider module's
-# `class Element` would collide with the DOM lib). The driver constructs
-# the scope through the provider seam (webDomScope); mount reads the
-# planted pre-existing markup through webDomSnapshot (the real provider
-# route shape). fix:g4 / fix:web-dom-locale are REMOVED.
+# Stage 4 U6 (seam restoration): the browser case binds the web:dom
+# namespace over the authored fake-DOM surface (the fake-DOM Node host env;
+# the bare Scope/Nodus types come from the harness boundary — the emitted
+# provider module's `class Element` would collide with the DOM lib). The
+# driver constructs the scope through the provider seam (web_dom_scope);
+# mount reads the planted pre-existing markup through web_dom_snapshot (the
+# real provider route shape). fix:g4 / fix:web-dom-locale are REMOVED.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -70,13 +71,13 @@ strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
 
 VALIDA_NS="const validate = { valid_space, valid_tag_name, valid_attribute_name, valid_name_in_space, valid_void_html, valid_void_structure };"
 TELA_NS="const tela = { html_visus, css, theme_css, theme_style, theme, token, core_tokens, token_property_name, token_name_valid, theme_has_core_tokens, theme_has_token, assemble, bundle, order, deduplicated_bundles, topological_order, style_valid, unclean_style_text, bundle_for, in_list, dependencies_met, text_view, fragment_view, new_identity, html_space, svg_space, element_view, element_full, event_name, restore, direct, anchor, update, effect_identity, Attribute, Property, Identity, Declaration, Rule, Style, Token, Theme, Bundle, Order, EventName, Update };"
-# Stage 4 U6: the web:dom namespace binds the DOM-SHIM's runtime surface
-# (the fake-DOM Node host env). The bare Scope/Nodus types come from the
-# shim itself (the emitted provider module's `class Element` would collide
-# with the DOM lib). The `snapshot` binding is widened (the harness
-# boundary is any-typed — the shim's webDomSnapshot expects the runtime
-# scope with `root`; the emitted Scope type carries only `selector`).
-DOM_NS="const dom = { scope: webDomScope, snapshot: ((scope: any): Array<Nodus> | null => webDomSnapshot(scope)), query: webDomQuery, require: webDomRequire, all: webDomAll, value: webDomValue };"
+# Stage 5 U9 (the dogfooding unit): the web:dom namespace for the browser
+# case binds the AUTHORED fake-DOM surface (scripta/harness_dom.fab emitted
+# to TS — the fake-DOM behavior is now Faber source). The bare Scope/Nodus
+# provider types are declared at the harness boundary (the browser case
+# does not assemble the emitted provider module). The old dom-shim + the
+# hand-written BROWSER_DRIVER are replaced by the emitted module + the
+# relocated mount-proof driver (see below).
 BROWSER_NS="const browser = { region_root, event_subscription, binding, parse_identities, element_tag, count_occurrences, duplicate_identities, tag_name, tag_at, identities_from_nodes, tags_from_nodes, binding_status, hydration_diagnostics, mount, replace, dispose, focus_held, focus_target };"
 # Stage 5 U2/U3/U4/U5/U6/U7: the reference catalog namespace (every
 # tela:reference export the exempla consumes — the layout + typography
@@ -85,19 +86,293 @@ BROWSER_NS="const browser = { region_root, event_subscription, binding, parse_id
 # family, U7).
 REF_NS="const ref = { layout_stack, layout_grid, layout_prose, stack_props, grid_props, layout_prose_props, typography_heading, typography_prose, typography_emphasis, typography_scale, heading_props, prose_props, emphasis_props, scale_props, clamped_level, layout_style, typography_style, panel, badge, metric, panel_props, badge_props, metric_props, panel_style, badge_style, metric_style, table, table_row, table_props, table_style, segmented_control, segmented_props, segmented_option, segmented_options, segmented_live_region, selected_text, active_tabindex, segmented_style, button, button_props, button_event, button_style, field_input, field_input_props, field_invalid, field_error_region, field_live_region, field_control, field_style, ref_layout_gap, ref_layout_prose_measure, ref_type_scale_xs, ref_type_scale_sm, ref_type_scale_md, ref_type_scale_lg, ref_type_scale_xl, ref_type_heading_weight, ref_type_heading_margin, ref_type_prose_line_height, ref_type_prose_margin, ref_panel_surface, ref_panel_border, ref_panel_radius, ref_panel_padding, ref_badge_size, ref_badge_padding, ref_badge_radius, ref_metric_label_size, ref_metric_label_muted, ref_metric_value_size, ref_metric_value_weight, ref_table_border, ref_table_padding, ref_table_header_weight, ref_table_caption_muted, ref_seg_gap, ref_seg_radius, ref_seg_size, ref_seg_padding, ref_seg_border, ref_seg_selected_border, ref_button_size, ref_button_padding, ref_button_radius, ref_button_border, ref_button_text, ref_button_primary_background, ref_button_primary_text, ref_button_secondary_background, ref_button_ghost_background, ref_button_focus, ref_button_disabled_opacity, field_invalid_token, field_valid_token, field_focus_token, reference_tokens, StackProps, GridProps, LayoutProseProps, HeadingProps, ProseProps, EmphasisProps, ScaleProps, PanelProps, BadgeProps, MetricProps, TableProps, TableRow, SegmentedProps, ButtonProps, FieldInputProps };"
 
-# The U2 mount-proof driver glue: calls executeMountProof (dom-shim) with
-# the assembled browser exempla's scenario inputs — the runtime gate for
-# the browser exempla's DOM-level assertions. The scope is constructed
-# through the provider seam (webDomScope); mount reads the planted
-# pre-existing markup via webDomSnapshot.
-BROWSER_DRIVER="
+# The U9 mount-proof driver glue: the browser case assembles the AUTHORED
+# fake DOM (the emitted module), the bare web:dom provider types (the
+# exempla constructs dom.Nodus at load), and the relocated executeMountProof
+# driver (the assertion/orchestration driver — the hardening executed lane,
+# TS by split, recorded in stage-5-dogfooding.md) — the runtime gate for the
+# browser exempla's DOM-level assertions. The scope is constructed through
+# the provider seam (web_dom_scope(doc, ...)); mount reads the planted
+# pre-existing markup via web_dom_snapshot.
+BROWSER_HOST=$(cat <<'BROWSER_HOST'
+
+// The bare web:dom provider types (the emitted provider module's type
+// shape — the exempla constructs dom.Nodus directly; declared at the
+// harness boundary, orchestration lane).
+class Scope { selector!: string; }
+class Nodus { identitas!: string; tag!: string; }
+
+// The global installation stays at the driver boundary (hardening lane).
+const installFakeDom = (): FakeDocument => {
+  const doc = fake_document();
+  const root = fake_element("div");
+  element_attr_set(root, "id", "root");
+  element_append_child(doc.body, root);
+  globalThis.document = doc as unknown as Document;
+  globalThis.window = { addEventListener() {}, removeEventListener() {} } as unknown as Window & typeof globalThis;
+  globalThis.requestAnimationFrame = (cb: (t: number) => void) => setTimeout(() => cb(Date.now()), 16);
+  globalThis.cancelAnimationFrame = (id: unknown) => clearTimeout(id as any);
+  globalThis.fetch = () => Promise.reject(new Error("no fetch in the exempla gate"));
+  return doc;
+};
+BROWSER_HOST
+)
+
+BROWSER_DRIVER=$(cat <<'BROWSER_DRIVER'
+
+interface RenovatioLike {
+  view: unknown;
+  effects: unknown[];
+}
+
+interface MountProofApi {
+  // The api fn params are any-typed (bounded harness typing): the emitted
+  // browser.fab functions carry concrete Scope/View/Theme types declared in
+  // the assembled file. The RETURN types stay structural so the driver
+  // reads real plan fields.
+  mount: (scope: any, view: any, theme: any) => MountedLike | null;
+  replace: (mounted: any, view: any) => RenovatioLike | null;
+  dispose: (mounted: any) => void;
+  focus_held: (mounted: any, identity: string) => any;
+  focus_target: (mounted: any, identity: string) => any;
+  scope: (selector: string) => any;
+  html_visus: (view: any) => string | null;
+  effect_identity: (effects: any) => string;
+  tree: () => any;
+  extended_tree: () => any;
+  duplicate_tree: () => any;
+  theme: () => any;
+  tree_markup: () => string;
+  hydration_present: () => string;
+  mismatch_present: () => string;
+  duplicate_present: () => string;
+  foreign_present: () => string;
+}
+
+// The Stage 3 U2 mount proof: executes the real mount/replace/dispose
+// lifecycle (emitted from browser.fab via the api) against the AUTHORED
+// fake DOM and asserts every done_when (g) DOM-level outcome. The driver
+// rides the emitted function surface (U9). Called after the Faber modules +
+// consts are in scope.
+const executeMountProof = (doc: FakeDocument, api: MountProofApi): void => {
+  const assert = (cond: boolean, msg: string): void => {
+    if (!cond) {
+      throw new Error(`dom-shim assert failed: ${msg}`);
+    }
+  };
+  const identityNodes = (): FakeElement[] => doc_query_all(doc, "[data-tela]");
+  const byIdentity = (id: string): FakeElement | undefined => identityNodes().find((n) => n.data_tela === id);
+  const textOf = (id: string): string => {
+    const n = byIdentity(id);
+    return n === undefined ? "" : element_text(n);
+  };
+  // Each scenario owns a fresh region (sequential scenarios on one DOM).
+  const resetRegion = (selector: string): FakeElement => {
+    const region = resolve_region(doc, selector);
+    element_clear_children(region);
+    doc_focus_node(doc, null);
+    return region;
+  };
+  // The driver plants the pre-existing markup into the fake DOM (the real
+  // provider route reads it via web_dom_snapshot), then mount reads it.
+  const preRenderRegion = (selector: string, markup: string): void => {
+    const region = resetRegion(selector);
+    for (const node of parse_fragment(markup)) {
+      element_append_child(region, node);
+    }
+  };
+
+  // --- scenario 1: mount onto an EMPTY scope ------------------------------
+  {
+    resetRegion("#root");
+    const mounted = api.mount(api.scope("#root"), api.tree(), api.theme());
+    assert(mounted !== null, "mount onto an empty scope returns a plan");
+    const m = mounted as MountedLike;
+    assert(m.markup === api.tree_markup(), "plan markup is the serialized View");
+    assert(m.diagnostics.length === 0, "clean mount: no diagnostics");
+    assert(m.bindings.every((l) => l.status === "create"), "clean mount: every identity creates");
+    execute_mount_plan(doc, "#root", m, true);
+    const ids = identityNodes();
+    assert(ids.length === 3, "three identity nodes mounted");
+    assert(byIdentity("tela-control")?.tagName === "div", "group node is a div");
+    assert(textOf("tela-seg-1") === "One", "seg-1 text mounted");
+    assert(textOf("tela-seg-2") === "Two", "seg-2 text mounted");
+    assert(byIdentity("tela-seg-1")?.token === "fresh", "empty mount: nodes are fresh");
+  }
+
+  // --- scenario 2: hydration binds matching nodes (never recreated) ------
+  {
+    const present = api.hydration_present();
+    preRenderRegion("#root", present);
+    const mounted = api.mount(api.scope("#root"), api.tree(), api.theme());
+    assert(mounted !== null, "hydration mount returns a plan");
+    const m = mounted as MountedLike;
+    assert(m.diagnostics.length === 0, "hydration: no diagnostics");
+    assert(m.bindings.every((l) => l.status === "bind"), "hydration: every identity binds");
+    execute_mount_plan(doc, "#root", m, true);
+    const ids = identityNodes();
+    assert(ids.length === 3, "hydration: three identity nodes present");
+    assert(
+      byIdentity("tela-control")?.token === "original" &&
+        byIdentity("tela-seg-1")?.token === "original" &&
+        byIdentity("tela-seg-2")?.token === "original",
+      "hydration: matching nodes bound, not recreated",
+    );
+  }
+
+  // --- scenario 3: mismatch → diagnose + replace (never a silent bind) ---
+  {
+    const present = api.mismatch_present();
+    preRenderRegion("#root", present);
+    const mounted = api.mount(api.scope("#root"), api.tree(), api.theme());
+    assert(mounted !== null, "mismatch mount returns a plan");
+    const m = mounted as MountedLike;
+    assert(m.diagnostics.includes("changed:tela-seg-2"), "mismatch diagnosed");
+    assert(m.bindings.find((l) => l.identity === "tela-seg-2")?.status === "create", "mismatch node re-creates");
+    execute_mount_plan(doc, "#root", m, true);
+    assert(byIdentity("tela-seg-2")?.token !== "original", "mismatch node replaced (not silently bound)");
+    assert(textOf("tela-seg-2") === "Two", "mismatch node replaced from the View");
+    assert(byIdentity("tela-control")?.token === "original", "matching group node still bound");
+    assert(byIdentity("tela-seg-1")?.token === "original", "matching seg-1 still bound");
+  }
+
+  // --- scenario 4: duplicate identity → diagnosed + resolved --------------
+  {
+    const present = api.duplicate_present();
+    preRenderRegion("#root", present);
+    const mounted = api.mount(api.scope("#root"), api.duplicate_tree(), api.theme());
+    assert(mounted !== null, "duplicate mount returns a plan");
+    const m = mounted as MountedLike;
+    assert(m.diagnostics.includes("duplicate:tela-dup"), "duplicate identity diagnosed");
+    assert(m.bindings.find((l) => l.identity === "tela-dup")?.status === "create", "duplicate identity re-creates");
+    execute_mount_plan(doc, "#root", m, true);
+    const dups = doc_query_all(doc, "[data-tela='tela-dup']");
+    assert(dups.length === 1, "duplicate nodes collapsed to one (no silent double-bind)");
+    assert(dups[0] !== undefined && element_text(dups[0]) === "x", "the surviving node is the View's node");
+  }
+
+  // --- scenario 5: replace → declarative effects execute ------------------
+  {
+    resetRegion("#root");
+    const mounted = api.mount(api.scope("#root"), api.tree(), api.theme());
+    assert(mounted !== null, "replace scenario: mount returns a plan");
+    const m = mounted as MountedLike;
+    execute_mount_plan(doc, "#root", m, true);
+    // Model the pre-replacement focus; the fake DOM mirrors it.
+    const seg2 = byIdentity("tela-seg-2");
+    assert(seg2 !== undefined, "seg-2 node present before replace");
+    doc_focus_node(doc, seg2!);
+    const mFocus = api.focus_held(m, "tela-seg-2");
+    const update = api.replace(mFocus, api.tree());
+    assert(update !== null, "replace returns the update result");
+    const r = update as RenovatioLike;
+    const keys = r.effects.map((e) => api.effect_identity(e));
+    assert(keys.length === 2, "replace derives two effects");
+    assert(keys[0] === "tela-seg-2" && keys[1] === "#root", "effects are restore(seg-2) + anchor(#root)");
+    // Execute the replacement (rebuild the region from the next View).
+    const nextMarkup = api.html_visus(r.view) ?? "";
+    const nextPlan: MountedLike = {
+      ...m,
+      markup: nextMarkup,
+      bindings: m.identities.map((id) => ({ identity: id, status: "create" })),
+    };
+    execute_mount_plan(doc, "#root", nextPlan, false);
+    // Execute the declarative effects after replacement (focus restore by
+    // stable identity; scroll-anchor intent for the region).
+    for (const e of r.effects) {
+      const key = api.effect_identity(e);
+      const target = identityNodes().find((n) => n.data_tela === key);
+      if (target !== undefined) {
+        doc_focus_node(doc, target);
+      }
+    }
+    assert(doc.active_element?.data_tela === "tela-seg-2", "focus restored to the pre-replacement identity");
+    assert(byIdentity("tela-control") !== undefined, "region present after replacement");
+  }
+
+  // --- scenario 5b: declared focus movement adds Direct ------------------
+  {
+    resetRegion("#root");
+    const mounted = api.mount(api.scope("#root"), api.tree(), api.theme());
+    assert(mounted !== null, "movement scenario: mount returns a plan");
+    const m = mounted as MountedLike;
+    execute_mount_plan(doc, "#root", m, true);
+    const mFocus = api.focus_held(m, "tela-seg-2");
+    const mMove = api.focus_target(mFocus, "tela-seg-3");
+    const update = api.replace(mMove, api.extended_tree());
+    assert(update !== null, "movement replace returns the update result");
+    const r = update as RenovatioLike;
+    const keys = r.effects.map((e) => api.effect_identity(e));
+    assert(keys.length === 3, "movement replace derives three effects");
+    assert(
+      keys[0] === "tela-seg-2" && keys[1] === "tela-seg-3" && keys[2] === "#root",
+      "effects are restore + direct + anchor",
+    );
+    const nextMarkup = api.html_visus(r.view) ?? "";
+    const extIds = m.identities.concat("tela-seg-3");
+    const nextPlan: MountedLike = {
+      ...m,
+      markup: nextMarkup,
+      bindings: extIds.map((id) => ({ identity: id, status: "create" })),
+    };
+    execute_mount_plan(doc, "#root", nextPlan, false);
+    for (const e of r.effects) {
+      const key = api.effect_identity(e);
+      const target = identityNodes().find((n) => n.data_tela === key);
+      if (target !== undefined) {
+        doc_focus_node(doc, target);
+      }
+    }
+    assert(doc.active_element?.data_tela === "tela-seg-3", "focus moved to the declared target identity");
+  }
+
+  // --- scenario 6: dispose unsubscribes + clears the region --------------
+  {
+    resetRegion("#root");
+    const mounted = api.mount(api.scope("#root"), api.tree(), api.theme());
+    assert(mounted !== null, "dispose scenario: mount returns a plan");
+    const m = mounted as MountedLike;
+    assert(m.subscriptions.length === 3, "one subscription descriptor per View identity");
+    execute_mount_plan(doc, "#root", m, false);
+    // Bind the region-bind subscriptions (web_dom* surface) with an
+    // observable counter; the app's real handlers are app-typed in U3.
+    let dispatched = 0;
+    const subscriptions = bind_region_subscriptions(doc, "#root", m, () => {
+      dispatched += 1;
+    });
+    const preNode = byIdentity("tela-seg-1");
+    assert(preNode !== undefined, "seg-1 node present before dispose");
+    element_dispatch(preNode!, fake_event("tela:binding"));
+    assert(dispatched === 1, "subscription is live before dispose");
+    // dispose: the harness executes the unsubscribe plan + clears the region.
+    api.dispose(m);
+    for (const sub of subscriptions) {
+      web_dom_unsubscribe(doc, sub);
+    }
+    const region = resolve_region(doc, "#root");
+    element_clear_children(region);
+    // A post-dispose dispatch does nothing (listeners removed).
+    element_dispatch(preNode!, fake_event("tela:binding"));
+    assert(dispatched === 1, "post-dispose dispatch is a no-op (unsubscribed)");
+    assert(identityNodes().length === 0, "region cleared after dispose");
+  }
+
+  assert(identityNodes().length === 0, "proof scenarios leave no residue");
+};
+
+const doc = installFakeDom();
+// The web:dom namespace the emitted browser mount reads (browser.fab calls
+// dom.snapshot inside mount; the scope is built through web_dom_scope).
+const dom = {
+  snapshot: ((scope: any): Array<FakeNodus> | null => web_dom_snapshot(scope)),
+};
 const domProofApi = {
   mount: browser.mount,
   replace: browser.replace,
   dispose: browser.dispose,
   focus_held: browser.focus_held,
   focus_target: browser.focus_target,
-  scope: webDomScope,
+  scope: (selector: string): any => web_dom_scope(doc, selector),
   html_visus: tela.html_visus,
   effect_identity: tela.effect_identity,
   tree: control_tree,
@@ -108,10 +383,15 @@ const domProofApi = {
   hydration_present: hydration_present,
   mismatch_present: mismatch_present,
   duplicate_present: duplicate_present,
-  foreign_present: foreign_present
+  foreign_present: foreign_present,
 };
-executeMountProof(domProofApi);
-"
+executeMountProof(doc, domProofApi);
+BROWSER_DRIVER
+)
+
+# printf (not echo) so the driver's backtick/template content is verbatim.
+printf '%s' "$BROWSER_HOST" > "$SCRATCH/browser-host.ts"
+printf '%s' "$BROWSER_DRIVER" > "$SCRATCH/browser-driver.ts"
 
 echo "check-exempla: TS lane (emit + assemble + tsc --noEmit + node runtime gate)"
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/validate.fab" -o "$SCRATCH/valida.ts" >/dev/null
@@ -120,6 +400,13 @@ echo "check-exempla: TS lane (emit + assemble + tsc --noEmit + node runtime gate
 # Stage 5 U2: the reference catalog module (the exempla/reference wiring
 # case consumes it through the tela:reference package interface).
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/reference.fab" -o "$SCRATCH/reference.ts" >/dev/null
+# Stage 5 U9: the AUTHORED fake DOM (Faber source -> the emitted module;
+# the browser case assembles it in place of the deleted dom-shim).
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/scripta/harness_dom.fab" -o "$SCRATCH/harness_dom.ts" >/dev/null
+# The emitted harness_dom module is self-contained (no imports) and emits
+# NO FaberDisplay preamble (the authored surface uses no display helpers);
+# plain header strip is the whole strip.
+strip_hdom() { sed '1,2d' "$1"; }
 
 for f in "$ROOT"/exempla/*.fab; do
   name="$(basename "$f" .fab)"
@@ -177,25 +464,27 @@ for f in "$ROOT"/exempla/*.fab; do
       ;;
     browser)
       # exempla/browser.fab imports tela:tela + tela:browser + web:dom. The
-      # DOM_NS const binds the dom-shim's runtime surface (the fake-DOM
-      # Node host env — the bare Scope/Nodus types come from the shim); the
-      # dom-shim + the mount-proof driver execute the FULL mount proof
-      # under node — mount reads the planted pre-existing markup through
-      # the snapshot (the real provider route shape).
+      # AUTHORED fake DOM (Stage 5 U9 — scripta/harness_dom.fab emitted to
+      # TS) provides the node host environment; the bare Scope/Nodus
+      # provider types + installFakeDom live at the harness boundary
+      # (BROWSER_HOST); the relocated mount-proof driver (BROWSER_DRIVER)
+      # executes the FULL mount proof under node — mount reads the planted
+      # pre-existing markup through the authored web_dom_snapshot (the real
+      # provider route shape).
       {
         strip "$SCRATCH/valida.ts"
         echo "$VALIDA_NS"
         strip "$SCRATCH/tela.ts"
         echo "$TELA_NS"
-        echo "$DOM_NS"
         strip "$SCRATCH/browser.ts"
         echo "$BROWSER_NS"
-        # The shim precedes the exempla so its `class Nodus`/`class Scope`
+        strip_hdom "$SCRATCH/harness_dom.ts"
+        # The bare provider types precede the exempla so its `class Nodus`
         # declarations are in scope before the exempla's `new Nodus()`.
-        sed 's/^export //' "$ROOT/scripta/dom-shim.ts"
+        cat "$SCRATCH/browser-host.ts"
         strip "$SCRATCH/browser-exempla.ts"
         echo ""
-        echo "$BROWSER_DRIVER"
+        cat "$SCRATCH/browser-driver.ts"
       } > "$SCRATCH/${name}-joined.ts"
       ;;
     reference)

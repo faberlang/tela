@@ -82,12 +82,18 @@ echo "check-reference: TS emit valida / tela / dom / browser / extension / forms
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/reference.fab" -o "$SCRATCH/reference.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab" -o "$SCRATCH/main.ts" >/dev/null
+# Stage 5 U9: the AUTHORED fake DOM (Faber source -> the emitted module).
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/scripta/harness_dom.fab" -o "$SCRATCH/harness_dom.ts" >/dev/null
 # The generated provider reference: the emitted web:dom module (the bare
 # Scope/Nodus/… type declarations — the la locale emit is the package's own
 # reader).
 "$RADIX_BIN" emit -t ts --locale la "$ROOT/../faber-web/src/dom.fab" -o "$SCRATCH/dom.ts" >/dev/null
 
 strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
+# The emitted harness_dom module is self-contained (no imports) and emits
+# NO FaberDisplay preamble (the authored surface uses no display helpers);
+# plain header strip is the whole strip.
+strip_hdom() { sed '1,2d' "$1"; }
 # The emitted web:dom provider module's preamble (FaberDisplayHint + the
 # __faberDisplay helpers) and its `Element` genus are renamed so they do not
 # collide with the tela module's own preamble / the DOM lib's `Element`.
@@ -124,142 +130,41 @@ REF_ALIAS="const reference = ref;"
 DOM_NS="const dom = { scope: webDomScope, query: webDomQuery, require: webDomRequire, all: webDomAll, snapshot: ((scope: any): Array<Nodus> | null => webDomSnapshot(scope)), text_set: webDomTextSet, attr_set: webDomAttrSet, attr_remove: webDomAttrRemove, class_add: webDomClassAdd, class_remove: webDomClassRemove, class_toggle: webDomClassToggle, on: webDomOn, unsubscribe: webDomUnsubscribe, value: webDomValue, value_set: webDomValueSet, on_input: webDomOnInput, on_submit: webDomOnSubmit, on_frame: webDomOnFrame, on_resize: webDomOnResize, on_keyboard: webDomOnKeyboard, on_pointer: webDomOnPointer, on_focus: webDomOnFocus, pointer_lock_state: webDomPointerLockState, request_pointer_lock: webDomRequestPointerLock, exit_pointer_lock: webDomExitPointerLock, on_pointer_lock: webDomOnPointerLock, prevent_default: webDomPreventDefault, fetch_text: webDomFetchText };"
 
 cat > "$SCRATCH/host-driver.ts" <<'HOST_DRIVER'
-// ---- node host environment (modeled on the WEB5 fake-dom.mjs precedent) --
-class FakeClassList {
-  _s: Set<string>;
-  constructor() { this._s = new Set(); }
-  add(c: string) { this._s.add(c); }
-  remove(c: string) { this._s.delete(c); }
-  toggle(c: string) { if (this._s.has(c)) { this._s.delete(c); return false; } this._s.add(c); return true; }
-  has(c: string) { return this._s.has(c); }
-}
-type FakeListener = (event: FakeEvent) => void;
-class FakeEvent {
-  type: string;
-  defaultPrevented: boolean;
-  [key: string]: unknown;
-  constructor(type: string, fields: Record<string, unknown> = {}) { this.type = type; this.defaultPrevented = false; Object.assign(this, fields); }
-  preventDefault() { this.defaultPrevented = true; }
-}
-class FakeElement {
-  tagName: string;
-  children: FakeElement[];
-  _attrs: Map<string, string>;
-  _listeners: Map<string, Set<FakeListener>>;
-  _ownText: string;
-  value: string;
-  classList: FakeClassList;
-  focused: boolean;
-  token: string;
-  constructor(tagName: string) {
-    this.tagName = tagName;
-    this.children = [];
-    this._attrs = new Map();
-    this._listeners = new Map();
-    this._ownText = "";
-    this.value = "";
-    this.classList = new FakeClassList();
-    this.focused = false;
-    this.token = "";
-  }
-  get dataTela() { return this.getAttribute("data-tela") ?? ""; }
-  get id() { return this.getAttribute("id") ?? ""; }
-  get textContent() {
-    if (this.tagName === "#text") return this._ownText;
-    let a = this._ownText;
-    for (const c of this.children) a += c.textContent;
-    return a;
-  }
-  set textContent(v: string) { this._ownText = v; if (this.tagName !== "#text") this.children = []; }
-  setAttribute(n: string, v: string) { this._attrs.set(n, String(v)); }
-  removeAttribute(n: string) { this._attrs.delete(n); }
-  getAttribute(n: string) { return this._attrs.get(n) ?? null; }
-  hasAttribute(n: string) { return this._attrs.has(n); }
-  addEventListener(t: string, h: FakeListener) { if (!this._listeners.has(t)) this._listeners.set(t, new Set()); this._listeners.get(t)!.add(h); }
-  removeEventListener(t: string, h: FakeListener) { this._listeners.get(t)?.delete(h); }
-  dispatchEvent(ev: FakeEvent) { for (const h of this._listeners.get(ev.type) ?? []) h(ev); return !ev.defaultPrevented; }
-  appendChild(c: FakeElement) { this.children.push(c); return c; }
-  matches(sel: string) {
-    if (sel === "[data-tela]") return this.hasAttribute("data-tela");
-    if (sel.startsWith("#")) return this.id === sel.slice(1);
-    if (sel.startsWith(".")) return this.classList.has(sel.slice(1));
-    const m = /^\[([\w-]+)=['"]?([^'"\]]*)['"]?\]$/.exec(sel);
-    if (m) return this.getAttribute(m[1]) === m[2];
-    return this.tagName === sel;
-  }
-  _queryAll(sel: string, out: FakeElement[]) {
-    for (const ch of this.children) { if (ch.matches(sel)) out.push(ch); ch._queryAll(sel, out); }
-    return out;
-  }
-  querySelector(sel: string) { return this._queryAll(sel, [])[0] ?? null; }
-  querySelectorAll(sel: string) { return this._queryAll(sel, []); }
-}
-class FakeDocument {
-  body: FakeElement;
-  activeElement: FakeElement | null;
-  constructor() { this.body = new FakeElement("body"); this.activeElement = null; }
-  querySelector(sel: string) { return this.body.querySelector(sel); }
-  querySelectorAll(sel: string) { return this.body.querySelectorAll(sel); }
-  hasFocus() { return true; }
-  focusNode(el: FakeElement | null) { this.activeElement = el; }
-}
-// Bounded HTML parser for the serializer's markup shape (elements +
-// single-quoted attributes + `data-tela` identities + nested children +
-// void elements). The host's DOM sync after each replace.
-const VOID_TAGS = new Set(["input", "br", "hr", "img", "link", "meta", "area", "base", "col", "embed", "source", "track", "wbr"]);
-function parseFragment(html: string): FakeElement[] {
-  const root = new FakeElement("#fragment");
-  const stack: FakeElement[] = [root];
-  let current = root;
-  let i = 0;
-  while (i < html.length) {
-    const lt = html.indexOf("<", i);
-    if (lt === -1) {
-      if (i < html.length) { const t = html.slice(i); const tn = new FakeElement("#text"); tn.textContent = t; current.children.push(tn); }
-      break;
-    }
-    if (lt > i) { const t = html.slice(i, lt); const tn = new FakeElement("#text"); tn.textContent = t; current.children.push(tn); }
-    const gt = html.indexOf(">", lt);
-    if (gt === -1) break;
-    const tagText = html.slice(lt + 1, gt);
-    const close = /^\/([\w-]+)/.exec(tagText);
-    if (close) { stack.pop(); current = stack[stack.length - 1] ?? root; i = gt + 1; continue; }
-    const m = /^([\w-]+)([^>]*)$/.exec(tagText);
-    if (!m) { i = gt + 1; continue; }
-    const el = new FakeElement(m[1]);
-    const attrRe = /([\w-]+)='([^']*)'/g;
-    let am: RegExpExecArray | null;
-    while ((am = attrRe.exec(m[2])) !== null) el.setAttribute(am[1], am[2]);
-    const attrRe2 = /([\w-]+)="([^"]*)"/g;
-    while ((am = attrRe2.exec(m[2])) !== null) el.setAttribute(am[1], am[2]);
-    current.children.push(el);
-    if (!VOID_TAGS.has(m[1]) && !tagText.endsWith("/")) { stack.push(el); current = el; }
-    i = gt + 1;
-  }
-  return root.children;
-}
-function installFakeDom(): FakeDocument {
-  const doc = new FakeDocument();
-  const root = new FakeElement("div");
-  root.setAttribute("id", "root");
-  doc.body.appendChild(root);
+// ---- node host environment (Stage 5 U9: the AUTHORED fake DOM) ---------
+// The fake DOM is Faber source (scripta/harness_dom.fab emitted to TS) —
+// the embedded fake-DOM classes are REMOVED at U9. The driver rides the
+// emitted function surface (web_dom_*, element_*, doc_*, fake_event_*,
+// execute_mount_plan). The faber-web runtime/dom.ts (assembled verbatim
+// above, TS by contract) calls the METHOD bridge on the fake nodes — the
+// authored genus methods (querySelector/querySelectorAll/getAttribute) +
+// the tagName field satisfy it. The global installation stays at the
+// driver boundary.
+const installFakeDom = (): FakeDocument => {
+  const doc = fake_document();
+  const root = fake_element("div");
+  element_attr_set(root, "id", "root");
+  element_append_child(doc.body, root);
   globalThis.document = doc as unknown as Document;
   globalThis.window = { addEventListener() {}, removeEventListener() {}, innerWidth: 800, innerHeight: 600, devicePixelRatio: 1 } as unknown as Window & typeof globalThis;
   globalThis.requestAnimationFrame = (cb: (t: number) => void) => setTimeout(() => cb(Date.now()), 16);
   globalThis.cancelAnimationFrame = (id: unknown) => clearTimeout(id as any);
   globalThis.fetch = () => Promise.reject(new Error("no fetch in the reference gate"));
   return doc;
-}
+};
 
 // ---- scripted mount + structure/a11y driver (the check-reference gate) ---
 const assert = (cond: boolean, msg: string): void => { if (!cond) throw new Error(`check-reference assert failed: ${msg}`); };
 const doc = installFakeDom();
-const identityNodes = (): FakeElement[] => doc.querySelectorAll("[data-tela]");
-const byIdentity = (id: string): FakeElement | undefined => identityNodes().find((n) => n.dataTela === id);
+const identityNodes = (): FakeElement[] => doc_query_all(doc, "[data-tela]");
+const byIdentity = (id: string): FakeElement | undefined => identityNodes().find((n) => n.data_tela === id);
 const plantRegion = (selector: string, markup: string): void => {
-  const region = doc.querySelector(selector) as FakeElement;
-  region.children = [];
-  for (const node of parseFragment(markup)) region.appendChild(node);
+  const region = doc_query_selector(doc, selector)!;
+  element_clear_children(region);
+  for (const node of parse_fragment(markup)) element_append_child(region, node);
+};
+const textOf = (id: string): string => {
+  const n = byIdentity(id);
+  return n === undefined ? "" : element_text(n);
 };
 
 // --- 1. the layout family mounts through tela.browser.mount --------------
@@ -276,9 +181,9 @@ assert(lm.bindings.every((l) => l.status === "bind"), "hydration: every layout i
 // the columns' text (text views serialize as one contiguous text run — no
 // wrappers), the prose measure wraps a paragraph.
 assert(byIdentity("ref-layout-stack") !== undefined, "stack container present");
-assert(byIdentity("ref-layout-stack")!.textContent === "row onerow two", "stack carries the two rows' text");
+assert(textOf("ref-layout-stack") === "row onerow two", "stack carries the two rows' text");
 assert(byIdentity("ref-layout-grid") !== undefined, "grid container present");
-assert(byIdentity("ref-layout-grid")!.textContent === "column onecolumn two", "grid carries the two columns' text");
+assert(textOf("ref-layout-grid") === "column onecolumn two", "grid carries the two columns' text");
 assert(byIdentity("ref-layout-prose") !== undefined, "prose measure present");
 assert(byIdentity("ref-layout-prose")!.children.length === 1 && byIdentity("ref-layout-prose")!.children[0].tagName === "p", "prose measure wraps a paragraph (prose semantics)");
 
@@ -299,8 +204,8 @@ assert(byIdentity("ref-typography-prose")?.tagName === "p", "prose is a native p
 // the semantic strong tag; no color/state-carrying attribute exists.
 const strong = byIdentity("ref-typography-emphasis-strong");
 assert(strong !== undefined && strong.tagName === "strong", "emphasis is a semantic strong");
-assert(strong!.textContent === "emphasis", "emphasis text present");
-assert(strong!.getAttribute("style") === null && strong!.getAttribute("class") === null, "emphasis carries no style/class (the meaning is the markup)");
+assert(element_text(strong!) === "emphasis", "emphasis text present");
+assert(element_attr_get(strong!, "style") === null && element_attr_get(strong!, "class") === null, "emphasis carries no style/class (the meaning is the markup)");
 // The type scale: decorative sizing spans at the documented steps.
 assert(byIdentity("ref-typography-scale-lg")?.tagName === "span", "scale-lg is a span");
 assert(byIdentity("ref-typography-scale-xs")?.tagName === "span", "scale-xs is a span");
@@ -312,7 +217,7 @@ assert(byIdentity("ref-typography-scale-xs")?.tagName === "span", "scale-xs is a
 // "create".
 const dupMarkup = tela.html_visus(duplicate_prose_composition()) ?? "";
 plantRegion("#root", dupMarkup);
-const dm = browser.mount(webDomScope("#root"), duplicate_prose_composition(), reference_theme()) as Mounted;
+const dm = browser.mount(web_dom_scope(doc, "#root"), duplicate_prose_composition(), reference_theme()) as Mounted;
 assert(dm !== null, "duplicate case: mount returns a plan");
 assert(dm.diagnostics.includes("duplicate:ref-typography-prose"), "reuse of the static identity is diagnosed (never a silent bind)");
 const dupBinding = dm.bindings.find((b) => b.identity === "ref-typography-prose");
@@ -329,12 +234,12 @@ assert(pm !== null, "panel mount returns a plan");
 assert(pm.identities.length === 3, "panel identities: wrapper + panel + prose paragraph");
 assert(pm.bindings.every((l) => l.status === "bind"), "hydration: every panel identity binds");
 const panelNode = byIdentity("ref-panel-status");
-assert(panelNode !== undefined && panelNode.getAttribute("role") === "region", "panel is a region landmark");
-assert(panelNode!.getAttribute("aria-label") === "Status panel", "panel accessible name (aria-label)");
+assert(panelNode !== undefined && element_attr_get(panelNode, "role") === "region", "panel is a region landmark");
+assert(element_attr_get(panelNode!, "aria-label") === "Status panel", "panel accessible name (aria-label)");
 // No hardcoded color in the panel bytes: the surface is a var() reference
 // to the --ref-panel-surface token (theme-surface semantics).
-assert(panelNode!.getAttribute("style") === null, "panel carries no inline style (the surface rides the tokens)");
-assert(byIdentity("ref-typography-prose")?.textContent === "all systems operational", "panel content (prose) present");
+assert(element_attr_get(panelNode!, "style") === null, "panel carries no inline style (the surface rides the tokens)");
+assert(textOf("ref-typography-prose") === "all systems operational", "panel content (prose) present");
 
 // --- 5. the badge family mounts + the textual-status structure -----------
 // A badge's meaning is TEXTUAL: role=status + aria-label carries the
@@ -346,11 +251,11 @@ assert(bm !== null, "badge mount returns a plan");
 assert(bm.identities.length === 3, "badge identities: wrapper + two badges");
 assert(bm.bindings.every((l) => l.status === "bind"), "hydration: every badge identity binds");
 const badgeNew = byIdentity("ref-badge-new");
-assert(badgeNew !== undefined && badgeNew.getAttribute("role") === "status", "badge carries role=status");
-assert(badgeNew!.getAttribute("aria-label") === "New: 3 messages", "badge accessible name carries the status word + the label (meaning never color alone)");
-assert(badgeNew!.textContent === "3 messages", "badge visible label present");
+assert(badgeNew !== undefined && element_attr_get(badgeNew, "role") === "status", "badge carries role=status");
+assert(element_attr_get(badgeNew!, "aria-label") === "New: 3 messages", "badge accessible name carries the status word + the label (meaning never color alone)");
+assert(element_text(badgeNew!) === "3 messages", "badge visible label present");
 const badgeOk = byIdentity("ref-badge-ok");
-assert(badgeOk !== undefined && badgeOk!.getAttribute("aria-label") === "Ok: all checks passed", "second badge accessible name");
+assert(badgeOk !== undefined && element_attr_get(badgeOk!, "aria-label") === "Ok: all checks passed", "second badge accessible name");
 
 // --- 6. the metric family mounts + the definition-list structure ---------
 // The benchmark grammar's dl/dt/dd pattern: label + value (+ optional
@@ -364,12 +269,12 @@ assert(mm.bindings.every((l) => l.status === "bind"), "hydration: every metric i
 const metricUptime = byIdentity("ref-metric-uptime");
 assert(metricUptime !== undefined && metricUptime!.tagName === "dl", "metric is a dl (the definition-list pattern)");
 assert(metricUptime!.children.length === 2, "metric uptime: label + value rows only (no delta)");
-assert(metricUptime!.children[0].tagName === "dt" && metricUptime!.children[0].textContent === "uptime", "metric dt = the label");
-assert(metricUptime!.children[1].tagName === "dd" && metricUptime!.children[1].textContent === "99.9%", "metric dd = the value");
+assert(metricUptime!.children[0].tagName === "dt" && element_text(metricUptime!.children[0]) === "uptime", "metric dt = the label");
+assert(metricUptime!.children[1].tagName === "dd" && element_text(metricUptime!.children[1]) === "99.9%", "metric dd = the value");
 const metricRequests = byIdentity("ref-metric-requests");
 assert(metricRequests !== undefined && metricRequests!.children.length === 3, "metric requests: label + value + delta rows");
-assert(metricRequests!.children[2].tagName === "dd" && metricRequests!.children[2].textContent === "+3.1%", "the optional delta row is a dd");
-assert(metricUptime!.getAttribute("style") === null, "metric carries no inline style (the typography rides the tokens)");
+assert(metricRequests!.children[2].tagName === "dd" && element_text(metricRequests!.children[2]) === "+3.1%", "the optional delta row is a dd");
+assert(element_attr_get(metricUptime!, "style") === null, "metric carries no inline style (the typography rides the tokens)");
 
 // --- 7. the table family mounts + the semantic/a11y structure -----------
 // The native <table>/<caption>/<thead>/<th scope='col'>/<tbody>/<tr>/<td>
@@ -385,20 +290,20 @@ assert(tb.bindings.every((l) => l.status === "bind"), "hydration: every table id
 const tableNode = byIdentity("ref-table-services");
 assert(tableNode !== undefined && tableNode!.tagName === "table", "table root is a native table");
 assert(tableNode!.children.length === 3, "table children: caption + thead + tbody");
-assert(tableNode!.children[0].tagName === "caption" && tableNode!.children[0].textContent === "Services", "caption is the first child (the accessible name)");
+assert(tableNode!.children[0].tagName === "caption" && element_text(tableNode!.children[0]) === "Services", "caption is the first child (the accessible name)");
 const tableHead = tableNode!.children[1];
 assert(tableHead.tagName === "thead", "thead follows the caption");
 const tableHeaderRow = tableHead.children[0];
 assert(tableHeaderRow.tagName === "tr" && tableHeaderRow.children.length === 2, "thead carries a header row of two cells");
-assert(tableHeaderRow.children[0].tagName === "th" && tableHeaderRow.children[0].getAttribute("scope") === "col", "header cell is a th with scope='col' (the column association)");
-assert(tableHeaderRow.children[0].textContent === "Service", "first header cell text");
-assert(tableHeaderRow.children[1].tagName === "th" && tableHeaderRow.children[1].getAttribute("scope") === "col", "second header cell scope");
+assert(tableHeaderRow.children[0].tagName === "th" && element_attr_get(tableHeaderRow.children[0], "scope") === "col", "header cell is a th with scope='col' (the column association)");
+assert(element_text(tableHeaderRow.children[0]) === "Service", "first header cell text");
+assert(tableHeaderRow.children[1].tagName === "th" && element_attr_get(tableHeaderRow.children[1], "scope") === "col", "second header cell scope");
 const tableBody = tableNode!.children[2];
 assert(tableBody.tagName === "tbody", "tbody follows thead");
 assert(tableBody.children.length === 3, "three body rows");
 assert(tableBody.children[0].tagName === "tr" && tableBody.children[0].children.length === 2, "body row of two td cells");
-assert(tableBody.children[0].children[0].tagName === "td" && tableBody.children[0].children[0].textContent === "gateway", "body cell is a td with the cell text");
-assert(tableNode!.getAttribute("style") === null, "table carries no inline style (the borders ride the tokens)");
+assert(tableBody.children[0].children[0].tagName === "td" && element_text(tableBody.children[0].children[0]) === "gateway", "body cell is a td with the cell text");
+assert(element_attr_get(tableNode!, "style") === null, "table carries no inline style (the borders ride the tokens)");
 
 // --- 8. the declared table interaction case (the consumer plan, D1) ------
 // The table itself is STATELESS — it declares no behavior (D1 recorded in
@@ -436,8 +341,8 @@ assert(path[5] === "ref-table-services-cell-1-0", "an unmapped key is a silent n
 for (const id of path) { assert(byIdentity(id) !== undefined, `navigation target present: ${id}`); }
 // The plan restores focus by identity (the pre-navigation focused cell) —
 // deterministic focus restoration, campaign §8.
-doc.focusNode(byIdentity(path[path.length - 1])!);
-assert(doc.activeElement === byIdentity("ref-table-services-cell-1-0"), "focus restoration targets the declared identity");
+doc_focus_node(doc, byIdentity(path[path.length - 1])!);
+assert(doc.active_element === byIdentity("ref-table-services-cell-1-0"), "focus restoration targets the declared identity");
 
 // --- 9. the segmented-control family mounts + the interaction case -------
 // The Stage 3 control re-homed in the catalog (tela:reference, Stage 5
@@ -459,30 +364,27 @@ assert(sm !== null, "segmented mount returns a plan");
 assert(sm.identities.length === 6, "segmented identities: wrapper + group + 3 segments + live region");
 assert(sm.bindings.every((l) => l.status === "bind"), "hydration: every segmented identity binds");
 const segGroup = byIdentity("ref-seg-control");
-assert(segGroup !== undefined && segGroup.getAttribute("role") === "radiogroup", "the group is a radiogroup");
-assert(segGroup!.getAttribute("aria-label") === "segmented control", "the group accessible name");
+assert(segGroup !== undefined && element_attr_get(segGroup, "role") === "radiogroup", "the group is a radiogroup");
+assert(element_attr_get(segGroup!, "aria-label") === "segmented control", "the group accessible name");
 const segOne = byIdentity("ref-seg-control-1");
-assert(segOne !== undefined && segOne!.getAttribute("role") === "radio", "a segment is a radio");
-assert(segOne!.getAttribute("aria-selected") === "true", "the selected segment carries aria-selected=true");
-assert(segOne!.getAttribute("tabindex") === "0", "the roving tabindex: the selected segment is the tab stop");
-assert(byIdentity("ref-seg-control-2")!.getAttribute("tabindex") === "-1", "unselected segments are out of the tab sequence");
+assert(segOne !== undefined && element_attr_get(segOne!, "role") === "radio", "a segment is a radio");
+assert(element_attr_get(segOne!, "aria-selected") === "true", "the selected segment carries aria-selected=true");
+assert(element_attr_get(segOne!, "tabindex") === "0", "the roving tabindex: the selected segment is the tab stop");
+assert(element_attr_get(byIdentity("ref-seg-control-2")!, "tabindex") === "-1", "unselected segments are out of the tab sequence");
 const segLive = byIdentity("ref-seg-live");
-assert(segLive !== undefined && segLive!.getAttribute("role") === "status" && segLive!.getAttribute("aria-live") === "polite", "the control-owned declared live region");
+assert(segLive !== undefined && element_attr_get(segLive!, "role") === "status" && element_attr_get(segLive!, "aria-live") === "polite", "the control-owned declared live region");
 
 // The app-typed plan (D1) + the scripted interaction sequence.
-// The faber-web runtime's webDom* surface is typed against the DOM lib's
-// Element (WebDomElement = Element); the harness's fake nodes are
-// FakeElement — the harness boundary widens the node type (the DOM_NS
-// snapshot binding already widens to any; same class of harness widening).
-const toEl = (n: FakeElement): Element => n as unknown as Element;
+// The U9 driver rides the emitted function surface directly (the authored
+// web_dom_* functions take FakeElement) — no node-type widening needed.
 let segModel = "ref-seg-control-1";
 let segFocused = "ref-seg-control-1";
 let segAnnouncements = 0;
 const segProps = control_props();
-let segSubs: WebDomSubscription[] = [];
+let segSubs: FakeSubscription[] = [];
 const segClearSubs = (): void => {
   for (const s of segSubs) {
-    webDomUnsubscribe(s);
+    web_dom_unsubscribe(doc, s);
   }
   segSubs = [];
 };
@@ -491,12 +393,12 @@ const segMoveFocus = (identity: string): void => {
   for (const id of segment_order()) {
     const node = byIdentity(id);
     if (node !== undefined) {
-      webDomAttrSet(toEl(node), "tabindex", id === identity ? "0" : "-1");
+      web_dom_attr_set(node, "tabindex", id === identity ? "0" : "-1");
     }
   }
   const target = byIdentity(identity);
   assert(target !== undefined, `focus target present: ${identity}`);
-  doc.focusNode(target!);
+  doc_focus_node(doc, target!);
 };
 const segReplace = (): void => {
   const r = browser.replace(sm, reference.segmented_control(selected_props(segProps, segModel)));
@@ -509,13 +411,13 @@ const segReplace = (): void => {
     const key = tela.effect_identity(e);
     const target = byIdentity(key);
     if (target !== undefined) {
-      doc.focusNode(target);
+      doc_focus_node(doc, target);
     }
   }
   segAnnouncements += 1;
   const liveNow = byIdentity("ref-seg-live");
   assert(liveNow !== undefined, "live region present after replacement");
-  webDomTextSet(toEl(liveNow!), announcement(segProps, segModel));
+  web_dom_text_set(liveNow!, announcement(segProps, segModel));
   // Re-attach the subscriptions to the fresh nodes (the app re-attaches).
   segClearSubs();
   segBind();
@@ -535,12 +437,12 @@ const segBind = (): void => {
     const handler = (): void => {
       segApply(v.message(tela.event_name(v.identity)));
     };
-    segSubs.push(webDomOn(toEl(node!), v.event_name, handler));
+    segSubs.push(web_dom_on(doc, node!, v.event_name, handler));
   }
   for (const id of segment_order()) {
     const node = byIdentity(id);
     assert(node !== undefined, `keyboard target present: ${id}`);
-    segSubs.push(webDomOnKeyboard(toEl(node!), "keydown", (state) => {
+    segSubs.push(web_dom_on_keyboard(doc, node!, "keydown", (state) => {
       const msg = key_message(segFocused, state.key as string);
       if (msg.tag === "Selected") {
         segApply(msg);
@@ -553,48 +455,48 @@ const segBind = (): void => {
 segBind();
 
 // 9a. pointer select on the unselected seg-2: select + announce once.
-byIdentity("ref-seg-control-2")!.dispatchEvent(new FakeEvent("click"));
+element_dispatch(byIdentity("ref-seg-control-2")!, fake_event("click"));
 assert(segModel === "ref-seg-control-2", "pointer click selects seg-2");
-assert(byIdentity("ref-seg-control-2")!.getAttribute("aria-selected") === "true", "seg-2 aria-selected flips true");
-assert(byIdentity("ref-seg-control-1")!.getAttribute("aria-selected") === "false", "seg-1 aria-selected flips false");
+assert(element_attr_get(byIdentity("ref-seg-control-2")!, "aria-selected") === "true", "seg-2 aria-selected flips true");
+assert(element_attr_get(byIdentity("ref-seg-control-1")!, "aria-selected") === "false", "seg-1 aria-selected flips false");
 assert(segAnnouncements === 1, "announcement fires once");
-assert(byIdentity("ref-seg-live")!.textContent === "Two selected", "live region reads Two selected");
+assert(textOf("ref-seg-live") === "Two selected", "live region reads Two selected");
 // 9b. click on the already-selected seg-2: silent no-op (§1.5).
-byIdentity("ref-seg-control-2")!.dispatchEvent(new FakeEvent("click"));
+element_dispatch(byIdentity("ref-seg-control-2")!, fake_event("click"));
 assert(segModel === "ref-seg-control-2", "no-op click keeps the model");
 assert(segAnnouncements === 1, "no announcement on the no-op (silent)");
-assert(byIdentity("ref-seg-live")!.textContent === "Two selected", "live region unchanged");
+assert(textOf("ref-seg-live") === "Two selected", "live region unchanged");
 // 9c. arrows: focus only, selection unchanged, silent.
 segMoveFocus("ref-seg-control-2");
-byIdentity("ref-seg-control-2")!.dispatchEvent(new FakeEvent("keydown", { key: "ArrowRight" }));
-assert(doc.activeElement?.dataTela === "ref-seg-control-3", "ArrowRight moves focus to seg-3");
+element_dispatch(byIdentity("ref-seg-control-2")!, fake_event_key("keydown", "ArrowRight"));
+assert(doc.active_element?.data_tela === "ref-seg-control-3", "ArrowRight moves focus to seg-3");
 assert(segModel === "ref-seg-control-2", "selection unchanged after ArrowRight");
 assert(segAnnouncements === 1, "arrow move is silent");
 segMoveFocus("ref-seg-control-1");
-byIdentity("ref-seg-control-1")!.dispatchEvent(new FakeEvent("keydown", { key: "ArrowLeft" }));
-assert(doc.activeElement?.dataTela === "ref-seg-control-3", "ArrowLeft from seg-1 wraps to the last segment");
+element_dispatch(byIdentity("ref-seg-control-1")!, fake_event_key("keydown", "ArrowLeft"));
+assert(doc.active_element?.data_tela === "ref-seg-control-3", "ArrowLeft from seg-1 wraps to the last segment");
 assert(segModel === "ref-seg-control-2", "selection unchanged after the wrap");
 // 9d. Home/End: focus only.
 segMoveFocus("ref-seg-control-3");
-byIdentity("ref-seg-control-3")!.dispatchEvent(new FakeEvent("keydown", { key: "Home" }));
-assert(doc.activeElement?.dataTela === "ref-seg-control-1", "Home moves focus to the first segment");
+element_dispatch(byIdentity("ref-seg-control-3")!, fake_event_key("keydown", "Home"));
+assert(doc.active_element?.data_tela === "ref-seg-control-1", "Home moves focus to the first segment");
 assert(segModel === "ref-seg-control-2", "selection unchanged after Home");
-byIdentity("ref-seg-control-1")!.dispatchEvent(new FakeEvent("keydown", { key: "End" }));
-assert(doc.activeElement?.dataTela === "ref-seg-control-3", "End moves focus to the last segment");
+element_dispatch(byIdentity("ref-seg-control-1")!, fake_event_key("keydown", "End"));
+assert(doc.active_element?.data_tela === "ref-seg-control-3", "End moves focus to the last segment");
 assert(segModel === "ref-seg-control-2", "selection unchanged after End");
 assert(segAnnouncements === 1, "Home/End are silent");
 // 9e. Space on the focused seg-1: select + announce.
 segMoveFocus("ref-seg-control-1");
-byIdentity("ref-seg-control-1")!.dispatchEvent(new FakeEvent("keydown", { key: "Space" }));
+element_dispatch(byIdentity("ref-seg-control-1")!, fake_event_key("keydown", "Space"));
 assert(segModel === "ref-seg-control-1", "Space selects the focused seg-1");
 assert(segAnnouncements === 2, "second announcement");
-assert(byIdentity("ref-seg-live")!.textContent === "One selected", "live region reads One selected");
+assert(textOf("ref-seg-live") === "One selected", "live region reads One selected");
 // 9f. Enter on the focused seg-3: select + announce.
 segMoveFocus("ref-seg-control-3");
-byIdentity("ref-seg-control-3")!.dispatchEvent(new FakeEvent("keydown", { key: "Enter" }));
+element_dispatch(byIdentity("ref-seg-control-3")!, fake_event_key("keydown", "Enter"));
 assert(segModel === "ref-seg-control-3", "Enter selects the focused seg-3");
 assert(segAnnouncements === 3, "third announcement");
-assert(byIdentity("ref-seg-live")!.textContent === "Three selected", "live region reads Three selected");
+assert(textOf("ref-seg-live") === "Three selected", "live region reads Three selected");
 // 9g. replace across the region: focus restoration by identity.
 const segFocus = browser.focus_held(sm, "ref-seg-control-2");
 const segRestore = browser.replace(segFocus, reference.segmented_control(selected_props(segProps, "ref-seg-control-2")));
@@ -607,10 +509,10 @@ for (const e of segUpdateFocus.effects) {
   const key = tela.effect_identity(e);
   const target = byIdentity(key);
   if (target !== undefined) {
-    doc.focusNode(target);
+    doc_focus_node(doc, target);
   }
 }
-assert(doc.activeElement?.dataTela === "ref-seg-control-2", "focus restored to the pre-replacement identity");
+assert(doc.active_element?.data_tela === "ref-seg-control-2", "focus restored to the pre-replacement identity");
 
 // --- 10. the button family mounts + the scripted interaction case --------
 // The FIRST catalog behavior component (tela:reference, Stage 5 U6). The
@@ -636,23 +538,23 @@ assert(btm.identities.length === 4, "button identities: wrapper + save + cancel 
 assert(btm.bindings.every((l) => l.status === "bind"), "hydration: every button identity binds");
 const saveBtn = byIdentity("ref-button-save");
 assert(saveBtn !== undefined && saveBtn!.tagName === "button", "the button is a native button element (native semantics)");
-assert(saveBtn!.getAttribute("role") === null, "no ARIA role (native button semantics — no duplication)");
-assert(saveBtn!.textContent === "Save", "the accessible name is the label text (native)");
-assert(saveBtn!.getAttribute("aria-label") === null, "no aria-label when the label IS the name");
-assert(saveBtn!.getAttribute("data-ref-variant") === "primary", "the primary variant treatment is declared");
+assert(element_attr_get(saveBtn!, "role") === null, "no ARIA role (native button semantics — no duplication)");
+assert(element_text(saveBtn!) === "Save", "the accessible name is the label text (native)");
+assert(element_attr_get(saveBtn!, "aria-label") === null, "no aria-label when the label IS the name");
+assert(element_attr_get(saveBtn!, "data-ref-variant") === "primary", "the primary variant treatment is declared");
 const cancelBtn = byIdentity("ref-button-cancel");
-assert(cancelBtn !== undefined && cancelBtn!.getAttribute("data-ref-variant") === "secondary", "the secondary variant treatment is declared");
+assert(cancelBtn !== undefined && element_attr_get(cancelBtn!, "data-ref-variant") === "secondary", "the secondary variant treatment is declared");
 const deleteBtn = byIdentity("ref-button-delete");
-assert(deleteBtn !== undefined && deleteBtn!.getAttribute("disabled") !== null, "the disabled button carries the native disabled attribute (no activation, state exposed)");
-assert(deleteBtn!.getAttribute("aria-label") === "Delete permanently", "the aria-label override supplies the accessible name");
-assert(deleteBtn!.textContent === "Delete", "the disabled button label is present");
+assert(deleteBtn !== undefined && element_attr_get(deleteBtn!, "disabled") !== null, "the disabled button carries the native disabled attribute (no activation, state exposed)");
+assert(element_attr_get(deleteBtn!, "aria-label") === "Delete permanently", "the aria-label override supplies the accessible name");
+assert(element_text(deleteBtn!) === "Delete", "the disabled button label is present");
 
 // The app-typed plan (D1) + the scripted interaction sequence.
 let btnModel = button_state(0, "");
-let btnSubs: WebDomSubscription[] = [];
+let btnSubs: FakeSubscription[] = [];
 const btnClearSubs = (): void => {
   for (const s of btnSubs) {
-    webDomUnsubscribe(s);
+    web_dom_unsubscribe(doc, s);
   }
   btnSubs = [];
 };
@@ -666,7 +568,7 @@ const btnBind = (): void => {
     const handler = (): void => {
       btnApply(v.message(tela.event_name(v.identity)));
     };
-    btnSubs.push(webDomOn(toEl(node!), v.event_name, handler));
+    btnSubs.push(web_dom_on(doc, node!, v.event_name, handler));
   }
   // The NATIVE keyboard contract: Space/Enter on a focused native button
   // fire a click (the host models the browser-native behavior — the plan
@@ -675,10 +577,10 @@ const btnBind = (): void => {
   for (const id of button_order()) {
     const node = byIdentity(id);
     assert(node !== undefined, `keyboard target present: ${id}`);
-    btnSubs.push(webDomOnKeyboard(toEl(node!), "keydown", (state) => {
+    btnSubs.push(web_dom_on_keyboard(doc, node!, "keydown", (state) => {
       const key = state.key as string;
       if (key === "Space" || key === "Enter") {
-        node!.dispatchEvent(new FakeEvent("click"));
+        element_dispatch(node!, fake_event("click"));
       }
     }));
   }
@@ -686,19 +588,19 @@ const btnBind = (): void => {
 btnBind();
 
 // 10a. click on the enabled save button: activates the message.
-byIdentity("ref-button-save")!.dispatchEvent(new FakeEvent("click"));
+element_dispatch(byIdentity("ref-button-save")!, fake_event("click"));
 assert(btnModel.presses === 1 && btnModel.last === "ref-button-save", "click activates the save button (the Pressed message fires)");
 // 10b. Space on the focused save button: the native keyboard → click
 // activation.
-doc.focusNode(byIdentity("ref-button-save")!);
-byIdentity("ref-button-save")!.dispatchEvent(new FakeEvent("keydown", { key: "Space" }));
+doc_focus_node(doc, byIdentity("ref-button-save")!);
+element_dispatch(byIdentity("ref-button-save")!, fake_event_key("keydown", "Space"));
 assert(btnModel.presses === 2 && btnModel.last === "ref-button-save", "Space activates the focused button (native semantics)");
 // 10c. Enter activates too (native semantics).
-byIdentity("ref-button-save")!.dispatchEvent(new FakeEvent("keydown", { key: "Enter" }));
+element_dispatch(byIdentity("ref-button-save")!, fake_event_key("keydown", "Enter"));
 assert(btnModel.presses === 3 && btnModel.last === "ref-button-save", "Enter activates the focused button (native semantics)");
 // 10d. the disabled button: click no-ops (no subscription — the plan
 // binds only enabled buttons; the native disabled semantics).
-byIdentity("ref-button-delete")!.dispatchEvent(new FakeEvent("click"));
+element_dispatch(byIdentity("ref-button-delete")!, fake_event("click"));
 assert(btnModel.presses === 3 && btnModel.last === "ref-button-save", "disabled click no-ops (the model is unchanged)");
 // 10e. replace across the region: focus restoration by identity.
 const btnFocus = browser.focus_held(btm, "ref-button-cancel");
@@ -712,10 +614,10 @@ for (const e of btnUpdateFocus.effects) {
   const key = tela.effect_identity(e);
   const target = byIdentity(key);
   if (target !== undefined) {
-    doc.focusNode(target);
+    doc_focus_node(doc, target);
   }
 }
-assert(doc.activeElement?.dataTela === "ref-button-cancel", "focus restored to the pre-replacement identity");
+assert(doc.active_element?.data_tela === "ref-button-cancel", "focus restored to the pre-replacement identity");
 
 // --- 11. the field family mounts + the static a11y structure -------------
 // The Stage 4 formslib field contract RE-HOMED (tela:reference, Stage 5
@@ -737,26 +639,26 @@ assert(fm.identities.length === 11, "field identities: wrapper + 3 groups + 3 fi
 assert(fm.bindings.every((l) => l.status === "bind"), "hydration: every field identity binds");
 const fieldName = byIdentity("form-field-name");
 assert(fieldName !== undefined && fieldName.tagName === "input", "the field is a native input");
-assert(fieldName!.getAttribute("type") === "text", "the input is a text input");
-assert(fieldName!.getAttribute("role") === null, "no ARIA role (native input semantics — no duplication)");
-assert(fieldName!.getAttribute("aria-label") === "Name", "the accessible name (aria-label = the label prop)");
-assert(fieldName!.getAttribute("aria-invalid") === "false", "valid field: aria-invalid=false");
-assert(fieldName!.getAttribute("aria-describedby") === null, "valid field: no describedby");
-assert(fieldName!.getAttribute("value") === "Ada", "the value attribute carries the value");
+assert(element_attr_get(fieldName!, "type") === "text", "the input is a text input");
+assert(element_attr_get(fieldName!, "role") === null, "no ARIA role (native input semantics — no duplication)");
+assert(element_attr_get(fieldName!, "aria-label") === "Name", "the accessible name (aria-label = the label prop)");
+assert(element_attr_get(fieldName!, "aria-invalid") === "false", "valid field: aria-invalid=false");
+assert(element_attr_get(fieldName!, "aria-describedby") === null, "valid field: no describedby");
+assert(element_attr_get(fieldName!, "value") === "Ada", "the value attribute carries the value");
 const fieldEmail = byIdentity("form-field-email");
-assert(fieldEmail !== undefined && fieldEmail.getAttribute("aria-invalid") === "true", "invalid field: aria-invalid=true");
-assert(fieldEmail!.getAttribute("aria-describedby") === "form-error-email", "invalid field: describedby → the error identity");
+assert(fieldEmail !== undefined && element_attr_get(fieldEmail, "aria-invalid") === "true", "invalid field: aria-invalid=true");
+assert(element_attr_get(fieldEmail!, "aria-describedby") === "form-error-email", "invalid field: describedby → the error identity");
 const errorEmail = byIdentity("form-error-email");
-assert(errorEmail !== undefined && errorEmail.getAttribute("role") === "alert", "the error node is role=alert");
-assert(errorEmail!.textContent === "Required", "the error text is present");
+assert(errorEmail !== undefined && element_attr_get(errorEmail, "role") === "alert", "the error node is role=alert");
+assert(element_text(errorEmail!) === "Required", "the error text is present");
 const fieldPhone = byIdentity("form-field-phone");
-assert(fieldPhone !== undefined && fieldPhone.getAttribute("disabled") !== null, "the disabled field carries the native disabled attribute");
+assert(fieldPhone !== undefined && element_attr_get(fieldPhone, "disabled") !== null, "the disabled field carries the native disabled attribute");
 const groupName = byIdentity("form-control-name");
 assert(groupName !== undefined && groupName.children.length === 2, "the group carries the field + its error node (the association surface)");
-assert(groupName!.children[0].dataTela === "form-field-name" && groupName!.children[1].dataTela === "form-error-name", "the group child order: field then error");
+assert(groupName!.children[0].data_tela === "form-field-name" && groupName!.children[1].data_tela === "form-error-name", "the group child order: field then error");
 const fieldLive = byIdentity("form-live");
-assert(fieldLive !== undefined && fieldLive.getAttribute("role") === "status" && fieldLive.getAttribute("aria-live") === "polite", "the declared live region (role=status + aria-live=polite)");
-assert(fieldName!.getAttribute("style") === null, "the field carries no inline style (the surface rides the tokens)");
+assert(fieldLive !== undefined && element_attr_get(fieldLive, "role") === "status" && element_attr_get(fieldLive, "aria-live") === "polite", "the declared live region (role=status + aria-live=polite)");
+assert(element_attr_get(fieldName!, "style") === null, "the field carries no inline style (the surface rides the tokens)");
 
 // --- 12. the field behavior case (U8 — validation + live region + -------
 // focus restoration + dispose). The forms split half 2: the CATALOG owns
@@ -784,15 +686,15 @@ assert(fmp.bindings.every((l) => l.status === "bind"), "hydration: every field-p
 // The initial plan render: the name field is empty + error-free (the
 // "fresh" state — the first input dispatch fires the transition).
 const fName0 = byIdentity("form-field-name");
-assert(fName0 !== undefined && fName0.getAttribute("aria-invalid") === "false", "initial: aria-invalid=false");
-assert(fName0!.getAttribute("aria-describedby") === null, "initial: no describedby");
+assert(fName0 !== undefined && element_attr_get(fName0, "aria-invalid") === "false", "initial: aria-invalid=false");
+assert(element_attr_get(fName0!, "aria-describedby") === null, "initial: no describedby");
 // The app-typed plan (D1) + the scripted sequence.
 let fModel = field_plan_state("name", "Name", "", "");
 let fAnnouncements = 0;
-let fSubs: WebDomSubscription[] = [];
+let fSubs: FakeSubscription[] = [];
 const fClearSubs = (): void => {
   for (const s of fSubs) {
-    webDomUnsubscribe(s);
+    web_dom_unsubscribe(doc, s);
   }
   fSubs = [];
 };
@@ -816,7 +718,7 @@ const fApply = (msg: FieldMessage): void => {
   if (announced !== "") {
     const live = byIdentity("form-live");
     assert(live !== undefined, "live region present");
-    webDomTextSet(live as unknown as Element, announced);
+    web_dom_text_set(live!, announced);
     fAnnouncements += 1;
   }
 };
@@ -825,9 +727,9 @@ const fBind = (): void => {
     const node = byIdentity(v.identity);
     assert(node !== undefined, `field binding target present: ${v.identity}`);
     const handler = (): void => {
-      fApply(field_text(node!.dataTela, webDomValue(toEl(node!))));
+      fApply(field_text(node!.data_tela, web_dom_value(node!)));
     };
-    fSubs.push(webDomOn(toEl(node!), v.event_name, handler));
+    fSubs.push(web_dom_on(doc, node!, v.event_name, handler));
   }
 };
 fBind();
@@ -835,32 +737,32 @@ fBind();
 // 12a. input dispatch (empty value): → invalid transition.
 let fNode = byIdentity("form-field-name")!;
 fNode.value = "";
-fNode.dispatchEvent(new FakeEvent("input"));
+element_dispatch(fNode, fake_event("input"));
 assert(fAnnouncements === 1, "invalid transition announces once");
 let fInv = byIdentity("form-field-name")!;
-assert(fInv.getAttribute("aria-invalid") === "true", "aria-invalid flips true");
-assert(fInv.getAttribute("aria-describedby") === "form-error-name", "describedby wired to the error identity");
-assert(byIdentity("form-error-name")!.textContent === "Required", "error text written");
-assert(byIdentity("form-live")!.textContent === "form-field-name invalid: Required", "live region announces the invalid transition");
+assert(element_attr_get(fInv, "aria-invalid") === "true", "aria-invalid flips true");
+assert(element_attr_get(fInv, "aria-describedby") === "form-error-name", "describedby wired to the error identity");
+assert(textOf("form-error-name") === "Required", "error text written");
+assert(textOf("form-live") === "form-field-name invalid: Required", "live region announces the invalid transition");
 // 12b. input dispatch ("Ada"): → valid → cleared.
 fNode = byIdentity("form-field-name")!;
 fNode.value = "Ada";
-fNode.dispatchEvent(new FakeEvent("input"));
+element_dispatch(fNode, fake_event("input"));
 assert(fAnnouncements === 2, "valid transition announces once");
 const fVal = byIdentity("form-field-name")!;
-assert(fVal.getAttribute("aria-invalid") === "false", "aria-invalid flips false");
-assert(fVal.getAttribute("aria-describedby") === null, "describedby removed");
-assert(byIdentity("form-error-name")!.textContent === "", "error text cleared");
-assert(byIdentity("form-live")!.textContent === "form-field-name valid", "live region announces the valid transition");
+assert(element_attr_get(fVal, "aria-invalid") === "false", "aria-invalid flips false");
+assert(element_attr_get(fVal, "aria-describedby") === null, "describedby removed");
+assert(textOf("form-error-name") === "", "error text cleared");
+assert(textOf("form-live") === "form-field-name valid", "live region announces the valid transition");
 // 12c. input dispatch (same value): → no-op → silent (§1.5).
 fNode = byIdentity("form-field-name")!;
 fNode.value = "Ada";
-fNode.dispatchEvent(new FakeEvent("input"));
+element_dispatch(fNode, fake_event("input"));
 assert(fAnnouncements === 2, "no announcement on the no-op (silent)");
 const fNoop = byIdentity("form-field-name")!;
-assert(fNoop.getAttribute("aria-invalid") === "false", "the no-op keeps the valid state (aria-invalid false)");
-assert(fNoop.getAttribute("aria-describedby") === null, "the no-op keeps describedby removed");
-assert(byIdentity("form-error-name")!.textContent === "", "the no-op keeps the error cleared");
+assert(element_attr_get(fNoop, "aria-invalid") === "false", "the no-op keeps the valid state (aria-invalid false)");
+assert(element_attr_get(fNoop, "aria-describedby") === null, "the no-op keeps describedby removed");
+assert(textOf("form-error-name") === "", "the no-op keeps the error cleared");
 // 12d. replace across the region: focus restoration by identity.
 const fFocus = browser.focus_held(fmp, "form-field-name");
 const fRestore = browser.replace(fFocus, field_plan_composition(fModel));
@@ -873,20 +775,20 @@ for (const e of fUpdateFocus.effects) {
   const key = tela.effect_identity(e);
   const target = byIdentity(key);
   if (target !== undefined) {
-    doc.focusNode(target);
+    doc_focus_node(doc, target);
   }
 }
-assert(doc.activeElement?.dataTela === "form-field-name", "focus restored to the pre-replacement identity");
+assert(doc.active_element?.data_tela === "form-field-name", "focus restored to the pre-replacement identity");
 // 12e. dispose: subscriptions live before, gone after.
 let fNodeAfter = byIdentity("form-field-name")!;
 fNodeAfter.value = "";
-fNodeAfter.dispatchEvent(new FakeEvent("input"));
+element_dispatch(fNodeAfter, fake_event("input"));
 assert(fAnnouncements === 3, "subscription live before dispose (a dispatch fires)");
 browser.dispose(fmp);
 fClearSubs();
 fNodeAfter = byIdentity("form-field-name")!;
 fNodeAfter.value = "x";
-fNodeAfter.dispatchEvent(new FakeEvent("input"));
+element_dispatch(fNodeAfter, fake_event("input"));
 assert(fAnnouncements === 3, "post-dispose dispatch no-ops (unsubscribed)");
 
 console.log("reference catalog mount gate green (layout + typography + panel + badge + metric + table + segmented-control + button + field mount + structure/a11y + field behavior + declared interaction; tela-s5-u2/u3/u4/u5/u6/u7/u8)");
@@ -900,6 +802,9 @@ HOST_DRIVER
   strip_dom "$SCRATCH/dom.ts"
   strip_runtime "$ROOT/../faber-web/runtime/dom.ts"
   echo "$DOM_NS"
+  # Stage 5 U9: the AUTHORED fake DOM (Faber source -> the emitted module;
+  # the embedded fake DOM in the host-driver is removed).
+  strip_hdom "$SCRATCH/harness_dom.ts"
   strip "$SCRATCH/browser.ts"
   echo "$BROWSER_NS"
   strip "$SCRATCH/extension.ts"

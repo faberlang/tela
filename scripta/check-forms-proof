@@ -67,6 +67,10 @@ echo "check-forms-proof: TS emit valida / tela / forms / browser / dom / exempla
 # at load here; the interactive gate check-forms-interactive binds the real
 # faber-web runtime over the actual bindings/ts.toml mapping).
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/browser.fab" -o "$SCRATCH/browser.ts" >/dev/null
+# Stage 5 U9: the reference catalog module (the canary's consumer assembly
+# references tela:reference — the pre-existing staleness that left this
+# gate RED since U5 is repaired at this boundary).
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/reference.fab" -o "$SCRATCH/reference.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale la "$ROOT/../faber-web/src/dom.fab" -o "$SCRATCH/dom.ts" >/dev/null
 
 # Assemble a self-contained TS file: drop the radix header (2 lines) and
@@ -87,6 +91,10 @@ BROWSER_NS="const browser = { region_root, event_subscription, binding, parse_id
 # main IIFE never calls the seam at load — inert here).
 DOM_NS="const dom = { scope, query, require, all, snapshot, text_set, attr_set, attr_remove, class_add, class_remove, class_toggle, on, unsubscribe, value, value_set, on_input, on_submit, on_frame, on_resize, on_keyboard, on_pointer, on_focus, pointer_lock_state, request_pointer_lock, exit_pointer_lock, on_pointer_lock, prevent_default, fetch_text };"
 FORMS_NS="const forms = { field_props, checkbox_props, select_props, field, checkbox, select, error_region, form_live_region, field_group, form_field_invalid, form_field_valid, form_focus, form_tokens, form_style, field_event, change_event, submit_event, click_event, invalid_state, error_present };"
+# Stage 5 U9: the reference catalog namespace (the canary's runner
+# references tela:reference types + fns).
+REF_NS="const ref = { layout_stack, layout_grid, layout_prose, stack_props, grid_props, layout_prose_props, typography_heading, typography_prose, typography_emphasis, typography_scale, heading_props, prose_props, emphasis_props, scale_props, clamped_level, layout_style, typography_style, panel, badge, metric, panel_props, badge_props, metric_props, panel_style, badge_style, metric_style, table, table_row, table_props, table_style, segmented_control, segmented_props, segmented_option, segmented_options, segmented_live_region, selected_text, active_tabindex, segmented_style, button, button_props, button_event, button_style, field_input, field_input_props, field_invalid, field_error_region, field_live_region, field_control, field_style, field_input_event, field_error_for_value, field_announcement, ref_layout_gap, ref_layout_prose_measure, ref_type_scale_xs, ref_type_scale_sm, ref_type_scale_md, ref_type_scale_lg, ref_type_scale_xl, ref_type_heading_weight, ref_type_heading_margin, ref_type_prose_line_height, ref_type_prose_margin, ref_panel_surface, ref_panel_border, ref_panel_radius, ref_panel_padding, ref_badge_size, ref_badge_padding, ref_badge_radius, ref_metric_label_size, ref_metric_label_muted, ref_metric_value_size, ref_metric_value_weight, ref_table_border, ref_table_padding, ref_table_header_weight, ref_table_caption_muted, ref_seg_gap, ref_seg_radius, ref_seg_size, ref_seg_padding, ref_seg_border, ref_seg_selected_border, ref_button_size, ref_button_padding, ref_button_radius, ref_button_border, ref_button_text, ref_button_primary_background, ref_button_primary_text, ref_button_secondary_background, ref_button_ghost_background, ref_button_focus, ref_button_disabled_opacity, field_invalid_token, field_valid_token, field_focus_token, reference_tokens, StackProps, GridProps, LayoutProseProps, HeadingProps, ProseProps, EmphasisProps, ScaleProps, PanelProps, BadgeProps, MetricProps, TableProps, TableRow, SegmentedProps, ButtonProps, FieldInputProps };"
+REF_ALIAS="const reference = ref;"
 
 # ---- TS lane A: the package exempla gate (byte-exact static + ARIA) ------
 {
@@ -120,6 +128,9 @@ node "$SCRATCH/exempla.ts" >/dev/null
   echo "$EXT_NS"
   strip "$SCRATCH/forms.ts"
   echo "$FORMS_NS"
+  strip "$SCRATCH/reference.ts"
+  echo "$REF_NS"
+  echo "$REF_ALIAS"
   strip "$SCRATCH/main.ts"
 } > "$SCRATCH/consumer.ts"
 

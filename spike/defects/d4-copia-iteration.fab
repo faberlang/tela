@@ -1,0 +1,39 @@
+# tela/spike/defects/d4-copia-iteration.fab — minimized repro for
+# fix:copia-iteration (the U9 authoring-probe finding, tela-s5-u9).
+#
+# GENUINE GAP: the copia (Set) collection type has NO iteration or
+# read-back surface on in-tree radix 0.80.0. `itera ex` over a copia fails
+# SEM010.expression_type_mismatch; the copia-intrinsics design records
+# `valores` / `perambula` / `inLista` as "preserved, not promoted" — none
+# are compiler intrinsics today. The fake DOM's class set and listener sets
+# need insertion-ordered read-back (classNames()) + membership iteration
+# (dispatch), so a bare copia cannot express the conversion target.
+#
+# Repro: radix check --locale en d4-copia-iteration.fab
+#   error[SEM010]: expression_type_mismatch at the itera/append.
+#
+# The conversion preserves the Set semantics EXACTLY with a tabula-backed
+# store (insertion-ordered read-back via claves(); membership via habet();
+# listener dedup via the continet-guard before append) — the conversion
+# target is never weakened. A radix-lane follow-on (copia values()/read-
+# back) would retire the work-around; out of scope for Stage 5.
+
+class FakeElement {
+    string tag
+}
+
+fn collect_text(copia<string> xs) → list<string> {
+    var list<string> all ← vacua
+    itera ex xs fixum h {
+        all.appende(h)
+    }
+    return all
+}
+
+fn collect_elements(copia<FakeElement> xs) → list<FakeElement> {
+    var list<FakeElement> all ← vacua
+    itera ex xs fixum h {
+        all.appende(h)
+    }
+    return all
+}

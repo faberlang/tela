@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # tela/scripta/check-mount — Stage 3 U4 interaction gate (new harness).
 #
-# Assembles the interactive composition (kernel + browser module + dom-shim
-# + extension + app) and executes the segmented-control scripted interaction
-# sequence under node — FAIL-CLOSED: every assertion runs; any assertion
-# failure or non-zero exit FAILS the gate.
+# Assembles the interactive composition (kernel + browser module + the
+# AUTHORED fake DOM (U9: scripta/harness_dom.fab emitted to TS) + reference
+# + extension + forms + app) and executes the segmented-control scripted
+# interaction sequence under node — FAIL-CLOSED: every assertion runs; any
+# assertion failure or non-zero exit FAILS the gate.
 #
 # The scripted sequence (stage-3-segmented-control.md §5, the U3 evidence
 # record — the reference mechanics): pointer select / pointer no-op /
@@ -14,7 +15,8 @@
 #
 # The app is consumed through the harness-assembly path (the driver calls
 # the emitted functions directly). The webDom* surface binds at the
-# harness level (the dom-shim — the fake-DOM Node host env).
+# harness level (the authored fake DOM — the emitted function surface over
+# the fake-DOM records).
 #
 # Stage 4 U5 (tela-s4-u5): the assembly also binds the formslib namespace
 # (FORMS_NS) — the canary-app runner (U3/U4, 9335ad1/689e87d) consumes
@@ -26,12 +28,24 @@
 # unchanged (the segmented-control driver consumes no forms surface).
 #
 # Stage 4 U6 (tela-s4-u6): the seam flip — browser.fab consumes the REAL
-# web:dom seam. The assembly binds the DOM_NS const over the dom-shim
-# runtime (the bare Scope/Nodus types come from the shim itself — the
-# emitted provider module's `class Element` would collide with the DOM
-# lib); the driver constructs scopes through the provider seam
-# (webDomScope). fix:g4 and fix:web-dom-locale are REMOVED (the cds-u5/u6
-# predicates landed).
+# web:dom seam. The assembly binds the DOM_NS const over the authored fake
+# DOM (the bare Scope type comes from the driver boundary — the emitted
+# provider module's `class Element` would collide with the DOM lib);
+# the driver constructs scopes through the provider seam
+# (web_dom_scope(doc, ...)). fix:g4 and fix:web-dom-locale are REMOVED
+# (the cds-u5/u6 predicates landed).
+#
+# Stage 5 U9 (the dogfooding unit): the hand-written dom-shim.ts is
+# DELETED — the fake DOM is authored as Faber source
+# (scripta/harness_dom.fab, en locale) and the emitted module is assembled
+# here (strip_hdom). The driver's DOM-call sites are rewritten to the
+# emitted function surface (web_dom_*, element_*, doc_*, fake_event_*,
+# execute_mount_plan). The reference catalog re-home (Stage 5 U5–U8) is
+# bound here too (REF_NS + REF_ALIAS + the reference module emit) — the
+# pre-existing staleness that left check-mount RED since U5 is repaired at
+# this boundary (the segmented control is reference.segmented_control; the
+# theme is the canary's reference_theme). Assertion/orchestration drivers
+# stay TS (the hardening executed lane — recorded in stage-5-dogfooding.md).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -62,63 +76,110 @@ echo "check-mount: radix check both benchmark packages (benchmark library home)"
 "$RADIX_BIN" check --locale en "$ROOT/proof/benchmark/extension-lib/src/extension.fab"
 "$RADIX_BIN" check --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab"
 
-echo "check-mount: TS emit valida / tela / browser / dom / extension / forms / main"
+echo "check-mount: TS emit valida / tela / browser / reference / extension / forms / main / harness_dom"
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/validate.fab" -o "$SCRATCH/valida.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/browser.fab" -o "$SCRATCH/browser.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/reference.fab" -o "$SCRATCH/reference.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/extension-lib/src/extension.fab" -o "$SCRATCH/extension.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab" -o "$SCRATCH/main.ts" >/dev/null
+# Stage 5 U9: the AUTHORED fake DOM (Faber source -> the emitted module).
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/scripta/harness_dom.fab" -o "$SCRATCH/harness_dom.ts" >/dev/null
 
 # Assemble one self-contained file: strip the radix header (2 lines) +
-# import lines, bind the namespaces as const objects, append the dom-shim
-# (export keywords removed) + the interaction-gate driver.
+# import lines, bind the namespaces as const objects, append the emitted
+# fake-DOM module (the U9 dogfooding surface) + the interaction-gate driver.
 strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
+# The emitted harness_dom module is self-contained (no imports) and emits
+# NO FaberDisplay preamble (the authored surface uses no display helpers —
+# verified at U9); plain header strip is the whole strip.
+strip_hdom() { sed '1,2d' "$1"; }
 
 VALIDA_NS="const validate = { valid_space, valid_tag_name, valid_attribute_name, valid_name_in_space, valid_void_html, valid_void_structure };"
 TELA_NS="const tela = { html_visus, css, theme_css, theme_style, theme, token, core_tokens, token_property_name, token_name_valid, theme_has_core_tokens, theme_has_token, assemble, bundle, order, deduplicated_bundles, topological_order, style_valid, unclean_style_text, bundle_for, in_list, dependencies_met, text_view, fragment_view, new_identity, html_space, svg_space, element_view, element_full, event_name, restore, direct, anchor, update, effect_identity, Attribute, Property, Identity, Declaration, Rule, Style, Token, Theme, Bundle, Order, EventName, Update };"
 BROWSER_NS="const browser = { region_root, event_subscription, binding, parse_identities, element_tag, count_occurrences, duplicate_identities, tag_name, tag_at, identities_from_nodes, tags_from_nodes, binding_status, hydration_diagnostics, mount, replace, dispose, focus_held, focus_target };"
-# Stage 4 U6: the web:dom namespace binds the dom-shim runtime (the bare
-# Scope/Nodus types come from the shim); the snapshot binding is widened
-# (the harness boundary is any-typed — webDomSnapshot expects the runtime
-# scope with `root`, the emitted Scope type carries only `selector`).
-DOM_NS="const dom = { scope: webDomScope, snapshot: ((scope: any): Array<Nodus> | null => webDomSnapshot(scope)), query: webDomQuery, require: webDomRequire, all: webDomAll, value: webDomValue };"
 EXT_NS="const ext = { chart_axis_muted, chart_axis_muted_dark, chart_grid_muted, chart_grid_muted_dark, chart_tokens, chart_tokens_dark, bar_meter, chart_style };"
 FORMS_NS="const forms = { field_props, checkbox_props, select_props, field, checkbox, select, error_region, form_live_region, field_group, form_field_invalid, form_field_valid, form_focus, form_tokens, form_style, field_event, change_event, submit_event, click_event, invalid_state, error_present };"
+# Stage 5 U5–U9: the reference catalog namespace (the segmented-control
+# family the interaction gate consumes + the catalog types the canary's
+# runner references) + the `reference` alias (the emitted code imports
+# tela:reference under that alias).
+REF_NS="const ref = { layout_stack, layout_grid, layout_prose, stack_props, grid_props, layout_prose_props, typography_heading, typography_prose, typography_emphasis, typography_scale, heading_props, prose_props, emphasis_props, scale_props, clamped_level, layout_style, typography_style, panel, badge, metric, panel_props, badge_props, metric_props, panel_style, badge_style, metric_style, table, table_row, table_props, table_style, segmented_control, segmented_props, segmented_option, segmented_options, segmented_live_region, selected_text, active_tabindex, segmented_style, button, button_props, button_event, button_style, field_input, field_input_props, field_invalid, field_error_region, field_live_region, field_control, field_style, field_input_event, field_error_for_value, field_announcement, ref_layout_gap, ref_layout_prose_measure, ref_type_scale_xs, ref_type_scale_sm, ref_type_scale_md, ref_type_scale_lg, ref_type_scale_xl, ref_type_heading_weight, ref_type_heading_margin, ref_type_prose_line_height, ref_type_prose_margin, ref_panel_surface, ref_panel_border, ref_panel_radius, ref_panel_padding, ref_badge_size, ref_badge_padding, ref_badge_radius, ref_metric_label_size, ref_metric_label_muted, ref_metric_value_size, ref_metric_value_weight, ref_table_border, ref_table_padding, ref_table_header_weight, ref_table_caption_muted, ref_seg_gap, ref_seg_radius, ref_seg_size, ref_seg_padding, ref_seg_border, ref_seg_selected_border, ref_button_size, ref_button_padding, ref_button_radius, ref_button_border, ref_button_text, ref_button_primary_background, ref_button_primary_text, ref_button_secondary_background, ref_button_ghost_background, ref_button_focus, ref_button_disabled_opacity, field_invalid_token, field_valid_token, field_focus_token, reference_tokens, StackProps, GridProps, LayoutProseProps, HeadingProps, ProseProps, EmphasisProps, ScaleProps, PanelProps, BadgeProps, MetricProps, TableProps, TableRow, SegmentedProps, ButtonProps, FieldInputProps };"
+REF_ALIAS="const reference = ref;"
 
 cat > "$SCRATCH/driver.ts" <<'DRIVER'
 // ---- tela-s3-u4 interaction-gate driver (appended by check-mount) ------
 // Executes the scripted segmented-control sequence (U3 evidence §5)
-// against the assembled composition + the dom-shim. The app-typed plan is
-// consumed directly (the harness-assembly path); the Message union
+// against the assembled composition + the AUTHORED fake DOM. The app-typed
+// plan is consumed directly (the harness-assembly path); the Message union
 // discriminant is the emitted TS `tag` (the D2 emitter shape). Stage 4 U6:
-// the scope is constructed through the provider seam (webDomScope), which
+// the scope is constructed through the provider seam (web_dom_scope), which
 // resolves the selector against the document — so the region root must
 // exist before the scope is built.
+//
+// Stage 5 U9: the driver's DOM call sites ride the EMITTED function
+// surface (web_dom_*, element_*, doc_*, fake_event_*, execute_mount_plan).
+// The global installation (installFakeDom — globalThis.document/window)
+// stays at the driver boundary; the bare Scope type (the emitted provider
+// module's type shape) is declared here, not re-assembled.
+class Scope { selector!: string; }
+class Nodus { identitas!: string; tag!: string; }
+
+const installFakeDom = (): FakeDocument => {
+  const doc = fake_document();
+  globalThis.document = doc as unknown as Document;
+  globalThis.window = {
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  } as unknown as Window & typeof globalThis;
+  return doc;
+};
 const doc = installFakeDom();
-resolveRegion(doc, "#root");
+resolve_region(doc, "#root");
+// The web:dom namespace binds the authored fake-DOM surface (the emitted
+// module — the U9 conversion). The `scope` binding is widened to the
+// one-arg seam shape the emitted mount fns call; `snapshot` is widened at
+// the harness boundary (the emitted Scope type carries only `selector`).
+const dom = {
+  scope: ((selector: string): any => web_dom_scope(doc, selector)),
+  snapshot: ((scope: any): Array<FakeNodus> | null => web_dom_snapshot(scope)),
+  query: web_dom_query,
+  require: web_dom_require,
+  all: web_dom_all,
+  value: web_dom_value,
+};
 const assert = (cond: boolean, msg: string): void => {
   if (!cond) {
     throw new Error(`check-mount assert failed: ${msg}`);
   }
 };
-const identityNodes = (): FakeElement[] => doc.querySelectorAll("[data-tela]");
-const byIdentity = (id: string): FakeElement | undefined => identityNodes().find((n) => n.dataTela === id);
+const identityNodes = (): FakeElement[] => doc_query_all(doc, "[data-tela]");
+const byIdentity = (id: string): FakeElement | undefined => identityNodes().find((n) => n.data_tela === id);
+// The emitted function surface (no property/method syntax on the records).
+const attrOf = (id: string, name: string): string | null => {
+  const n = byIdentity(id);
+  return n === undefined ? null : element_attr_get(n, name);
+};
+const textOf = (id: string): string => {
+  const n = byIdentity(id);
+  return n === undefined ? "" : element_text(n);
+};
 
 // ---- app state (the update loop's model) --------------------------------
-let model = "tela-seg-1";
-let focused = "tela-seg-1";
+let model = "ref-seg-control-1";
+let focused = "ref-seg-control-1";
 let announcements = 0;
 let clicksFired = 0;
 const props = control_props();
 
 // ---- mount the control onto an empty scope ------------------------------
-const mounted = browser.mount(webDomScope("#root"), segmented_control(props), control_theme());
+const mounted = browser.mount(web_dom_scope(doc, "#root"), reference.segmented_control(props), reference_theme());
 assert(mounted !== null, "mount returns a plan");
 // The real emitted types (Mounted/Update/View/Effect) are in scope in
 // this assembled file — use them directly (no structural shim types).
 let m: Mounted = mounted!;
-executeMountPlan(doc, "#root", m, true);
+execute_mount_plan(doc, "#root", m, true);
 
 // ---- the update loop: update(message) → next View → replace ------------
 const applyMessage = (msg: Message): void => {
@@ -127,7 +188,7 @@ const applyMessage = (msg: Message): void => {
     return; // silent no-op (already-selected click) — §1.5
   }
   model = nextModel;
-  const next = segmented_control(selected_props(props, model));
+  const next = reference.segmented_control(selected_props(props, model));
   const r = browser.replace(m, next);
   assert(r !== null, "replace returns the update result");
   const update: Update = r!;
@@ -137,21 +198,21 @@ const applyMessage = (msg: Message): void => {
     markup: nextMarkup,
     bindings: m.identities.map((id) => ({ identity: id, status: "create" })),
   };
-  executeMountPlan(doc, "#root", nextPlan, true);
+  execute_mount_plan(doc, "#root", nextPlan, true);
   m = { ...m, markup: nextMarkup };
   // Execute the declarative effects after replacement (focus by identity).
   for (const e of update.effects) {
     const key = tela.effect_identity(e);
     const target = byIdentity(key);
     if (target !== undefined) {
-      doc.focusNode(target);
+      doc_focus_node(doc, target);
     }
   }
   // The live-region announcement (only when selection changed, §1.5).
   announcements += 1;
-  const live = byIdentity("tela-live");
+  const live = byIdentity("ref-seg-live");
   assert(live !== undefined, "live region present after replacement");
-  webDomTextSet(live!, announcement(props, model));
+  web_dom_text_set(live!, announcement(props, model));
   // Re-attach the subscriptions to the fresh nodes (the app re-attaches).
   clearSubs();
   bindSubscriptions();
@@ -163,19 +224,19 @@ const moveFocus = (identity: string): void => {
   for (const id of segment_order()) {
     const node = byIdentity(id);
     if (node !== undefined) {
-      webDomAttrSet(node, "tabindex", id === identity ? "0" : "-1");
+      web_dom_attr_set(node, "tabindex", id === identity ? "0" : "-1");
     }
   }
   const target = byIdentity(identity);
   assert(target !== undefined, `focus target present: ${identity}`);
-  doc.focusNode(target!);
+  doc_focus_node(doc, target!);
 };
 
 // ---- subscriptions (web:dom attaches by identity, never ambient) --------
-let subs: WebDomSubscription[] = [];
+let subs: FakeSubscription[] = [];
 const clearSubs = (): void => {
   for (const s of subs) {
-    webDomUnsubscribe(s);
+    web_dom_unsubscribe(doc, s);
   }
   subs = [];
 };
@@ -187,12 +248,12 @@ const bindSubscriptions = (): void => {
       clicksFired += 1;
       applyMessage(v.message(tela.event_name(v.identity)));
     };
-    subs.push(webDomOn(node!, v.event_name, handler));
+    subs.push(web_dom_on(doc, node!, v.event_name, handler));
   }
   for (const id of segment_order()) {
     const node = byIdentity(id);
     assert(node !== undefined, `keyboard target present: ${id}`);
-    subs.push(webDomOnKeyboard(node!, "keydown", (state) => {
+    subs.push(web_dom_on_keyboard(doc, node!, "keydown", (state) => {
       const msg = key_message(focused, state.key as string);
       if (msg.tag === "Selected") {
         applyMessage(msg);
@@ -206,105 +267,105 @@ bindSubscriptions();
 
 // ---- 1. pointer click on the unselected seg-2 ---------------------------
 {
-  byIdentity("tela-seg-2")!.dispatchEvent(new FakeEvent("click"));
-  assert(model === "tela-seg-2", "pointer click selects seg-2");
-  assert(byIdentity("tela-seg-2")?.getAttribute("aria-selected") === "true", "seg-2 aria-selected flips true");
-  assert(byIdentity("tela-seg-1")?.getAttribute("aria-selected") === "false", "seg-1 aria-selected flips false");
+  element_dispatch(byIdentity("ref-seg-control-2")!, fake_event("click"));
+  assert(model === "ref-seg-control-2", "pointer click selects seg-2");
+  assert(attrOf("ref-seg-control-2", "aria-selected") === "true", "seg-2 aria-selected flips true");
+  assert(attrOf("ref-seg-control-1", "aria-selected") === "false", "seg-1 aria-selected flips false");
   assert(announcements === 1, "announcement fires once");
-  assert(byIdentity("tela-live")?.textContent === "Two selected", "live region reads Two selected");
+  assert(textOf("ref-seg-live") === "Two selected", "live region reads Two selected");
   assert(clicksFired === 1, "one click reached the binding");
 }
 
 // ---- 2. click on the already-selected seg-2: silent no-op ---------------
 {
-  byIdentity("tela-seg-2")!.dispatchEvent(new FakeEvent("click"));
-  assert(model === "tela-seg-2", "no-op click keeps the model");
+  element_dispatch(byIdentity("ref-seg-control-2")!, fake_event("click"));
+  assert(model === "ref-seg-control-2", "no-op click keeps the model");
   assert(announcements === 1, "no announcement on the no-op (silent)");
-  assert(byIdentity("tela-live")?.textContent === "Two selected", "live region unchanged");
+  assert(textOf("ref-seg-live") === "Two selected", "live region unchanged");
   assert(clicksFired === 2, "the no-op click still reached the binding");
 }
 
 // ---- 3. arrows: focus only, selection unchanged -------------------------
 {
-  moveFocus("tela-seg-2");
-  byIdentity("tela-seg-2")!.dispatchEvent(new FakeEvent("keydown", { key: "ArrowRight" }));
-  assert(focused === "tela-seg-3", "ArrowRight moves focus to seg-3");
-  assert(doc.activeElement?.dataTela === "tela-seg-3", "DOM focus on seg-3");
-  assert(model === "tela-seg-2", "selection unchanged after ArrowRight");
+  moveFocus("ref-seg-control-2");
+  element_dispatch(byIdentity("ref-seg-control-2")!, fake_event_key("keydown", "ArrowRight"));
+  assert(focused === "ref-seg-control-3", "ArrowRight moves focus to seg-3");
+  assert(doc.active_element?.data_tela === "ref-seg-control-3", "DOM focus on seg-3");
+  assert(model === "ref-seg-control-2", "selection unchanged after ArrowRight");
   assert(announcements === 1, "arrow move is silent");
-  moveFocus("tela-seg-1");
-  byIdentity("tela-seg-1")!.dispatchEvent(new FakeEvent("keydown", { key: "ArrowLeft" }));
-  assert(focused === "tela-seg-3", "ArrowLeft from seg-1 wraps to the last segment");
-  assert(model === "tela-seg-2", "selection unchanged after the wrap");
+  moveFocus("ref-seg-control-1");
+  element_dispatch(byIdentity("ref-seg-control-1")!, fake_event_key("keydown", "ArrowLeft"));
+  assert(focused === "ref-seg-control-3", "ArrowLeft from seg-1 wraps to the last segment");
+  assert(model === "ref-seg-control-2", "selection unchanged after the wrap");
 }
 
 // ---- 4. Space on the focused seg-3: select + announce -------------------
 {
-  byIdentity("tela-seg-3")!.dispatchEvent(new FakeEvent("keydown", { key: "Space" }));
-  assert(model === "tela-seg-3", "Space selects the focused seg-3");
-  assert(byIdentity("tela-seg-3")?.getAttribute("aria-selected") === "true", "seg-3 aria-selected true");
-  assert(byIdentity("tela-seg-2")?.getAttribute("aria-selected") === "false", "seg-2 aria-selected false");
+  element_dispatch(byIdentity("ref-seg-control-3")!, fake_event_key("keydown", "Space"));
+  assert(model === "ref-seg-control-3", "Space selects the focused seg-3");
+  assert(attrOf("ref-seg-control-3", "aria-selected") === "true", "seg-3 aria-selected true");
+  assert(attrOf("ref-seg-control-2", "aria-selected") === "false", "seg-2 aria-selected false");
   assert(announcements === 2, "second announcement");
-  assert(byIdentity("tela-live")?.textContent === "Three selected", "live region reads Three selected");
+  assert(textOf("ref-seg-live") === "Three selected", "live region reads Three selected");
 }
 
 // ---- 5. Home / End: focus only ------------------------------------------
 {
-  moveFocus("tela-seg-3");
-  byIdentity("tela-seg-3")!.dispatchEvent(new FakeEvent("keydown", { key: "Home" }));
-  assert(focused === "tela-seg-1", "Home moves focus to the first segment");
-  assert(model === "tela-seg-3", "selection unchanged after Home");
-  byIdentity("tela-seg-1")!.dispatchEvent(new FakeEvent("keydown", { key: "End" }));
-  assert(focused === "tela-seg-3", "End moves focus to the last segment");
-  assert(model === "tela-seg-3", "selection unchanged after End");
+  moveFocus("ref-seg-control-3");
+  element_dispatch(byIdentity("ref-seg-control-3")!, fake_event_key("keydown", "Home"));
+  assert(focused === "ref-seg-control-1", "Home moves focus to the first segment");
+  assert(model === "ref-seg-control-3", "selection unchanged after Home");
+  element_dispatch(byIdentity("ref-seg-control-1")!, fake_event_key("keydown", "End"));
+  assert(focused === "ref-seg-control-3", "End moves focus to the last segment");
+  assert(model === "ref-seg-control-3", "selection unchanged after End");
   assert(announcements === 2, "Home/End are silent");
 }
 
 // ---- 6. Enter on the focused seg-1: select + announce -------------------
 {
-  moveFocus("tela-seg-1");
-  byIdentity("tela-seg-1")!.dispatchEvent(new FakeEvent("keydown", { key: "Enter" }));
-  assert(model === "tela-seg-1", "Enter selects the focused seg-1");
+  moveFocus("ref-seg-control-1");
+  element_dispatch(byIdentity("ref-seg-control-1")!, fake_event_key("keydown", "Enter"));
+  assert(model === "ref-seg-control-1", "Enter selects the focused seg-1");
   assert(announcements === 3, "third announcement");
-  assert(byIdentity("tela-live")?.textContent === "One selected", "live region reads One selected");
+  assert(textOf("ref-seg-live") === "One selected", "live region reads One selected");
 }
 
 // ---- 7. replace across the region: focus restoration + scroll anchor ----
 {
-  const mFocus = browser.focus_held(m, "tela-seg-2");
-  const r = browser.replace(mFocus, segmented_control(selected_props(props, "tela-seg-2")));
+  const mFocus = browser.focus_held(m, "ref-seg-control-2");
+  const r = browser.replace(mFocus, reference.segmented_control(selected_props(props, "ref-seg-control-2")));
   assert(r !== null, "replace returns the update result");
   const update: Update = r!;
   const keys = update.effects.map((e) => tela.effect_identity(e));
-  assert(keys.length === 2 && keys[0] === "tela-seg-2" && keys[1] === "#root", "effects are restore(seg-2) + anchor(#root)");
+  assert(keys.length === 2 && keys[0] === "ref-seg-control-2" && keys[1] === "#root", "effects are restore(seg-2) + anchor(#root)");
   const nextMarkup = tela.html_visus(update.view) ?? "";
   const nextPlan: MountedLike = {
     ...m,
     markup: nextMarkup,
     bindings: m.identities.map((id) => ({ identity: id, status: "create" })),
   };
-  executeMountPlan(doc, "#root", nextPlan, false);
+  execute_mount_plan(doc, "#root", nextPlan, false);
   for (const e of update.effects) {
     const key = tela.effect_identity(e);
     const target = byIdentity(key);
     if (target !== undefined) {
-      doc.focusNode(target);
+      doc_focus_node(doc, target);
     }
   }
-  assert(doc.activeElement?.dataTela === "tela-seg-2", "focus restored to the pre-replacement identity");
-  assert(byIdentity("tela-control") !== undefined, "region present after replacement");
+  assert(doc.active_element?.data_tela === "ref-seg-control-2", "focus restored to the pre-replacement identity");
+  assert(byIdentity("ref-seg-control") !== undefined, "region present after replacement");
 }
 
 // ---- 7b. declared focus movement (Direct) -------------------------------
 {
-  const mFocus = browser.focus_held(m, "tela-seg-2");
-  const mMove = browser.focus_target(mFocus, "tela-seg-3");
-  const r = browser.replace(mMove, segmented_control(selected_props(props, "tela-seg-3")));
+  const mFocus = browser.focus_held(m, "ref-seg-control-2");
+  const mMove = browser.focus_target(mFocus, "ref-seg-control-3");
+  const r = browser.replace(mMove, reference.segmented_control(selected_props(props, "ref-seg-control-3")));
   assert(r !== null, "movement replace returns the update result");
   const update: Update = r!;
   const keys = update.effects.map((e) => tela.effect_identity(e));
   assert(
-    keys.length === 3 && keys[0] === "tela-seg-2" && keys[1] === "tela-seg-3" && keys[2] === "#root",
+    keys.length === 3 && keys[0] === "ref-seg-control-2" && keys[1] === "ref-seg-control-3" && keys[2] === "#root",
     "effects are restore + direct + anchor",
   );
   const nextMarkup = tela.html_visus(update.view) ?? "";
@@ -313,38 +374,38 @@ bindSubscriptions();
     markup: nextMarkup,
     bindings: m.identities.map((id) => ({ identity: id, status: "create" })),
   };
-  executeMountPlan(doc, "#root", nextPlan, false);
+  execute_mount_plan(doc, "#root", nextPlan, false);
   for (const e of update.effects) {
     const key = tela.effect_identity(e);
     const target = byIdentity(key);
     if (target !== undefined) {
-      doc.focusNode(target);
+      doc_focus_node(doc, target);
     }
   }
-  assert(doc.activeElement?.dataTela === "tela-seg-3", "focus moved to the declared target identity");
+  assert(doc.active_element?.data_tela === "ref-seg-control-3", "focus moved to the declared target identity");
 }
 
 // ---- 8. dispose: subscriptions live before, gone after ------------------
 {
-  const region = resolveRegion(doc, "#root");
-  region.children.splice(0, region.children.length);
-  const fresh = browser.mount(webDomScope("#root"), segmented_control(control_props()), control_theme());
+  const region = resolve_region(doc, "#root");
+  element_clear_children(region);
+  const fresh = browser.mount(web_dom_scope(doc, "#root"), reference.segmented_control(control_props()), reference_theme());
   assert(fresh !== null, "dispose scenario: mount returns a plan");
   const fm: Mounted = fresh!;
-  executeMountPlan(doc, "#root", fm, false);
+  execute_mount_plan(doc, "#root", fm, false);
   clearSubs();
   bindSubscriptions();
   const pre = clicksFired;
-  const seg1 = byIdentity("tela-seg-1")!;
-  seg1.dispatchEvent(new FakeEvent("click"));
+  const seg1 = byIdentity("ref-seg-control-1")!;
+  element_dispatch(seg1, fake_event("click"));
   assert(clicksFired === pre + 1, "subscription is live before dispose");
   browser.dispose(fm);
   clearSubs();
-  const reg = resolveRegion(doc, "#root");
-  reg.children.splice(0, reg.children.length);
-  seg1.dispatchEvent(new FakeEvent("click"));
+  const reg = resolve_region(doc, "#root");
+  element_clear_children(reg);
+  element_dispatch(seg1, fake_event("click"));
   assert(clicksFired === pre + 1, "post-dispose dispatch is a no-op (unsubscribed)");
-  assert(doc.querySelectorAll("[data-tela]").length === 0, "region cleared after dispose");
+  assert(doc_query_all(doc, "[data-tela]").length === 0, "region cleared after dispose");
 }
 
 console.log("segmented control interaction gate green (scripted sequence; tela-s3-u4)");
@@ -355,16 +416,18 @@ DRIVER
   echo "$VALIDA_NS"
   strip "$SCRATCH/tela.ts"
   echo "$TELA_NS"
-  echo "$DOM_NS"
   strip "$SCRATCH/browser.ts"
   echo "$BROWSER_NS"
+  strip "$SCRATCH/reference.ts"
+  echo "$REF_NS"
+  echo "$REF_ALIAS"
   strip "$SCRATCH/extension.ts"
   echo "$EXT_NS"
   strip "$SCRATCH/forms.ts"
   echo "$FORMS_NS"
   strip "$SCRATCH/main.ts"
   echo ""
-  sed 's/^export //' "$ROOT/scripta/dom-shim.ts"
+  strip_hdom "$SCRATCH/harness_dom.ts"
   cat "$SCRATCH/driver.ts"
 } > "$SCRATCH/mount.ts"
 
