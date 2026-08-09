@@ -347,7 +347,7 @@ tokens, behavior, product assembly input, and tests without modifying Tela,
 
 ### Stage 5 — Reference Primitives And Forms
 
-**Status**: planned; depends on Stage 4
+**Status**: active — delivery admitted (2026-08-09, `stage-5-delivery.md`: 10 units/10 waves, SG1–SG10; U1 discovery pending the naming-review admission checkpoint)
 **Source**: operator visual grammar and accessibility contract
 **Why now**: validate that ordinary application UI is concise without baking
 application concepts into the kernel, after the public extension seam is real.
