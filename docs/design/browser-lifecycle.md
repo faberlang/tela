@@ -215,6 +215,19 @@ segment. Update cycles that do not change selection remain silent per the
 live-region policy (campaign §8: "including when an update should remain
 silent").
 
+### Landed emission (U3 `27aa181`/`c182688` — reconciled)
+
+- The control's live region is a control-owned
+  `<div role='status' aria-live='polite' data-tela='tela-live'></div>`
+  (the `regio_viva()` component, a direct child of the control group).
+- The announcement mapping is the app-owned
+  `annuntium(props, electum) → string` — names the newly selected option
+  ("One selected", "Two selected", "Three selected"); the driver writes it
+  into the live region via `webDomTextSet` **only** when the selection
+  changes (the interaction gate asserts the live region reads the new
+  option after a select and is unchanged after a no-op click / a focus-only
+  arrow move — §5 sequence steps 1–6 in stage-3-segmented-control.md).
+
 ## 6. Async-gap boundary
 
 The named Stage 3 input (`stage-0-behavior-design.md` §4, quoted from
@@ -346,6 +359,7 @@ re-check records the re-confirmed status.
 | Defect | Marker | Stage 3 posture |
 | --- | --- | --- |
 | `web:dom` locale/dialect gap (en→la) | `fix:web-dom-locale` | **ATTEMPTED and FAILED** at check/emit on in-tree radix 0.80.0 (PARSE001/SEM002 — probe matrix in the `browser.fab` header). Landed fallback: harness-level DOM binding (dom-shim binds the `webDom*` surface); the seam carries `dom.Scope` as tela:browser's `Scope` handle; never re-author a `web:dom` copy inside tela |
+| imported-union variant matching from a consumer | `fix:sem001` | **Landed (U1, `4ca331a`; row added at the Stage 3 closeout)**: a consumer-side `match` over an imported union's variants does not bind — the kernel owns the only `Effectus` matcher (`effectus_identitas`, `src/tela.fab:970` + module-header marker `src/tela.fab:913`); consumers read effect keys through the accessor. Removal = grep-replace after the radix fix lands |
 | G4 — WARN014 snapshot skip on public signatures referencing imported sibling types | `fix:g4` | **Landed observation**: the pinned seam fns `mount`/`replace` (imported `tela` sibling types in signatures) are export-skipped for consumers. Workaround: the G4-safe pure policy fns (string/list signatures) stay exported for check-time exempla; the harness-assembly workaround covers the skipped fns (the snapshot does not apply at runtime — the driver calls the emitted `mount`/`replace` directly) |
 | **primitive nullable bindings in fn bodies (NEW parser observation)** | **`fix:prim-nullable`** | **Landed, new**: a primitive `∪ null` const/var annotation and a `!` unwrap of a primitive nullable do not parse inside named function bodies on in-tree radix 0.80.0 (PARSE030/PARSE001; the same forms work in `main`, and class `∪ null` works in fn bodies — the kernel's `thema_css` pattern). Workaround: null checks run against the call (`if f(x) is null then …`), then the value binds via `coalesce ""`; shape comparisons carry a boolean `habet` flag |
 | CODEGEN001 — Rust emit-across-imports | `fix:codegen001` | Rust path attempted + recorded; `web:dom` is ts-only so Rust emit of a browser module is doubly out; TS lane is the proven lane; R2 sha-equality |
@@ -353,7 +367,7 @@ re-check records the re-confirmed status.
 | TS-emitter observations | `fix:ts-emitter` | Workarounds held; fragile against emitter changes |
 | snapshot-nomen-collision | `fix:snapshot-nomen-collision` | Stage 2 workaround held; new identifiers avoid kernel type names |
 
-## 12. Reconciliation state (U1 + U2 landed; U3 pending)
+## 12. Reconciliation state (U1 + U2 + U3 landed; all reconciled)
 
 - **U1 emission (`4ca331a`) — verified, no deviation.** The behavior-carrier
   spellings in §2 (`Eventum { nomen }`, `union Effectus` with
@@ -384,12 +398,30 @@ re-check records the re-confirmed status.
   5. **Synchronous-only + shim-boundary statements** — verified unchanged;
      §7/§8 now record the harness-level `webDom*` binding as the landed
      posture and the landed dom-shim driver entry points.
-- **U3 (segmented-interactive) is pending.** The interaction proof + the
-  app-typed plan (benchmark `canary-app`, U3) will mount through the
-  landed seam; U4 (`check-mount`) consumes the dom-shim driver surface
-  (§8). When U3 lands, reconcile this record's §5 (live-region policy) and
-  the interaction-gate statements against its emission — the same residual
-  path.
+- **U3 emission (`27aa181`/`c182688`) — reconciled, deviations recorded.**
+  The segmented-control interaction proof + the app-typed plan landed and
+  this record's §5 (live-region policy) and the interaction-gate
+  statements now document the landed emission (the stage-3 closeout
+  residual path, auditor-4 P2-3):
+  1. **The live-region policy (§5)** — the control-owned
+     `<div role='status' aria-live='polite' data-tela='tela-live'>`
+     node, the `annuntium(props, electum)` announcement mapping, and the
+     silent-on-no-op/focus-only behavior — asserted by the interaction
+     gate (U4 `check-mount`).
+  2. **The interaction-gate statements (§8/§10)** — the scripted sequence
+     executes under `check-mount` (pointer select / no-op / keyboard
+     focus-only / Space-Enter / Home-End / replace + effects / dispose);
+     determinism applies to the static/mount-time serialization only
+     (`stage-3-mount-determinism.md`, sha `77516916…e5490`).
+  3. **The app-typed plan (D1 boundary)** — `union Nuntius` /
+     `class Vinculum` (eventus + message-producing closures) /
+     `update_controlli` / `nuntius_clavis` / `annuntium` are app-side in
+     the benchmark, never kernel-generic — the campaign's conceptual
+     `mount(Scope, Program, Theme)` decomposes at the app boundary
+     (identity-hydration.md §7 attach point).
+  4. **`fix:<id>` inventory (§11)** — gained `fix:sem001` (the kernel owns
+     the only `Effectus` matcher, `effectus_identitas`) at the closeout
+     (auditor-4 P2-1).
 
 ## Non-goals
 

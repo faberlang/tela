@@ -4,7 +4,16 @@
 **Planner**: planner-1
 **Campaign**: `tela/docs/factory/mvp/CAMPAIGN.md` (Stage 3 — "Browser Mount And Update Lifecycle", lines 288–303; the gate's async-gap sentence at lines 302–303)
 **Control-plane repo**: `/Users/ianzepp/work/faberlang/tela` (Stage 3 cwd)
-**Baseline carried from Stage 2**: landed kernel `tela/src/tela.fab` (U1 `e194621` theme/token + U2 `bd3130e` assembly), docs `docs/design/theme-protocol.md` + `AGENTS.md` (U4 `3b0b8c4`), two-theme composition `proof/benchmark/` (U3 `ee2abb0`), harnesses `scripta/` (U5 `c8f1c91`), determinism evidence `stage-2-determinism.md`, Stage 2 closeout `stage-2-closeout.md` (`080f695`) + step-6 acceptance flip (`4f85d04`, Stage 3 selected next); policy locks (a)–(e) from `stage-0-protocol-policies.md`; behavior posture from `stage-0-behavior-design.md` (segmented-control contract §1, update strategy §3, async-gap routing §4, mount relationship §5); Stage 0/1/2 closeout residuals (`tela-closeout.md` §4, `stage-1-closeout.md`, `stage-2-closeout.md` §3/§7).
+**Baseline carried from Stage 2**: landed kernel `tela/src/tela.fab` (U1 `e194621` theme/token + U2 `bd3130e` assembly), docs `docs/design/theme-protocol.md` + `AGENTS.md` (U4 `3b0b8c4`), two-theme composition `proof/benchmark/` (U3 `ee2abb0`), harnesses `scripta/` (U5 `c8f1c91`), determinism evidence `stage-2-determinism.md`, Stage 2 closeout `stage-2-closeout.md` (`080f695`) + step-6 acceptance (`4f85d04`, Stage 3 selected next); policy locks (a)–(e) from `stage-0-protocol-policies.md`; behavior posture from `stage-0-behavior-design.md` (segmented-control contract §1, update strategy §3, async-gap routing §4, mount relationship §5); Stage 0/1/2 closeout residuals (`tela-closeout.md` §4, `stage-1-closeout.md`, `stage-2-closeout.md` §3/§7).
+
+> **Stage 2 acceptance-record correction (`5cbc184`, 2026-08-09 — the
+> 4f85d04-echo residual)**: the Stage 2 accept (`4f85d04`) asserted a
+> step-6 independent audit that had not yet run; the fire-9 independent
+> audit (auditor-2, 2026-08-09) confirmed the closeout evidence afterward,
+> and `5cbc184` corrected the record to that true sequence. This spec's
+> citations of `4f85d04` as the acceptance flip carry that correction —
+> the accept's recommendation stands, the audit confirmed the evidence
+> after the fact.
 **Mode**: planning artifacts only. This spec lowers the stage; it does not implement.
 **Closeout owner**: the tela `CAMPAIGN.md` Stage 3 stage-line status update + the leading-clause evolution are owned by the **Mind-routed Stage 3 closeout** (workflow step 6), **not** by any unit in this spec — decision D3 pattern carried from Stages 1/2 (stage-2-delivery.md Coordination Constraints §6). The factory README regeneration also belongs to the closeout.
 
@@ -293,7 +302,9 @@ invented):
 Verified by planner-1 (2026-08-09):
 
 - **`tela/`** — sibling git repo on `main`, clean at `4f85d04` (Stage 2
-  step-6 acceptance). Contents (all Stage 1/2-landed, commit-verified):
+  step-6 acceptance; the acceptance record was corrected by `5cbc184` —
+  the fire-9 independent audit confirmed the Stage 2 closeout evidence
+  after the fact). Contents (all Stage 1/2-landed, commit-verified):
   `faber.toml` (package `tela`, provider `tela`, `kind = "lib"`, targets
   `rust`+`ts`, locale `en`); `src/tela.fab` (Branch B kernel + escaping +
   HTML/CSS serializers + `Stilum`/`Regula`/`Declaratio` + `Scopulum`/`Thema`/

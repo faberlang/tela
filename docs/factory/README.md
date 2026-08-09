@@ -29,7 +29,7 @@ in [`docs/archived/`](../archived/README.md).
 
 | Goal | Status | Done | goal | campaign | delivery | ledger | council | evidence | other |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| [mvp](mvp/CAMPAIGN.md) | active | — | 0 | 1 | 4 | 0 | 0 | 0 | 12 |
+| [mvp](mvp/CAMPAIGN.md) | active | — | 0 | 1 | 4 | 0 | 0 | 0 | 15 |
 
 ## Planned
 
