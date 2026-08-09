@@ -13,5 +13,12 @@ source = "src"
 kind = "lib"
 targets = ["rust", "ts"]
 
+# Web-surface-import U2 (web-import-u2-tela-dom-runtime-bindings): the
+# tela:dom host binding — the emitted tela:dom references resolve to the
+# tela-owned runtime via this bindings file (the faber-web [target.ts]
+# shape; DELIVERY.md §U2).
+[target.ts]
+bindings = "bindings/ts.toml"
+
 [reader]
 locale = "en"

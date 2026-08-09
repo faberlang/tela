@@ -1,0 +1,156 @@
+[shim]
+path = "runtime/dom.ts"
+
+# tela/bindings/ts.toml — the tela-owned DOM host binding (web-surface-import
+# U2, web-import-u2-tela-dom-runtime-bindings; DELIVERY.md §U2 + §5.2).
+# Route -> runtime symbol binding table: every tela:dom route mirrors one
+# `fn` in src/dom.fab and one exported function in runtime/dom.ts (the
+# `webDom*` symbols are KEPT — the documented host-binding contract). The
+# opener/result fields are en Faber type names taken from the fn signature
+# (`string`, `void`, `bool`, `int`, `list<Element>`, `Scope`, `Element`,
+# `DomNode`, `Subscription`, `SubmitOptions`, `FetchRequest`,
+# `FetchResponse`, …); tests/contract-test.ts verifies them mechanically
+# (the en-adjusted plain-text cross-check of .fab ↔ ts.toml ↔ runtime).
+# The route keys are re-keyed from faber-web's `web:dom.X` → `tela:dom.X`;
+# the one recorded rename: `tela:dom.input_value` → `webDomValue`
+# (fix:sem005-renamed — the en type keyword `value`; §5.2).
+
+[functions."tela:dom.scope"]
+symbol = "webDomScope"
+opener = "string"
+result = "Scope"
+
+[functions."tela:dom.query"]
+symbol = "webDomQuery"
+opener = "Scope, string"
+result = "Element"
+
+[functions."tela:dom.require"]
+symbol = "webDomRequire"
+opener = "Scope, string"
+result = "Element"
+
+[functions."tela:dom.all"]
+symbol = "webDomAll"
+opener = "Scope, string"
+result = "list<Element>"
+
+[functions."tela:dom.snapshot"]
+symbol = "webDomSnapshot"
+opener = "Scope"
+result = "list<DomNode>"
+
+[functions."tela:dom.text_set"]
+symbol = "webDomTextSet"
+opener = "Element, string"
+result = "void"
+
+[functions."tela:dom.attr_set"]
+symbol = "webDomAttrSet"
+opener = "Element, string, string"
+result = "void"
+
+[functions."tela:dom.attr_remove"]
+symbol = "webDomAttrRemove"
+opener = "Element, string"
+result = "void"
+
+[functions."tela:dom.class_add"]
+symbol = "webDomClassAdd"
+opener = "Element, string"
+result = "void"
+
+[functions."tela:dom.class_remove"]
+symbol = "webDomClassRemove"
+opener = "Element, string"
+result = "void"
+
+[functions."tela:dom.class_toggle"]
+symbol = "webDomClassToggle"
+opener = "Element, string"
+result = "void"
+
+[functions."tela:dom.on"]
+symbol = "webDomOn"
+opener = "Element, string, EventHandler"
+result = "Subscription"
+
+[functions."tela:dom.unsubscribe"]
+symbol = "webDomUnsubscribe"
+opener = "Subscription"
+result = "void"
+
+[functions."tela:dom.input_value"]
+symbol = "webDomValue"
+opener = "Element"
+result = "string"
+
+[functions."tela:dom.value_set"]
+symbol = "webDomValueSet"
+opener = "Element, string"
+result = "void"
+
+[functions."tela:dom.on_input"]
+symbol = "webDomOnInput"
+opener = "Element, InputHandler"
+result = "Subscription"
+
+[functions."tela:dom.on_submit"]
+symbol = "webDomOnSubmit"
+opener = "Element, SubmitOptions, SubmitHandler"
+result = "Subscription"
+
+[functions."tela:dom.on_frame"]
+symbol = "webDomOnFrame"
+opener = "FrameHandler"
+result = "Subscription"
+
+[functions."tela:dom.on_resize"]
+symbol = "webDomOnResize"
+opener = "ResizeHandler"
+result = "Subscription"
+
+[functions."tela:dom.on_keyboard"]
+symbol = "webDomOnKeyboard"
+opener = "Element, string, KeyboardHandler"
+result = "Subscription"
+
+[functions."tela:dom.on_pointer"]
+symbol = "webDomOnPointer"
+opener = "Element, string, PointerHandler"
+result = "Subscription"
+
+[functions."tela:dom.on_focus"]
+symbol = "webDomOnFocus"
+opener = "Element, string, FocusHandler"
+result = "Subscription"
+
+[functions."tela:dom.pointer_lock_state"]
+symbol = "webDomPointerLockState"
+opener = "Element"
+result = "PointerLockState"
+
+[functions."tela:dom.request_pointer_lock"]
+symbol = "webDomRequestPointerLock"
+opener = "Element"
+result = "PointerLockState"
+
+[functions."tela:dom.exit_pointer_lock"]
+symbol = "webDomExitPointerLock"
+opener = ""
+result = "PointerLockState"
+
+[functions."tela:dom.on_pointer_lock"]
+symbol = "webDomOnPointerLock"
+opener = "Element, PointerLockHandler"
+result = "Subscription"
+
+[functions."tela:dom.prevent_default"]
+symbol = "webDomPreventDefault"
+opener = "DomEvent"
+result = "DomEvent"
+
+[functions."tela:dom.fetch_text"]
+symbol = "webDomFetchText"
+opener = "FetchRequest"
+result = "FetchResponse"
