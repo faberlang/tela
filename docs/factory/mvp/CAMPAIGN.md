@@ -2,7 +2,7 @@
 
 **Created**: 2026-07-18
 **Updated**: 2026-07-18 — moved into the initialized Tela repository after review reconciliation
-**Status**: active — Stage 0 accepted (closeout 2026-08-09); Stage 1 selected next
+**Status**: active — Stage 0 accepted (closeout 2026-08-09); Stage 1 delivered + closed out (2026-08-09); Stage 2 selected next
 **Mode**: repository campaign routing artifact; do not implement directly from this file
 **Target workspace**: `/Users/ianzepp/work/faberlang`
 **Control-plane repo**: `/Users/ianzepp/work/faberlang/tela`
@@ -242,7 +242,7 @@ recorded as the **radix-lane input** (repros under `tela/spike/`).
 
 ### Stage 1 — Tela Kernel And Static Renderer
 
-**Status**: planned; depends on Stage 0
+**Status**: delivered — Stage 1 closed out (2026-08-09); Stage 2 selected next
 **Source**: Stage 0 delivery
 **Why now**: establish the reusable package and deterministic output before
 browser lifecycle complexity.
@@ -255,6 +255,21 @@ documented hydration-ready form; central escaping; tag/attribute lexical and
 namespace validation; deterministic HTML and initial CSS serialization;
 deterministic double-build evidence; package tests; and the static half of the
 two-package benchmark composition. Tela v1 has no raw-markup `View` variant.
+
+**Closeout evidence** (workflow step 6, `docs/factory/mvp/stage-1-closeout.md`):
+all six gates satisfied — CG1 kernel contract (U1 `5bc797e`), CG2 validation
+(U2 `836965c`), CG3 serializer (U3 `05909f7`), CG4 docs + reconcile (U4
+`20d9bfd` + `d4ad577`), CG5 benchmark static two-package composition (U5
+`d71e29f`, `stage-1-benchmark-static.md`), CG6 tests + determinism (U6
+`e8fb083`, `stage-1-determinism.md`). Determinism: the benchmark composition
+static output builds twice byte-for-byte identical — sha256
+`a0f1b1cb170eded36c2816011320399080c60644f3182b7bd0167300f1f8613b`, fail-closed
+(diff fails). One correctness repair landed at the closeout (U2 `img` name-set
+fix, `4c00192`). Independent auditor re-run of `scripta/check-determinism` is
+routed by Mind (named test owner) before campaign acceptance. Residuals
+routed: Rust provider-module locale propagation (CODEGEN001) + G4 + G5 +
+emitter observations → radix lane; TS async gap → Stage 3; Branch A re-spike on
+radix D1; versioning/capability truth → Stage 8. **Stage 2 selected next.**
 
 ### Stage 2 — Style And Theme Protocol
 
