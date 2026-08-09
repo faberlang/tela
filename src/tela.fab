@@ -797,18 +797,28 @@ fn assemble(
         if not stilum_validum(Stilum { regulae = reset!.regulae }) then return null
     }
 
-    # tela.components — dedup by stable identity; input order preserved.
+    # tela.components — dedup + fail-closed rule shape, input order.
     const list<Codicillus> ∪ null componentes_unici ← codicilli_dedupata(componentes)
     if componentes_unici is null then return null
     const list<Codicillus> componente_vacua ← vacua
     const list<Codicillus> componentes_finales ← componentes_unici coalesce componente_vacua
+    var int ci ← 0
+    while ci < componentes_finales.longitudo() {
+        if not stilum_validum(componentes_finales[ci].stilum) then return null
+        ci ← ci + 1
+    }
 
-    # Library packages — dedup, then topo order over the explicit ordines
-    # map (every codicillus identity must appear in ordines).
+    # Library packages — dedup, rule shape, then topo order over the explicit
+    # ordines map (every codicillus identity must appear in ordines).
     const list<Codicillus> ∪ null codicilli_unici ← codicilli_dedupata(codicilli)
     if codicilli_unici is null then return null
     const list<Codicillus> codicilli_vacui ← vacua
     const list<Codicillus> codicilli_finales ← codicilli_unici coalesce codicilli_vacui
+    var int li ← 0
+    while li < codicilli_finales.longitudo() {
+        if not stilum_validum(codicilli_finales[li].stilum) then return null
+        li ← li + 1
+    }
     var list<string> identitates ← vacua
     var int m ← 0
     while m < codicilli_finales.longitudo() {

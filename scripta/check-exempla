@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# tela/scripta/check-exempla — Stage 1 U6 exempla surface.
+# tela/scripta/check-exempla — exempla surface (Stage 1 U6 + Stage 2 U5).
 # radix check every exempla/*.fab, then the TS lane: emit the import-free
 # kernel-side modules + assemble each exempla into ONE self-contained file
 # (single-file emits of the import-bearing exempla are not self-contained —
 # they keep `provider:module` imports and bare type references), then
-# `tsc --noEmit` (strict). The spec gate is radix check + the TS lane
-# (delivery U6 (b)); no runtime run is required. A development-time runtime
-# run of the assembled validation exempla in U6 surfaced a U2 defect
-# (valida.fab's html-only name set omitted `img`, so
-# valida_nomen_in_spatio("img","svg") returned true while validation.fab
-# asserts rejection) — that defect was escalated and is FIXED by the Stage 1
-# closeout repair (img added to nomen_html_soli; commit tela-s1-img-repair),
-# and the runtime predicate was re-verified at the closeout.
+# `tsc --noEmit` (strict) AND execute the assembled file under `node`
+# (Stage 2 U5 runtime gate — residual R1 closed: assertions run, so a wrong
+# expected value or a real emitter/source defect fails the check instead of
+# being implementer-claimed). A development-time runtime run in U6 surfaced
+# a U2 defect (valida.fab's html-only name set omitted `img`) — fixed by the
+# Stage 1 closeout repair; the runtime gate now owns this class of defect
+# (the Stage 2 U5 gate caught a real U2 assemble hole: components/library
+# bundles were not rule-shape validated — fixed in the U5 closeout).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -52,9 +52,9 @@ trap 'rm -rf "$SCRATCH"' EXIT
 strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
 
 VALIDA_NS="const valida = { valida_spatium, valida_nomen_tag, valida_nomen_attributi, valida_nomen_in_spatio, valida_void_html, valida_void_structura };"
-TELA_NS="const tela = { html_visus, css, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, Attributum, Declaratio, Regula, Stilum };"
+TELA_NS="const tela = { html_visus, css, thema_css, thema_stilum, thema, scopulum, scopuli_core, nomen_scopuli_proprietas, nomen_scopuli_validum, thema_scopuli_core_parati, thema_habet_scopulum, assemble, codicillus, ordo, codicilli_dedupata, ordine_ordinata, stilum_validum, stilum_textus_immundus, codicillus_ex, in_lista, pendeant_parata, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, Attributum, Declaratio, Regula, Stilum, Scopulum, Thema, Codicillus, Ordo };"
 
-echo "check-exempla: TS lane (emit + assemble + tsc --noEmit)"
+echo "check-exempla: TS lane (emit + assemble + tsc --noEmit + node runtime gate)"
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/valida.fab" -o "$SCRATCH/valida.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela.ts" >/dev/null
 
@@ -80,6 +80,26 @@ for f in "$ROOT"/exempla/*.fab; do
         strip "$SCRATCH/serializer.ts"
       } > "$SCRATCH/${name}-joined.ts"
       ;;
+    thema)
+      # exempla/thema.fab imports tela:tela (Stage 2 U1 theme/token surface)
+      {
+        strip "$SCRATCH/valida.ts"
+        echo "$VALIDA_NS"
+        strip "$SCRATCH/tela.ts"
+        echo "$TELA_NS"
+        strip "$SCRATCH/thema.ts"
+      } > "$SCRATCH/${name}-joined.ts"
+      ;;
+    assemble)
+      # exempla/assemble.fab imports tela:tela (Stage 2 U2 assembly surface)
+      {
+        strip "$SCRATCH/valida.ts"
+        echo "$VALIDA_NS"
+        strip "$SCRATCH/tela.ts"
+        echo "$TELA_NS"
+        strip "$SCRATCH/assemble.ts"
+      } > "$SCRATCH/${name}-joined.ts"
+      ;;
     *)
       echo "check-exempla: exempla module ${name} has no assembly wiring (add it)" >&2
       exit 1
@@ -88,6 +108,11 @@ for f in "$ROOT"/exempla/*.fab; do
   joined="$SCRATCH/${name}-joined.ts"
   echo "check-exempla: ${name}: tsc --noEmit"
   tsc --noEmit --strict --target ES2020 --module ESNext --moduleResolution bundler --skipLibCheck "$joined"
+  # Stage 2 U5 runtime gate (residual R1 closed): the assembled exempla
+  # EXECUTES under node — every `assert` runs, so a wrong expectation or a
+  # real source/emitter defect fails the check (node exit != 0).
+  echo "check-exempla: ${name}: node (runtime gate — assertions execute)"
+  node "$joined" >/dev/null
 done
 
 echo "check-exempla: green"

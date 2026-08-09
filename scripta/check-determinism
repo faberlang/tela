@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
-# tela/scripta/check-determinism — Stage 1 U6 determinism gate.
+# tela/scripta/check-determinism — determinism gate (Stage 1 U6 + Stage 2 U5).
 # Builds the benchmark composition static output TWICE and byte-compares.
 # A diff FAILS the check (fail-closed); identical builds print sha256 hashes
 # and write build/static-1.txt, build/static-2.txt, build/hashes.txt.
+#
+# Stage 2 U5: the double-build input is the TWO-THEME composition runner
+# (canary-app, U3 ee2abb0) — the output is the single theme-independent HTML
+# plus the full cascade CSS under both themes (lumen/tenebrae). The gate
+# byte-compares the whole runner output twice.
 #
 # Lanes:
 #   Primary (Rust): emit canary-app to Rust -> scratch crate OUTSIDE the
@@ -12,10 +17,12 @@
 #     provider-module locale-propagation defect, U3/U5 escalation,
 #     stage-1-benchmark-static.md §3). The path is ATTEMPTED first and the
 #     defect is recorded when it fires; the gate is NOT weakened to pass.
+#     R2 (recorded in stage-2-determinism.md): when CODEGEN001 lands, the
+#     Rust-lane capture must equal the TS-lane capture (sha equality) and
+#     the Rust primary path activates automatically — no harness change.
 #   Fallback (TS-lane composition, the proven lane): emit valida/tela/
 #     extension/main, assemble into ONE self-contained file (single-module
-#     shape, no runtime imports), run twice, byte-compare. The U5 double-run
-#     (sha a0f1b1cb…f8613b) is the same evidence shape.
+#     shape, no runtime imports), run twice, byte-compare.
 #   TS lane analog: double-emit the kernel and byte-compare the emitted
 #     files; tsc --noEmit on the assembled composition.
 set -euo pipefail
@@ -110,9 +117,9 @@ strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
   strip "$SCRATCH/valida.ts"
   echo "const valida = { valida_spatium, valida_nomen_tag, valida_nomen_attributi, valida_nomen_in_spatio, valida_void_html, valida_void_structura };"
   strip "$SCRATCH/tela.ts"
-  echo "const tela = { html_visus, css, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, Attributum, Proprietas, Declaratio, Regula, Stilum };"
+  echo "const tela = { html_visus, css, thema_css, thema_stilum, thema, scopulum, scopuli_core, nomen_scopuli_proprietas, nomen_scopuli_validum, thema_scopuli_core_parati, thema_habet_scopulum, assemble, codicillus, ordo, codicilli_dedupata, ordine_ordinata, stilum_validum, stilum_textus_immundus, codicillus_ex, in_lista, pendeant_parata, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, Attributum, Proprietas, Declaratio, Regula, Stilum, Scopulum, Thema, Codicillus, Ordo };"
   strip "$SCRATCH/extension.ts"
-  echo "const ext = { chart_axis_muted, chart_scopuli, bar_metrum, chart_stilum, Scopulum };"
+  echo "const ext = { chart_axis_muted, chart_axis_muted_tenebrae, chart_grid_muted, chart_grid_muted_tenebrae, chart_scopuli, chart_scopuli_tenebrae, bar_metrum, chart_stilum, Scopulus };"
   strip "$SCRATCH/main.ts"
 } > "$SCRATCH/composition.ts"
 
