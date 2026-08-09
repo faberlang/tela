@@ -22,7 +22,7 @@ file is the operating summary; the docs are the contract.
 | `src/valida.fab` | Validation module (imported as `tela:valida`) — flat, import-free, public surface string/bool only |
 | `exempla/` | Exempla-mode tests (`+++` frontmatter, `locale = "en"`); one exempla file per unit surface (e.g. `validation.fab`, `serializer.fab`) |
 | `scripta/` | Validation harnesses (Stage 1 U6: `check-compile`, `check-exempla`, `check-determinism`) |
-| `docs/design/` | Design records (this stage: `identity-hydration.md`) |
+| `docs/design/` | Design records (`identity-hydration.md`, `theme-protocol.md`, `browser-lifecycle.md`) |
 | `docs/factory/mvp/` | Campaign + delivery + policy docs (machine-managed; do not hand-edit `README.md` if present — regenerate) |
 | `spike/` | **Frozen Stage 0 evidence — no unit writes here** |
 | `proof/benchmark/` | Stage 1 U5 benchmark packages (`extension-lib/`, `canary-app/`, `libhome/`) |
@@ -206,6 +206,87 @@ exempla: `exempla/thema.fab`.
   (opt-in only) → tokens → components → library packages → application;
   `@layer` at-rules are deferred (policy (c) growth). U2's assembly/cascade
   record is the authoritative reconciliation point when it lands.
+
+## Stage 3 authoring notes (browser lifecycle)
+
+Design record: [`docs/design/browser-lifecycle.md`](docs/design/browser-lifecycle.md).
+Stage 3 adds the interactive layer over the locked static renderer: the pure
+behavior carriers in the kernel (`Eventum`/`Effectus`/`Renovatio`, U1
+`4ca331a`), a new flat browser module owning the mount/update/dispose
+lifecycle + hydration over the `web:dom` host seam, a DOM shim for the node
+runtime gate, and the segmented-control interaction proof.
+
+- **Browser-module conventions.** The browser module `src/browser.fab`
+  (`tela:browser`, U2) imports `web:dom` through the documented host seam —
+  `web:dom` is consumed read-only (faber-web authored la, targets ts only).
+  The **pinned seam call shape** (policy (b) English renderer/host verbs;
+  behavior-design §5): `mount(dom.Scope, Visus, Thema) → Mounted ∪ null`,
+  `replace(Mounted, Visus) → Renovatio ∪ null`, `dispose(Mounted) → vacuum`.
+  `Mounted` carries host state (scope, mounted root, current `Visus`, active
+  theme, subscription list). The kernel owns the pure carriers only —
+  Faber-Latin protocol spellings `Eventum { nomen }`, `union Effectus`
+  (`Restitue`/`Dirige`/`Ancora`, each keyed by `identitas`), `Renovatio {
+  Visus visus, list<Effectus> effectus }`, with kernel-owned constructors
+  (`eventum`, `restitue`, `dirige`, `ancora`, `renovatio`) and the
+  `effectus_identitas` accessor. The message-typed behavior plan is
+  **app-typed** (radix D1 blocks generic user-type construction — never
+  kernel-generic; the campaign's conceptual `mount(Scope, Program, Theme)`
+  decomposes at the app boundary, attaching through the `data-tela` seam).
+  Never ambient global document shortcuts — DOM operations flow through the
+  `Scope`.
+- **Escalation markers (G4/dialect).** `fix:g4` — WARN014 snapshot skip on
+  public signatures referencing imported sibling types (the browser module's
+  `web:dom`-typed signatures; the union-returning signature family); the
+  harness-assembly workaround binds the `webDom*` surface directly, so the
+  snapshot does not apply at runtime. `fix:web-dom-locale` — en→la
+  provider-module locale/dialect propagation at `radix check`
+  (PARSE001-family, the CODEGEN001 mechanism): **attempt the import**; on
+  failure record + escalate; fall back to the harness-level DOM binding;
+  **never re-author a `web:dom` copy inside tela**.
+- **DOM shim + check-mount harness.** The node runtime gate runs the
+  mount/update proofs through `scripta/dom-shim.ts` (U2) — a minimal
+  in-memory DOM implementing the `webDom*` runtime-binding surface (the
+  WEB5 `fake-dom.mjs`/`web-shim-dom.js` precedent). **Bounded fidelity**:
+  state-level assertions (selection / ARIA / live-region / subscription /
+  focus / scroll intent), not real layout; a real-browser driver is out of
+  scope. `scripta/check-mount` (U4) is the interaction gate: it assembles
+  the interactive composition and runs the scripted sequence under `node`,
+  fail-closed.
+- **Interaction-gate proof shape.** The segmented-control scripted sequence
+  (U3/U4): pointer click on an unselected segment selects (previous
+  unselects, the announcement fires once); click on the already-selected
+  segment is a no-op (silent); arrow keys move focus only (selection
+  unchanged); `Space`/`Enter` select + announce; `Home`/`End` move focus;
+  a replace across the region restores focus to the pre-replacement focused
+  node by identity + executes the declared scroll-anchor; dispose removes
+  subscriptions (a post-dispose event dispatch does nothing). Assertions
+  execute under `node` — any failure or non-zero exit FAILS the gate.
+- **Synchronous-only posture.** Stage 3 proofs are synchronous only: no
+  `@ futura`, no `dom.fetch_text`, no async event sources, no
+  fetch-driven/async update claim (the TS async gap is a named Stage 3
+  input, routed — see the design record §6). A unit that hits an
+  async-shaped need records the workaround + escalation To mind; it never
+  weakens the contract and never waits.
+- **`fix:<id>` discipline inventory (Stage 3).** Markers: `fix:web-dom-locale`
+  (NEW), `fix:g4`, `fix:g5`, `fix:codegen001`, `fix:ts-emitter`,
+  `fix:snapshot-nomen-collision`. Every applied workaround is marked at the
+  site in the module header; **removal = grep-replace after each radix fix
+  lands** (e.g. `grep -rn 'fix:web-dom-locale' src/`). A colliding locked
+  verb is **escalated, never silently renamed** (the G5/G6 rule).
+- **Determinism posture.** Determinism applies to **static/mount-time
+  serialization only** (the segmented control's initial HTML + full cascade
+  — byte-identical double-build, fail-closed); interactive state is
+  time-variant, so the interaction gate is a scripted deterministic
+  assertion sequence, not a racy timing test. R2 note: when CODEGEN001
+  lands, the Rust-lane capture must equal the TS-lane capture
+  (stage-2-determinism.md §3).
+- **Hydration + the app-typed plan.** The concrete message type +
+  `Vinculum`-shaped bindings are built app-side in the benchmark (U3),
+  keyed to the `data-tela` identities the static renderer emits
+  (identity-hydration.md §7). Hydration attaches to matching `data-tela`
+  nodes; a mismatch diagnoses + replaces the mismatched region from the
+  View; duplicate `data-tela` values are diagnosed — never a silent bind
+  (identity-hydration.md §6).
 
 ## Branch B (frozen for Stage 1)
 
