@@ -2,7 +2,7 @@
 
 **Created**: 2026-07-18
 **Updated**: 2026-07-18 — moved into the initialized Tela repository after review reconciliation
-**Status**: active — Stage 0 accepted, Stage 1 accepted, Stage 2 accepted — initial accept record corrected (fire-9 independent audit 2026-08-09 confirmed the closeout evidence; the original accept asserted a prior audit that did not exist); Stage 3 accepted (step-6 review + independent audit clean_pass 2026-08-09, audit-before-acceptance held); Stage 4 accepted (non-interactive proof U1–U5, independent audit clean_pass 2026-08-09, audit-before-acceptance held — verdict mail a7a89c12; the interactive gate U6/U7 recorded NOT MET: cds-u5/cds-u6 not landed — gated workstream post-closeout); Stage 5 (reference catalog) waits on the interactive seam closing
+**Status**: active — Stage 0 accepted, Stage 1 accepted, Stage 2 accepted — initial accept record corrected (fire-9 independent audit 2026-08-09 confirmed the closeout evidence; the original accept asserted a prior audit that did not exist); Stage 3 accepted (step-6 review + independent audit clean_pass 2026-08-09, audit-before-acceptance held); Stage 4 accepted (non-interactive proof U1–U5, independent audit clean_pass 2026-08-09, audit-before-acceptance held — verdict mail a7a89c12; interactive gate U6/U7 MET 2026-08-09 — verdict mail f9b616c0, scoped claim wording); Stage 5 (reference catalog) waits on the interactive seam closing
 **Mode**: repository campaign routing artifact; do not implement directly from this file
 **Target workspace**: `/Users/ianzepp/work/faberlang`
 **Control-plane repo**: `/Users/ianzepp/work/faberlang/tela`
@@ -305,16 +305,23 @@ TypeScript async gap before claiming fetch-driven updates.
 
 **Status**: accepted — non-interactive proof complete (U1–U5; independent
 audit clean_pass 2026-08-09, audit-before-acceptance held, verdict mail
-a7a89c12); the interactive gate U6/U7 is RECORDED NOT MET (CTO10-3 —
-`cds-u5-provider-locale` + `cds-u6-file-interface-exports` not landed); the
-gated workstream executes post-closeout when both fixes land; the entry
-conditions above stand until then
-**Entry conditions (recorded, not met)**: the Stage 4 interactive-proof gate
-per the Stage 3 closeout (CTO10-3) — `fix:web-dom-locale` (a real en→la
-`web:dom` import) and `fix:g4` (the `tela:browser` lifecycle exported and
-consumable through the normal package interface) must land before the
-interactive Stage 4 proof; the `fix:sem001`/`fix:prim-nullable`/
-`fix:codegen001` markers are NOT Stage-4 blockers.
+a7a89c12); interactive gate U6/U7 MET 2026-08-09 (independent audit PASS
+with scoped claim wording — verdict mail f9b616c0, audit-before-acceptance
+held; commits tela `b6050ea` + `1423666`, faber-web `c48f152`, radix
+`e32397630` + `2103f8a7f`)
+**Entry conditions**: MET — the Stage 4 interactive-proof gate (CTO10-3) is
+closed. Claim, exactly as audited: real en→la `web:dom` import +
+`tela:browser` public lifecycle (mount/replace/dispose) + formslib composed
+through normal qualified imports; mount via `dom.scope` + `browser.mount`;
+an 8-step scripted interaction sequence asserted under node (exit 0) crossing
+the ACTUAL faber-web seam — emitted app/browser `dom.*` refs → emitted
+web:dom provider module → `bindings/ts.toml` mapping → `runtime/dom.ts`
+implementation (verbatim) — over a WEB5-precedent fake DOM; no tela-side
+shim, no same-named webDom* globals; synchronous-only. Scope: hydration
+fidelity = identity + tag name from `dom.snapshot` (tagName-only;
+faber-web's namespace/local Nodus fields emitted but not yet consumed).
+Residuals: CODEGEN001 (Rust path), `verum`→`b` workaround, 9 `dom.on*`
+WARN014 skips.
 **Source**: campaign governing invariant and Stage 0 two-package canary
 **Why now**: the framework is not extensible merely because its own components
 compile; prove the public seam before building the reference catalog.
