@@ -627,56 +627,56 @@ function openTagEquals(a: FakeElement, b: FakeElement): boolean {
 // ---------------------------------------------------------------------------
 
 export interface MountedLike {
-  scopus: { selector: string };
-  radix: { identitas: string };
-  textus_markup: string;
-  textus_css: string;
-  identitates: string[];
-  diagnosia: string[];
-  ligamina: Array<{ identitas: string; status: string }>;
-  subscriptiones: Array<{ identitas: string; nomen_eventi: string }>;
-  identitas_focus: string;
-  identitas_focus_optata: string;
+  scope: { selector: string };
+  root: { identity: string };
+  markup: string;
+  css_text: string;
+  identities: string[];
+  diagnostics: string[];
+  bindings: Array<{ identity: string; status: string }>;
+  subscriptions: Array<{ identity: string; event_name: string }>;
+  focused_identity: string;
+  target_identity: string;
 }
 
 export interface RenovatioLike {
-  visus: unknown;
-  effectus: unknown[];
+  view: unknown;
+  effects: unknown[];
 }
 
 export interface MountProofApi {
   // The api fn params are `any`-typed (bounded harness typing): the emitted
-  // browser.fab functions carry concrete Scope/Visus/Thema types declared in
+  // browser.fab functions carry concrete Scope/View/Theme types declared in
   // the assembled file, which this standalone module cannot import. The
   // RETURN types stay structural so the driver reads real plan fields.
-  mount: (scope: any, visus: any, thema: any) => MountedLike | null;
-  replace: (mounted: any, visus: any) => RenovatioLike | null;
+  mount: (scope: any, view: any, theme: any) => MountedLike | null;
+  replace: (mounted: any, view: any) => RenovatioLike | null;
   dispose: (mounted: any) => void;
-  focus_tenet: (mounted: any, identitas: string) => any;
-  focus_optata: (mounted: any, identitas: string) => any;
+  focus_held: (mounted: any, identity: string) => any;
+  focus_target: (mounted: any, identity: string) => any;
   // Stage 4 U6: the scope is constructed through the REAL provider seam
-  // (webDomScope — the dom-shim's web:dom runtime) — no tela-side `scopus`
+  // (webDomScope — the dom-shim's web:dom runtime) — no tela-side `scope`
   // constructor exists anymore. The pre-existing hydration state is READ by
-  // mount via webDomSnapshot; the driver plants the praesens DOM first.
-  scopus: (selector: string) => any;
-  html_visus: (visus: any) => string | null;
-  effectus_identitas: (effectus: any) => string;
-  arbor: () => any;
-  arbor_extensa: () => any;
-  arbor_duplicata: () => any;
-  thema: () => any;
-  textus_arboris: () => string;
-  praesens_hydrationis: () => string;
-  praesens_mismatch: () => string;
-  praesens_duplicata: () => string;
-  praesens_extranea: () => string;
+  // mount via webDomSnapshot; the driver plants the present DOM first.
+  scope: (selector: string) => any;
+  html_visus: (view: any) => string | null;
+  effect_identity: (effects: any) => string;
+  tree: () => any;
+  extended_tree: () => any;
+  duplicate_tree: () => any;
+  theme: () => any;
+  tree_markup: () => string;
+  hydration_present: () => string;
+  mismatch_present: () => string;
+  duplicate_present: () => string;
+  foreign_present: () => string;
 }
 
 /**
  * Execute a mount plan against the installed fake DOM. Node-level policy
- * follows the module's binding plan (ligamina): "ligare" identities bind to
+ * follows the module's binding plan (bindings): "bind" identities bind to
  * the existing matching node (stamped "original" when `stamp` is set);
- * "creare" identities are created/replaced from the View; extra or
+ * "create" identities are created/replaced from the View; extra or
  * duplicated identity nodes are removed.
  */
 export function executeMountPlan(
@@ -686,8 +686,8 @@ export function executeMountPlan(
   stamp = false,
 ): void {
   const root = resolveRegion(document, selector);
-  const target = parseFragment(mounted.textus_markup);
-  const plan = new Map(mounted.ligamina.map((l) => [l.identitas, l.status]));
+  const target = parseFragment(mounted.markup);
+  const plan = new Map(mounted.bindings.map((l) => [l.identity, l.status]));
   syncRegion(root, target, plan, stamp);
 }
 
@@ -711,8 +711,8 @@ function syncRegion(
     const tId = t.dataTela;
     const match = tId !== "" ? parent.children.find((c) => c.dataTela === tId) ?? null
       : parent.children[k] ?? null;
-    const status = tId !== "" ? (plan.get(tId) ?? "creare") : "creare";
-    if (match !== null && status === "ligare" && openTagEquals(match, t)) {
+    const status = tId !== "" ? (plan.get(tId) ?? "create") : "create";
+    if (match !== null && status === "bind" && openTagEquals(match, t)) {
       if (stamp) {
         match.token = "original";
       }
@@ -734,7 +734,7 @@ function syncRegion(
     }
   }
   // Remove leftover identity nodes: nodes whose identity is absent from the
-  // target (extranea) and duplicate nodes beyond one per target identity
+  // target (foreign) and duplicate nodes beyond one per target identity
   // (the duplicate-identity policy — never a silent double-bind).
   const targetIdentitySet = new Set(
     targetChildren.filter((c) => c.dataTela !== "").map((c) => c.dataTela),
@@ -767,12 +767,12 @@ export function bindRegionSubscriptions(
   handler: (event: FakeEvent) => void = () => undefined,
 ): WebDomSubscription[] {
   const root = resolveRegion(document, selector);
-  return mounted.subscriptiones.map((s) => {
-    const node = root.querySelectorAll("[data-tela]").find((n) => n.dataTela === s.identitas);
+  return mounted.subscriptions.map((s) => {
+    const node = root.querySelectorAll("[data-tela]").find((n) => n.dataTela === s.identity);
     if (node === undefined) {
-      throw new Error(`dom-shim: subscription target missing: ${s.identitas}`);
+      throw new Error(`dom-shim: subscription target missing: ${s.identity}`);
     }
-    return webDomOn(node, s.nomen_eventi, handler);
+    return webDomOn(node, s.event_name, handler);
   });
 }
 
@@ -812,12 +812,12 @@ export function executeMountProof(api: MountProofApi): void {
   // --- scenario 1: mount onto an EMPTY scope ------------------------------
   {
     resetRegion("#root");
-    const mounted = api.mount(api.scopus("#root"), api.arbor(), api.thema());
+    const mounted = api.mount(api.scope("#root"), api.tree(), api.theme());
     assert(mounted !== null, "mount onto an empty scope returns a plan");
     const m = mounted as MountedLike;
-    assert(m.textus_markup === api.textus_arboris(), "plan markup is the serialized View");
-    assert(m.diagnosia.length === 0, "clean mount: no diagnostics");
-    assert(m.ligamina.every((l) => l.status === "creare"), "clean mount: every identity creates");
+    assert(m.markup === api.tree_markup(), "plan markup is the serialized View");
+    assert(m.diagnostics.length === 0, "clean mount: no diagnostics");
+    assert(m.bindings.every((l) => l.status === "create"), "clean mount: every identity creates");
     executeMountPlan(document, "#root", m, true);
     const ids = identityNodes();
     assert(ids.length === 3, "three identity nodes mounted");
@@ -829,13 +829,13 @@ export function executeMountProof(api: MountProofApi): void {
 
   // --- scenario 2: hydration binds matching nodes (never recreated) ------
   {
-    const praesens = api.praesens_hydrationis();
-    preRenderRegion("#root", praesens);
-    const mounted = api.mount(api.scopus("#root"), api.arbor(), api.thema());
+    const present = api.hydration_present();
+    preRenderRegion("#root", present);
+    const mounted = api.mount(api.scope("#root"), api.tree(), api.theme());
     assert(mounted !== null, "hydration mount returns a plan");
     const m = mounted as MountedLike;
-    assert(m.diagnosia.length === 0, "hydration: no diagnostics");
-    assert(m.ligamina.every((l) => l.status === "ligare"), "hydration: every identity binds");
+    assert(m.diagnostics.length === 0, "hydration: no diagnostics");
+    assert(m.bindings.every((l) => l.status === "bind"), "hydration: every identity binds");
     executeMountPlan(document, "#root", m, true);
     const ids = identityNodes();
     assert(ids.length === 3, "hydration: three identity nodes present");
@@ -849,13 +849,13 @@ export function executeMountProof(api: MountProofApi): void {
 
   // --- scenario 3: mismatch → diagnose + replace (never a silent bind) ---
   {
-    const praesens = api.praesens_mismatch();
-    preRenderRegion("#root", praesens);
-    const mounted = api.mount(api.scopus("#root"), api.arbor(), api.thema());
+    const present = api.mismatch_present();
+    preRenderRegion("#root", present);
+    const mounted = api.mount(api.scope("#root"), api.tree(), api.theme());
     assert(mounted !== null, "mismatch mount returns a plan");
     const m = mounted as MountedLike;
-    assert(m.diagnosia.includes("muta:tela-seg-2"), "mismatch diagnosed");
-    assert(m.ligamina.find((l) => l.identitas === "tela-seg-2")?.status === "creare", "mismatch node re-creates");
+    assert(m.diagnostics.includes("changed:tela-seg-2"), "mismatch diagnosed");
+    assert(m.bindings.find((l) => l.identity === "tela-seg-2")?.status === "create", "mismatch node re-creates");
     executeMountPlan(document, "#root", m, true);
     assert(byIdentity("tela-seg-2")?.token !== "original", "mismatch node replaced (not silently bound)");
     assert(byIdentity("tela-seg-2")?.textContent === "Two", "mismatch node replaced from the View");
@@ -865,13 +865,13 @@ export function executeMountProof(api: MountProofApi): void {
 
   // --- scenario 4: duplicate identity → diagnosed + resolved --------------
   {
-    const praesens = api.praesens_duplicata();
-    preRenderRegion("#root", praesens);
-    const mounted = api.mount(api.scopus("#root"), api.arbor_duplicata(), api.thema());
+    const present = api.duplicate_present();
+    preRenderRegion("#root", present);
+    const mounted = api.mount(api.scope("#root"), api.duplicate_tree(), api.theme());
     assert(mounted !== null, "duplicate mount returns a plan");
     const m = mounted as MountedLike;
-    assert(m.diagnosia.includes("duplicata:tela-dup"), "duplicate identity diagnosed");
-    assert(m.ligamina.find((l) => l.identitas === "tela-dup")?.status === "creare", "duplicate identity re-creates");
+    assert(m.diagnostics.includes("duplicate:tela-dup"), "duplicate identity diagnosed");
+    assert(m.bindings.find((l) => l.identity === "tela-dup")?.status === "create", "duplicate identity re-creates");
     executeMountPlan(document, "#root", m, true);
     const dups = document.querySelectorAll("[data-tela='tela-dup']");
     assert(dups.length === 1, "duplicate nodes collapsed to one (no silent double-bind)");
@@ -881,7 +881,7 @@ export function executeMountProof(api: MountProofApi): void {
   // --- scenario 5: replace → declarative effects execute ------------------
   {
     resetRegion("#root");
-    const mounted = api.mount(api.scopus("#root"), api.arbor(), api.thema());
+    const mounted = api.mount(api.scope("#root"), api.tree(), api.theme());
     assert(mounted !== null, "replace scenario: mount returns a plan");
     const m = mounted as MountedLike;
     executeMountPlan(document, "#root", m, true);
@@ -889,25 +889,25 @@ export function executeMountProof(api: MountProofApi): void {
     const seg2 = byIdentity("tela-seg-2");
     assert(seg2 !== undefined, "seg-2 node present before replace");
     document.focusNode(seg2!);
-    const mFocus = api.focus_tenet(m, "tela-seg-2");
-    const renovatio = api.replace(mFocus, api.arbor());
-    assert(renovatio !== null, "replace returns the update result");
-    const r = renovatio as RenovatioLike;
-    const keys = r.effectus.map((e) => api.effectus_identitas(e));
+    const mFocus = api.focus_held(m, "tela-seg-2");
+    const update = api.replace(mFocus, api.tree());
+    assert(update !== null, "replace returns the update result");
+    const r = update as RenovatioLike;
+    const keys = r.effects.map((e) => api.effect_identity(e));
     assert(keys.length === 2, "replace derives two effects");
-    assert(keys[0] === "tela-seg-2" && keys[1] === "#root", "effects are restitue(seg-2) + ancora(#root)");
+    assert(keys[0] === "tela-seg-2" && keys[1] === "#root", "effects are restore(seg-2) + anchor(#root)");
     // Execute the replacement (rebuild the region from the next View).
-    const nextMarkup = api.html_visus(r.visus) ?? "";
+    const nextMarkup = api.html_visus(r.view) ?? "";
     const nextPlan: MountedLike = {
       ...m,
-      textus_markup: nextMarkup,
-      ligamina: m.identitates.map((id) => ({ identitas: id, status: "creare" })),
+      markup: nextMarkup,
+      bindings: m.identities.map((id) => ({ identity: id, status: "create" })),
     };
     executeMountPlan(document, "#root", nextPlan, false);
     // Execute the declarative effects after replacement (focus restore by
     // stable identity; scroll-anchor intent for the region).
-    for (const e of r.effectus) {
-      const key = api.effectus_identitas(e);
+    for (const e of r.effects) {
+      const key = api.effect_identity(e);
       const target = identityNodes().find((n) => n.dataTela === key);
       if (target !== undefined) {
         document.focusNode(target);
@@ -917,34 +917,34 @@ export function executeMountProof(api: MountProofApi): void {
     assert(byIdentity("tela-control") !== undefined, "region present after replacement");
   }
 
-  // --- scenario 5b: declared focus movement adds Dirige ------------------
+  // --- scenario 5b: declared focus movement adds Direct ------------------
   {
     resetRegion("#root");
-    const mounted = api.mount(api.scopus("#root"), api.arbor(), api.thema());
+    const mounted = api.mount(api.scope("#root"), api.tree(), api.theme());
     assert(mounted !== null, "movement scenario: mount returns a plan");
     const m = mounted as MountedLike;
     executeMountPlan(document, "#root", m, true);
-    const mFocus = api.focus_tenet(m, "tela-seg-2");
-    const mMove = api.focus_optata(mFocus, "tela-seg-3");
-    const renovatio = api.replace(mMove, api.arbor_extensa());
-    assert(renovatio !== null, "movement replace returns the update result");
-    const r = renovatio as RenovatioLike;
-    const keys = r.effectus.map((e) => api.effectus_identitas(e));
+    const mFocus = api.focus_held(m, "tela-seg-2");
+    const mMove = api.focus_target(mFocus, "tela-seg-3");
+    const update = api.replace(mMove, api.extended_tree());
+    assert(update !== null, "movement replace returns the update result");
+    const r = update as RenovatioLike;
+    const keys = r.effects.map((e) => api.effect_identity(e));
     assert(keys.length === 3, "movement replace derives three effects");
     assert(
       keys[0] === "tela-seg-2" && keys[1] === "tela-seg-3" && keys[2] === "#root",
-      "effects are restitue + dirige + ancora",
+      "effects are restore + direct + anchor",
     );
-    const nextMarkup = api.html_visus(r.visus) ?? "";
-    const extIds = m.identitates.concat("tela-seg-3");
+    const nextMarkup = api.html_visus(r.view) ?? "";
+    const extIds = m.identities.concat("tela-seg-3");
     const nextPlan: MountedLike = {
       ...m,
-      textus_markup: nextMarkup,
-      ligamina: extIds.map((id) => ({ identitas: id, status: "creare" })),
+      markup: nextMarkup,
+      bindings: extIds.map((id) => ({ identity: id, status: "create" })),
     };
     executeMountPlan(document, "#root", nextPlan, false);
-    for (const e of r.effectus) {
-      const key = api.effectus_identitas(e);
+    for (const e of r.effects) {
+      const key = api.effect_identity(e);
       const target = identityNodes().find((n) => n.dataTela === key);
       if (target !== undefined) {
         document.focusNode(target);
@@ -956,10 +956,10 @@ export function executeMountProof(api: MountProofApi): void {
   // --- scenario 6: dispose unsubscribes + clears the region --------------
   {
     resetRegion("#root");
-    const mounted = api.mount(api.scopus("#root"), api.arbor(), api.thema());
+    const mounted = api.mount(api.scope("#root"), api.tree(), api.theme());
     assert(mounted !== null, "dispose scenario: mount returns a plan");
     const m = mounted as MountedLike;
-    assert(m.subscriptiones.length === 3, "one subscription descriptor per View identity");
+    assert(m.subscriptions.length === 3, "one subscription descriptor per View identity");
     executeMountPlan(document, "#root", m, false);
     // Bind the region-bind subscriptions (webDom* surface) with an
     // observable counter; the app's real handlers are app-typed in U3.
@@ -969,7 +969,7 @@ export function executeMountProof(api: MountProofApi): void {
     });
     const preNode = byIdentity("tela-seg-1");
     assert(preNode !== undefined, "seg-1 node present before dispose");
-    preNode!.dispatchEvent(new FakeEvent("tela:ligamen"));
+    preNode!.dispatchEvent(new FakeEvent("tela:binding"));
     assert(dispatched === 1, "subscription is live before dispose");
     // dispose: the harness executes the unsubscribe plan + clears the region.
     api.dispose(m);
@@ -979,7 +979,7 @@ export function executeMountProof(api: MountProofApi): void {
     const region = resolveRegion(document, "#root");
     region.children.splice(0, region.children.length);
     // A post-dispose dispatch does nothing (listeners removed).
-    preNode!.dispatchEvent(new FakeEvent("tela:ligamen"));
+    preNode!.dispatchEvent(new FakeEvent("tela:binding"));
     assert(dispatched === 1, "post-dispose dispatch is a no-op (unsubscribed)");
     assert(identityNodes().length === 0, "region cleared after dispose");
   }

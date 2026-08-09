@@ -68,8 +68,8 @@ trap 'rm -rf "$SCRATCH"' EXIT
 # their top-level bindings without exports).
 strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
 
-VALIDA_NS="const valida = { valida_spatium, valida_nomen_tag, valida_nomen_attributi, valida_nomen_in_spatio, valida_void_html, valida_void_structura };"
-TELA_NS="const tela = { html_visus, css, thema_css, thema_stilum, thema, scopulum, scopuli_core, nomen_scopuli_proprietas, nomen_scopuli_validum, thema_scopuli_core_parati, thema_habet_scopulum, assemble, codicillus, ordo, codicilli_dedupata, ordine_ordinata, stilum_validum, stilum_textus_immundus, codicillus_ex, in_lista, pendeant_parata, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, eventum, restitue, dirige, ancora, renovatio, effectus_identitas, Attributum, Proprietas, Declaratio, Regula, Stilum, Scopulum, Thema, Codicillus, Ordo };"
+VALIDA_NS="const validate = { valid_space, valid_tag_name, valid_attribute_name, valid_name_in_space, valid_void_html, valid_void_structure };"
+TELA_NS="const tela = { html_visus, css, theme_css, theme_style, theme, token, core_tokens, token_property_name, token_name_valid, theme_has_core_tokens, theme_has_token, assemble, bundle, order, deduplicated_bundles, topological_order, style_valid, unclean_style_text, bundle_for, in_list, dependencies_met, text_view, fragment_view, new_identity, html_space, svg_space, element_view, element_full, event_name, restore, direct, anchor, update, effect_identity, Attribute, Property, Identity, Declaration, Rule, Style, Token, Theme, Bundle, Order, EventName, Update };"
 # Stage 4 U6: the web:dom namespace binds the DOM-SHIM's runtime surface
 # (the fake-DOM Node host env). The bare Scope/Nodus types come from the
 # shim itself (the emitted provider module's `class Element` would collide
@@ -77,7 +77,7 @@ TELA_NS="const tela = { html_visus, css, thema_css, thema_stilum, thema, scopulu
 # boundary is any-typed — the shim's webDomSnapshot expects the runtime
 # scope with `root`; the emitted Scope type carries only `selector`).
 DOM_NS="const dom = { scope: webDomScope, snapshot: ((scope: any): Array<Nodus> | null => webDomSnapshot(scope)), query: webDomQuery, require: webDomRequire, all: webDomAll, value: webDomValue };"
-BROWSER_NS="const browser = { radiculum, subscriptio, ligamen, parse_identitates, elementum_tag, quotiens, identitates_duplicatae, nomen_tagi, tag_at, identitates_ex_nodis, tags_ex_nodis, ligamen_status, diagnosia_hydrationis, mount, replace, dispose, focus_tenet, focus_optata };"
+BROWSER_NS="const browser = { region_root, event_subscription, binding, parse_identities, element_tag, count_occurrences, duplicate_identities, tag_name, tag_at, identities_from_nodes, tags_from_nodes, binding_status, hydration_diagnostics, mount, replace, dispose, focus_held, focus_target };"
 
 # The U2 mount-proof driver glue: calls executeMountProof (dom-shim) with
 # the assembled browser exempla's scenario inputs — the runtime gate for
@@ -89,26 +89,26 @@ const domProofApi = {
   mount: browser.mount,
   replace: browser.replace,
   dispose: browser.dispose,
-  focus_tenet: browser.focus_tenet,
-  focus_optata: browser.focus_optata,
-  scopus: webDomScope,
+  focus_held: browser.focus_held,
+  focus_target: browser.focus_target,
+  scope: webDomScope,
   html_visus: tela.html_visus,
-  effectus_identitas: tela.effectus_identitas,
-  arbor: arbor_controlli,
-  arbor_extensa: arbor_controlli_extensa,
-  arbor_duplicata: arbor_duplicata,
-  thema: thema_probe,
-  textus_arboris: textus_arboris,
-  praesens_hydrationis: praesens_hydrationis,
-  praesens_mismatch: praesens_mismatch,
-  praesens_duplicata: praesens_duplicata,
-  praesens_extranea: praesens_extranea
+  effect_identity: tela.effect_identity,
+  tree: control_tree,
+  extended_tree: extended_control_tree,
+  duplicate_tree: duplicate_tree,
+  theme: theme_probe,
+  tree_markup: tree_markup,
+  hydration_present: hydration_present,
+  mismatch_present: mismatch_present,
+  duplicate_present: duplicate_present,
+  foreign_present: foreign_present
 };
 executeMountProof(domProofApi);
 "
 
 echo "check-exempla: TS lane (emit + assemble + tsc --noEmit + node runtime gate)"
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/valida.fab" -o "$SCRATCH/valida.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/validate.fab" -o "$SCRATCH/valida.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/browser.fab" -o "$SCRATCH/browser.ts" >/dev/null
 
@@ -119,7 +119,7 @@ for f in "$ROOT"/exempla/*.fab; do
   "$RADIX_BIN" emit -t ts --locale en "$f" -o "$SCRATCH/${name}-exempla.ts" >/dev/null
   case "$name" in
     validation)
-      # exempla/validation.fab imports tela:valida
+      # exempla/validation.fab imports tela:validate
       {
         strip "$SCRATCH/valida.ts"
         echo "$VALIDA_NS"
@@ -127,7 +127,7 @@ for f in "$ROOT"/exempla/*.fab; do
       } > "$SCRATCH/${name}-joined.ts"
       ;;
     serializer)
-      # exempla/serializer.fab imports tela:tela (which imports tela:valida)
+      # exempla/serializer.fab imports tela:tela (which imports tela:validate)
       {
         strip "$SCRATCH/valida.ts"
         echo "$VALIDA_NS"
@@ -137,7 +137,7 @@ for f in "$ROOT"/exempla/*.fab; do
       } > "$SCRATCH/${name}-joined.ts"
       ;;
     thema)
-      # exempla/thema.fab imports tela:tela (Stage 2 U1 theme/token surface)
+      # exempla/theme.fab imports tela:tela (Stage 2 U1 theme/token surface)
       {
         strip "$SCRATCH/valida.ts"
         echo "$VALIDA_NS"

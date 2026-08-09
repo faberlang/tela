@@ -9,7 +9,7 @@ locale = "en"
 # lifecycle (tela:browser). Proves, at the PURE level, every U2 done_when
 # (g) case's PLAN half: mount onto an empty scope (markup + identity index
 # + binding plan), hydration onto pre-rendered Tela markup (matching
-# data-tela nodes bind — "ligare", not recreated), mismatch → diagnose +
+# data-tela nodes bind — "bind", not recreated), mismatch → diagnose +
 # replace (never a silent bind), duplicate-identity diagnosis, replace's
 # declarative effect-key derivation, and the region-bind subscription
 # descriptors dispose carries.
@@ -21,128 +21,128 @@ locale = "en"
 # subscriptions disposed, region cleared) — "asserted at the shim level".
 #
 # WHY the split: browser.mount/browser.replace carry imported sibling types
-# (tela.Visus/Thema/Renovatio) in their public signatures. The radix
+# (tela.View/Theme/Update) in their public signatures. The radix
 # file-interface export skip (WARN014 — the G4 family) no longer applies
 # (cds-u6 landed: imported-sibling signatures export; fix:g4 removed). The
-# check-time exempla asserts the G4-safe pure policy (ligamen_status /
-# diagnosia_hydrationis / parse_identitates / nomen_tagi — string/list
+# check-time exempla asserts the G4-safe pure policy (binding_status /
+# hydration_diagnostics / parse_identities / tag_name — string/list
 # signatures stay on the file interface).
 #
 # Stage 4 U6 (seam restoration): browser.mount now consumes the REAL
 # web:dom seam (dom.Scope + dom.snapshot — the typed hydration read, no
 # textual DOM parse). The pure policy fns take the TYPED tag index
-# (tags_praesentes — the aligned per-identity tag names from the snapshot)
-# instead of the praesens markup string. The muta diagnostic fires on a
+# (present_tags — the aligned per-identity tag names from the snapshot)
+# instead of the present markup string. The changed diagnostic fires on a
 # TAG-NAME mismatch (the snapshot's fidelity — identity + tag name; the
 # attribute-level open-tag shape comparison is superseded, recorded in
 # browser-lifecycle.md). The mismatch fixture below is therefore a
 # tag-name mismatch (seg-2 is a span, not a button).
 #
 # fix:<id> markers: none applied beyond browser.fab's (fix:codegen001,
-# fix:prim-nullable, fix:g5 — NONE, fix:snapshot-nomen-collision).
+# fix:prim-nullable, fix:g5 — NONE, fix:snapshot-name-collision).
 
 import from "tela:tela" public * ut tela
 import from "tela:browser" public * ut browser
 import from "web:dom" public * ut dom
 
-# A valid theme (the 8-token core baseline — thema_css is fail-closed, so
+# A valid theme (the 8-token core baseline — theme_css is fail-closed, so
 # mount requires a theme covering the core).
-fn thema_probe() → tela.Thema {
-    return tela.thema("probe", [
-        tela.scopulum("surface.canvas", "#ffffff"),
-        tela.scopulum("surface.panel", "#f9fafb"),
-        tela.scopulum("text.primary", "#111827"),
-        tela.scopulum("text.muted", "#6b7280"),
-        tela.scopulum("border.default", "#e5e7eb"),
-        tela.scopulum("accent.primary", "#2563eb"),
-        tela.scopulum("state.positive", "#16a34a"),
-        tela.scopulum("state.caution", "#d97706")
+fn theme_probe() → tela.Theme {
+    return tela.theme("probe", [
+        tela.token("surface.canvas", "#ffffff"),
+        tela.token("surface.panel", "#f9fafb"),
+        tela.token("text.primary", "#111827"),
+        tela.token("text.muted", "#6b7280"),
+        tela.token("border.default", "#e5e7eb"),
+        tela.token("accent.primary", "#2563eb"),
+        tela.token("state.positive", "#16a34a"),
+        tela.token("state.caution", "#d97706")
     ])
 }
 
 # A segmented-control-shaped View over the data-tela seam: a group div with
 # two segment buttons. The driver mounts this View onto a scope.
-fn arbor_controlli() → tela.Visus {
-    return tela.elementum_omne(
-        tela.nova_identitas("tela-control"),
-        tela.html_spatium(),
+fn control_tree() → tela.View {
+    return tela.element_full(
+        tela.new_identity("tela-control"),
+        tela.html_space(),
         "div",
         [],
         [],
         [
-            tela.elementum_omne(
-                tela.nova_identitas("tela-seg-1"),
-                tela.html_spatium(),
+            tela.element_full(
+                tela.new_identity("tela-seg-1"),
+                tela.html_space(),
                 "button",
-                [ tela.Attributum { nomen = "class", valor = "seg" } ],
+                [ tela.Attribute { name = "class", value = "seg" } ],
                 [],
-                [ tela.textus_view("One") ]
+                [ tela.text_view("One") ]
             ),
-            tela.elementum_omne(
-                tela.nova_identitas("tela-seg-2"),
-                tela.html_spatium(),
+            tela.element_full(
+                tela.new_identity("tela-seg-2"),
+                tela.html_space(),
                 "button",
-                [ tela.Attributum { nomen = "class", valor = "seg" } ],
+                [ tela.Attribute { name = "class", value = "seg" } ],
                 [],
-                [ tela.textus_view("Two") ]
+                [ tela.text_view("Two") ]
             )
         ]
     )
 }
 
-# The extended control (adds a third segment — the dirige proof target).
-fn arbor_controlli_extensa() → tela.Visus {
-    return tela.elementum_omne(
-        tela.nova_identitas("tela-control"),
-        tela.html_spatium(),
+# The extended control (adds a third segment — the direct proof target).
+fn extended_control_tree() → tela.View {
+    return tela.element_full(
+        tela.new_identity("tela-control"),
+        tela.html_space(),
         "div",
         [],
         [],
         [
-            tela.elementum_omne(
-                tela.nova_identitas("tela-seg-1"),
-                tela.html_spatium(),
+            tela.element_full(
+                tela.new_identity("tela-seg-1"),
+                tela.html_space(),
                 "button",
-                [ tela.Attributum { nomen = "class", valor = "seg" } ],
+                [ tela.Attribute { name = "class", value = "seg" } ],
                 [],
-                [ tela.textus_view("One") ]
+                [ tela.text_view("One") ]
             ),
-            tela.elementum_omne(
-                tela.nova_identitas("tela-seg-2"),
-                tela.html_spatium(),
+            tela.element_full(
+                tela.new_identity("tela-seg-2"),
+                tela.html_space(),
                 "button",
-                [ tela.Attributum { nomen = "class", valor = "seg" } ],
+                [ tela.Attribute { name = "class", value = "seg" } ],
                 [],
-                [ tela.textus_view("Two") ]
+                [ tela.text_view("Two") ]
             ),
-            tela.elementum_omne(
-                tela.nova_identitas("tela-seg-3"),
-                tela.html_spatium(),
+            tela.element_full(
+                tela.new_identity("tela-seg-3"),
+                tela.html_space(),
                 "button",
-                [ tela.Attributum { nomen = "class", valor = "seg" } ],
+                [ tela.Attribute { name = "class", value = "seg" } ],
                 [],
-                [ tela.textus_view("Three") ]
+                [ tela.text_view("Three") ]
             )
         ]
     )
 }
 
 # The duplicate-identity View (one tela-dup span under a group div).
-fn arbor_duplicata() → tela.Visus {
-    return tela.elementum_omne(
-        tela.nova_identitas("tela-duplicata"),
-        tela.html_spatium(),
+fn duplicate_tree() → tela.View {
+    return tela.element_full(
+        tela.new_identity("tela-duplicata"),
+        tela.html_space(),
         "div",
         [],
         [],
         [
-            tela.elementum_omne(
-                tela.nova_identitas("tela-dup"),
-                tela.html_spatium(),
+            tela.element_full(
+                tela.new_identity("tela-dup"),
+                tela.html_space(),
                 "span",
                 [],
                 [],
-                [ tela.textus_view("x") ]
+                [ tela.text_view("x") ]
             )
         ]
     )
@@ -150,163 +150,163 @@ fn arbor_duplicata() → tela.Visus {
 
 # The exact serialized control markup (the plan's markup + the driver's
 # expected bytes).
-fn textus_arboris() → string {
-    return tela.html_visus(arbor_controlli()) coalesce ""
+fn tree_markup() → string {
+    return tela.html_visus(control_tree()) coalesce ""
 }
 
 # The exact serialized extended-control markup.
-fn textus_arboris_extensae() → string {
-    return tela.html_visus(arbor_controlli_extensa()) coalesce ""
+fn extended_tree_markup() → string {
+    return tela.html_visus(extended_control_tree()) coalesce ""
 }
 
 # Pre-rendered markup for the hydration scenario: the SAME bytes the View
 # serializes to — matching data-tela nodes must bind, not recreate.
-fn praesens_hydrationis() → string {
-    return textus_arboris()
+fn hydration_present() → string {
+    return tree_markup()
 }
 
 # Pre-rendered markup for the mismatch scenario: the seg-2 node is OUT OF
 # SHAPE by TAG NAME (a span instead of a button) — diagnosed + replaced
 # from the View. (The snapshot's fidelity is identity + tag name, so the
-# muta diagnostic fires on a tag-name mismatch — the U6 reconciliation.)
-fn praesens_mismatch() → string {
+# changed diagnostic fires on a tag-name mismatch — the U6 reconciliation.)
+fn mismatch_present() → string {
     return "<div data-tela='tela-control'><button class='seg' data-tela='tela-seg-1'>One</button><span class='altera' data-tela='tela-seg-2'>Two</span></div>"
 }
 
 # Pre-rendered markup for the duplicate-identity scenario: TWO nodes carry
 # the same data-tela value — diagnosed, never a silent bind.
-fn praesens_duplicata() → string {
+fn duplicate_present() → string {
     return "<div data-tela='tela-duplicata'><span data-tela='tela-dup'>a</span><span data-tela='tela-dup'>b</span></div>"
 }
 
-# Pre-rendered markup for the extranea scenario: a pre-existing identity
+# Pre-rendered markup for the foreign scenario: a pre-existing identity
 # absent from the View — the region is replaced from the View.
-fn praesens_extranea() → string {
+fn foreign_present() → string {
     return "<div data-tela='tela-control'><span data-tela='tela-pristina'>old</span></div>"
 }
 
 # The identity index of the control View (document order).
-fn identitates_arboris() → list<string> {
-    return browser.parse_identitates(textus_arboris())
+fn tree_identities() → list<string> {
+    return browser.parse_identities(tree_markup())
 }
 
 # The identity index of the duplicate pre-rendered markup.
-fn identitates_praesentis_duplicatae() → list<string> {
-    return browser.parse_identitates(praesens_duplicata())
+fn present_duplicate_identities() → list<string> {
+    return browser.parse_identities(duplicate_present())
 }
 
 # The TYPED tag-index fixtures (the aligned per-identity tag names the
 # policy fns take — what dom.snapshot would return per data-tela node).
-fn tags_hydrationis() → list<string> {
+fn hydration_tags() → list<string> {
     return ["div", "button", "button"]
 }
 
-fn tags_mismatch() → list<string> {
+fn mismatch_tags() → list<string> {
     return ["div", "button", "span"]
 }
 
-fn tags_extranea() → list<string> {
+fn foreign_tags() → list<string> {
     return ["div", "span"]
 }
 
-fn tags_duplicata() → list<string> {
+fn duplicate_tags() → list<string> {
     return ["div", "span", "span"]
 }
 
 main {
     # --- the serialized control markup (plan bytes) ----------------------
-    assert textus_arboris() ≡ "<div data-tela='tela-control'><button class='seg' data-tela='tela-seg-1'>One</button><button class='seg' data-tela='tela-seg-2'>Two</button></div>"
-    assert textus_arboris_extensae() ≡ "<div data-tela='tela-control'><button class='seg' data-tela='tela-seg-1'>One</button><button class='seg' data-tela='tela-seg-2'>Two</button><button class='seg' data-tela='tela-seg-3'>Three</button></div>"
+    assert tree_markup() ≡ "<div data-tela='tela-control'><button class='seg' data-tela='tela-seg-1'>One</button><button class='seg' data-tela='tela-seg-2'>Two</button></div>"
+    assert extended_tree_markup() ≡ "<div data-tela='tela-control'><button class='seg' data-tela='tela-seg-1'>One</button><button class='seg' data-tela='tela-seg-2'>Two</button><button class='seg' data-tela='tela-seg-3'>Three</button></div>"
 
     # --- identity extraction (the data-tela seam, document order) --------
-    const list<string> identitates ← identitates_arboris()
-    assert identitates.longitudo() ≡ 3
-    assert identitates[0] ≡ "tela-control"
-    assert identitates[1] ≡ "tela-seg-1"
-    assert identitates[2] ≡ "tela-seg-2"
+    const list<string> identities ← tree_identities()
+    assert identities.longitudo() ≡ 3
+    assert identities[0] ≡ "tela-control"
+    assert identities[1] ≡ "tela-seg-1"
+    assert identities[2] ≡ "tela-seg-2"
 
     # --- mount onto an empty scope: every identity creates ----------------
     const list<string> vacua_ids ← vacua
     const list<string> vacua_tags ← vacua
-    assert browser.ligamen_status("tela-control", identitates, vacua_ids, textus_arboris(), vacua_tags) ≡ "creare"
-    assert browser.ligamen_status("tela-seg-1", identitates, vacua_ids, textus_arboris(), vacua_tags) ≡ "creare"
-    assert browser.ligamen_status("tela-seg-2", identitates, vacua_ids, textus_arboris(), vacua_tags) ≡ "creare"
-    assert browser.diagnosia_hydrationis(textus_arboris(), identitates, vacua_ids, vacua_tags).longitudo() ≡ 0
+    assert browser.binding_status("tela-control", identities, vacua_ids, tree_markup(), vacua_tags) ≡ "create"
+    assert browser.binding_status("tela-seg-1", identities, vacua_ids, tree_markup(), vacua_tags) ≡ "create"
+    assert browser.binding_status("tela-seg-2", identities, vacua_ids, tree_markup(), vacua_tags) ≡ "create"
+    assert browser.hydration_diagnostics(tree_markup(), identities, vacua_ids, vacua_tags).longitudo() ≡ 0
 
     # --- hydration: matching nodes bind (never recreate) ------------------
-    const list<string> praesentes_ids ← browser.parse_identitates(praesens_hydrationis())
-    assert browser.ligamen_status("tela-control", identitates, praesentes_ids, textus_arboris(), tags_hydrationis()) ≡ "ligare"
-    assert browser.ligamen_status("tela-seg-1", identitates, praesentes_ids, textus_arboris(), tags_hydrationis()) ≡ "ligare"
-    assert browser.ligamen_status("tela-seg-2", identitates, praesentes_ids, textus_arboris(), tags_hydrationis()) ≡ "ligare"
-    assert browser.diagnosia_hydrationis(textus_arboris(), identitates, praesentes_ids, tags_hydrationis()).longitudo() ≡ 0
+    const list<string> present_ids ← browser.parse_identities(hydration_present())
+    assert browser.binding_status("tela-control", identities, present_ids, tree_markup(), hydration_tags()) ≡ "bind"
+    assert browser.binding_status("tela-seg-1", identities, present_ids, tree_markup(), hydration_tags()) ≡ "bind"
+    assert browser.binding_status("tela-seg-2", identities, present_ids, tree_markup(), hydration_tags()) ≡ "bind"
+    assert browser.hydration_diagnostics(tree_markup(), identities, present_ids, hydration_tags()).longitudo() ≡ 0
 
     # --- the tag-name comparison (the U6 quote-normalization resolution) --
     # Both sides normalize to tag names: the view side extracts the tag name
-    # from the serializer's open tag; the praesens side uses the typed tag
+    # from the serializer's open tag; the present side uses the typed tag
     # name. Tag names carry no quotes — the DOM's double-quote serialization
     # never enters the comparison.
-    assert browser.nomen_tagi("<button class='seg' data-tela='tela-seg-1'>") ≡ "button"
-    assert browser.nomen_tagi("<div data-tela='tela-control'>") ≡ "div"
-    assert browser.nomen_tagi("") ≡ ""
+    assert browser.tag_name("<button class='seg' data-tela='tela-seg-1'>") ≡ "button"
+    assert browser.tag_name("<div data-tela='tela-control'>") ≡ "div"
+    assert browser.tag_name("") ≡ ""
 
     # --- the typed tag-index adapters (the snapshot surface) --------------
     # dom.Nodus construction (cds-u6: imported classes construct) + the
     # G4-safe adapter: the parallel string lists the policy fns consume.
-    const dom.Nodus nodus_control ← dom.Nodus { identitas = "tela-control", tag = "div" }
-    const dom.Nodus nodus_seg1 ← dom.Nodus { identitas = "tela-seg-1", tag = "button" }
-    const dom.Nodus nodus_seg2 ← dom.Nodus { identitas = "tela-seg-2", tag = "button" }
-    const list<dom.Nodus> ∪ null nodi_hydrationis ← [nodus_control, nodus_seg1, nodus_seg2]
-    const list<string> ids_ex_nodis ← browser.identitates_ex_nodis(nodi_hydrationis)
-    const list<string> tags_ex_nodis ← browser.tags_ex_nodis(nodi_hydrationis)
-    assert ids_ex_nodis.longitudo() ≡ 3
-    assert ids_ex_nodis[2] ≡ "tela-seg-2"
-    assert tags_ex_nodis.longitudo() ≡ 3
-    assert tags_ex_nodis[0] ≡ "div"
-    assert tags_ex_nodis[1] ≡ "button"
-    assert browser.identitates_ex_nodis(null).longitudo() ≡ 0
-    assert browser.tags_ex_nodis(null).longitudo() ≡ 0
+    const dom.Nodus control_node ← dom.Nodus { identitas = "tela-control", tag = "div" }
+    const dom.Nodus seg1_node ← dom.Nodus { identitas = "tela-seg-1", tag = "button" }
+    const dom.Nodus seg2_node ← dom.Nodus { identitas = "tela-seg-2", tag = "button" }
+    const list<dom.Nodus> ∪ null hydration_nodes ← [control_node, seg1_node, seg2_node]
+    const list<string> ids_from_nodes ← browser.identities_from_nodes(hydration_nodes)
+    const list<string> tags_from_nodes ← browser.tags_from_nodes(hydration_nodes)
+    assert ids_from_nodes.longitudo() ≡ 3
+    assert ids_from_nodes[2] ≡ "tela-seg-2"
+    assert tags_from_nodes.longitudo() ≡ 3
+    assert tags_from_nodes[0] ≡ "div"
+    assert tags_from_nodes[1] ≡ "button"
+    assert browser.identities_from_nodes(null).longitudo() ≡ 0
+    assert browser.tags_from_nodes(null).longitudo() ≡ 0
 
     # --- mismatch → diagnose + replace (never a silent bind) --------------
-    const list<string> praesentes_mismatch ← browser.parse_identitates(praesens_mismatch())
-    const list<string> diagnosia_mismatch ← browser.diagnosia_hydrationis(textus_arboris(), identitates, praesentes_mismatch, tags_mismatch())
-    assert diagnosia_mismatch.longitudo() ≡ 1
-    assert diagnosia_mismatch[0] ≡ "muta:tela-seg-2"
-    assert browser.ligamen_status("tela-control", identitates, praesentes_mismatch, textus_arboris(), tags_mismatch()) ≡ "ligare"
-    assert browser.ligamen_status("tela-seg-1", identitates, praesentes_mismatch, textus_arboris(), tags_mismatch()) ≡ "ligare"
-    assert browser.ligamen_status("tela-seg-2", identitates, praesentes_mismatch, textus_arboris(), tags_mismatch()) ≡ "creare"
+    const list<string> mismatch_ids ← browser.parse_identities(mismatch_present())
+    const list<string> mismatch_diagnostics ← browser.hydration_diagnostics(tree_markup(), identities, mismatch_ids, mismatch_tags())
+    assert mismatch_diagnostics.longitudo() ≡ 1
+    assert mismatch_diagnostics[0] ≡ "changed:tela-seg-2"
+    assert browser.binding_status("tela-control", identities, mismatch_ids, tree_markup(), mismatch_tags()) ≡ "bind"
+    assert browser.binding_status("tela-seg-1", identities, mismatch_ids, tree_markup(), mismatch_tags()) ≡ "bind"
+    assert browser.binding_status("tela-seg-2", identities, mismatch_ids, tree_markup(), mismatch_tags()) ≡ "create"
 
-    # --- extranea diagnosis (a pre-existing identity absent from the View)
-    const list<string> praesentes_extranea ← browser.parse_identitates(praesens_extranea())
-    const list<string> diagnosia_extranea ← browser.diagnosia_hydrationis(textus_arboris(), identitates, praesentes_extranea, tags_extranea())
-    assert diagnosia_extranea.continet("extranea:tela-pristina")
-    assert browser.ligamen_status("tela-control", identitates, praesentes_extranea, textus_arboris(), tags_extranea()) ≡ "ligare"
+    # --- foreign diagnosis (a pre-existing identity absent from the View)
+    const list<string> foreign_ids ← browser.parse_identities(foreign_present())
+    const list<string> foreign_diagnostics ← browser.hydration_diagnostics(tree_markup(), identities, foreign_ids, foreign_tags())
+    assert foreign_diagnostics.continet("foreign:tela-pristina")
+    assert browser.binding_status("tela-control", identities, foreign_ids, tree_markup(), foreign_tags()) ≡ "bind"
 
     # --- duplicate-identity diagnosis (never a silent bind) ---------------
-    const list<string> identitates_duplicata ← browser.parse_identitates(textus_arboris())
-    const list<string> praesentes_duplicata ← identitates_praesentis_duplicatae()
-    const list<string> diagnosia_duplicata ← browser.diagnosia_hydrationis(textus_arboris(), identitates_duplicata, praesentes_duplicata, tags_duplicata())
-    assert praesentes_duplicata.longitudo() ≡ 3
-    assert diagnosia_duplicata.continet("duplicata:tela-dup")
-    assert browser.ligamen_status("tela-dup", identitates_duplicata, praesentes_duplicata, textus_arboris(), tags_duplicata()) ≡ "creare"
+    const list<string> view_ids ← browser.parse_identities(tree_markup())
+    const list<string> present_duplicate_ids ← present_duplicate_identities()
+    const list<string> duplicate_diagnostics ← browser.hydration_diagnostics(tree_markup(), view_ids, present_duplicate_ids, duplicate_tags())
+    assert present_duplicate_ids.longitudo() ≡ 3
+    assert duplicate_diagnostics.continet("duplicate:tela-dup")
+    assert browser.binding_status("tela-dup", view_ids, present_duplicate_ids, tree_markup(), duplicate_tags()) ≡ "create"
 
     # --- replace: the declarative effect keys (behavior-design §3.2) ------
     # Focus restoration by the pre-replacement focused node's identity →
-    # Restitue; declared focus movement → Dirige; scroll-anchor intent for
-    # the region → Ancora. The full derivation rides replace (driver-side);
+    # Restore; declared focus movement → Direct; scroll-anchor intent for
+    # the region → Anchor. The full derivation rides replace (driver-side);
     # here the carrier construction + key accessor are proven.
-    const tela.Effectus restitue ← tela.restitue("tela-seg-2")
-    assert tela.effectus_identitas(restitue) ≡ "tela-seg-2"
-    const tela.Effectus dirige ← tela.dirige("tela-seg-3")
-    assert tela.effectus_identitas(dirige) ≡ "tela-seg-3"
-    const tela.Effectus ancora ← tela.ancora("#root")
-    assert tela.effectus_identitas(ancora) ≡ "#root"
+    const tela.Effect restore ← tela.restore("tela-seg-2")
+    assert tela.effect_identity(restore) ≡ "tela-seg-2"
+    const tela.Effect direct ← tela.direct("tela-seg-3")
+    assert tela.effect_identity(direct) ≡ "tela-seg-3"
+    const tela.Effect anchor ← tela.anchor("#root")
+    assert tela.effect_identity(anchor) ≡ "#root"
 
     # --- the region-bind subscription descriptors (dispose surface) -------
-    # mount attaches one descriptor per View identity, event "tela:ligamen"
+    # mount attaches one descriptor per View identity, event "tela:binding"
     # (the U2 dispose proof; the app's event bindings are app-typed in U3).
-    assert browser.subscriptio("tela-seg-1", "tela:ligamen").identitas ≡ "tela-seg-1"
-    assert browser.subscriptio("tela-seg-1", "tela:ligamen").nomen_eventi ≡ "tela:ligamen"
+    assert browser.event_subscription("tela-seg-1", "tela:binding").identity ≡ "tela-seg-1"
+    assert browser.event_subscription("tela-seg-1", "tela:binding").event_name ≡ "tela:binding"
 
     # --- fail-closed: an invalid View serializes to null ------------------
-    assert tela.html_visus(tela.elementum_view(tela.html_spatium(), "circle", [])) ≡ null
+    assert tela.html_visus(tela.element_view(tela.html_space(), "circle", [])) ≡ null
 }

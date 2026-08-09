@@ -6,35 +6,35 @@ locale = "en"
 +++
 
 # tela/proof/extension-forms/exempla/forms.fab — exempla-mode tests for the
-# forms family's STATIC half (Stage 4 U2).
+# forms family's STATIC half (Stage 4 U2; re-routed by U0).
 #
-# Asserts the exact serialized bytes (serializer emission order: attributa
+# Asserts the exact serialized bytes (serializer emission order: attributes
 # in author order, then data-tela) + the ARIA structure (aria-invalid /
 # aria-checked / aria-describedby → the error identity / role=alert /
 # role=status + aria-live=polite) for every surface group: field (text
 # input), checkbox, select, and the error/live-region association.
 #
-# The exempla asserts through the G4-safe string-returning render helpers
-# (`*_html` — the U1 probe finding): the `→ tela.Visus` component fns are
-# WARN014-skipped for consumers through the provider interface (fix:g4), so
-# the byte-exact proof rides the string helpers; the props constructors are
-# local-class-returning (consumable).
+# U0 re-route (MF-6): the exempla consume the `→ tela.View` component fns
+# through the NORMAL provider interface — `tela.html_visus(forms.field(
+# forms.field_props(...)))`. The exempla-mode consumption was re-verified
+# live against in-tree radix 0.80.0 (post-cds-u6) before the re-route; the
+# `*_html` string-returning helpers are RETIRED (the stale fix:g4
+# compose-without surface is gone).
 #
-# fix:<id> markers: none applied beyond forms.fab's (fix:g4, fix:g5 — NONE,
-# fix:snapshot-nomen-collision, fix:codegen001).
+# fix:<id> markers: none applied beyond forms.fab's (fix:g5 — NONE,
+# fix:snapshot-name-collision, fix:codegen001). fix:g4 — REMOVED (the U0
+# probe re-verified exempla-mode consumption green).
 
 import from "formslib:forms" public * ut forms
 import from "tela:tela" public * ut tela
 
 main {
-    # --- field (text input) — form-field-<nomen> -------------------------
+    # --- field (text input) — form-field-<name> -------------------------
     # Valid: type + aria-label + aria-invalid, then data-tela (author order).
-    const forms.Props_campi campo ← forms.props_campi("name", "Name", "", "false", "")
-    const string campo_html ← forms.campum_html(campo)
+    const string campo_html ← tela.html_visus(forms.field(forms.field_props("name", "Name", "", "false", ""))) coalesce ""
     assert campo_html ≡ "<input type='text' aria-label='Name' aria-invalid='false' data-tela='form-field-name'>"
     # Invalid + a value: aria-describedby → the error identity; value attr.
-    const forms.Props_campi campo_invalid ← forms.props_campi("name", "Name", "Ada", "true", "Required")
-    const string campo_invalid_html ← forms.campum_html(campo_invalid)
+    const string campo_invalid_html ← tela.html_visus(forms.field(forms.field_props("name", "Name", "Ada", "true", "Required"))) coalesce ""
     assert campo_invalid_html ≡ "<input type='text' aria-label='Name' aria-invalid='true' aria-describedby='form-error-name' value='Ada' data-tela='form-field-name'>"
     # The ARIA structure (inside the bytes): the invalid surface + the
     # describedby association.
@@ -42,37 +42,32 @@ main {
     assert campo_invalid_html.continet("aria-describedby='form-error-name'")
     assert not campo_html.continet("aria-describedby")
 
-    # --- checkbox — form-checkbox-<nomen> (aria-checked) -----------------
-    const forms.Props_boxi boxum_selectum ← forms.props_boxi("agree", "Agree", "true", "false")
-    const string boxum_selectum_html ← forms.boxum_html(boxum_selectum)
+    # --- checkbox — form-checkbox-<name> (aria-checked) -----------------
+    const string boxum_selectum_html ← tela.html_visus(forms.checkbox(forms.checkbox_props("agree", "Agree", "true", "false"))) coalesce ""
     assert boxum_selectum_html ≡ "<input type='checkbox' aria-label='Agree' aria-checked='true' aria-invalid='false' data-tela='form-checkbox-agree'>"
-    const forms.Props_boxi boxum_invalid ← forms.props_boxi("agree", "Agree", "false", "true")
-    const string boxum_invalid_html ← forms.boxum_html(boxum_invalid)
+    const string boxum_invalid_html ← tela.html_visus(forms.checkbox(forms.checkbox_props("agree", "Agree", "false", "true"))) coalesce ""
     assert boxum_invalid_html ≡ "<input type='checkbox' aria-label='Agree' aria-checked='false' aria-invalid='true' aria-describedby='form-error-agree' data-tela='form-checkbox-agree'>"
 
-    # --- select — form-select-<nomen> (native option children) -----------
-    const forms.Props_selecti selectum ← forms.props_selecti("tone", "Tone", ["Light", "Dark"], "false")
-    const string selectum_html ← forms.selego_html(selectum)
+    # --- select — form-select-<name> (native option children) -----------
+    const string selectum_html ← tela.html_visus(forms.select(forms.select_props("tone", "Tone", ["Light", "Dark"], "false"))) coalesce ""
     assert selectum_html ≡ "<select aria-label='Tone' aria-invalid='false' data-tela='form-select-tone'><option>Light</option><option>Dark</option></select>"
 
     # --- error / live-region association --------------------------------
     # The error node (role=alert + the identity the field references).
-    const string error_html ← forms.error_regionum_html("name", "Required")
+    const string error_html ← tela.html_visus(forms.error_region("name", "Required")) coalesce ""
     assert error_html ≡ "<div role='alert' data-tela='form-error-name'>Required</div>"
     # Empty error text = empty node (the association structure is stable).
-    const string error_vacua_html ← forms.error_regionum_html("name", "")
+    const string error_vacua_html ← tela.html_visus(forms.error_region("name", "")) coalesce ""
     assert error_vacua_html ≡ "<div role='alert' data-tela='form-error-name'></div>"
     # The form-level live region (role=status + aria-live=polite, form-live).
-    const string regio_viva_html ← forms.regio_viva_forma_html()
+    const string regio_viva_html ← tela.html_visus(forms.form_live_region()) coalesce ""
     assert regio_viva_html ≡ "<div role='status' aria-live='polite' data-tela='form-live'></div>"
     # The field group (the association surface): the field + its error node
-    # under form-control-<nomen>; the describedby wires the field to the
+    # under form-control-<name>; the describedby wires the field to the
     # error identity when invalid.
-    const forms.Props_campi campo_gregale ← forms.props_campi("name", "Name", "", "false", "")
-    const string grex_html ← forms.agmen_campi_html(campo_gregale)
+    const string grex_html ← tela.html_visus(forms.field_group(forms.field_props("name", "Name", "", "false", ""))) coalesce ""
     assert grex_html ≡ "<div data-tela='form-control-name'><input type='text' aria-label='Name' aria-invalid='false' data-tela='form-field-name'><div role='alert' data-tela='form-error-name'></div></div>"
-    const forms.Props_campi campo_gregale_invalid ← forms.props_campi("name", "Name", "", "true", "Required")
-    const string grex_invalid_html ← forms.agmen_campi_html(campo_gregale_invalid)
+    const string grex_invalid_html ← tela.html_visus(forms.field_group(forms.field_props("name", "Name", "", "true", "Required"))) coalesce ""
     assert grex_invalid_html ≡ "<div data-tela='form-control-name'><input type='text' aria-label='Name' aria-invalid='true' aria-describedby='form-error-name' data-tela='form-field-name'><div role='alert' data-tela='form-error-name'>Required</div></div>"
 
     # --- deterministic identity scheme (data-tela values) ----------------

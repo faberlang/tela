@@ -32,7 +32,7 @@ fi
 
 echo "check-compile: kernel + validation modules (container library home)"
 export FABER_LIBRARY_HOME="${FABER_LIBRARY_HOME:-$ROOT/..}"
-for mod in tela valida; do
+for mod in tela validate; do
   echo "check-compile: parsing src/${mod}.fab"
   "$RADIX_BIN" check --locale en "$ROOT/src/${mod}.fab"
 done

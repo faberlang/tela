@@ -53,7 +53,7 @@ echo "check-forms-interactive: radix check the real-import composition (benchmar
 "$RADIX_BIN" check --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab"
 
 echo "check-forms-interactive: TS emit valida / tela / dom / browser / extension / forms / main"
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/valida.fab" -o "$SCRATCH/valida.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/validate.fab" -o "$SCRATCH/valida.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/browser.fab" -o "$SCRATCH/browser.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/extension-lib/src/extension.fab" -o "$SCRATCH/extension.ts" >/dev/null
@@ -75,11 +75,11 @@ strip_dom() { sed '1,2d' "$1" | grep -v '^import .* from "' | sed -e 's/\bFaberR
 # installed fake DOM.
 strip_runtime() { sed 's/^export //' "$1"; }
 
-VALIDA_NS="const valida = { valida_spatium, valida_nomen_tag, valida_nomen_attributi, valida_nomen_in_spatio, valida_void_html, valida_void_structura };"
-TELA_NS="const tela = { html_visus, css, thema_css, thema_stilum, thema, scopulum, scopuli_core, nomen_scopuli_proprietas, nomen_scopuli_validum, thema_scopuli_core_parati, thema_habet_scopulum, assemble, codicillus, ordo, codicilli_dedupata, ordine_ordinata, stilum_validum, stilum_textus_immundus, codicillus_ex, in_lista, pendeant_parata, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, eventum, restitue, dirige, ancora, renovatio, effectus_identitas, Attributum, Proprietas, Declaratio, Regula, Stilum, Scopulum, Thema, Codicillus, Ordo };"
-BROWSER_NS="const browser = { radiculum, subscriptio, ligamen, parse_identitates, elementum_tag, quotiens, identitates_duplicatae, nomen_tagi, tag_at, identitates_ex_nodis, tags_ex_nodis, ligamen_status, diagnosia_hydrationis, mount, replace, dispose, focus_tenet, focus_optata };"
-EXT_NS="const ext = { chart_axis_muted, chart_axis_muted_tenebrae, chart_grid_muted, chart_grid_muted_tenebrae, chart_scopuli, chart_scopuli_tenebrae, bar_metrum, chart_stilum, Scopulus };"
-FORMS_NS="const forms = { props_campi, props_boxi, props_selecti, campum, boxum, selego, error_regionum, regio_viva_forma, agmen_campi, campum_html, boxum_html, selego_html, error_regionum_html, regio_viva_forma_html, agmen_campi_html, form_field_invalid, form_field_valid, form_focus, scopulae_formae, form_stilum, eventus_campi, eventus_mutationis, eventus_submissionis, eventus_click, invalid_textus, error_praesens };"
+VALIDA_NS="const validate = { valid_space, valid_tag_name, valid_attribute_name, valid_name_in_space, valid_void_html, valid_void_structure };"
+TELA_NS="const tela = { html_visus, css, theme_css, theme_style, theme, token, core_tokens, token_property_name, token_name_valid, theme_has_core_tokens, theme_has_token, assemble, bundle, order, deduplicated_bundles, topological_order, style_valid, unclean_style_text, bundle_for, in_list, dependencies_met, text_view, fragment_view, new_identity, html_space, svg_space, element_view, element_full, event_name, restore, direct, anchor, update, effect_identity, Attribute, Property, Identity, Declaration, Rule, Style, Token, Theme, Bundle, Order, EventName, Update };"
+BROWSER_NS="const browser = { region_root, event_subscription, binding, parse_identities, element_tag, count_occurrences, duplicate_identities, tag_name, tag_at, identities_from_nodes, tags_from_nodes, binding_status, hydration_diagnostics, mount, replace, dispose, focus_held, focus_target };"
+EXT_NS="const ext = { chart_axis_muted, chart_axis_muted_dark, chart_grid_muted, chart_grid_muted_dark, chart_tokens, chart_tokens_dark, bar_meter, chart_style };"
+FORMS_NS="const forms = { field_props, checkbox_props, select_props, field, checkbox, select, error_region, form_live_region, field_group, form_field_invalid, form_field_valid, form_focus, form_tokens, form_style, field_event, change_event, submit_event, click_event, invalid_state, error_present };"
 # The DOM_NS: the ACTUAL bindings/ts.toml mapping (web:dom.<fn> →
 # webDom<Fn>) over faber-web's runtime/dom.ts implementation. The snapshot
 # binding is widened at the harness boundary (the emitted Scope type carries
@@ -224,26 +224,26 @@ const plantRegion = (selector: string, markup: string): void => {
   region.children = [];
   for (const node of parseFragment(markup)) region.appendChild(node);
 };
-const syncRegion = (selector: string, visus: unknown): void => {
-  const html = tela.html_visus(visus as any) ?? "";
+const syncRegion = (selector: string, view: unknown): void => {
+  const html = tela.html_visus(view as any) ?? "";
   plantRegion(selector, html);
 };
 
 // --- app state (the update loop's model) ----------------------------------
-let model: Statu_Campi = statum_campi("form-field-name", "", "");
+let model: FieldState = field_state("form-field-name", "", "");
 let agree: boolean = false;
 let tone: string = "Light";
 let announcements = 0;
 
 let m: Mounted;
-const applyMessage = (msg: Nuntius_Formae): string => {
-  const next = update_campi(model, msg);
-  const announced = annuntium_formae(model, next);
-  if (msg.tag === "Boxum_Toggle") agree = msg.selectus;
-  if (msg.tag === "Selectum_Mutatio") tone = msg.electum;
+const applyMessage = (msg: FormMessage): string => {
+  const next = update_field(model, msg);
+  const announced = form_announcement(model, next);
+  if (msg.tag === "CheckboxToggle") agree = msg.selected;
+  if (msg.tag === "SelectChange") tone = msg.selected;
   model = next;
-  const nextVisus = compositio_formae_ex_statu(model, agree, tone);
-  const r = browser.replace(m, nextVisus) as Renovatio;
+  const nextVisus = forms_composition_from_state(model, agree, tone);
+  const r = browser.replace(m, nextVisus) as Update;
   syncRegion("#root", nextVisus);
   if (announced !== "") {
     const live = byIdentity("form-live");
@@ -255,17 +255,17 @@ const applyMessage = (msg: Nuntius_Formae): string => {
 };
 
 // --- 1. hydration: mount onto a scope pre-rendered with the SAME composition
-const praesensMarkup = tela.html_visus(compositio_formae()) ?? "";
-plantRegion("#root", praesensMarkup);
-m = montium_formae("#root") as Mounted;
+const presentMarkup = tela.html_visus(forms_composition()) ?? "";
+plantRegion("#root", presentMarkup);
+m = mount_forms("#root") as Mounted;
 assert(m !== null, "mount returns a plan");
-assert(m.ligamina.length === 7, "seven binding-plan entries (forma + field group + field + error + checkbox + select + live)");
-assert(m.ligamina.every((l) => l.status === "ligare"), "hydration: every matching identity binds (the dom.snapshot read)");
-assert(byIdentity("form-field-name") !== undefined, "field node present from the praesens");
+assert(m.bindings.length === 7, "seven binding-plan entries (forma + field group + field + error + checkbox + select + live)");
+assert(m.bindings.every((l) => l.status === "bind"), "hydration: every matching identity binds (the dom.snapshot read)");
+assert(byIdentity("form-field-name") !== undefined, "field node present from the present");
 
 // --- 2. field input → empty → invalid transition ---------------------------
 {
-  const announced = applyMessage(nuntius_campi_textus("form-field-name", ""));
+  const announced = applyMessage(field_text_message("form-field-name", ""));
   assert(announced === "form-field-name invalid: Required", "invalid transition announces");
   assert(announcements === 1, "announced once");
   const field = byIdentity("form-field-name");
@@ -277,7 +277,7 @@ assert(byIdentity("form-field-name") !== undefined, "field node present from the
 
 // --- 3. field input → valid → cleared --------------------------------------
 {
-  const announced = applyMessage(nuntius_campi_textus("form-field-name", "Ada"));
+  const announced = applyMessage(field_text_message("form-field-name", "Ada"));
   assert(announced === "form-field-name valid", "valid transition announces");
   assert(announcements === 2, "announced once");
   const field = byIdentity("form-field-name");
@@ -288,14 +288,14 @@ assert(byIdentity("form-field-name") !== undefined, "field node present from the
 
 // --- 4. no-op input (same value) → silent ----------------------------------
 {
-  const announced = applyMessage(nuntius_campi_textus("form-field-name", "Ada"));
+  const announced = applyMessage(field_text_message("form-field-name", "Ada"));
   assert(announced === "", "the no-op rule: silent");
   assert(announcements === 2, "no announcement on the no-op");
 }
 
 // --- 5. checkbox toggle flips aria-checked ---------------------------------
 {
-  applyMessage(nuntius_boxi_toggle("form-checkbox-agree", true));
+  applyMessage(checkbox_toggle_message("form-checkbox-agree", true));
   assert(announcements === 3, "the toggle announces once");
   const box = byIdentity("form-checkbox-agree");
   assert(box !== undefined && box.getAttribute("aria-checked") === "true", "aria-checked flips true");
@@ -304,18 +304,18 @@ assert(byIdentity("form-field-name") !== undefined, "field node present from the
 
 // --- 6. select change updates the model ------------------------------------
 {
-  applyMessage(nuntius_selecti_mutatio("form-select-tone", "Dark"));
-  assert(model.valor === "Dark", "select change updates the model");
+  applyMessage(select_change_message("form-select-tone", "Dark"));
+  assert(model.value === "Dark", "select change updates the model");
   assert(tone === "Dark", "the app model tracks the select state");
 }
 
 // --- 7. replace across the region: focus restoration + scroll anchor -------
 {
-  const mFocused = browser.focus_tenet(m, "form-field-name");
-  const r = browser.replace(mFocused, compositio_formae_ex_statu(model, agree, tone)) as Renovatio;
-  const keys = r.effectus.map((e) => tela.effectus_identitas(e));
+  const mFocused = browser.focus_held(m, "form-field-name");
+  const r = browser.replace(mFocused, forms_composition_from_state(model, agree, tone)) as Update;
+  const keys = r.effects.map((e) => tela.effect_identity(e));
   assert(keys.length === 2 && keys[0] === "form-field-name" && keys[1] === "#root",
-    "effects are Restitue(form-field-name) + Ancora(#root)");
+    "effects are Restore(form-field-name) + Anchor(#root)");
   const target = byIdentity("form-field-name");
   assert(target !== undefined, "focus target present");
   doc.focusNode(target as FakeElement);

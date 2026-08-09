@@ -63,7 +63,7 @@ echo "check-mount: radix check both benchmark packages (benchmark library home)"
 "$RADIX_BIN" check --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab"
 
 echo "check-mount: TS emit valida / tela / browser / dom / extension / forms / main"
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/valida.fab" -o "$SCRATCH/valida.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/validate.fab" -o "$SCRATCH/valida.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/browser.fab" -o "$SCRATCH/browser.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/extension-lib/src/extension.fab" -o "$SCRATCH/extension.ts" >/dev/null
@@ -75,22 +75,22 @@ echo "check-mount: TS emit valida / tela / browser / dom / extension / forms / m
 # (export keywords removed) + the interaction-gate driver.
 strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
 
-VALIDA_NS="const valida = { valida_spatium, valida_nomen_tag, valida_nomen_attributi, valida_nomen_in_spatio, valida_void_html, valida_void_structura };"
-TELA_NS="const tela = { html_visus, css, thema_css, thema_stilum, thema, scopulum, scopuli_core, nomen_scopuli_proprietas, nomen_scopuli_validum, thema_scopuli_core_parati, thema_habet_scopulum, assemble, codicillus, ordo, codicilli_dedupata, ordine_ordinata, stilum_validum, stilum_textus_immundus, codicillus_ex, in_lista, pendeant_parata, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, eventum, restitue, dirige, ancora, renovatio, effectus_identitas, Attributum, Proprietas, Declaratio, Regula, Stilum, Scopulum, Thema, Codicillus, Ordo };"
-BROWSER_NS="const browser = { radiculum, subscriptio, ligamen, parse_identitates, elementum_tag, quotiens, identitates_duplicatae, nomen_tagi, tag_at, identitates_ex_nodis, tags_ex_nodis, ligamen_status, diagnosia_hydrationis, mount, replace, dispose, focus_tenet, focus_optata };"
+VALIDA_NS="const validate = { valid_space, valid_tag_name, valid_attribute_name, valid_name_in_space, valid_void_html, valid_void_structure };"
+TELA_NS="const tela = { html_visus, css, theme_css, theme_style, theme, token, core_tokens, token_property_name, token_name_valid, theme_has_core_tokens, theme_has_token, assemble, bundle, order, deduplicated_bundles, topological_order, style_valid, unclean_style_text, bundle_for, in_list, dependencies_met, text_view, fragment_view, new_identity, html_space, svg_space, element_view, element_full, event_name, restore, direct, anchor, update, effect_identity, Attribute, Property, Identity, Declaration, Rule, Style, Token, Theme, Bundle, Order, EventName, Update };"
+BROWSER_NS="const browser = { region_root, event_subscription, binding, parse_identities, element_tag, count_occurrences, duplicate_identities, tag_name, tag_at, identities_from_nodes, tags_from_nodes, binding_status, hydration_diagnostics, mount, replace, dispose, focus_held, focus_target };"
 # Stage 4 U6: the web:dom namespace binds the dom-shim runtime (the bare
 # Scope/Nodus types come from the shim); the snapshot binding is widened
 # (the harness boundary is any-typed — webDomSnapshot expects the runtime
 # scope with `root`, the emitted Scope type carries only `selector`).
 DOM_NS="const dom = { scope: webDomScope, snapshot: ((scope: any): Array<Nodus> | null => webDomSnapshot(scope)), query: webDomQuery, require: webDomRequire, all: webDomAll, value: webDomValue };"
-EXT_NS="const ext = { chart_axis_muted, chart_axis_muted_tenebrae, chart_grid_muted, chart_grid_muted_tenebrae, chart_scopuli, chart_scopuli_tenebrae, bar_metrum, chart_stilum, Scopulus };"
-FORMS_NS="const forms = { props_campi, props_boxi, props_selecti, campum, boxum, selego, error_regionum, regio_viva_forma, agmen_campi, campum_html, boxum_html, selego_html, error_regionum_html, regio_viva_forma_html, agmen_campi_html, form_field_invalid, form_field_valid, form_focus, scopulae_formae, form_stilum, eventus_campi, eventus_mutationis, eventus_submissionis, eventus_click, invalid_textus, error_praesens };"
+EXT_NS="const ext = { chart_axis_muted, chart_axis_muted_dark, chart_grid_muted, chart_grid_muted_dark, chart_tokens, chart_tokens_dark, bar_meter, chart_style };"
+FORMS_NS="const forms = { field_props, checkbox_props, select_props, field, checkbox, select, error_region, form_live_region, field_group, form_field_invalid, form_field_valid, form_focus, form_tokens, form_style, field_event, change_event, submit_event, click_event, invalid_state, error_present };"
 
 cat > "$SCRATCH/driver.ts" <<'DRIVER'
 // ---- tela-s3-u4 interaction-gate driver (appended by check-mount) ------
 // Executes the scripted segmented-control sequence (U3 evidence §5)
 // against the assembled composition + the dom-shim. The app-typed plan is
-// consumed directly (the harness-assembly path); the Nuntius union
+// consumed directly (the harness-assembly path); the Message union
 // discriminant is the emitted TS `tag` (the D2 emitter shape). Stage 4 U6:
 // the scope is constructed through the provider seam (webDomScope), which
 // resolves the selector against the document — so the region root must
@@ -110,38 +110,38 @@ let model = "tela-seg-1";
 let focused = "tela-seg-1";
 let announcements = 0;
 let clicksFired = 0;
-const props = props_controlli();
+const props = control_props();
 
 // ---- mount the control onto an empty scope ------------------------------
-const mounted = browser.mount(webDomScope("#root"), segmentatum(props), thema_controlli());
+const mounted = browser.mount(webDomScope("#root"), segmented_control(props), control_theme());
 assert(mounted !== null, "mount returns a plan");
-// The real emitted types (Mounted/Renovatio/Visus/Effectus) are in scope in
+// The real emitted types (Mounted/Update/View/Effect) are in scope in
 // this assembled file — use them directly (no structural shim types).
 let m: Mounted = mounted!;
 executeMountPlan(doc, "#root", m, true);
 
-// ---- the update loop: update(message) → next Visus → replace ------------
-const applyMessage = (msg: Nuntius): void => {
-  const nextModel = update_controlli(model, msg);
+// ---- the update loop: update(message) → next View → replace ------------
+const applyMessage = (msg: Message): void => {
+  const nextModel = update_control(model, msg);
   if (nextModel === model) {
     return; // silent no-op (already-selected click) — §1.5
   }
   model = nextModel;
-  const next = segmentatum(props_electi(props, model));
+  const next = segmented_control(selected_props(props, model));
   const r = browser.replace(m, next);
   assert(r !== null, "replace returns the update result");
-  const renovatio: Renovatio = r!;
-  const nextMarkup = tela.html_visus(renovatio.visus) ?? "";
+  const update: Update = r!;
+  const nextMarkup = tela.html_visus(update.view) ?? "";
   const nextPlan: MountedLike = {
     ...m,
-    textus_markup: nextMarkup,
-    ligamina: m.identitates.map((id) => ({ identitas: id, status: "creare" })),
+    markup: nextMarkup,
+    bindings: m.identities.map((id) => ({ identity: id, status: "create" })),
   };
   executeMountPlan(doc, "#root", nextPlan, true);
-  m = { ...m, textus_markup: nextMarkup };
+  m = { ...m, markup: nextMarkup };
   // Execute the declarative effects after replacement (focus by identity).
-  for (const e of renovatio.effectus) {
-    const key = tela.effectus_identitas(e);
+  for (const e of update.effects) {
+    const key = tela.effect_identity(e);
     const target = byIdentity(key);
     if (target !== undefined) {
       doc.focusNode(target);
@@ -151,23 +151,23 @@ const applyMessage = (msg: Nuntius): void => {
   announcements += 1;
   const live = byIdentity("tela-live");
   assert(live !== undefined, "live region present after replacement");
-  webDomTextSet(live!, annuntium(props, model));
+  webDomTextSet(live!, announcement(props, model));
   // Re-attach the subscriptions to the fresh nodes (the app re-attaches).
   clearSubs();
   bindSubscriptions();
 };
 
-// ---- focus movement (Motus: arrows/Home/End — focus only) ---------------
-const moveFocus = (identitas: string): void => {
-  focused = identitas;
-  for (const id of ordines_segmentorum()) {
+// ---- focus movement (Moved: arrows/Home/End — focus only) ---------------
+const moveFocus = (identity: string): void => {
+  focused = identity;
+  for (const id of segment_order()) {
     const node = byIdentity(id);
     if (node !== undefined) {
-      webDomAttrSet(node, "tabindex", id === identitas ? "0" : "-1");
+      webDomAttrSet(node, "tabindex", id === identity ? "0" : "-1");
     }
   }
-  const target = byIdentity(identitas);
-  assert(target !== undefined, `focus target present: ${identitas}`);
+  const target = byIdentity(identity);
+  assert(target !== undefined, `focus target present: ${identity}`);
   doc.focusNode(target!);
 };
 
@@ -180,24 +180,24 @@ const clearSubs = (): void => {
   subs = [];
 };
 const bindSubscriptions = (): void => {
-  for (const v of vincula_controlli()) {
-    const node = byIdentity(v.identitas);
-    assert(node !== undefined, `binding target present: ${v.identitas}`);
+  for (const v of control_bindings()) {
+    const node = byIdentity(v.identity);
+    assert(node !== undefined, `binding target present: ${v.identity}`);
     const handler = (): void => {
       clicksFired += 1;
-      applyMessage(v.nuntius(tela.eventum(v.identitas)));
+      applyMessage(v.message(tela.event_name(v.identity)));
     };
-    subs.push(webDomOn(node!, v.eventus, handler));
+    subs.push(webDomOn(node!, v.event_name, handler));
   }
-  for (const id of ordines_segmentorum()) {
+  for (const id of segment_order()) {
     const node = byIdentity(id);
     assert(node !== undefined, `keyboard target present: ${id}`);
     subs.push(webDomOnKeyboard(node!, "keydown", (state) => {
-      const msg = nuntius_clavis(focused, state.key as string);
-      if (msg.tag === "Electum") {
+      const msg = key_message(focused, state.key as string);
+      if (msg.tag === "Selected") {
         applyMessage(msg);
       } else {
-        moveFocus(msg.identitas);
+        moveFocus(msg.identity);
       }
     }));
   }
@@ -271,21 +271,21 @@ bindSubscriptions();
 
 // ---- 7. replace across the region: focus restoration + scroll anchor ----
 {
-  const mFocus = browser.focus_tenet(m, "tela-seg-2");
-  const r = browser.replace(mFocus, segmentatum(props_electi(props, "tela-seg-2")));
+  const mFocus = browser.focus_held(m, "tela-seg-2");
+  const r = browser.replace(mFocus, segmented_control(selected_props(props, "tela-seg-2")));
   assert(r !== null, "replace returns the update result");
-  const renovatio: Renovatio = r!;
-  const keys = renovatio.effectus.map((e) => tela.effectus_identitas(e));
-  assert(keys.length === 2 && keys[0] === "tela-seg-2" && keys[1] === "#root", "effects are restitue(seg-2) + ancora(#root)");
-  const nextMarkup = tela.html_visus(renovatio.visus) ?? "";
+  const update: Update = r!;
+  const keys = update.effects.map((e) => tela.effect_identity(e));
+  assert(keys.length === 2 && keys[0] === "tela-seg-2" && keys[1] === "#root", "effects are restore(seg-2) + anchor(#root)");
+  const nextMarkup = tela.html_visus(update.view) ?? "";
   const nextPlan: MountedLike = {
     ...m,
-    textus_markup: nextMarkup,
-    ligamina: m.identitates.map((id) => ({ identitas: id, status: "creare" })),
+    markup: nextMarkup,
+    bindings: m.identities.map((id) => ({ identity: id, status: "create" })),
   };
   executeMountPlan(doc, "#root", nextPlan, false);
-  for (const e of renovatio.effectus) {
-    const key = tela.effectus_identitas(e);
+  for (const e of update.effects) {
+    const key = tela.effect_identity(e);
     const target = byIdentity(key);
     if (target !== undefined) {
       doc.focusNode(target);
@@ -295,27 +295,27 @@ bindSubscriptions();
   assert(byIdentity("tela-control") !== undefined, "region present after replacement");
 }
 
-// ---- 7b. declared focus movement (Dirige) -------------------------------
+// ---- 7b. declared focus movement (Direct) -------------------------------
 {
-  const mFocus = browser.focus_tenet(m, "tela-seg-2");
-  const mMove = browser.focus_optata(mFocus, "tela-seg-3");
-  const r = browser.replace(mMove, segmentatum(props_electi(props, "tela-seg-3")));
+  const mFocus = browser.focus_held(m, "tela-seg-2");
+  const mMove = browser.focus_target(mFocus, "tela-seg-3");
+  const r = browser.replace(mMove, segmented_control(selected_props(props, "tela-seg-3")));
   assert(r !== null, "movement replace returns the update result");
-  const renovatio: Renovatio = r!;
-  const keys = renovatio.effectus.map((e) => tela.effectus_identitas(e));
+  const update: Update = r!;
+  const keys = update.effects.map((e) => tela.effect_identity(e));
   assert(
     keys.length === 3 && keys[0] === "tela-seg-2" && keys[1] === "tela-seg-3" && keys[2] === "#root",
-    "effects are restitue + dirige + ancora",
+    "effects are restore + direct + anchor",
   );
-  const nextMarkup = tela.html_visus(renovatio.visus) ?? "";
+  const nextMarkup = tela.html_visus(update.view) ?? "";
   const nextPlan: MountedLike = {
     ...m,
-    textus_markup: nextMarkup,
-    ligamina: m.identitates.map((id) => ({ identitas: id, status: "creare" })),
+    markup: nextMarkup,
+    bindings: m.identities.map((id) => ({ identity: id, status: "create" })),
   };
   executeMountPlan(doc, "#root", nextPlan, false);
-  for (const e of renovatio.effectus) {
-    const key = tela.effectus_identitas(e);
+  for (const e of update.effects) {
+    const key = tela.effect_identity(e);
     const target = byIdentity(key);
     if (target !== undefined) {
       doc.focusNode(target);
@@ -328,7 +328,7 @@ bindSubscriptions();
 {
   const region = resolveRegion(doc, "#root");
   region.children.splice(0, region.children.length);
-  const fresh = browser.mount(webDomScope("#root"), segmentatum(props_controlli()), thema_controlli());
+  const fresh = browser.mount(webDomScope("#root"), segmented_control(control_props()), control_theme());
   assert(fresh !== null, "dispose scenario: mount returns a plan");
   const fm: Mounted = fresh!;
   executeMountPlan(doc, "#root", fm, false);

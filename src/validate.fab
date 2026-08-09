@@ -1,9 +1,9 @@
-# tela/src/valida.fab — fail-closed lexical + namespace validation (Stage 1 U2).
+# tela/src/validate.fab — fail-closed lexical + namespace validation (Stage 1 U2).
 #
 # G4-safe predicate module: the public surface is string/bool ONLY. No tela
-# type (Spatium, Visus, Elementum, …) appears in any public signature — the
+# type (Space, View, ElementNode, …) appears in any public signature — the
 # namespace context rides a string surface ("html" / "svg") that the U3
-# serializer glue maps from the kernel's Spatium enum. The module is flat and
+# serializer glue maps from the kernel's Space enum. The module is flat and
 # import-free (stdlib intrinsics only), matching the kernel module rule (G4).
 #
 # FAIL-CLOSED CONTRACT (stage-1-delivery.md U2 done_when (d)):
@@ -23,28 +23,28 @@
 #   elements (x-*), SVG camelCase names, and future-standard names pass.
 #
 # Lexical rules (the HTML-context shape; the SVG lane shares the same base):
-#   - tag names (valida_nomen_tag): first char an ASCII letter; then ASCII
+#   - tag names (valid_tag_name): first char an ASCII letter; then ASCII
 #     letters/digits/-/_/. only. Rejects empty, whitespace, markup/attribute
 #     delimiters (< > " ' / =), leading digits, and control characters.
 #     Colons are excluded (the open element model marks namespaces via
-#     Spatium, not XML prefixes). Non-ASCII names fail closed in v1 (the
+#     Space, not XML prefixes). Non-ASCII names fail closed in v1 (the
 #     charsets are ASCII; a non-ASCII scalar is never contained).
-#   - attribute names (valida_nomen_attributi): ASCII letters/digits/-/_/./
+#   - attribute names (valid_attribute_name): ASCII letters/digits/-/_/./
 #     : only. Rejects whitespace, =, quotes, < > /, and control characters.
 #     Accepts data-*, aria-*, xlink:*, xml:*, and standard names.
 #   Control characters are excluded by construction (absent from the charsets).
 #
 # Namespace-context rules (string surface; fail-closed):
-#   - valida_spatium: accepts exactly "html" / "svg"; any other string is an
+#   - valid_space: accepts exactly "html" / "svg"; any other string is an
 #     unknown context and is rejected.
-#   - valida_nomen_in_spatio: known SVG-only element names under the "html"
+#   - valid_name_in_space: known SVG-only element names under the "html"
 #     context and known HTML-only element names under the "svg" context are
 #     namespace misuse and are rejected; unknown-but-valid names are accepted
 #     in either context (dependency rule 9); an unknown namespace context
 #     fails closed.
-#   - valida_void_html: exact membership in the HTML void-element set
+#   - valid_void_html: exact membership in the HTML void-element set
 #     (area base br col embed hr img input link meta param source track wbr).
-#   - valida_void_structura: an HTML void element carrying children is an
+#   - valid_void_structure: an HTML void element carrying children is an
 #     impossible structure and is rejected; non-void elements may carry
 #     children freely and void elements without children are valid.
 #
@@ -62,9 +62,9 @@
 # matches ("line" inside "polyline", "meta" inside "metadata") cannot pass.
 # ---------------------------------------------------------------------------
 
-fn valida_in_gregis(string nomen, string grex) → bool {
+fn in_group(string name, string grex) → bool {
     const string grex_limitata ← " " + grex + " "
-    const string nomen_limitatum ← " " + nomen + " "
+    const string nomen_limitatum ← " " + name + " "
     return grex_limitata.continet(nomen_limitatum)
 }
 
@@ -72,14 +72,14 @@ fn valida_in_gregis(string nomen, string grex) → bool {
 # (a) Lexical tag-name predicate.
 # ---------------------------------------------------------------------------
 
-fn valida_nomen_tag(string nomen) → bool {
+fn valid_tag_name(string name) → bool {
     const string litterae ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     const string char_tagi ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_."
-    if nomen.longitudo() ≡ 0 then return false
-    if not litterae.continet(nomen.sectio(0, 1)) then return false
+    if name.longitudo() ≡ 0 then return false
+    if not litterae.continet(name.sectio(0, 1)) then return false
     var int i ← 1
-    while i < nomen.longitudo() {
-        if not char_tagi.continet(nomen.sectio(i, i + 1)) then return false
+    while i < name.longitudo() {
+        if not char_tagi.continet(name.sectio(i, i + 1)) then return false
         i ← i + 1
     }
     return true
@@ -89,12 +89,12 @@ fn valida_nomen_tag(string nomen) → bool {
 # (b) Lexical attribute-name predicate.
 # ---------------------------------------------------------------------------
 
-fn valida_nomen_attributi(string nomen) → bool {
+fn valid_attribute_name(string name) → bool {
     const string char_attributi ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.:"
-    if nomen.longitudo() ≡ 0 then return false
+    if name.longitudo() ≡ 0 then return false
     var int i ← 0
-    while i < nomen.longitudo() {
-        if not char_attributi.continet(nomen.sectio(i, i + 1)) then return false
+    while i < name.longitudo() {
+        if not char_attributi.continet(name.sectio(i, i + 1)) then return false
         i ← i + 1
     }
     return true
@@ -104,44 +104,44 @@ fn valida_nomen_attributi(string nomen) → bool {
 # (c) Namespace-context predicates (string surface).
 # ---------------------------------------------------------------------------
 
-# The serializer glue maps Spatium.html → "html" and Spatium.svg → "svg".
+# The serializer glue maps Space.html → "html" and Space.svg → "svg".
 # Unknown contexts fail closed (never emit).
-fn valida_spatium(string spatium) → bool {
-    return spatium ≡ "html" or spatium ≡ "svg"
+fn valid_space(string space) → bool {
+    return space ≡ "html" or space ≡ "svg"
 }
 
 # Name-context misuse detection: known SVG-only names under html context and
 # known HTML-only names under svg context are rejected; unknown-but-valid
 # names are accepted in either context (dependency rule 9); an unknown
 # namespace context fails closed.
-fn valida_nomen_in_spatio(string nomen, string spatium) → bool {
+fn valid_name_in_space(string name, string space) → bool {
     const string nomen_svg_soli ← "svg g defs symbol use path rect circle ellipse line polyline polygon text tspan textPath foreignObject image linearGradient radialGradient stop clipPath mask pattern marker view switch metadata animate animateTransform animateMotion set mpath"
     const string nomen_html_soli ← "div span p br hr wbr h1 h2 h3 h4 h5 h6 ul ol li dl dt dd table thead tbody tfoot tr td th caption colgroup form input button select option optgroup textarea label fieldset legend datalist output progress meter section article header footer nav main aside figure figcaption blockquote pre code em strong small sub sup mark time abbr address cite b i u s del ins q kbd samp var img iframe video audio canvas template dialog details summary picture source track map area link meta menu"
-    if not valida_nomen_tag(nomen) then return false
-    if spatium ≡ "html" {
-        if valida_in_gregis(nomen, nomen_svg_soli) then return false
+    if not valid_tag_name(name) then return false
+    if space ≡ "html" {
+        if in_group(name, nomen_svg_soli) then return false
         return true
     }
-    if spatium ≡ "svg" {
-        if valida_in_gregis(nomen, nomen_html_soli) then return false
+    if space ≡ "svg" {
+        if in_group(name, nomen_html_soli) then return false
         return true
     }
     return false
 }
 
 # HTML void-element set membership (exact HTML spec set).
-fn valida_void_html(string nomen) → bool {
+fn valid_void_html(string name) → bool {
     const string nomen_voidi_html ← "area base br col embed hr img input link meta param source track wbr"
-    return valida_in_gregis(nomen, nomen_voidi_html)
+    return in_group(name, nomen_voidi_html)
 }
 
 # ---------------------------------------------------------------------------
 # (d) Void-structure predicate — impossible void-element structure never
-# emits. The serializer glue passes habet_liberi = (liberi list non-empty).
+# emits. The serializer glue passes has_children = (children list non-empty).
 # ---------------------------------------------------------------------------
 
-fn valida_void_structura(string nomen, bool habet_liberi) → bool {
-    if not valida_nomen_tag(nomen) then return false
-    if valida_void_html(nomen) and habet_liberi then return false
+fn valid_void_structure(string name, bool has_children) → bool {
+    if not valid_tag_name(name) then return false
+    if valid_void_html(name) and has_children then return false
     return true
 }

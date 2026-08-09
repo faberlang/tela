@@ -4,123 +4,127 @@
 # flat single module (G4 rule), importing tela:tela through the public seam.
 #
 # This package contributes (public shape only — no tela/radix edits):
-#   1. one custom view helper — bar_metrum (horizontal bar meter with label
-#      and textual value) returning the kernel's tela.Visus;
+#   1. one custom view helper — bar_meter (horizontal bar meter with label
+#      and textual value) returning the kernel's tela.View;
 #   2. one namespaced theme token — chart.axis.muted (campaign §5: extension
 #      libraries add namespaced tokens; Tela does not widen a closed Theme)
-#      plus the component style bundle chart_stilum referencing it;
+#      plus the component style bundle chart_style referencing it;
 #   3. the U6 static-render input: the app imports tela:tela + extensionlib:extension
 #      and renders the composition through tela.html_visus / tela.css.
 #
 # Seam posture (recorded G/D workarounds, applied not fought):
 #   - G2: wildcard import + qualified references (bare type binds do not work);
-#   - G1: namespace values via the kernel's html_spatium()/svg_spatium() helpers;
+#   - G1: namespace values via the kernel's html_space()/svg_space() helpers;
 #   - G3: imported-union construction via kernel-owned constructors
-#     (elementum_omne/elementum_view/...);
+#     (element_full/element_view/...);
 #   - G4 seam (the U5 named escalation): this module's PUBLIC signatures
-#     reference the imported sibling type tela.Visus / tela.Stilum. If the
+#     reference the imported sibling type tela.View / tela.Style. If the
 #     export snapshot skips them (WARN014.file_interface_export_skipped), the
 #     app falls back to composing with tela constructors + consuming the
 #     token + style bundle — recorded in stage-1-benchmark-static.md; the
-#     contract is not weakened (no duplicated Visus in this extension).
+#     contract is not weakened (no duplicated View in this extension).
 #
-# Stage 2 U3 — fix:snapshot-nomen-collision (NEW observation, escalated to
+# Stage 2 U3 — fix:snapshot-name-collision (NEW observation, escalated to
 # the radix lane): the extension's local token class was originally named
-# `Scopulum`, which COLLIDES with the kernel's U1 `Scopulum` type in the
+# `Token`, which COLLIDED with the kernel's U1 `Token` type in the
 # shared file-interface snapshot — importing BOTH packages made the snapshot
 # skip every class-returning export in both providers (WARN014 cascade) and
 # broke the app's token binding. The workaround: the extension's local token
-# class is renamed `Scopulus` (a distinct name — extension-local classes must
+# class was renamed `Scopulus` (a distinct name — extension-local classes must
 # avoid kernel type names). Additionally the extension-local class name is
 # NOT a nameable qualified type from the app (SEM002 qualified_type_not_exported),
 # so consumers read tokens via field access on the zero-arg accessor call
-# results (tela.scopulum(ext.chart_axis_muted().nomen, ...).valor)) — the
-# compose-without collect-app-side pattern. Removal of both workarounds is a
-# grep-replace after the radix snapshot fix lands.
+# results.
+#
+# MF-7 RESOLUTION (U0, pre-admission): the snapshot-collision removal
+# predicate was re-verified live against in-tree radix 0.80.0 (two
+# providers declaring the same-named class + a consumer importing both
+# check clean — no WARN014 cascade, no export skip). The triad
+# (`Scopulum`/`Scopulus`/`Scopula_formae`) is resolved: the kernel `Token`
+# type is the ONE token-carrier pattern; the per-package carriers are
+# DELETED. This extension's token accessors return `tela.Token` values
+# (the kernel carrier); consumers read fields on the call result
+# (`tela.token(ext.chart_axis_muted().name, ...).value`).
 
 import from "tela:tela" public * ut tela
 
 # --- Namespaced theme token (declared only; theme/token rendering is Stage 2)
+# The kernel `Token` carrier is the standardized token-carrier pattern.
 
-class Scopulus {
-    string nomen
-    string valor
+fn chart_axis_muted() → tela.Token {
+    return tela.Token { name = "chart.axis.muted", value = "#6b7280" }
 }
 
-fn chart_axis_muted() → Scopulus {
-    return Scopulus { nomen = "chart.axis.muted", valor = "#6b7280" }
-}
-
-# --- Tenebrae (dark) theme tokens — the second, materially different token
+# --- Dark theme tokens — the second, materially different token
 # collection (Stage 2 U3). Same namespaced paths as the light palette, with
 # different values: the two-theme proof renders the same component tree
 # under both, and only the token layer differs.
 
-fn chart_axis_muted_tenebrae() → Scopulus {
-    return Scopulus { nomen = "chart.axis.muted", valor = "#9ca3af" }
+fn chart_axis_muted_dark() → tela.Token {
+    return tela.Token { name = "chart.axis.muted", value = "#9ca3af" }
 }
 
-fn chart_grid_muted() → Scopulus {
-    return Scopulus { nomen = "chart.grid.muted", valor = "#e5e7eb" }
+fn chart_grid_muted() → tela.Token {
+    return tela.Token { name = "chart.grid.muted", value = "#e5e7eb" }
 }
 
-fn chart_grid_muted_tenebrae() → Scopulus {
-    return Scopulus { nomen = "chart.grid.muted", valor = "#1f2937" }
+fn chart_grid_muted_dark() → tela.Token {
+    return tela.Token { name = "chart.grid.muted", value = "#1f2937" }
 }
 
 # The extension's token collection (what a product assembler would collect;
 # product assembly / cascade ordering is Stage 2).
-fn chart_scopuli() → list<Scopulus> {
+fn chart_tokens() → list<tela.Token> {
     return [ chart_axis_muted(), chart_grid_muted() ]
 }
 
-# The extension's dark token collection (the tenebrae palette).
-fn chart_scopuli_tenebrae() → list<Scopulus> {
-    return [ chart_axis_muted_tenebrae(), chart_grid_muted_tenebrae() ]
+# The extension's dark token collection (the dark palette).
+fn chart_tokens_dark() → list<tela.Token> {
+    return [ chart_axis_muted_dark(), chart_grid_muted_dark() ]
 }
 
 # --- Custom view helper (G4 seam): horizontal bar meter with label + textual
-# value, returning the kernel's tela.Visus. Behavior stays adjacent and typed
+# value, returning the kernel's tela.View. Behavior stays adjacent and typed
 # (Stage 3); this benchmark is static composition only.
 
-fn bar_metrum(string label, string valor, int latitudo) → tela.Visus {
-    # The Proprietas below (aria-valuenow) is a browser-lane DOM property:
+fn bar_meter(string label, string value, int width) → tela.View {
+    # The Property below (aria-valuenow) is a browser-lane DOM property:
     # carried in the tree, NOT serialized statically (Stage 1 static
     # posture; the data-prop: marker is superseded).
-    return tela.elementum_omne(
-        tela.nova_identitas("tela-chart-bar"),
-        tela.html_spatium(),
+    return tela.element_full(
+        tela.new_identity("tela-chart-bar"),
+        tela.html_space(),
         "div",
         [
-            tela.Attributum { nomen = "role", valor = "meter" },
-            tela.Attributum { nomen = "aria-label", valor = label },
-            tela.Attributum { nomen = "data-latitudo", valor = "§"(latitudo) }
+            tela.Attribute { name = "role", value = "meter" },
+            tela.Attribute { name = "aria-label", value = label },
+            tela.Attribute { name = "data-latitudo", value = "§"(width) }
         ],
         [
-            tela.Proprietas { nomen = "aria-valuenow", valor = valor }
+            tela.Property { name = "aria-valuenow", value = value }
         ],
         [
-            tela.elementum_view(tela.html_spatium(), "span", [ tela.textus_view(label) ]),
-            tela.elementum_view(tela.html_spatium(), "x-bar", [
-                tela.elementum_view(tela.html_spatium(), "x-fill", [ tela.textus_view(valor) ])
+            tela.element_view(tela.html_space(), "span", [ tela.text_view(label) ]),
+            tela.element_view(tela.html_space(), "x-bar", [
+                tela.element_view(tela.html_space(), "x-fill", [ tela.text_view(value) ])
             ])
         ]
     )
 }
 
-# --- Component style bundle (G4 seam): returns the kernel's tela.Stilum; the
+# --- Component style bundle (G4 seam): returns the kernel's tela.Style; the
 # rule references the namespaced token as the CSS custom property
 # --chart-axis-muted (declared, not rendered — token rendering is Stage 2).
 
-fn chart_stilum() → tela.Stilum {
-    return tela.Stilum {
-        regulae = [
-            tela.Regula {
+fn chart_style() → tela.Style {
+    return tela.Style {
+        rules = [
+            tela.Rule {
                 selector = "[data-tela='tela-chart-bar']",
-                declarationes = [
-                    tela.Declaratio { nomen = "color", valor = "var(--chart-axis-muted)" },
-                    tela.Declaratio { nomen = "display", valor = "grid" },
-                    tela.Declaratio { nomen = "gap", valor = "0.5rem" }
+                declarations = [
+                    tela.Declaration { name = "color", value = "var(--chart-axis-muted)" },
+                    tela.Declaration { name = "display", value = "grid" },
+                    tela.Declaration { name = "gap", value = "0.5rem" }
                 ]
             }
         ]

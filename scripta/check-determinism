@@ -123,7 +123,7 @@ fi
 
 # ---- TS-lane composition lane (proven fallback; U5 evidence shape) -------
 echo "TS lane: emitting valida / tela / extension / forms / browser / dom / main"
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/valida.fab" -o "$SCRATCH/valida.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/validate.fab" -o "$SCRATCH/valida.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/extension-lib/src/extension.fab" -o "$SCRATCH/extension.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms.ts" >/dev/null
@@ -157,17 +157,17 @@ strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
 strip_dom() { sed '1,2d' "$1" | grep -v '^import .* from "' | sed -e 's/\bFaberResult\b/FaberResultDom/g' -e 's/\bFaberDisplayHint\b/FaberDisplayHintDom/g' -e 's/\b__faberDisplayFractus\b/__faberDisplayDomFractus/g' -e 's/\b__faberDisplayList\b/__faberDisplayDomList/g' -e 's/\b__faberDisplayTensor\b/__faberDisplayDomTensor/g' -e 's/\b__faberDisplaySparsa\b/__faberDisplayDomSparsa/g' -e 's/\b__faberDisplayMap\b/__faberDisplayDomMap/g' -e 's/\b__faberDisplayValor\b/__faberDisplayDomValor/g' -e 's/\b__faberDisplayTaggedValor\b/__faberDisplayDomTaggedValor/g' -e 's/\b__faberDisplay\b/__faberDisplayDom/g' -e 's/\bElement\b/DomElement/g'; }
 {
   strip "$SCRATCH/valida.ts"
-  echo "const valida = { valida_spatium, valida_nomen_tag, valida_nomen_attributi, valida_nomen_in_spatio, valida_void_html, valida_void_structura };"
+  echo "const validate = { valid_space, valid_tag_name, valid_attribute_name, valid_name_in_space, valid_void_html, valid_void_structure };"
   strip "$SCRATCH/tela.ts"
-  echo "const tela = { html_visus, css, thema_css, thema_stilum, thema, scopulum, scopuli_core, nomen_scopuli_proprietas, nomen_scopuli_validum, thema_scopuli_core_parati, thema_habet_scopulum, assemble, codicillus, ordo, codicilli_dedupata, ordine_ordinata, stilum_validum, stilum_textus_immundus, codicillus_ex, in_lista, pendeant_parata, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, eventum, restitue, dirige, ancora, renovatio, effectus_identitas, Attributum, Proprietas, Declaratio, Regula, Stilum, Scopulum, Thema, Codicillus, Ordo };"
+  echo "const tela = { html_visus, css, theme_css, theme_style, theme, token, core_tokens, token_property_name, token_name_valid, theme_has_core_tokens, theme_has_token, assemble, bundle, order, deduplicated_bundles, topological_order, style_valid, unclean_style_text, bundle_for, in_list, dependencies_met, text_view, fragment_view, new_identity, html_space, svg_space, element_view, element_full, event_name, restore, direct, anchor, update, effect_identity, Attribute, Property, Identity, Declaration, Rule, Style, Token, Theme, Bundle, Order, EventName, Update };"
   strip_dom "$SCRATCH/dom.ts"
   echo "const dom = { scope, query, require, all, snapshot, text_set, attr_set, attr_remove, class_add, class_remove, class_toggle, on, unsubscribe, value, value_set, on_input, on_submit, on_frame, on_resize, on_keyboard, on_pointer, on_focus, pointer_lock_state, request_pointer_lock, exit_pointer_lock, on_pointer_lock, prevent_default, fetch_text };"
   strip "$SCRATCH/browser.ts"
-  echo "const browser = { radiculum, subscriptio, ligamen, parse_identitates, elementum_tag, quotiens, identitates_duplicatae, nomen_tagi, tag_at, identitates_ex_nodis, tags_ex_nodis, ligamen_status, diagnosia_hydrationis, mount, replace, dispose, focus_tenet, focus_optata };"
+  echo "const browser = { region_root, event_subscription, binding, parse_identities, element_tag, count_occurrences, duplicate_identities, tag_name, tag_at, identities_from_nodes, tags_from_nodes, binding_status, hydration_diagnostics, mount, replace, dispose, focus_held, focus_target };"
   strip "$SCRATCH/extension.ts"
-  echo "const ext = { chart_axis_muted, chart_axis_muted_tenebrae, chart_grid_muted, chart_grid_muted_tenebrae, chart_scopuli, chart_scopuli_tenebrae, bar_metrum, chart_stilum, Scopulus };"
+  echo "const ext = { chart_axis_muted, chart_axis_muted_dark, chart_grid_muted, chart_grid_muted_dark, chart_tokens, chart_tokens_dark, bar_meter, chart_style };"
   strip "$SCRATCH/forms.ts"
-  echo "const forms = { props_campi, props_boxi, props_selecti, campum, boxum, selego, error_regionum, regio_viva_forma, agmen_campi, campum_html, boxum_html, selego_html, error_regionum_html, regio_viva_forma_html, agmen_campi_html, form_field_invalid, form_field_valid, form_focus, scopulae_formae, form_stilum, eventus_campi, eventus_mutationis, eventus_submissionis, eventus_click, invalid_textus, error_praesens };"
+  echo "const forms = { field_props, checkbox_props, select_props, field, checkbox, select, error_region, form_live_region, field_group, form_field_invalid, form_field_valid, form_focus, form_tokens, form_style, field_event, change_event, submit_event, click_event, invalid_state, error_present };"
   strip "$SCRATCH/main.ts"
 } > "$SCRATCH/composition.ts"
 

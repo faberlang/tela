@@ -10,23 +10,23 @@
 # for U6: it prints the full HTML + CSS bytes.
 #
 # Spec-vs-live reconciliation (from the U3 escalation): the U5 spec's
-# `tela.html(arbor)` is spelled `tela.html_visus(arbor)` here — the exact
-# `html` verb collides with the Spatium.html enum-member top-level binding
+# `tela.html(tree)` is spelled `tela.html_visus(tree)` here — the exact
+# `html` verb collides with the Space.html enum-member top-level binding
 # (G5, SEM005.duplicate_definition; stage-0-canary.md §5; recorded in the
 # tela.fab header). css is verbatim. U6 determinism consumes this runner.
 #
 # Static composition only — no behavior/mount (Stage 3), no catalog.
-# Stage 2 U3 extends the runner: the same arbor renders under two materially
-# different Thema values (lumen/tenebrae) with the full cascade CSS assembled
+# Stage 2 U3 extends the runner: the same tree renders under two materially
+# different Theme values (lumen/tenebrae) with the full cascade CSS assembled
 # per theme (the campaign gate bullets 1+2 proof, TS-lane runner).
 #
 # Stage 3 U3 (segmented-interactive) — the campaign gate proof. This module
-# gains the segmented-control component (typed props → Visus, §1.1/§1.4/
+# gains the segmented-control component (typed props → View, §1.1/§1.4/
 # §1.5 of stage-0-behavior-design.md), the app-typed behavior plan (a
-# concrete message type + Vinculum-shaped bindings keyed to the data-tela
+# concrete message type + EventBinding-shaped bindings keyed to the data-tela
 # identities — built app-side, the D1 constraint: never kernel-generic),
-# the subscription wiring plan (eventus + message-producing closures), the
-# update loop (update → next Visus → replace on the mounted region), and
+# the subscription wiring plan (event_name + message-producing closures), the
+# update loop (update → next View → replace on the mounted region), and
 # the pure-level runner proof. The DOM-level interaction sequence executes
 # through the dom-shim driver (the harness-assembly path — U2's
 # mount/replace are WARN014-skipped for consumers, fix:g4; the harness
@@ -39,19 +39,19 @@
 # deterministic assertion sequence, not a racy timing test.
 #
 # fix:<id> markers applied in this unit:
-#   fix:g5 — NONE: all new identifiers (segmentatum/segmentum_view/regio_viva/
-#            props_controlli/vinculum/nuntius/electum/motus/update_controlli/
-#            nuntius_clavis/annuntium/…) probed collision-free on in-tree
+#   fix:g5 — NONE: all new identifiers (segmented_control/segment_view/live_region/
+#            control_props/vinculum/message/selected/moved/update_control/
+#            key_message/announcement/…) probed collision-free on in-tree
 #            radix 0.80.0 (a free fn may share a class name — G5's collision
 #            is enum-member-specific).
-#   fix:sem001 — the kernel owns the only Effectus matcher
-#            (tela.effectus_identitas); the app never matches an imported
+#   fix:sem001 — the kernel owns the only Effect matcher
+#            (tela.effect_identity); the app never matches an imported
 #            union's variants (consumer-side match does not bind — the
 #            recorded G3-family gap). Removal = grep-replace after the fix.
-#   fix:snapshot-nomen-collision — new identifiers avoid kernel type names:
-#            the app-local plan types (Nuntius/Vinculum/Props_controlli) do
-#            NOT collide with kernel type names (Eventum/Effectus/Renovatio/
-#            Visus/…); probed.
+#   fix:snapshot-name-collision — new identifiers avoid kernel type names:
+#            the app-local plan types (Message/EventBinding/ControlProps) do
+#            NOT collide with kernel type names (EventName/Effect/Update/
+#            View/…); probed.
 #   fix:web-dom-locale — the webDom* surface binds at the HARNESS level
 #            (dom-shim + driver); the app never re-authors a web:dom copy.
 #   fix:g4 — mount/replace consumed via the harness-assembly path (the
@@ -63,20 +63,20 @@
 # module imports formslib:forms (the Stage 4 proof package) and composes:
 #   - the namespaced `form.*` tokens (form.field.invalid / form.field.valid
 #     / form.focus) into both themes via the field-access pattern on the
-#     zero-arg accessors (the Scopulus precedent — never a nameable
-#     qualified type, never a widened kernel theme record);
-#   - the formslib component style bundle (tela.codicillus("formslib",
-#     forms.form_stilum())) into the assemble call — the three-package
+#     zero-arg accessors (the MF-7 resolution: the accessors return the
+#     kernel `Token` carrier — the ONE token-carrier pattern);
+#   - the formslib component style bundle (tela.bundle("formslib",
+#     forms.form_style())) into the assemble call — the three-package
 #     cascade orders extensionlib → formslib → canary-app (topological
 #     order + the stable package-identity tie-break; the kernel's
-#     ordine_ordinata picks extensionlib before formslib by identity);
+#     topological_order picks extensionlib before formslib by identity);
 #   - the fail-closed regressions re-asserted (cycles /
 #     duplicate-identity-different-content / invalid output reject);
-#   - the runner output: the forms family static render (via the G4-safe
-#     `*_html` helpers — the U1/U2 probe finding: the `→ tela.Visus`
-#     component fns are WARN014-skipped for consumers, fix:g4; the
-#     consumer's cross-package family composition stays behind
-#     compose-without until g4 lands — the seam kept, never weakened).
+#   - the runner output: the forms family static render (re-routed by U0
+#     to the `→ tela.View` component fns through the NORMAL package
+#     interface — the `*_html` helpers are RETIRED; the exempla-mode
+#     consumption was re-verified live, fix:g4 removed; the rendered
+#     bytes are identical, so the determinism sha is unaffected).
 # The Stage 3 determinism sha (77516916…e5490) is SUPERSEDED by this
 # output change — recorded; U5 re-records the official sha (check-
 # determinism is RED between U3 and U5 — flagged honestly, not a failure).
@@ -84,7 +84,7 @@
 # Stage 4 U4 (behavior-semantics) — the forms behavior plan (app-typed,
 # D1). This module gains the pure-level behavior proof: a concrete message
 # type (field input / checkbox toggle / select change / submit) +
-# Vinculum-shaped bindings keyed to the forms identities
+# EventBinding-shaped bindings keyed to the forms identities
 # (form-field-name / form-checkbox-agree / form-select-tone / form-submit —
 # the submit identity is the app-declared form-level aggregate: the U2
 # static family renders no <form> element, the family declares the "submit"
@@ -99,35 +99,35 @@
 #
 # fix:<id> markers applied in this unit:
 #   fix:sem001 — HELD: consumers read effect keys through
-#     tela.effectus_identitas, never matching an imported union
+#     tela.effect_identity, never matching an imported union
 #     (consumer-side match over an imported union does not bind — the
-#     G3-family gap, recorded; the Nuntius_Formae union is app-local, so
+#     G3-family gap, recorded; the FormMessage union is app-local, so
 #     the app's match over it binds normally).
-#   fix:g5 — NONE: all new identifiers (Nuntius_Formae/Vinculum_Formae/
-#     Statu_Campi/Campi_Textus/Boxum_Toggle/Selectum_Mutatio/Submission/
-#     vinculum_campi/vinculum_boxi/vinculum_selecti/vinculum_submissionis/
-#     nuntius_campi_textus/nuntius_boxi_toggle/nuntius_selecti_mutatio/
-#     nuntius_submissionis/statum_campi/update_campi/annuntium_formae/
-#     props_ex_statu) probed collision-free on in-tree radix 0.80.0 (a
+#   fix:g5 — NONE: all new identifiers (FormMessage/FormBinding/
+#     FieldState/FieldText/CheckboxToggle/SelectChange/Submit/
+#     field_binding/checkbox_binding/select_binding/submit_binding/
+#     field_text_message/checkbox_toggle_message/select_change_message/
+#     submit_message/field_state/update_field/form_announcement/
+#     props_from_state) probed collision-free on in-tree radix 0.80.0 (a
 #     free fn may share a class name — G5's collision is enum-member-
 #     specific).
-#   fix:snapshot-nomen-collision — the plan type names avoid kernel type
-#     names (Eventum/Effectus/Renovatio/Visus/…) AND the U3 plan's names
-#     (Nuntius/Vinculum/Props_controlli).
-#   fix:g4 — the `→ tela.Visus` component fns stay WARN014-skipped for
-#     consumers; the ARIA/validation round trip rides the package's
-#     string-returning helpers (*_html) + the props constructors (the
-#     documented compose-without posture).
+#   fix:snapshot-name-collision — the plan type names avoid kernel type
+#     names (EventName/Effect/Update/View/…) AND the U3 plan's names
+#     (Message/EventBinding/ControlProps).
+#   fix:g4 — REMOVED by U0: the `→ tela.View` component fns are consumed
+#     through the normal package interface (the exempla-mode consumption
+#     re-verified live); the `*_html` helpers are RETIRED; the
+#     ARIA/validation round trip rides the direct component fns.
 #   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the
 #     TS lane is the proven runtime lane.
 #
 # Stage 4 U7 (interactive-provider-seam) — the CTO10-3 interactive claim.
 # This module now imports the REAL seam — web:dom (en→la, cds-u5) +
 # tela:browser (exported, consumable, cds-u6) — and composes the forms
-# components through NORMAL qualified imports (the → tela.Visus component
+# components through NORMAL qualified imports (the → tela.View component
 # fns are consumable: no compose-without, no *_html helper route, no
 # harness-assembly bypass, no tela-side shim). The seam call goes through
-# the app's OWN imports (montium_formae: dom.scope + browser.mount). The
+# the app's OWN imports (mount_forms: dom.scope + browser.mount). The
 # scripted interaction sequence executes against the DOCUMENTED faber-web
 # host binding (bindings/ts.toml → runtime/dom.ts) under
 # check-forms-interactive; this module supplies the plan surface (the
@@ -142,53 +142,53 @@ import from "web:dom" public * ut dom
 # --- Themed panel: a div with a stable identity + accessible name; the panel
 # rule in main's style bundle keys on the identity (policy (d) seam).
 
-fn panelum(list<tela.Visus> liberi) → tela.Visus {
-    return tela.elementum_omne(
-        tela.nova_identitas("canary-panelum"),
-        tela.html_spatium(),
+fn panel(list<tela.View> children) → tela.View {
+    return tela.element_full(
+        tela.new_identity("canary-panelum"),
+        tela.html_space(),
         "div",
-        [ tela.Attributum { nomen = "aria-label", valor = "metric panel" } ],
+        [ tela.Attribute { name = "aria-label", value = "metric panel" } ],
         [],
-        liberi
+        children
     )
 }
 
 # --- Two-column metric table: dl with dt/dd pairs (labels + values).
 
-fn metrica_tabula() → tela.Visus {
-    return tela.elementum_view(tela.html_spatium(), "dl", [
-        tela.elementum_view(tela.html_spatium(), "dt", [ tela.textus_view("uptime") ]),
-        tela.elementum_view(tela.html_spatium(), "dd", [ tela.textus_view("99.9%") ]),
-        tela.elementum_view(tela.html_spatium(), "dt", [ tela.textus_view("requests") ]),
-        tela.elementum_view(tela.html_spatium(), "dd", [ tela.textus_view("12 480") ]),
-        tela.elementum_view(tela.html_spatium(), "dt", [ tela.textus_view("error rate") ]),
-        tela.elementum_view(tela.html_spatium(), "dd", [ tela.textus_view("0.02%") ])
+fn metric_table() → tela.View {
+    return tela.element_view(tela.html_space(), "dl", [
+        tela.element_view(tela.html_space(), "dt", [ tela.text_view("uptime") ]),
+        tela.element_view(tela.html_space(), "dd", [ tela.text_view("99.9%") ]),
+        tela.element_view(tela.html_space(), "dt", [ tela.text_view("requests") ]),
+        tela.element_view(tela.html_space(), "dd", [ tela.text_view("12 480") ]),
+        tela.element_view(tela.html_space(), "dt", [ tela.text_view("error rate") ]),
+        tela.element_view(tela.html_space(), "dd", [ tela.text_view("0.02%") ])
     ])
 }
 
 # --- Horizontal bar meter — app-side composition (G4 workaround). ---------
-# The extension's bar_metrum (tela.Visus-returning signature) is skipped in
+# The extension's bar_meter (tela.View-returning signature) is skipped in
 # the cross-package export snapshot (WARN014 — G4 confirmed against the
 # kernel; recorded in stage-1-benchmark-static.md). Per the U5 spec's
 # documented workaround, the app composes the same meter shape with tela
 # constructors and consumes the extension's token + style bundle. The
-# contract is not weakened: the extension keeps its bar_metrum seam and no
-# duplicated Visus exists IN the extension.
-fn bar_metrum_app(string label, string valor, int latitudo) → tela.Visus {
-    return tela.elementum_omne(
-        tela.nova_identitas("tela-chart-bar"),
-        tela.html_spatium(),
+# contract is not weakened: the extension keeps its bar_meter seam and no
+# duplicated View exists IN the extension.
+fn bar_meter_app(string label, string value, int width) → tela.View {
+    return tela.element_full(
+        tela.new_identity("tela-chart-bar"),
+        tela.html_space(),
         "div",
         [
-            tela.Attributum { nomen = "role", valor = "meter" },
-            tela.Attributum { nomen = "aria-label", valor = label },
-            tela.Attributum { nomen = "data-latitudo", valor = "§"(latitudo) }
+            tela.Attribute { name = "role", value = "meter" },
+            tela.Attribute { name = "aria-label", value = label },
+            tela.Attribute { name = "data-latitudo", value = "§"(width) }
         ],
         [],
         [
-            tela.elementum_view(tela.html_spatium(), "span", [ tela.textus_view(label) ]),
-            tela.elementum_view(tela.html_spatium(), "x-bar", [
-                tela.elementum_view(tela.html_spatium(), "x-fill", [ tela.textus_view(valor) ])
+            tela.element_view(tela.html_space(), "span", [ tela.text_view(label) ]),
+            tela.element_view(tela.html_space(), "x-bar", [
+                tela.element_view(tela.html_space(), "x-fill", [ tela.text_view(value) ])
             ])
         ]
     )
@@ -198,7 +198,7 @@ fn bar_metrum_app(string label, string valor, int latitudo) → tela.Visus {
 # Stage 3 U3 — the segmented-control component (behavior-design §1).
 #
 # The control is an ordinary component function over typed props (no
-# compiler-known component kind) producing a Visus with:
+# compiler-known component kind) producing a View with:
 #   - stable data-tela identities on the group + per segment (§1.1);
 #   - role='radiogroup' on the group, role='radio' + aria-selected
 #     true/false on the segments (§1.4);
@@ -212,49 +212,49 @@ fn bar_metrum_app(string label, string valor, int latitudo) → tela.Visus {
 # and mounts interactively (the driver) — shared-source evidence.
 # ===========================================================================
 
-class Props_controlli {
-    list<string> optiones
-    string electum
-    string nomen
+class ControlProps {
+    list<string> options
+    string selected
+    string name
 }
 
-fn selected_textus(bool selectus) → string {
-    if selectus then return "true"
+fn selected_text(bool selected) → string {
+    if selected then return "true"
     return "false"
 }
 
-fn tabindex_viabilis(bool selectus) → string {
-    if selectus then return "0"
+fn active_tabindex(bool selected) → string {
+    if selected then return "0"
     return "-1"
 }
 
 # One segment: role=radio + aria-selected + the roving tabindex (§1.3/§1.4).
-fn segmentum_view(string identitas, string optio, string tabindex, string selected) → tela.Visus {
-    return tela.elementum_omne(
-        tela.nova_identitas(identitas),
-        tela.html_spatium(),
+fn segment_view(string identity, string optio, string tabindex, string selected) → tela.View {
+    return tela.element_full(
+        tela.new_identity(identity),
+        tela.html_space(),
         "button",
         [
-            tela.Attributum { nomen = "role", valor = "radio" },
-            tela.Attributum { nomen = "aria-selected", valor = selected },
-            tela.Attributum { nomen = "tabindex", valor = tabindex }
+            tela.Attribute { name = "role", value = "radio" },
+            tela.Attribute { name = "aria-selected", value = selected },
+            tela.Attribute { name = "tabindex", value = tabindex }
         ],
         [],
-        [ tela.textus_view(optio) ]
+        [ tela.text_view(optio) ]
     )
 }
 
 # The control-owned declared live region (§1.5): explicitly marked with a
 # live-region policy (role='status' / aria-live='polite'), owned by the
 # control, not an ambient page notification.
-fn regio_viva() → tela.Visus {
-    return tela.elementum_omne(
-        tela.nova_identitas("tela-live"),
-        tela.html_spatium(),
+fn live_region() → tela.View {
+    return tela.element_full(
+        tela.new_identity("tela-live"),
+        tela.html_space(),
         "div",
         [
-            tela.Attributum { nomen = "role", valor = "status" },
-            tela.Attributum { nomen = "aria-live", valor = "polite" }
+            tela.Attribute { name = "role", value = "status" },
+            tela.Attribute { name = "aria-live", value = "polite" }
         ],
         [],
         []
@@ -262,140 +262,140 @@ fn regio_viva() → tela.Visus {
 }
 
 # The segment children in focus order (index 1-based identity: tela-seg-N).
-fn segmenta_controlli(Props_controlli props) → list<tela.Visus> {
-    var list<tela.Visus> segmenta ← vacua
+fn control_segments(ControlProps props) → list<tela.View> {
+    var list<tela.View> segmenta ← vacua
     var int i ← 1
-    while i ≤ props.optiones.longitudo() {
-        const string identitas ← "tela-seg-" + "§"(i)
-        const string optio ← props.optiones[i - 1]
-        const bool selectus ← identitas ≡ props.electum
-        segmenta.appende(segmentum_view(identitas, optio, tabindex_viabilis(selectus), selected_textus(selectus)))
+    while i ≤ props.options.longitudo() {
+        const string identity ← "tela-seg-" + "§"(i)
+        const string optio ← props.options[i - 1]
+        const bool selected ← identity ≡ props.selected
+        segmenta.appende(segment_view(identity, optio, active_tabindex(selected), selected_text(selected)))
         i ← i + 1
     }
-    segmenta.appende(regio_viva())
+    segmenta.appende(live_region())
     return segmenta
 }
 
 # The segmented-control component: ordinary Faber over typed props (campaign
-# §3 component contract) → a Visus keyed to stable data-tela identities.
-fn segmentatum(Props_controlli props) → tela.Visus {
-    return tela.elementum_omne(
-        tela.nova_identitas("tela-control"),
-        tela.html_spatium(),
+# §3 component contract) → a View keyed to stable data-tela identities.
+fn segmented_control(ControlProps props) → tela.View {
+    return tela.element_full(
+        tela.new_identity("tela-control"),
+        tela.html_space(),
         "div",
         [
-            tela.Attributum { nomen = "role", valor = "radiogroup" },
-            tela.Attributum { nomen = "aria-label", valor = props.nomen }
+            tela.Attribute { name = "role", value = "radiogroup" },
+            tela.Attribute { name = "aria-label", value = props.name }
         ],
         [],
-        segmenta_controlli(props)
+        control_segments(props)
     )
 }
 
 # The default control props (the shared source both renderers consume).
-fn props_controlli() → Props_controlli {
-    return Props_controlli {
-        optiones = ["One", "Two", "Three"],
-        electum = "tela-seg-1",
-        nomen = "segmented control"
+fn control_props() → ControlProps {
+    return ControlProps {
+        options = ["One", "Two", "Three"],
+        selected = "tela-seg-1",
+        name = "segmented control"
     }
 }
 
 # Props with a changed selection (the update loop's view render input).
-fn props_electi(Props_controlli props, string electum) → Props_controlli {
-    return Props_controlli {
-        optiones = props.optiones,
-        electum = electum,
-        nomen = props.nomen
+fn selected_props(ControlProps props, string selected) → ControlProps {
+    return ControlProps {
+        options = props.options,
+        selected = selected,
+        name = props.name
     }
 }
 
 # The interactive proof's theme (the 8-token core baseline — mount requires
-# thema_css non-null, so the mounted control needs a theme covering the core).
-fn thema_controlli() → tela.Thema {
-    return tela.thema("controllum", [
-        tela.scopulum("surface.canvas", "#ffffff"),
-        tela.scopulum("surface.panel", "#f9fafb"),
-        tela.scopulum("text.primary", "#111827"),
-        tela.scopulum("text.muted", "#6b7280"),
-        tela.scopulum("border.default", "#e5e7eb"),
-        tela.scopulum("accent.primary", "#2563eb"),
-        tela.scopulum("state.positive", "#16a34a"),
-        tela.scopulum("state.caution", "#d97706")
+# theme_css non-null, so the mounted control needs a theme covering the core).
+fn control_theme() → tela.Theme {
+    return tela.theme("controllum", [
+        tela.token("surface.canvas", "#ffffff"),
+        tela.token("surface.panel", "#f9fafb"),
+        tela.token("text.primary", "#111827"),
+        tela.token("text.muted", "#6b7280"),
+        tela.token("border.default", "#e5e7eb"),
+        tela.token("accent.primary", "#2563eb"),
+        tela.token("state.positive", "#16a34a"),
+        tela.token("state.caution", "#d97706")
     ])
 }
 
 # ===========================================================================
 # Stage 3 U3 — the app-typed behavior plan (Branch B, behavior-design §2/§3).
 #
-# The concrete message type + Vinculum-shaped bindings (eventus +
+# The concrete message type + EventBinding-shaped bindings (event_name +
 # message-producing closures) keyed to the data-tela identities, built
 # APP-SIDE (the D1 constraint, recorded: generic user-type construction is
-# blocked, so the kernel owns only the non-generic carriers — Eventum/
-# Effectus/Renovatio — and the concrete plan is the application's surface,
+# blocked, so the kernel owns only the non-generic carriers — EventName/
+# Effect/Update — and the concrete plan is the application's surface,
 # never kernel-generic). The update function is an ordinary app function
 # over the concrete message type. Behavior is carried by typed message-
 # producing closures — never erased into strings.
 # ===========================================================================
 
 # The concrete app message type (two variants):
-#   Electum — select a segment (pointer click, Space, Enter on the focused
+#   Selected — select a segment (pointer click, Space, Enter on the focused
 #     segment) — the update loop consumes it;
-#   Motus   — move focus to a segment (arrows, Home, End) — focus only,
+#   Moved   — move focus to a segment (arrows, Home, End) — focus only,
 #     selection unchanged, no announcement (the driver executes the DOM
 #     focus move from the message).
-union Nuntius {
-    Electum { string identitas },
-    Motus { string identitas }
+union Message {
+    Selected { string identity },
+    Moved { string identity }
 }
 
-# Vinculum-shaped binding: one event subscription keyed to a stable node
+# EventBinding-shaped binding: one event subscription keyed to a stable node
 # identity, carrying a typed message-producing closure (Branch B plan).
-class Vinculum {
-    string identitas
-    string eventus
-    (tela.Eventum) → Nuntius nuntius
+class EventBinding {
+    string identity
+    string event_name
+    (tela.EventName) → Message message
 }
 
-fn electum(string identitas) → Nuntius {
-    return variant Electum { identitas = identitas }
+fn selected(string identity) → Message {
+    return variant Selected { identity = identity }
 }
 
-fn motus(string identitas) → Nuntius {
-    return variant Motus { identitas = identitas }
+fn moved(string identity) → Message {
+    return variant Moved { identity = identity }
 }
 
 # The pointer binding for one segment: the plan maps the click event → the
-# Electum message naming the clicked identity (the event's nomen carries it).
-fn vinculum_electi(string identitas) → Vinculum {
-    return Vinculum {
-        identitas = identitas,
-        eventus = "click",
-        nuntius = (tela.Eventum eventus) → Nuntius ∴ electum(eventus.nomen)
+# Selected message naming the clicked identity (the event's name carries it).
+fn segment_binding(string identity) → EventBinding {
+    return EventBinding {
+        identity = identity,
+        event_name = "click",
+        message = (tela.EventName event_name) → Message ∴ selected(event_name.name)
     }
 }
 
 # The subscription plan: one pointer binding per segment identity (the
 # web:dom subscriptions attach by identity — never ambient document
 # shortcuts; the driver binds the webDom* surface at the harness level).
-fn vincula_controlli() → list<Vinculum> {
+fn control_bindings() → list<EventBinding> {
     return [
-        vinculum_electi("tela-seg-1"),
-        vinculum_electi("tela-seg-2"),
-        vinculum_electi("tela-seg-3")
+        segment_binding("tela-seg-1"),
+        segment_binding("tela-seg-2"),
+        segment_binding("tela-seg-3")
     ]
 }
 
 # The focus order (one tab stop as a whole; arrows wrap at the ends).
-fn ordines_segmentorum() → list<string> {
+fn segment_order() → list<string> {
     return ["tela-seg-1", "tela-seg-2", "tela-seg-3"]
 }
 
-fn indice_identitatis(string identitas) → int {
-    const list<string> ordines ← ordines_segmentorum()
+fn identity_index(string identity) → int {
+    const list<string> ordines ← segment_order()
     var int i ← 0
     while i < ordines.longitudo() {
-        if ordines[i] ≡ identitas {
+        if ordines[i] ≡ identity {
             return i
         }
         i ← i + 1
@@ -403,8 +403,8 @@ fn indice_identitatis(string identitas) → int {
     return 0
 }
 
-fn identitas_ordinata(int index) → string {
-    const list<string> ordines ← ordines_segmentorum()
+fn wrapped_identity(int index) → string {
+    const list<string> ordines ← segment_order()
     const int longitudo ← ordines.longitudo()
     var int i ← index
     while i < 0 {
@@ -418,10 +418,10 @@ fn identitas_ordinata(int index) → string {
 
 # First-occurrence index of a fragment in a string (the cascade-ordering
 # assert: the extension bundle's selector appears before the forms bundle's).
-fn indice_in(string textus, string fragment) → int {
+fn index_in(string text, string fragment) → int {
     var int i ← 0
-    while not (i + fragment.longitudo() > textus.longitudo()) {
-        if textus.sectio(i, i + fragment.longitudo()) ≡ fragment {
+    while not (i + fragment.longitudo() > text.longitudo()) {
+        if text.sectio(i, i + fragment.longitudo()) ≡ fragment {
             return i
         }
         i ← i + 1
@@ -431,40 +431,40 @@ fn indice_in(string textus, string fragment) → int {
 
 # The keyboard mapping (behavior-design §1.3): the app owns the key
 # semantics, the driver executes the resulting message. Arrows move focus
-# only (Motus, wrap supported); Home/End move focus to first/last; Space/
-# Enter select the focused segment (Electum); anything else is a focus
-# no-op (Motus to the same identity). Tab is unhandled — the control's
+# only (Moved, wrap supported); Home/End move focus to first/last; Space/
+# Enter select the focused segment (Selected); anything else is a focus
+# no-op (Moved to the same identity). Tab is unhandled — the control's
 # single tab stop leaves as a unit (§1.3).
-fn nuntius_clavis(string identitas_focus, string clavis) → Nuntius {
-    const int index ← indice_identitatis(identitas_focus)
+fn key_message(string focused_identity, string clavis) → Message {
+    const int index ← identity_index(focused_identity)
     if clavis ≡ "ArrowRight" or clavis ≡ "ArrowDown" {
-        return motus(identitas_ordinata(index + 1))
+        return moved(wrapped_identity(index + 1))
     }
     if clavis ≡ "ArrowLeft" or clavis ≡ "ArrowUp" {
-        return motus(identitas_ordinata(index - 1))
+        return moved(wrapped_identity(index - 1))
     }
     if clavis ≡ "Home" {
-        return motus(identitas_ordinata(0))
+        return moved(wrapped_identity(0))
     }
     if clavis ≡ "End" {
-        return motus(identitas_ordinata(-1))
+        return moved(wrapped_identity(-1))
     }
     if clavis ≡ "Space" or clavis ≡ "Enter" {
-        return electum(identitas_focus)
+        return selected(focused_identity)
     }
-    return motus(identitas_focus)
+    return moved(focused_identity)
 }
 
 # The update function — an ordinary app function over the concrete message
-# type. Electum changes the selection; Motus leaves it unchanged (focus
+# type. Selected changes the selection; Moved leaves it unchanged (focus
 # only, live-region-silent per §1.5).
-fn update_controlli(string electum, Nuntius nuntius) → string {
-    match nuntius {
-        case Electum const identitas {
-            return identitas
+fn update_control(string selected, Message message) → string {
+    match message {
+        case Selected const identity {
+            return identity
         }
-        case Motus const identitas {
-            return electum
+        case Moved const identity {
+            return selected
         }
     }
 }
@@ -473,10 +473,10 @@ fn update_controlli(string electum, Nuntius nuntius) → string {
 # The host writes it into the declared live region ONLY when the selection
 # changes — silent when a click/keypress lands on the already-selected
 # segment or when the update does not change selection.
-fn annuntium(Props_controlli props, string electum) → string {
-    const int index ← indice_identitatis(electum)
-    if index < props.optiones.longitudo() {
-        return props.optiones[index] + " selected"
+fn announcement(ControlProps props, string selected) → string {
+    const int index ← identity_index(selected)
+    if index < props.options.longitudo() {
+        return props.options[index] + " selected"
     }
     return ""
 }
@@ -484,7 +484,7 @@ fn annuntium(Props_controlli props, string electum) → string {
 # ===========================================================================
 # Stage 4 U4 — the forms behavior plan (app-typed — D1, recorded).
 #
-# The concrete message type + Vinculum-shaped bindings keyed to the forms
+# The concrete message type + EventBinding-shaped bindings keyed to the forms
 # identities, the update/validation semantics (invalid → aria-invalid +
 # error text; valid → cleared; the no-op rule) + the live-region policy
 # (announce on a validation-state change, silent on no-op — the Stage 3
@@ -495,102 +495,102 @@ fn annuntium(Props_controlli props, string electum) → string {
 # ===========================================================================
 
 # The concrete app message type (four variants — the forms plan):
-#   Campi_Textus     — a field text entry (the "input" event) — live
+#   FieldText     — a field text entry (the "input" event) — live
 #     validation per keystroke;
-#   Boxum_Toggle     — a checkbox toggle (the "change" event);
-#   Selectum_Mutatio — a select selection change (the "change" event);
-#   Submission       — the form-level submit (the "submit" event) —
+#   CheckboxToggle     — a checkbox toggle (the "change" event);
+#   SelectChange — a select selection change (the "change" event);
+#   Submit       — the form-level submit (the "submit" event) —
 #     validates the field.
-union Nuntius_Formae {
-    Campi_Textus {
-        string identitas
-        string valor
+union FormMessage {
+    FieldText {
+        string identity
+        string value
     },
-    Boxum_Toggle {
-        string identitas
-        bool selectus
+    CheckboxToggle {
+        string identity
+        bool selected
     },
-    Selectum_Mutatio {
-        string identitas
-        string electum
+    SelectChange {
+        string identity
+        string selected
     },
-    Submission {
-        string identitas
+    Submit {
+        string identity
     },
 }
 
-# Vinculum-shaped binding (the Branch B shape, the U3 pattern): one event
+# EventBinding-shaped binding (the Branch B shape, the U3 pattern): one event
 # subscription keyed to a stable node identity, carrying a typed
 # message-producing closure. The event spellings come from the package's
 # contract constants (forms.eventus_* — the G4-safe string surface).
-class Vinculum_Formae {
-    string identitas
-    string eventus
-    (tela.Eventum) → Nuntius_Formae nuntius
+class FormBinding {
+    string identity
+    string event_name
+    (tela.EventName) → FormMessage message
 }
 
 # The form model — the app-side validation state for one field identity
 # (error "" = valid; the error text is the invalid → aria-invalid source).
-class Statu_Campi {
-    string identitas
-    string valor
+class FieldState {
+    string identity
+    string value
     string error
 }
 
 # Message-producing helpers (the closure bodies).
-fn nuntius_campi_textus(string identitas, string valor) → Nuntius_Formae {
-    return variant Campi_Textus { identitas = identitas, valor = valor }
+fn field_text_message(string identity, string value) → FormMessage {
+    return variant FieldText { identity = identity, value = value }
 }
 
-fn nuntius_boxi_toggle(string identitas, bool selectus) → Nuntius_Formae {
-    return variant Boxum_Toggle { identitas = identitas, selectus = selectus }
+fn checkbox_toggle_message(string identity, bool selected) → FormMessage {
+    return variant CheckboxToggle { identity = identity, selected = selected }
 }
 
-fn nuntius_selecti_mutatio(string identitas, string electum) → Nuntius_Formae {
-    return variant Selectum_Mutatio { identitas = identitas, electum = electum }
+fn select_change_message(string identity, string selected) → FormMessage {
+    return variant SelectChange { identity = identity, selected = selected }
 }
 
-fn nuntius_submissionis(string identitas) → Nuntius_Formae {
-    return variant Submission { identitas = identitas }
+fn submit_message(string identity) → FormMessage {
+    return variant Submit { identity = identity }
 }
 
 # The bindings — keyed to the forms identities; the event spellings are the
 # package's contract constants (consumable; never a magic string in the
 # plan).
-fn vinculum_campi(string identitas, string valor) → Vinculum_Formae {
-    return Vinculum_Formae {
-        identitas = identitas,
-        eventus = forms.eventus_campi(),
-        nuntius = (tela.Eventum eventus) → Nuntius_Formae ∴ nuntius_campi_textus(eventus.nomen, valor)
+fn field_binding(string identity, string value) → FormBinding {
+    return FormBinding {
+        identity = identity,
+        event_name = forms.field_event(),
+        message = (tela.EventName event_name) → FormMessage ∴ field_text_message(event_name.name, value)
     }
 }
 
-fn vinculum_boxi(string identitas, bool selectus) → Vinculum_Formae {
-    return Vinculum_Formae {
-        identitas = identitas,
-        eventus = forms.eventus_mutationis(),
-        nuntius = (tela.Eventum eventus) → Nuntius_Formae ∴ nuntius_boxi_toggle(eventus.nomen, selectus)
+fn checkbox_binding(string identity, bool selected) → FormBinding {
+    return FormBinding {
+        identity = identity,
+        event_name = forms.change_event(),
+        message = (tela.EventName event_name) → FormMessage ∴ checkbox_toggle_message(event_name.name, selected)
     }
 }
 
-fn vinculum_selecti(string identitas, string electum) → Vinculum_Formae {
-    return Vinculum_Formae {
-        identitas = identitas,
-        eventus = forms.eventus_mutationis(),
-        nuntius = (tela.Eventum eventus) → Nuntius_Formae ∴ nuntius_selecti_mutatio(eventus.nomen, electum)
+fn select_binding(string identity, string selected) → FormBinding {
+    return FormBinding {
+        identity = identity,
+        event_name = forms.change_event(),
+        message = (tela.EventName event_name) → FormMessage ∴ select_change_message(event_name.name, selected)
     }
 }
 
-fn vinculum_submissionis(string identitas) → Vinculum_Formae {
-    return Vinculum_Formae {
-        identitas = identitas,
-        eventus = forms.eventus_submissionis(),
-        nuntius = (tela.Eventum eventus) → Nuntius_Formae ∴ nuntius_submissionis(eventus.nomen)
+fn submit_binding(string identity) → FormBinding {
+    return FormBinding {
+        identity = identity,
+        event_name = forms.submit_event(),
+        message = (tela.EventName event_name) → FormMessage ∴ submit_message(event_name.name)
     }
 }
 
-fn statum_campi(string identitas, string valor, string error) → Statu_Campi {
-    return Statu_Campi { identitas = identitas, valor = valor, error = error }
+fn field_state(string identity, string value, string error) → FieldState {
+    return FieldState { identity = identity, value = value, error = error }
 }
 
 # The update function — an ordinary app function over the concrete message
@@ -599,28 +599,28 @@ fn statum_campi(string identitas, string valor, string error) → Statu_Campi {
 # error (valid). The checkbox toggle / select change update the value. The
 # submit validates: the field keeps its error if still invalid, clears if
 # valid (the no-op rule: a state-unchanging update is silent downstream).
-fn update_campi(Statu_Campi statu, Nuntius_Formae nuntius) → Statu_Campi {
-    match nuntius {
-        case Campi_Textus const identitas, valor {
-            if valor ≡ "" {
-                return statum_campi(identitas, valor, "Required")
+fn update_field(FieldState state, FormMessage message) → FieldState {
+    match message {
+        case FieldText const identity, value {
+            if value ≡ "" {
+                return field_state(identity, value, "Required")
             }
-            return statum_campi(identitas, valor, "")
+            return field_state(identity, value, "")
         }
-        case Boxum_Toggle const identitas, selectus {
-            if selectus {
-                return statum_campi(identitas, "true", "")
+        case CheckboxToggle const identity, selected {
+            if selected {
+                return field_state(identity, "true", "")
             }
-            return statum_campi(identitas, "false", "")
+            return field_state(identity, "false", "")
         }
-        case Selectum_Mutatio const identitas, electum {
-            return statum_campi(identitas, electum, "")
+        case SelectChange const identity, selected {
+            return field_state(identity, selected, "")
         }
-        case Submission const identitas {
-            if statu.valor ≡ "" {
-                return statum_campi(identitas, statu.valor, "Required")
+        case Submit const identity {
+            if state.value ≡ "" {
+                return field_state(identity, state.value, "Required")
             }
-            return statum_campi(identitas, statu.valor, "")
+            return field_state(identity, state.value, "")
         }
     }
 }
@@ -628,27 +628,27 @@ fn update_campi(Statu_Campi statu, Nuntius_Formae nuntius) → Statu_Campi {
 # The live-region announcement (the §1.5 pattern extended to form
 # validation): announce on a validation-state change (the value or the
 # error flipped), SILENT on a no-op (the state unchanged — "" return).
-fn annuntium_formae(Statu_Campi ante, Statu_Campi post) → string {
-    if ante.valor ≡ post.valor and ante.error ≡ post.error {
+fn form_announcement(FieldState ante, FieldState post) → string {
+    if ante.value ≡ post.value and ante.error ≡ post.error {
         return ""
     }
     if not (post.error ≡ "") {
-        return post.identitas + " invalid: " + post.error
+        return post.identity + " invalid: " + post.error
     }
-    return post.identitas + " valid"
+    return post.identity + " valid"
 }
 
 # The app-side mapping: the model state → the field props (the package's
-# Props_campi — consumable), so the ARIA/validation semantics round-trip
+# FieldProps — consumable), so the ARIA/validation semantics round-trip
 # through the package's render helpers (invalid → aria-invalid='true' +
 # aria-describedby → the error identity + the error text; valid → cleared).
-fn props_ex_statu(string nomen, string label, Statu_Campi statu) → forms.Props_campi {
-    return forms.props_campi(
-        nomen,
+fn props_from_state(string name, string label, FieldState state) → forms.FieldProps {
+    return forms.field_props(
+        name,
         label,
-        statu.valor,
-        forms.invalid_textus(forms.error_praesens(statu.error)),
-        statu.error
+        state.value,
+        forms.invalid_state(forms.error_present(state.error)),
+        state.error
     )
 }
 
@@ -656,47 +656,47 @@ fn props_ex_statu(string nomen, string label, Statu_Campi statu) → forms.Props
 # Stage 4 U7 — the interactive plan surface.
 #
 # The mounted forms composition (the REAL component fns through the normal
-# package interface), the app-typed re-render (the model → the next Visus),
+# package interface), the app-typed re-render (the model → the next View),
 # and the seam mount (dom.scope + browser.mount through the app's OWN
 # imports). The scripted interaction driver (check-forms-interactive) calls
 # these against the documented faber-web host binding.
 # ===========================================================================
 
 # The interactive proof's theme (the 8-token core baseline).
-fn thema_formae() → tela.Thema {
-    return tela.thema("formae", [
-        tela.scopulum("surface.canvas", "#ffffff"),
-        tela.scopulum("surface.panel", "#f9fafb"),
-        tela.scopulum("text.primary", "#111827"),
-        tela.scopulum("text.muted", "#6b7280"),
-        tela.scopulum("border.default", "#e5e7eb"),
-        tela.scopulum("accent.primary", "#2563eb"),
-        tela.scopulum("state.positive", "#16a34a"),
-        tela.scopulum("state.caution", "#d97706")
+fn forms_theme() → tela.Theme {
+    return tela.theme("formae", [
+        tela.token("surface.canvas", "#ffffff"),
+        tela.token("surface.panel", "#f9fafb"),
+        tela.token("text.primary", "#111827"),
+        tela.token("text.muted", "#6b7280"),
+        tela.token("border.default", "#e5e7eb"),
+        tela.token("accent.primary", "#2563eb"),
+        tela.token("state.positive", "#16a34a"),
+        tela.token("state.caution", "#d97706")
     ])
 }
 
-# The forms composition — the family's `→ tela.Visus` component fns through
+# The forms composition — the family's `→ tela.View` component fns through
 # the NORMAL qualified imports (the U7 "no compose-without" condition): the
 # field group + the checkbox + the select + the form-level live region
 # under one group identity.
-fn compositio_formae() → tela.Visus {
-    return tela.elementum_omne(
-        tela.nova_identitas("forma"),
-        tela.html_spatium(),
+fn forms_composition() → tela.View {
+    return tela.element_full(
+        tela.new_identity("forma"),
+        tela.html_space(),
         "div",
         [],
         [],
         [
-            forms.agmen_campi(forms.props_campi("name", "Name", "", "false", "")),
-            forms.boxum(forms.props_boxi("agree", "Agree", "false", "false")),
-            forms.selego(forms.props_selecti("tone", "Tone", ["Light", "Dark"], "false")),
-            forms.regio_viva_forma()
+            forms.field_group(forms.field_props("name", "Name", "", "false", "")),
+            forms.checkbox(forms.checkbox_props("agree", "Agree", "false", "false")),
+            forms.select(forms.select_props("tone", "Tone", ["Light", "Dark"], "false")),
+            forms.form_live_region()
         ]
     )
 }
 
-fn veritas_textus(bool b) → string {
+fn bool_text(bool b) → string {
     if b then return "true"
     return "false"
 }
@@ -704,18 +704,18 @@ fn veritas_textus(bool b) → string {
 # The composition re-rendered from the app model (the field's validation
 # state + the checkbox + the select state) — the update loop's view-render
 # input (the driver applies the model via the messages).
-fn compositio_formae_ex_statu(Statu_Campi statu, bool agree, string tone) → tela.Visus {
-    return tela.elementum_omne(
-        tela.nova_identitas("forma"),
-        tela.html_spatium(),
+fn forms_composition_from_state(FieldState state, bool agree, string tone) → tela.View {
+    return tela.element_full(
+        tela.new_identity("forma"),
+        tela.html_space(),
         "div",
         [],
         [],
         [
-            forms.agmen_campi(props_ex_statu("name", "Name", statu)),
-            forms.boxum(forms.props_boxi("agree", "Agree", veritas_textus(agree), "false")),
-            forms.selego(forms.props_selecti("tone", "Tone", ["Light", "Dark"], "false")),
-            forms.regio_viva_forma()
+            forms.field_group(props_from_state("name", "Name", state)),
+            forms.checkbox(forms.checkbox_props("agree", "Agree", bool_text(agree), "false")),
+            forms.select(forms.select_props("tone", "Tone", ["Light", "Dark"], "false")),
+            forms.form_live_region()
         ]
     )
 }
@@ -724,25 +724,25 @@ fn compositio_formae_ex_statu(Statu_Campi statu, bool agree, string tone) → te
 # tela.browser.mount (the cds-u5/u6 conditions at the app boundary). The
 # driver (the node host) calls this; the pre-existing hydration state is
 # read via dom.snapshot inside mount.
-fn montium_formae(string selector) → browser.Mounted ∪ null {
-    const dom.Scope scopus ← dom.scope(selector)
-    return browser.mount(scopus, compositio_formae(), thema_formae())
+fn mount_forms(string selector) → browser.Mounted ∪ null {
+    const dom.Scope scope ← dom.scope(selector)
+    return browser.mount(scope, forms_composition(), forms_theme())
 }
 
 main {
-    # G4 seam attempt (recorded in the evidence record): ext.bar_metrum
+    # G4 seam attempt (recorded in the evidence record): ext.bar_meter
     # resolves to WARN014 export-skip; the app composes the meter with tela
     # constructors (documented workaround).
-    const tela.Visus bar ← bar_metrum_app("throughput", "7.4 Mbps", 74)
+    const tela.View bar ← bar_meter_app("throughput", "7.4 Mbps", 74)
 
-    # --- Assembled arbor: panel > (two-column metric table, bar meter,
+    # --- Assembled tree: panel > (two-column metric table, bar meter,
     # segmented control) — the control renders statically alongside the
     # Stage 1/2 composition (shared source: the same component function
     # that mounts interactively).
-    const Props_controlli props ← props_controlli()
-    const tela.Visus control ← segmentatum(props)
-    const tela.Visus arbor ← panelum([
-        metrica_tabula(),
+    const ControlProps props ← control_props()
+    const tela.View control ← segmented_control(props)
+    const tela.View tree ← panel([
+        metric_table(),
         bar,
         control
     ])
@@ -750,105 +750,105 @@ main {
     # --- Extension tokens — both palettes (zero-arg accessors per the
     # G4-safe seam; consumed via field access on the call result, since the
     # extension-local token class name is not a nameable qualified type from
-    # the app — fix:snapshot-nomen-collision, see the extension header).
-    const tela.Thema lumen ← tela.thema("lumen", [
-        tela.scopulum("surface.canvas", "#ffffff"),
-        tela.scopulum("surface.panel", "#f9fafb"),
-        tela.scopulum("text.primary", "#111827"),
-        tela.scopulum("text.muted", "#6b7280"),
-        tela.scopulum("border.default", "#e5e7eb"),
-        tela.scopulum("accent.primary", "#2563eb"),
-        tela.scopulum("state.positive", "#16a34a"),
-        tela.scopulum("state.caution", "#d97706"),
-        tela.scopulum(ext.chart_axis_muted().nomen, ext.chart_axis_muted().valor),
-        tela.scopulum(ext.chart_grid_muted().nomen, ext.chart_grid_muted().valor),
-        tela.scopulum(forms.form_field_invalid().nomen, forms.form_field_invalid().valor),
-        tela.scopulum(forms.form_field_valid().nomen, forms.form_field_valid().valor),
-        tela.scopulum(forms.form_focus().nomen, forms.form_focus().valor)
+    # the app — fix:snapshot-name-collision, see the extension header).
+    const tela.Theme lumen ← tela.theme("lumen", [
+        tela.token("surface.canvas", "#ffffff"),
+        tela.token("surface.panel", "#f9fafb"),
+        tela.token("text.primary", "#111827"),
+        tela.token("text.muted", "#6b7280"),
+        tela.token("border.default", "#e5e7eb"),
+        tela.token("accent.primary", "#2563eb"),
+        tela.token("state.positive", "#16a34a"),
+        tela.token("state.caution", "#d97706"),
+        tela.token(ext.chart_axis_muted().name, ext.chart_axis_muted().value),
+        tela.token(ext.chart_grid_muted().name, ext.chart_grid_muted().value),
+        tela.token(forms.form_field_invalid().name, forms.form_field_invalid().value),
+        tela.token(forms.form_field_valid().name, forms.form_field_valid().value),
+        tela.token(forms.form_focus().name, forms.form_focus().value)
     ])
-    const tela.Thema tenebrae ← tela.thema("tenebrae", [
-        tela.scopulum("surface.canvas", "#0f172a"),
-        tela.scopulum("surface.panel", "#1e293b"),
-        tela.scopulum("text.primary", "#f8fafc"),
-        tela.scopulum("text.muted", "#94a3b8"),
-        tela.scopulum("border.default", "#334155"),
-        tela.scopulum("accent.primary", "#3b82f6"),
-        tela.scopulum("state.positive", "#22c55e"),
-        tela.scopulum("state.caution", "#f59e0b"),
-        tela.scopulum(ext.chart_axis_muted_tenebrae().nomen, ext.chart_axis_muted_tenebrae().valor),
-        tela.scopulum(ext.chart_grid_muted_tenebrae().nomen, ext.chart_grid_muted_tenebrae().valor),
-        tela.scopulum(forms.form_field_invalid().nomen, forms.form_field_invalid().valor),
-        tela.scopulum(forms.form_field_valid().nomen, forms.form_field_valid().valor),
-        tela.scopulum(forms.form_focus().nomen, forms.form_focus().valor)
+    const tela.Theme tenebrae ← tela.theme("tenebrae", [
+        tela.token("surface.canvas", "#0f172a"),
+        tela.token("surface.panel", "#1e293b"),
+        tela.token("text.primary", "#f8fafc"),
+        tela.token("text.muted", "#94a3b8"),
+        tela.token("border.default", "#334155"),
+        tela.token("accent.primary", "#3b82f6"),
+        tela.token("state.positive", "#22c55e"),
+        tela.token("state.caution", "#f59e0b"),
+        tela.token(ext.chart_axis_muted_dark().name, ext.chart_axis_muted_dark().value),
+        tela.token(ext.chart_grid_muted_dark().name, ext.chart_grid_muted_dark().value),
+        tela.token(forms.form_field_invalid().name, forms.form_field_invalid().value),
+        tela.token(forms.form_field_valid().name, forms.form_field_valid().value),
+        tela.token(forms.form_focus().name, forms.form_focus().value)
     ])
 
     # --- App + extension style bundles (identical under both themes) -------
-    const tela.Stilum ext_stilum ← ext.chart_stilum()
-    const tela.Codicillus ext_bundle ← tela.codicillus("extensionlib", ext_stilum)
+    const tela.Style ext_stilum ← ext.chart_style()
+    const tela.Bundle ext_bundle ← tela.bundle("extensionlib", ext_stilum)
 
     # --- The formslib component style bundle (the three-package input) -----
-    # Class-returning (→ tela.Stilum) — consumable from the consumer today
+    # Class-returning (→ tela.Style) — consumable from the consumer today
     # (the stage-1 §3 evidence); the identity "formslib" is the package's
-    # assembly-identity entry (the ordo map declares it app-side).
-    const tela.Stilum forms_stilum ← forms.form_stilum()
-    const tela.Codicillus forms_bundle ← tela.codicillus("formslib", forms_stilum)
+    # assembly-identity entry (the order map declares it app-side).
+    const tela.Style forms_stilum ← forms.form_style()
+    const tela.Bundle forms_bundle ← tela.bundle("formslib", forms_stilum)
 
     # App style bundle: the panel rule + the segmented-control rule, both
     # keyed on the data-tela identity (the control's styles are app-owned).
-    const tela.Stilum app_stilum ← tela.Stilum {
-        regulae = [
-            tela.Regula {
+    const tela.Style app_stilum ← tela.Style {
+        rules = [
+            tela.Rule {
                 selector = "[data-tela='canary-panelum']",
-                declarationes = [
-                    tela.Declaratio { nomen = "display", valor = "grid" },
-                    tela.Declaratio { nomen = "gap", valor = "1rem" },
-                    tela.Declaratio { nomen = "color", valor = "var(--chart-axis-muted)" }
+                declarations = [
+                    tela.Declaration { name = "display", value = "grid" },
+                    tela.Declaration { name = "gap", value = "1rem" },
+                    tela.Declaration { name = "color", value = "var(--chart-axis-muted)" }
                 ]
             },
-            tela.Regula {
+            tela.Rule {
                 selector = "[data-tela='tela-control']",
-                declarationes = [
-                    tela.Declaratio { nomen = "display", valor = "flex" },
-                    tela.Declaratio { nomen = "gap", valor = "0.25rem" },
-                    tela.Declaratio { nomen = "border-radius", valor = "0.375rem" }
+                declarations = [
+                    tela.Declaration { name = "display", value = "flex" },
+                    tela.Declaration { name = "gap", value = "0.25rem" },
+                    tela.Declaration { name = "border-radius", value = "0.375rem" }
                 ]
             }
         ]
     }
-    const tela.Codicillus app_bundle ← tela.codicillus("canary-app", app_stilum)
+    const tela.Bundle app_bundle ← tela.bundle("canary-app", app_stilum)
 
     # --- Full cascade under each theme (assemble: tokens -> extensionlib ->
     # formslib -> canary-app; the token layer + the library bundles are the
-    # only differences between the two). The three-package ordo map: both
+    # only differences between the two). The three-package order map: both
     # extensionlib and formslib depend on nothing (tela is the shared base),
     # so the kernel's topological tie-break (stable package identity) orders
     # extensionlib before formslib — the documented cascade order.
-    const tela.Stilum ∪ null cascade_lumen_result ← tela.assemble(
+    const tela.Style ∪ null cascade_lumen_result ← tela.assemble(
         lumen,
         null,
         [],
-        [ tela.ordo("extensionlib", []), tela.ordo("formslib", []) ],
+        [ tela.order("extensionlib", []), tela.order("formslib", []) ],
         [ext_bundle, forms_bundle],
         app_bundle
     )
-    const tela.Stilum ∪ null cascade_tenebrae_result ← tela.assemble(
+    const tela.Style ∪ null cascade_tenebrae_result ← tela.assemble(
         tenebrae,
         null,
         [],
-        [ tela.ordo("extensionlib", []), tela.ordo("formslib", []) ],
+        [ tela.order("extensionlib", []), tela.order("formslib", []) ],
         [ext_bundle, forms_bundle],
         app_bundle
     )
     assert not (cascade_lumen_result ≡ null)
     assert not (cascade_tenebrae_result ≡ null)
-    const string css_lumen ← tela.css(tela.Stilum { regulae = cascade_lumen_result!.regulae }) coalesce ""
-    const string css_tenebrae ← tela.css(tela.Stilum { regulae = cascade_tenebrae_result!.regulae }) coalesce ""
+    const string css_lumen ← tela.css(tela.Style { rules = cascade_lumen_result!.rules }) coalesce ""
+    const string css_tenebrae ← tela.css(tela.Style { rules = cascade_tenebrae_result!.rules }) coalesce ""
 
     # --- The Stage 2 campaign gate proof (bullets 1 + 2) -------------------
-    # HTML is theme-independent: the same arbor renders byte-identically
+    # HTML is theme-independent: the same tree renders byte-identically
     # (themes supply values, not markup).
-    const string html_a ← tela.html_visus(arbor) coalesce ""
-    const string html_b ← tela.html_visus(arbor) coalesce ""
+    const string html_a ← tela.html_visus(tree) coalesce ""
+    const string html_b ← tela.html_visus(tree) coalesce ""
     assert html_a ≡ html_b
     # The two theme token layers differ materially.
     assert css_lumen ≠ css_tenebrae
@@ -868,81 +868,83 @@ main {
     assert css_lumen.continet("var(--form-focus)")
 
     # --- The Stage 2 fail-closed regressions re-asserted (three-package) ---
-    # A cycle in the ordo map rejects (fail-closed — no partial cascade).
-    const tela.Stilum ∪ null cycle_result ← tela.assemble(
+    # A cycle in the order map rejects (fail-closed — no partial cascade).
+    const tela.Style ∪ null cycle_result ← tela.assemble(
         lumen,
         null,
         [],
-        [ tela.ordo("extensionlib", ["formslib"]), tela.ordo("formslib", ["extensionlib"]) ],
+        [ tela.order("extensionlib", ["formslib"]), tela.order("formslib", ["extensionlib"]) ],
         [ext_bundle, forms_bundle],
         app_bundle
     )
     assert cycle_result ≡ null
     # Duplicate package identity with different content rejects (dedup by
     # stable identity — fail-closed, the Stage 2 contract).
-    const tela.Codicillus forms_bundle_altera ← tela.codicillus(
+    const tela.Bundle forms_bundle_altera ← tela.bundle(
         "formslib",
-        tela.Stilum {
-            regulae = [
-                tela.Regula {
+        tela.Style {
+            rules = [
+                tela.Rule {
                     selector = "[data-tela^='form-select-']",
-                    declarationes = [
-                        tela.Declaratio { nomen = "color", valor = "var(--form-focus)" }
+                    declarations = [
+                        tela.Declaration { name = "color", value = "var(--form-focus)" }
                     ]
                 }
             ]
         }
     )
-    const tela.Stilum ∪ null duplicate_result ← tela.assemble(
+    const tela.Style ∪ null duplicate_result ← tela.assemble(
         lumen,
         null,
         [],
-        [ tela.ordo("extensionlib", []), tela.ordo("formslib", []) ],
+        [ tela.order("extensionlib", []), tela.order("formslib", []) ],
         [ext_bundle, forms_bundle, forms_bundle_altera],
         app_bundle
     )
     assert duplicate_result ≡ null
     # Invalid output (an empty-selector rule) rejects (fail-closed).
-    const tela.Codicillus malum_bundle ← tela.codicillus(
+    const tela.Bundle malum_bundle ← tela.bundle(
         "mala",
-        tela.Stilum {
-            regulae = [
-                tela.Regula {
+        tela.Style {
+            rules = [
+                tela.Rule {
                     selector = "",
-                    declarationes = [
-                        tela.Declaratio { nomen = "color", valor = "#000000" }
+                    declarations = [
+                        tela.Declaration { name = "color", value = "#000000" }
                     ]
                 }
             ]
         }
     )
-    const tela.Stilum ∪ null malum_result ← tela.assemble(
+    const tela.Style ∪ null malum_result ← tela.assemble(
         lumen,
         null,
         [],
-        [ tela.ordo("extensionlib", []), tela.ordo("formslib", []) ],
+        [ tela.order("extensionlib", []), tela.order("formslib", []) ],
         [ext_bundle, forms_bundle, malum_bundle],
         app_bundle
     )
     assert malum_result ≡ null
 
     # --- The forms family static render (Stage 4 U3, runner input) --------
-    # The G4-safe route (the U1/U2 probe finding): the `→ tela.Visus`
-    # component fns are WARN014-skipped for consumers (fix:g4), so the
-    # runner renders the family through the package's consumable `*_html`
-    # helpers + props constructors (the direct-call pattern); the
-    # cross-package tree composition stays behind compose-without until g4.
+    # U0 re-route (MF-6): the runner renders the family through the
+    # `→ tela.View` component fns via the NORMAL package interface (the
+    # exempla-mode consumption re-verified live against in-tree radix
+    # 0.80.0 — post-cds-u6, green). The `*_html` helpers are RETIRED. The
+    # rendered bytes are IDENTICAL to the pre-route output (the helpers
+    # were exactly `tela.html_visus(fn(...))`), so the determinism sha is
+    # unaffected by the re-route.
     const string forma_composita ←
-        forms.campum_html(forms.props_campi("name", "Name", "", "false", "")) +
-        forms.boxum_html(forms.props_boxi("agree", "Agree", "true", "false")) +
-        forms.selego_html(forms.props_selecti("tone", "Tone", ["Light", "Dark"], "false")) +
-        forms.error_regionum_html("name", "") +
-        forms.regio_viva_forma_html()
+        tela.html_visus(forms.field(forms.field_props("name", "Name", "", "false", ""))) coalesce "" +
+        tela.html_visus(forms.checkbox(forms.checkbox_props("agree", "Agree", "true", "false"))) coalesce "" +
+        tela.html_visus(forms.select(forms.select_props("tone", "Tone", ["Light", "Dark"], "false"))) coalesce "" +
+        tela.html_visus(forms.error_region("name", "")) coalesce "" +
+        tela.html_visus(forms.form_live_region()) coalesce ""
     assert forma_composita ≡ "<input type='text' aria-label='Name' aria-invalid='false' data-tela='form-field-name'><input type='checkbox' aria-label='Agree' aria-checked='true' aria-invalid='false' data-tela='form-checkbox-agree'><select aria-label='Tone' aria-invalid='false' data-tela='form-select-tone'><option>Light</option><option>Dark</option></select><div role='alert' data-tela='form-error-name'></div><div role='status' aria-live='polite' data-tela='form-live'></div>"
     # The extension bundle resolves before the forms bundle in the cascade
     # (the topological tie-break orders extensionlib before formslib).
-    const int ext_index ← indice_in(css_lumen, "[data-tela='tela-chart-bar']")
-    const int forms_index ← indice_in(css_lumen, "[data-tela^='form-field-']")
+    const int ext_index ← index_in(css_lumen, "[data-tela='tela-chart-bar']")
+    const int forms_index ← index_in(css_lumen, "[data-tela^='form-field-']")
     assert ext_index < forms_index
 
     # --- The Stage 3 static half (U3 done_when (a)) ------------------------
@@ -951,169 +953,169 @@ main {
     # + the roving tabindex on the segments (§1.3/§1.4), the control-owned
     # declared live region (§1.5), stable data-tela identities throughout.
     const string html_controllum ← tela.html_visus(control) coalesce ""
-    # Serializer emission order: attributa in author order, then data-tela
+    # Serializer emission order: attributes in author order, then data-tela
     # (the identity attribute) — the U2 exempla precedent.
     assert html_controllum ≡ "<div role='radiogroup' aria-label='segmented control' data-tela='tela-control'><button role='radio' aria-selected='true' tabindex='0' data-tela='tela-seg-1'>One</button><button role='radio' aria-selected='false' tabindex='-1' data-tela='tela-seg-2'>Two</button><button role='radio' aria-selected='false' tabindex='-1' data-tela='tela-seg-3'>Three</button><div role='status' aria-live='polite' data-tela='tela-live'></div></div>"
 
     # --- The app-typed behavior plan (U3 done_when (b)) — pure proof -------
     # The plan is app-typed (D1 recorded, never kernel-generic) and carried
     # by typed message-producing closures (not erased into strings).
-    const list<Vinculum> vincula ← vincula_controlli()
+    const list<EventBinding> vincula ← control_bindings()
     assert vincula.longitudo() ≡ 3
-    # Invoke a binding's closure: click on tela-seg-2 → Electum{tela-seg-2}.
-    const Nuntius click_msg ← vincula[1].nuntius(tela.eventum("tela-seg-2"))
+    # Invoke a binding's closure: click on tela-seg-2 → Selected{tela-seg-2}.
+    const Message click_msg ← vincula[1].message(tela.event_name("tela-seg-2"))
     match click_msg {
-        case Electum const identitas {
-            assert identitas ≡ "tela-seg-2"
+        case Selected const identity {
+            assert identity ≡ "tela-seg-2"
         }
-        case Motus const identitas {
+        case Moved const identity {
             assert false
         }
     }
-    # The update loop: Electum changes the selection.
-    const string post ← update_controlli("tela-seg-1", click_msg)
+    # The update loop: Selected changes the selection.
+    const string post ← update_control("tela-seg-1", click_msg)
     assert post ≡ "tela-seg-2"
-    # The keyboard mapping: arrows move focus only (Motus) — the update
+    # The keyboard mapping: arrows move focus only (Moved) — the update
     # leaves the selection unchanged (§1.3; live-region-silent per §1.5).
-    const Nuntius arrow_msg ← nuntius_clavis("tela-seg-2", "ArrowRight")
+    const Message arrow_msg ← key_message("tela-seg-2", "ArrowRight")
     match arrow_msg {
-        case Motus const identitas {
-            assert identitas ≡ "tela-seg-3"
+        case Moved const identity {
+            assert identity ≡ "tela-seg-3"
         }
-        case Electum const identitas {
+        case Selected const identity {
             assert false
         }
     }
-    const string post_arrow ← update_controlli(post, arrow_msg)
+    const string post_arrow ← update_control(post, arrow_msg)
     assert post_arrow ≡ post
-    # Home/End move focus to first/last (Motus); Space/Enter select.
-    match nuntius_clavis("tela-seg-3", "Home") {
-        case Motus const identitas {
-            assert identitas ≡ "tela-seg-1"
+    # Home/End move focus to first/last (Moved); Space/Enter select.
+    match key_message("tela-seg-3", "Home") {
+        case Moved const identity {
+            assert identity ≡ "tela-seg-1"
         }
-        case Electum const identitas {
+        case Selected const identity {
             assert false
         }
     }
-    match nuntius_clavis("tela-seg-1", "End") {
-        case Motus const identitas {
-            assert identitas ≡ "tela-seg-3"
+    match key_message("tela-seg-1", "End") {
+        case Moved const identity {
+            assert identity ≡ "tela-seg-3"
         }
-        case Electum const identitas {
+        case Selected const identity {
             assert false
         }
     }
-    match nuntius_clavis("tela-seg-2", "Space") {
-        case Electum const identitas {
-            assert identitas ≡ "tela-seg-2"
+    match key_message("tela-seg-2", "Space") {
+        case Selected const identity {
+            assert identity ≡ "tela-seg-2"
         }
-        case Motus const identitas {
+        case Moved const identity {
             assert false
         }
     }
     # A no-op selection change: clicking the already-selected segment keeps
     # the model unchanged — the update returns the same selection (silent).
-    const Nuntius noop_msg ← vincula[1].nuntius(tela.eventum("tela-seg-2"))
-    assert update_controlli(post, noop_msg) ≡ post
+    const Message noop_msg ← vincula[1].message(tela.event_name("tela-seg-2"))
+    assert update_control(post, noop_msg) ≡ post
     # The declarative effects (behavior-design §3.2) — the kernel carriers
-    # + the key accessor (fix:sem001 — the kernel owns the only Effectus
+    # + the key accessor (fix:sem001 — the kernel owns the only Effect
     # matcher; the host executes effects by reading the key).
-    const tela.Effectus restitue ← tela.restitue("tela-seg-2")
-    assert tela.effectus_identitas(restitue) ≡ "tela-seg-2"
-    const tela.Effectus ancora ← tela.ancora("#root")
-    assert tela.effectus_identitas(ancora) ≡ "#root"
+    const tela.Effect restore ← tela.restore("tela-seg-2")
+    assert tela.effect_identity(restore) ≡ "tela-seg-2"
+    const tela.Effect anchor ← tela.anchor("#root")
+    assert tela.effect_identity(anchor) ≡ "#root"
     # The live-region announcement mapping (§1.5): names the new option.
-    assert annuntium(props, "tela-seg-2") ≡ "Two selected"
-    assert annuntium(props, "tela-seg-1") ≡ "One selected"
+    assert announcement(props, "tela-seg-2") ≡ "Two selected"
+    assert announcement(props, "tela-seg-1") ≡ "One selected"
     # The props carrier + the interactive theme (the driver + update loop
     # consume these).
-    assert props_electi(props, "tela-seg-3").electum ≡ "tela-seg-3"
-    assert not (tela.thema_css(thema_controlli()) ≡ null)
+    assert selected_props(props, "tela-seg-3").selected ≡ "tela-seg-3"
+    assert not (tela.theme_css(control_theme()) ≡ null)
 
     # --- The forms behavior plan (U4 done_when (b)) — pure proof --------
     # The plan is app-typed (D1 recorded, never kernel-generic) and carried
     # by typed message-producing closures (not erased into strings). The
     # bindings key to the forms identities; the event spellings are the
     # package's contract constants (consumable — the G4-safe surface).
-    assert forms.eventus_campi() ≡ "input"
-    assert forms.eventus_mutationis() ≡ "change"
-    assert forms.eventus_submissionis() ≡ "submit"
-    assert forms.eventus_click() ≡ "click"
-    const Vinculum_Formae v_campum ← vinculum_campi("form-field-name", "Ada")
-    const Vinculum_Formae v_boxum ← vinculum_boxi("form-checkbox-agree", true)
-    const Vinculum_Formae v_selectum ← vinculum_selecti("form-select-tone", "Dark")
-    const Vinculum_Formae v_submissio ← vinculum_submissionis("form-submit")
-    assert v_campum.eventus ≡ forms.eventus_campi()
-    assert v_boxum.eventus ≡ forms.eventus_mutationis()
-    assert v_selectum.eventus ≡ forms.eventus_mutationis()
-    assert v_submissio.eventus ≡ forms.eventus_submissionis()
-    assert v_campum.identitas ≡ "form-field-name"
-    assert v_boxum.identitas ≡ "form-checkbox-agree"
-    assert v_selectum.identitas ≡ "form-select-tone"
-    assert v_submissio.identitas ≡ "form-submit"
+    assert forms.field_event() ≡ "input"
+    assert forms.change_event() ≡ "change"
+    assert forms.submit_event() ≡ "submit"
+    assert forms.click_event() ≡ "click"
+    const FormBinding v_campum ← field_binding("form-field-name", "Ada")
+    const FormBinding v_boxum ← checkbox_binding("form-checkbox-agree", true)
+    const FormBinding v_selectum ← select_binding("form-select-tone", "Dark")
+    const FormBinding v_submissio ← submit_binding("form-submit")
+    assert v_campum.event_name ≡ forms.field_event()
+    assert v_boxum.event_name ≡ forms.change_event()
+    assert v_selectum.event_name ≡ forms.change_event()
+    assert v_submissio.event_name ≡ forms.submit_event()
+    assert v_campum.identity ≡ "form-field-name"
+    assert v_boxum.identity ≡ "form-checkbox-agree"
+    assert v_selectum.identity ≡ "form-select-tone"
+    assert v_submissio.identity ≡ "form-submit"
 
-    # Invoke the bindings' closures (the event's nomen carries the
+    # Invoke the bindings' closures (the event's name carries the
     # identity — the event subscription keys by identity, never ambient).
-    const Nuntius_Formae m_campum ← v_campum.nuntius(tela.eventum("form-field-name"))
+    const FormMessage m_campum ← v_campum.message(tela.event_name("form-field-name"))
     match m_campum {
-        case Campi_Textus const identitas, valor {
-            assert identitas ≡ "form-field-name"
-            assert valor ≡ "Ada"
+        case FieldText const identity, value {
+            assert identity ≡ "form-field-name"
+            assert value ≡ "Ada"
         }
-        case Boxum_Toggle const identitas, selectus {
+        case CheckboxToggle const identity, selected {
             assert false
         }
-        case Selectum_Mutatio const identitas, electum {
+        case SelectChange const identity, selected {
             assert false
         }
-        case Submission const identitas {
+        case Submit const identity {
             assert false
         }
     }
-    const Nuntius_Formae m_boxum ← v_boxum.nuntius(tela.eventum("form-checkbox-agree"))
+    const FormMessage m_boxum ← v_boxum.message(tela.event_name("form-checkbox-agree"))
     match m_boxum {
-        case Boxum_Toggle const identitas, selectus {
-            assert identitas ≡ "form-checkbox-agree"
-            assert selectus ≡ true
+        case CheckboxToggle const identity, selected {
+            assert identity ≡ "form-checkbox-agree"
+            assert selected ≡ true
         }
-        case Campi_Textus const identitas, valor {
+        case FieldText const identity, value {
             assert false
         }
-        case Selectum_Mutatio const identitas, electum {
+        case SelectChange const identity, selected {
             assert false
         }
-        case Submission const identitas {
+        case Submit const identity {
             assert false
         }
     }
-    const Nuntius_Formae m_selectum ← v_selectum.nuntius(tela.eventum("form-select-tone"))
+    const FormMessage m_selectum ← v_selectum.message(tela.event_name("form-select-tone"))
     match m_selectum {
-        case Selectum_Mutatio const identitas, electum {
-            assert identitas ≡ "form-select-tone"
-            assert electum ≡ "Dark"
+        case SelectChange const identity, selected {
+            assert identity ≡ "form-select-tone"
+            assert selected ≡ "Dark"
         }
-        case Campi_Textus const identitas, valor {
+        case FieldText const identity, value {
             assert false
         }
-        case Boxum_Toggle const identitas, selectus {
+        case CheckboxToggle const identity, selected {
             assert false
         }
-        case Submission const identitas {
+        case Submit const identity {
             assert false
         }
     }
-    const Nuntius_Formae m_submissio ← v_submissio.nuntius(tela.eventum("form-submit"))
+    const FormMessage m_submissio ← v_submissio.message(tela.event_name("form-submit"))
     match m_submissio {
-        case Submission const identitas {
-            assert identitas ≡ "form-submit"
+        case Submit const identity {
+            assert identity ≡ "form-submit"
         }
-        case Campi_Textus const identitas, valor {
+        case FieldText const identity, value {
             assert false
         }
-        case Boxum_Toggle const identitas, selectus {
+        case CheckboxToggle const identity, selected {
             assert false
         }
-        case Selectum_Mutatio const identitas, electum {
+        case SelectChange const identity, selected {
             assert false
         }
     }
@@ -1121,57 +1123,57 @@ main {
     # The update/validation semantics: an empty field input → invalid (the
     # error text set — the model flips to invalid); the validation-state
     # mapping flips aria-invalid to "true" + the error text is present.
-    const Statu_Campi statu_init ← statum_campi("form-field-name", "", "")
-    const Statu_Campi statu_invalidum ← update_campi(statu_init, nuntius_campi_textus("form-field-name", ""))
+    const FieldState statu_init ← field_state("form-field-name", "", "")
+    const FieldState statu_invalidum ← update_field(statu_init, field_text_message("form-field-name", ""))
     assert statu_invalidum.error ≡ "Required"
-    assert forms.invalid_textus(forms.error_praesens(statu_invalidum.error)) ≡ "true"
+    assert forms.invalid_state(forms.error_present(statu_invalidum.error)) ≡ "true"
     # The round trip through the package's render helper: invalid → the
     # bytes carry aria-invalid='true' + aria-describedby → the error
-    # identity + the error text (the agmen_campi association, U2).
-    const string grex_invalidum ← forms.agmen_campi_html(props_ex_statu("name", "Name", statu_invalidum))
+    # identity + the error text (the field_group association, U2).
+    const string grex_invalidum ← tela.html_visus(forms.field_group(props_from_state("name", "Name", statu_invalidum))) coalesce ""
     assert grex_invalidum.continet("aria-invalid='true'")
     assert grex_invalidum.continet("aria-describedby='form-error-name'")
     assert grex_invalidum.continet(">Required</div>")
     # A non-empty field input → valid: the error cleared (aria-invalid
     # flips "false", no describedby).
-    const Statu_Campi statu_validum ← update_campi(statu_invalidum, nuntius_campi_textus("form-field-name", "Ada"))
+    const FieldState statu_validum ← update_field(statu_invalidum, field_text_message("form-field-name", "Ada"))
     assert statu_validum.error ≡ ""
-    const string grex_validum ← forms.agmen_campi_html(props_ex_statu("name", "Name", statu_validum))
+    const string grex_validum ← tela.html_visus(forms.field_group(props_from_state("name", "Name", statu_validum))) coalesce ""
     assert not grex_validum.continet("aria-invalid='true'")
     assert not grex_validum.continet("aria-describedby")
     # The live-region policy (§1.5 extended to form validation): the
     # invalid → valid transition announces; a no-op input (same value,
     # same state) is SILENT ("" — the no-op rule).
-    assert annuntium_formae(statu_invalidum, statu_validum) ≡ "form-field-name valid"
-    const Statu_Campi statu_noop ← update_campi(statu_validum, nuntius_campi_textus("form-field-name", "Ada"))
-    assert statu_noop.valor ≡ statu_validum.valor
-    assert annuntium_formae(statu_validum, statu_noop) ≡ ""
+    assert form_announcement(statu_invalidum, statu_validum) ≡ "form-field-name valid"
+    const FieldState statu_noop ← update_field(statu_validum, field_text_message("form-field-name", "Ada"))
+    assert statu_noop.value ≡ statu_validum.value
+    assert form_announcement(statu_validum, statu_noop) ≡ ""
     # The checkbox toggle + select change update the model (the change
     # messages keyed to the forms identities); the second identical toggle
     # is a state no-op → silent.
-    const Statu_Campi statu_boxum ← update_campi(statu_validum, nuntius_boxi_toggle("form-checkbox-agree", true))
-    assert statu_boxum.valor ≡ "true"
-    assert annuntium_formae(statu_validum, statu_boxum) ≡ "form-checkbox-agree valid"
-    const Statu_Campi statu_boxum_noop ← update_campi(statu_boxum, nuntius_boxi_toggle("form-checkbox-agree", true))
-    assert statu_boxum_noop.valor ≡ statu_boxum.valor
-    assert annuntium_formae(statu_boxum, statu_boxum_noop) ≡ ""
-    const Statu_Campi statu_selectum ← update_campi(statu_boxum, nuntius_selecti_mutatio("form-select-tone", "Dark"))
-    assert statu_selectum.valor ≡ "Dark"
+    const FieldState statu_boxum ← update_field(statu_validum, checkbox_toggle_message("form-checkbox-agree", true))
+    assert statu_boxum.value ≡ "true"
+    assert form_announcement(statu_validum, statu_boxum) ≡ "form-checkbox-agree valid"
+    const FieldState statu_boxum_noop ← update_field(statu_boxum, checkbox_toggle_message("form-checkbox-agree", true))
+    assert statu_boxum_noop.value ≡ statu_boxum.value
+    assert form_announcement(statu_boxum, statu_boxum_noop) ≡ ""
+    const FieldState statu_selectum ← update_field(statu_boxum, select_change_message("form-select-tone", "Dark"))
+    assert statu_selectum.value ≡ "Dark"
     # The submit validates: an invalid field keeps the error (a state
     # no-op — silent); a valid field stays cleared (submitted).
-    const Statu_Campi statu_submit_invalidum ← update_campi(statu_invalidum, nuntius_submissionis("form-submit"))
+    const FieldState statu_submit_invalidum ← update_field(statu_invalidum, submit_message("form-submit"))
     assert statu_submit_invalidum.error ≡ "Required"
-    assert annuntium_formae(statu_invalidum, statu_submit_invalidum) ≡ ""
-    const Statu_Campi statu_submit_validum ← update_campi(statu_validum, nuntius_submissionis("form-submit"))
+    assert form_announcement(statu_invalidum, statu_submit_invalidum) ≡ ""
+    const FieldState statu_submit_validum ← update_field(statu_validum, submit_message("form-submit"))
     assert statu_submit_validum.error ≡ ""
     # fix:sem001 held (the recorded G3-family gap): effect keys are read
-    # through the kernel's effectus_identitas — the app never matches an
+    # through the kernel's effect_identity — the app never matches an
     # imported union. The declarative effect keys attach to the same
     # data-tela values the bindings key to (identity-hydration §7).
-    const tela.Effectus restitue_formae ← tela.restitue("form-field-name")
-    assert tela.effectus_identitas(restitue_formae) ≡ "form-field-name"
-    const tela.Effectus ancora_formae ← tela.ancora("#root")
-    assert tela.effectus_identitas(ancora_formae) ≡ "#root"
+    const tela.Effect restore_formae ← tela.restore("form-field-name")
+    assert tela.effect_identity(restore_formae) ≡ "form-field-name"
+    const tela.Effect ancora_formae ← tela.anchor("#root")
+    assert tela.effect_identity(ancora_formae) ≡ "#root"
 
     # --- The static-render runner output: HTML once, the full cascade CSS
     # under each theme (the U6/U3 double-build hook consumes this), then
@@ -1191,13 +1193,13 @@ main {
     # browser.mount); the pure surface is asserted here, the scripted DOM
     # sequence executes under check-forms-interactive (the documented
     # faber-web host binding).
-    const tela.Visus compositio ← compositio_formae()
+    const tela.View compositio ← forms_composition()
     assert tela.html_visus(compositio) not is null
     assert tela.html_visus(compositio) coalesce "" ≡ "<div data-tela='forma'><div data-tela='form-control-name'><input type='text' aria-label='Name' aria-invalid='false' data-tela='form-field-name'><div role='alert' data-tela='form-error-name'></div></div><input type='checkbox' aria-label='Agree' aria-checked='false' aria-invalid='false' data-tela='form-checkbox-agree'><select aria-label='Tone' aria-invalid='false' data-tela='form-select-tone'><option>Light</option><option>Dark</option></select><div role='status' aria-live='polite' data-tela='form-live'></div></div>"
-    assert veritas_textus(true) ≡ "true"
-    assert veritas_textus(false) ≡ "false"
-    const Statu_Campi statu_invalida ← statum_campi("form-field-name", "", "Required")
-    const string compositio_invalida ← tela.html_visus(compositio_formae_ex_statu(statu_invalida, false, "Light")) coalesce ""
+    assert bool_text(true) ≡ "true"
+    assert bool_text(false) ≡ "false"
+    const FieldState state_invalid ← field_state("form-field-name", "", "Required")
+    const string compositio_invalida ← tela.html_visus(forms_composition_from_state(state_invalid, false, "Light")) coalesce ""
     assert compositio_invalida.continet("aria-invalid='true'")
     assert compositio_invalida.continet("aria-describedby='form-error-name'")
     assert compositio_invalida.continet(">Required</div>")

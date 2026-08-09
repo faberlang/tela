@@ -12,9 +12,9 @@ locale = "en"
 # plain values — construct, combine, read fields, render; no behavior
 # smuggled in).
 #
-# The carrier shapes match behavior-design §1/§3.2: Eventum (typed event
-# name), Effectus (the three declarative host effects — focus restoration,
-# focus movement, scroll anchoring — keyed by stable identity), Renovatio
+# The carrier shapes match behavior-design §1/§3.2: EventName (typed event
+# name), Effect (the three declarative host effects — focus restoration,
+# focus movement, scroll anchoring — keyed by stable identity), Update
 # (the update result carrying the next view + effects).
 #
 # PARTIAL (CTO Q2 bar, compile-level): carrier construction + composition
@@ -33,40 +33,40 @@ import from "tela:tela" private tela
 
 main {
     # --- event-name construction (the typed event value) -------------------
-    const tela.Eventum event ← tela.eventum("segment-select")
-    assert event.nomen ≡ "segment-select"
+    const tela.EventName event ← tela.event_name("segment-select")
+    assert event.name ≡ "segment-select"
 
     # --- every effect variant (declarative host effects keyed by identity)
     # Focus restoration — restore focus to the pre-replacement focused node.
-    const tela.Effectus restore ← tela.restitue("tela-seg-2")
-    assert tela.effectus_identitas(restore) ≡ "tela-seg-2"
+    const tela.Effect restore ← tela.restore("tela-seg-2")
+    assert tela.effect_identity(restore) ≡ "tela-seg-2"
     # Focus movement — to a declared target identity.
-    const tela.Effectus move ← tela.dirige("tela-seg-3")
-    assert tela.effectus_identitas(move) ≡ "tela-seg-3"
+    const tela.Effect move ← tela.direct("tela-seg-3")
+    assert tela.effect_identity(move) ≡ "tela-seg-3"
     # Scroll anchoring — scroll-preservation intent for the region.
-    const tela.Effectus anchor ← tela.ancora("tela-control")
-    assert tela.effectus_identitas(anchor) ≡ "tela-control"
+    const tela.Effect anchor ← tela.anchor("tela-control")
+    assert tela.effect_identity(anchor) ≡ "tela-control"
 
     # --- an update result carrying a view + effects ------------------------
-    const tela.Visus arbor ← tela.elementum_view(
-        tela.html_spatium(),
+    const tela.View tree ← tela.element_view(
+        tela.html_space(),
         "div",
-        [ tela.textus_view("segment") ]
+        [ tela.text_view("segment") ]
     )
-    const tela.Renovatio update ← tela.renovatio(arbor, [restore, move, anchor])
-    assert update.effectus.longitudo() ≡ 3
-    const string rendered ← tela.html_visus(update.visus) coalesce ""
+    const tela.Update update ← tela.update(tree, [restore, move, anchor])
+    assert update.effects.longitudo() ≡ 3
+    const string rendered ← tela.html_visus(update.view) coalesce ""
     assert rendered ≡ "<div>segment</div>"
 
     # --- pure-carrier composition: combine effects into an update result ---
-    const tela.Renovatio combined ← tela.renovatio(arbor, [anchor, restore])
-    assert combined.effectus.longitudo() ≡ 2
+    const tela.Update combined ← tela.update(tree, [anchor, restore])
+    assert combined.effects.longitudo() ≡ 2
 
     # --- the no-closure property: carriers are plain values ---------------
     # Construct, combine, read fields, render — every carrier is a plain
     # value (no function/closure field exists anywhere in the three shapes).
-    const tela.Eventum another ← tela.eventum("pointer-down")
-    assert another.nomen ≠ event.nomen
-    const string rendered_combined ← tela.html_visus(combined.visus) coalesce ""
+    const tela.EventName another ← tela.event_name("pointer-down")
+    assert another.name ≠ event.name
+    const string rendered_combined ← tela.html_visus(combined.view) coalesce ""
     assert rendered_combined ≡ "<div>segment</div>"
 }

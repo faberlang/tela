@@ -5,11 +5,11 @@
 # norma/triga/faber-runtime dependency. The shape proven by the Stage 0
 # U3 spike (spike/visus-b.fab) through all three lanes.
 # (Import-free through U1; U3 adds ONE same-package sibling import —
-# tela:valida — for the fail-closed glue, per the U3 write_scope.)
+# tela:validate — for the fail-closed glue, per the U3 write_scope.)
 #
 # Branch decision (frozen for Stage 1): Branch B — pure non-generic
-# recursive Visus union + adjacent typed behavior plan. Branch A (generic
-# Visus<Message>) remains the ideal end-state, blocked only by radix defect
+# recursive View union + adjacent typed behavior plan. Branch A (generic
+# View<Message>) remains the ideal end-state, blocked only by radix defect
 # D1 (generic user-type construction does not instantiate type parameters;
 # stage-0-branch-a-b-evidence.md §2/§4). If D1 lands, the Branch A re-spike
 # is a DECISION POINT for a future stage — never a mid-stage switch.
@@ -17,73 +17,73 @@
 # Policy locks applied (stage-0-protocol-policies.md):
 #   (a) no raw-markup View variant — typed elements only, no RawHtml-style
 #       escape in the ordinary path;
-#   (b) Faber-Latin protocol spellings: nomen/valor/liberi/nomen_tag
-#       (nomen_tag avoids the D2 TS discriminant collision);
-#   (d) Identitas is an explicit typed field, never position-derived;
+#   (b) Faber-Latin protocol spellings: name/value/children/tag_name
+#       (tag_name avoids the D2 TS discriminant collision);
+#   (d) Identity is an explicit typed field, never position-derived;
 #       serialization into data-tela is the U3 serializer's job.
 # Validation boundary: constructors stay open (no eager validation);
 # fail-closed lexical/namespace checks land at the U2/U3 serializer edge.
 #
 # D2 re-check (2026-08-09, in-tree radix 0.80.0): TS emit +
-# tsc --noEmit clean (exit 0) — nomen_tag emits with no discriminant
+# tsc --noEmit clean (exit 0) — tag_name emits with no discriminant
 # collision against the TS `tag` discriminant. Workaround spelling kept.
 # D3 re-check (2026-08-09, in-tree radix 0.80.0): Rust emit + scratch
-# cargo check clean (Finished, exit 0) — nova_identitas routes the
-# non-null identity through Identitas ∪ null and emits Some(...)
+# cargo check clean (Finished, exit 0) — new_identity routes the
+# non-null identity through Identity ∪ null and emits Some(...)
 # correctly. Direct non-null construction into the nullable field is
 # STILL the D3 defect; the radix D3 delivery has NOT landed, so the
-# nova_identitas workaround is KEPT for Stage 1 (recorded either way).
+# new_identity workaround is KEPT for Stage 1 (recorded either way).
 #
 # Stage 1 U3 (serializer) notes — this module now carries the escape
 # function, the deterministic HTML/CSS serializers, and the fail-closed
-# boundary; it gains ONE same-package sibling import (tela:valida) for the
+# boundary; it gains ONE same-package sibling import (tela:validate) for the
 # namespace glue (stage-1-delivery.md U3 write_scope; U2 done_when (f)
-# non-goal: the glue lives in the kernel module, keeping valida.fab G4-safe).
+# non-goal: the glue lives in the kernel module, keeping validate.fab G4-safe).
 #
-# Central escaping (policy (a)2): escapa is the ONE escape path used by both
+# Central escaping (policy (a)2): escape is the ONE escape path used by both
 # text and attribute-value serialization. Escape sets: & < > for text;
 # additionally " ' for attribute values (single-quote style per the Stage 0
 # spike baseline). No serializer path concatenates an unescaped value; the
-# identity valor flows through the same attribute-escape path (policy (d)).
+# identity value flows through the same attribute-escape path (policy (d)).
 #
 # Fail-closed boundary (policy (a)2; U2 done_when (d)): before ANY emission
 # the serializer runs the U2 lexical/namespace/void checks over the whole
-# tree (valida_arbor). html_visus(Visus) → string ∪ null — null when any
+# tree (validate_tree). html_visus(View) → string ∪ null — null when any
 # check fails, so invalid input NEVER emits markup (no partial output). The
 # concrete mechanism (nullable result) is the implementing Hand's documented
 # choice within the available Faber surface; exercised by exempla/serializer.fab.
 #
-# Proprietas static posture (spec decision Q3): Proprietas are carried in the
+# Property static posture (spec decision Q3): Property are carried in the
 # tree as browser-lane DOM properties and are NOT serialized into static
 # HTML in Stage 1. The spike's provisional data-prop: marker is SUPERSEDED.
 # Recorded here for identity-hydration.md (U4).
 #
 # Emit-across-imports escalation (stage-1-delivery.md U3 done_when (g);
-# coordination §2/§5): radix check resolves the tela:valida import, and the
+# coordination §2/§5): radix check resolves the tela:validate import, and the
 # TS emit lane resolves it. The RUST emit lane re-analyzes the imported
 # provider module WITHOUT the en reader pack (PARSE001 — provider-module
 # locale propagation defect, reproduced with exempla/validation.fab on the
 # in-tree radix 0.80.0) and fails CODEGEN001. Recorded + escalated to the
 # radix lane. The contract remains covered by radix check + the import-free
-# single-module proven lane (valida.fab, U2) + the TS lane; the exempla lane
+# single-module proven lane (validate.fab, U2) + the TS lane; the exempla lane
 # is not weakened.
 #
 # Verb collision (U3 done_when (h); G5/G6): `css` verified against the
 # reserved-keyword registries — not reserved, kept verbatim (policy (b)).
-# `html` COLLIDES with the Spatium.html enum-member top-level binding —
+# `html` COLLIDES with the Space.html enum-member top-level binding —
 # the RECORDED G5 defect (stage-0-canary.md §5: "A `fn html()` collides with
-# the Spatium.html member binding → SEM005.duplicate_definition. Naming
-# constraint: prefix helpers (html_spatium)"). Applied workaround: the HTML
+# the Space.html member binding → SEM005.duplicate_definition. Naming
+# constraint: prefix helpers (html_space)"). Applied workaround: the HTML
 # renderer verb is html_visus — the `html_` prefix per the G5 recorded
 # constraint; the policy (b) English stem is preserved, NOT silently renamed.
 # ESCALATED To mind: the G5 radix-lane fix restores the exact `html` verb
-# (repro: SEM005.duplicate_definition on fn html(Visus) with
-# Spatium.html). fix:g5 — removal = grep-replace after the radix fix.
+# (repro: SEM005.duplicate_definition on fn html(View) with
+# Space.html). fix:g5 — removal = grep-replace after the radix fix.
 #
 # Stage 2 U1 (theme/token protocol) — this module gains the kernel-owned
-# theme/token value types (Scopulum/Thema), the core token baseline, and the
-# fail-closed deterministic thema_css renderer. fix:<id> markers applied in
-# this unit: fix:g5 — NONE (the theme verbs thema/scopulum/thema_css were
+# theme/token value types (Token/Theme), the core token baseline, and the
+# fail-closed deterministic theme_css renderer. fix:<id> markers applied in
+# this unit: fix:g5 — NONE (the theme verbs theme/token/theme_css were
 # probed collision-free on in-tree radix 0.80.0; a free fn may share a class
 # name — G5's collision is enum-member-specific); fix:codegen001 — the Rust
 # emit-across-imports block persists (provider-module locale propagation),
@@ -91,69 +91,69 @@
 # lane. See the Stage 2 U1 section header for the pinned core baseline.
 #
 # Stage 2 U2 (product assembly + cascade) — this module gains the kernel-owned
-# Codicillus/Ordo carriers, bundle dedup by stable identity, the topo-ordering
+# Bundle/Order carriers, bundle dedup by stable identity, the topo-ordering
 # of library packages over the explicit ordines map (stable-identity
-# tie-break), and the assemble(...) → Stilum ∪ null product assembler with
+# tie-break), and the assemble(...) → Style ∪ null product assembler with
 # cascade layers: tela.reset (opt-in; v1 ships none) → tela.tokens → tela.
 # components → library packages (topo) → tela.applicatio (last). fix:<id>
 # markers: fix:g5 — NONE (assemble verb not reserved, probed); fix:codegen001
 # — Rust emit-across-imports block persists (attempted + recorded).
 #
 # Stage 3 U1 (behavior carriers) — this module gains the pure behavior-plan
-# carriers Eventum/Effectus/Renovatio (closure-free, web:dom-free, G4-safe
+# carriers EventName/Effect/Update (closure-free, web:dom-free, G4-safe
 # flat shape). fix:<id> markers: fix:g5 — NONE (all carrier verbs + variant
 # names probed collision-free); fix:codegen001 — the Rust block persists.
-# PARTIAL marks + the D1/Vinculum constraint are recorded in the Stage 3 U1
+# PARTIAL marks + the D1/EventBinding constraint are recorded in the Stage 3 U1
 # section header.
-# enum Spatium { html, svg } in one module; in-tree radix 0.80.0,
+# enum Space { html, svg } in one module; in-tree radix 0.80.0,
 # 2026-08-09).
 
-import from "tela:valida" private valida
+import from "tela:validate" private validate
 
-# Spatium: namespace enum (html | svg). The open element model keeps the
+# Space: namespace enum (html | svg). The open element model keeps the
 # tag itself an ordinary string, so custom elements and future-standard
 # names stay open.
-enum Spatium {
+enum Space {
     html,
     svg
 }
 
-# Attributum: serialized attribute — an (nomen, valor) pair emitted into
+# Attribute: serialized attribute — an (name, value) pair emitted into
 # the tag.
-class Attributum {
-    string nomen
-    string valor
+class Attribute {
+    string name
+    string value
 }
 
-# Proprietas: DOM property (value, checked, selection), modeled separately
+# Property: DOM property (value, checked, selection), modeled separately
 # from serialized attributes because their semantics differ. Carried in
 # the tree; not serialized into static HTML in Stage 1 (browser lane).
-class Proprietas {
-    string nomen
-    string valor
+class Property {
+    string name
+    string value
 }
 
-# Identitas: stable identity. Explicit typed field — never inferred from
+# Identity: stable identity. Explicit typed field — never inferred from
 # array position. Serialized in one documented hydration-ready form
 # (data-tela) by the U3 serializer.
-class Identitas {
-    string valor
+class Identity {
+    string value
 }
 
-# Visus: the recursive tagged union at the center of the protocol.
+# View: the recursive tagged union at the center of the protocol.
 # Closure-free (Branch B): behavior lives in the adjacent typed plan
 # (Stage 3), not inside view values. No raw-markup variant (policy (a)).
-union Visus {
-    Elementum {
-        Identitas ∪ null identitas,
-        Spatium spatium,
-        string nomen_tag,
-        list<Attributum> attributa,
-        list<Proprietas> proprietates,
-        list<Visus> liberi
+union View {
+    ElementNode {
+        Identity ∪ null identity,
+        Space space,
+        string tag_name,
+        list<Attribute> attributes,
+        list<Property> properties,
+        list<View> children
     },
-    Textus { string valor },
-    Fragmentum { list<Visus> liberi }
+    TextNode { string value },
+    Fragment { list<View> children }
 }
 
 # ---------------------------------------------------------------------------
@@ -162,76 +162,76 @@ union Visus {
 # syntax (policy: kernel owns constructors; G3 workaround).
 # ---------------------------------------------------------------------------
 
-fn textus_view(string valor) → Visus {
-    return variant Textus { valor = valor } ∷ Visus
+fn text_view(string value) → View {
+    return variant TextNode { value = value } ∷ View
 }
 
-fn fragmentum_view(list<Visus> liberi) → Visus {
-    return variant Fragmentum { liberi = liberi } ∷ Visus
+fn fragment_view(list<View> children) → View {
+    return variant Fragment { children = children } ∷ View
 }
 
 # Typed stable identity via the nullable field. Routed through a helper
-# that returns Identitas ∪ null: direct non-null construction into a
+# that returns Identity ∪ null: direct non-null construction into a
 # nullable union field is a known Rust-emission defect (D3 — Some() wrap
 # missing; stage-0-branch-a-b-evidence.md §4). Workaround KEPT until the
 # radix D3 delivery lands.
-fn nova_identitas(string v) → Identitas ∪ null {
-    return Identitas { valor = v }
+fn new_identity(string v) → Identity ∪ null {
+    return Identity { value = v }
 }
 
 # Namespace values as plain helpers: enum-member access through an
 # imported namespace does not resolve (gap G1), so the values are exposed
 # as functions even inside the kernel module.
-fn html_spatium() → Spatium {
-    return Spatium.html
+fn html_space() → Space {
+    return Space.html
 }
 
-fn svg_spatium() → Spatium {
-    return Spatium.svg
+fn svg_space() → Space {
+    return Space.svg
 }
 
 # Open-element shorthand: no identity, no attributes.
-fn elementum_view(Spatium spatium, string nomen_tag, list<Visus> liberi) → Visus {
-    return variant Elementum {
-        identitas = null,
-        spatium = spatium,
-        nomen_tag = nomen_tag,
-        attributa = [],
-        proprietates = [],
-        liberi = liberi
-    } ∷ Visus
+fn element_view(Space space, string tag_name, list<View> children) → View {
+    return variant ElementNode {
+        identity = null,
+        space = space,
+        tag_name = tag_name,
+        attributes = [],
+        properties = [],
+        children = children
+    } ∷ View
 }
 
 # Full open-element constructor: identity + serialized attributes + DOM
 # properties. Cross-module variant construction does not resolve (gap G3),
-# so consumers reach the full Elementum through this constructor.
-fn elementum_omne(
-    Identitas ∪ null identitas,
-    Spatium spatium,
-    string nomen_tag,
-    list<Attributum> attributa,
-    list<Proprietas> proprietates,
-    list<Visus> liberi
-) → Visus {
-    return variant Elementum {
-        identitas = identitas,
-        spatium = spatium,
-        nomen_tag = nomen_tag,
-        attributa = attributa,
-        proprietates = proprietates,
-        liberi = liberi
-    } ∷ Visus
+# so consumers reach the full ElementNode through this constructor.
+fn element_full(
+    Identity ∪ null identity,
+    Space space,
+    string tag_name,
+    list<Attribute> attributes,
+    list<Property> properties,
+    list<View> children
+) → View {
+    return variant ElementNode {
+        identity = identity,
+        space = space,
+        tag_name = tag_name,
+        attributes = attributes,
+        properties = properties,
+        children = children
+    } ∷ View
 }
 
 # ---------------------------------------------------------------------------
 # Central escaping (policy (a)2) — ONE escape path for text AND attribute
 # values. in_attributo selects the attribute escape set: & < > for text,
 # additionally " ' for attribute values (single-quote style per the Stage 0
-# spike baseline). The identity valor flows through the same attribute-escape
+# spike baseline). The identity value flows through the same attribute-escape
 # path (policy (d)). No serializer path concatenates an unescaped value.
 # ---------------------------------------------------------------------------
 
-fn escapa(string s, bool in_attributo) → string {
+fn escape(string s, bool in_attributo) → string {
     var string accum ← ""
     var int i ← 0
     while i < s.longitudo() {
@@ -256,7 +256,7 @@ fn escapa(string s, bool in_attributo) → string {
         # double-escapes a `\"` string payload (emits `\\\"` → runtime
         # backslash+quote), so a bare-quote comparison written as "\"" never
         # matches at runtime (NEW emitter observation, escalated to the radix
-        # lane; probe escapa on in-tree radix 0.80.0, 2026-08-09).
+        # lane; probe escape on in-tree radix 0.80.0, 2026-08-09).
         if in_attributo and c ≡ "§"('"') then fragment ← "&quot;"
         if in_attributo and c ≡ "'" then fragment ← "&#39;"
         accum ← accum + fragment
@@ -266,16 +266,16 @@ fn escapa(string s, bool in_attributo) → string {
 }
 
 # ---------------------------------------------------------------------------
-# Namespace glue (U3) — maps Spatium onto the U2 string surface and applies
-# the fail-closed checks. valida.fab keeps its G4-safe string/bool surface.
+# Namespace glue (U3) — maps Space onto the U2 string surface and applies
+# the fail-closed checks. validate.fab keeps its G4-safe string/bool surface.
 # ---------------------------------------------------------------------------
 
-fn spatium_textus(Spatium spatium) → string {
-    match spatium {
-        case Spatium.html {
+fn space_name(Space space) → string {
+    match space {
+        case Space.html {
             return "html"
         }
-        case Spatium.svg {
+        case Space.svg {
             return "svg"
         }
     }
@@ -284,12 +284,12 @@ fn spatium_textus(Spatium spatium) → string {
 # Namespace emission: svg-namespace elements carry the xmlns declaration
 # (spike baseline; required on the svg root for inline SVG, harmless on
 # nested svg elements).
-fn seri_ns(Spatium spatium) → string {
-    match spatium {
-        case Spatium.html {
+fn serialize_ns(Space space) → string {
+    match space {
+        case Space.html {
             return ""
         }
-        case Spatium.svg {
+        case Space.svg {
             return " xmlns='http://www.w3.org/2000/svg'"
         }
     }
@@ -299,28 +299,28 @@ fn seri_ns(Spatium spatium) → string {
 # tree, run BEFORE any emission. Text is escaped, never validated (any
 # string is safe once escaped — policy (a)2). Invalid input NEVER emits
 # markup: html_visus returns null (no output at all), never partial markup.
-fn valida_arbor(Visus v) → bool {
+fn validate_tree(View v) → bool {
     match v {
-        case Textus const valor {
+        case TextNode const value {
             return true
         }
-        case Fragmentum const liberi {
-            for from liberi const liber {
-                if not valida_arbor(liber) then return false
+        case Fragment const children {
+            for from children const child {
+                if not validate_tree(child) then return false
             }
             return true
         }
-        case Elementum const identitas, spatium, nomen_tag, attributa, proprietates, liberi {
-            const string spatium_s ← spatium_textus(spatium)
-            if not valida.valida_spatium(spatium_s) then return false
-            if not valida.valida_nomen_in_spatio(nomen_tag, spatium_s) then return false
-            for from attributa const attr {
-                if not valida.valida_nomen_attributi(attr.nomen) then return false
+        case ElementNode const identity, space, tag_name, attributes, properties, children {
+            const string space_text ← space_name(space)
+            if not validate.valid_space(space_text) then return false
+            if not validate.valid_name_in_space(tag_name, space_text) then return false
+            for from attributes const attr {
+                if not validate.valid_attribute_name(attr.name) then return false
             }
-            const bool habet_liberi ← liberi.longitudo() > 0
-            if not valida.valida_void_structura(nomen_tag, habet_liberi) then return false
-            for from liberi const liber {
-                if not valida_arbor(liber) then return false
+            const bool has_children ← children.longitudo() > 0
+            if not validate.valid_void_structure(tag_name, has_children) then return false
+            for from children const child {
+                if not validate_tree(child) then return false
             }
             return true
         }
@@ -329,99 +329,99 @@ fn valida_arbor(Visus v) → bool {
 
 # ---------------------------------------------------------------------------
 # HTML serializer — deterministic, pure, over ordered lists. Author order of
-# attributa and liberi is preserved; no unordered/hash iteration, no
+# attributes and children is preserved; no unordered/hash iteration, no
 # timestamps. Identical input → identical bytes (empirically proven by U6).
 # ---------------------------------------------------------------------------
 
-# Attributes serialize as nomen='valor' — single quotes per the spike
-# baseline; the valor is escaped through the attribute escape set.
-fn seri_attributa(list<Attributum> attributa) → string {
+# Attributes serialize as name='value' — single quotes per the spike
+# baseline; the value is escaped through the attribute escape set.
+fn serialize_attributes(list<Attribute> attributes) → string {
     var string accum ← ""
-    for from attributa const attr {
-        accum ← accum + " " + attr.nomen + "='" + escapa(attr.valor, true) + "'"
+    for from attributes const attr {
+        accum ← accum + " " + attr.name + "='" + escape(attr.value, true) + "'"
     }
     return accum
 }
 
-# Identity: non-null Identitas emits data-tela='<escaped valor>' — the ONE
+# Identity: non-null Identity emits data-tela='<escaped value>' — the ONE
 # documented hydration-ready serialization form (policy (d)); elements
 # without identity emit nothing.
-fn seri_identitas(Identitas ∪ null identitas) → string {
-    match identitas {
+fn serialize_identity(Identity ∪ null identity) → string {
+    match identity {
         case null {
             return ""
         }
         default {
-            return " data-tela='" + escapa(identitas?.valor coalesce "", true) + "'"
+            return " data-tela='" + escape(identity?.value coalesce "", true) + "'"
         }
     }
 }
 
-fn seri_visus(Visus v) → string {
+fn serialize_view(View v) → string {
     match v {
-        case Textus const valor {
-            return escapa(valor, false)
+        case TextNode const value {
+            return escape(value, false)
         }
-        case Fragmentum const liberi {
+        case Fragment const children {
             var string accum ← ""
-            for from liberi const liber {
-                accum ← accum + seri_visus(liber)
+            for from children const child {
+                accum ← accum + serialize_view(child)
             }
             return accum
         }
-        case Elementum const identitas, spatium, nomen_tag, attributa, proprietates, liberi {
-            var string accum ← "<" + nomen_tag
-            accum ← accum + seri_ns(spatium)
-            accum ← accum + seri_attributa(attributa)
-            accum ← accum + seri_identitas(identitas)
-            # Proprietas are carried but NOT serialized into static HTML
+        case ElementNode const identity, space, tag_name, attributes, properties, children {
+            var string accum ← "<" + tag_name
+            accum ← accum + serialize_ns(space)
+            accum ← accum + serialize_attributes(attributes)
+            accum ← accum + serialize_identity(identity)
+            # Property are carried but NOT serialized into static HTML
             # (Stage 1 static posture; browser-lane DOM properties).
             var string inner ← ""
-            for from liberi const liber {
-                inner ← inner + seri_visus(liber)
+            for from children const child {
+                inner ← inner + serialize_view(child)
             }
-            if valida.valida_void_html(nomen_tag) then return accum + ">"
-            return accum + ">" + inner + "</" + nomen_tag + ">"
+            if validate.valid_void_html(tag_name) then return accum + ">"
+            return accum + ">" + inner + "</" + tag_name + ">"
         }
     }
 }
 
 # Public renderer verb (policy (b)). The G5 workaround spelling (html_visus,
 # html_ prefix per stage-0-canary.md §5) carries the locked English `html`
-# stem; the exact `html` verb is blocked by the Spatium.html enum-member
+# stem; the exact `html` verb is blocked by the Space.html enum-member
 # top-level binding and is ESCALATED to the radix lane (see module header).
 # Fail-closed: null = rejected, no markup ever emitted. Deterministic bytes
 # over author order.
-fn html_visus(Visus v) → string ∪ null {
-    if not valida_arbor(v) then return null
-    return seri_visus(v)
+fn html_visus(View v) → string ∪ null {
+    if not validate_tree(v) then return null
+    return serialize_view(v)
 }
 
 # ---------------------------------------------------------------------------
 # Initial CSS — smallest honest model (policy (c); spike shape). Deterministic
-# emission preserving author order of regulae and declarationes.
+# emission preserving author order of rules and declarations.
 # ---------------------------------------------------------------------------
 
-class Declaratio {
-    string nomen
-    string valor
+class Declaration {
+    string name
+    string value
 }
 
-class Regula {
+class Rule {
     string selector
-    list<Declaratio> declarationes
+    list<Declaration> declarations
 }
 
-class Stilum {
-    list<Regula> regulae
+class Style {
+    list<Rule> rules
 }
 
-fn css(Stilum stilum) → string {
+fn css(Style style) → string {
     var string accum ← ""
-    for from stilum.regulae const regula {
+    for from style.rules const regula {
         accum ← accum + regula.selector + " { "
-        for from regula.declarationes const decl {
-            accum ← accum + decl.nomen + ": " + decl.valor + "; "
+        for from regula.declarations const decl {
+            accum ← accum + decl.name + ": " + decl.value + "; "
         }
         accum ← accum + "}\n"
     }
@@ -438,18 +438,18 @@ fn css(Stilum stilum) → string {
 # deliberately excludes the space/radius/type/motion families (small + honest;
 # future subsets add tokens, never a closed enum — campaign §5).
 #
-# RENDERING CONVENTION (locked): a token nomen is a dotted path
-# (chart.axis.muted); the CSS custom property is `--` + nomen with `.` → `-`
-# (--chart-axis-muted — the U5-consumed spelling). thema_css emits the
-# resolved tokens as one Regula { selector = ":root", … } — the selected root
-# (campaign §5) — rendered through the existing css(Stilum) serializer.
+# RENDERING CONVENTION (locked): a token name is a dotted path
+# (chart.axis.muted); the CSS custom property is `--` + name with `.` → `-`
+# (--chart-axis-muted — the U5-consumed spelling). theme_css emits the
+# resolved tokens as one Rule { selector = ":root", … } — the selected root
+# (campaign §5) — rendered through the existing css(Style) serializer.
 #
 # FAIL-CLOSED (U1 done_when (d)): a theme missing a required core token
 # → null (no output); an invalid token name (fails the lexical predicate)
 # → null. Deterministic bytes over author order (no unordered iteration).
 #
 # fix:<id> markers applied in this unit:
-#   fix:g5 — none applied: the theme verbs (thema, scopulum, thema_css) were
+#   fix:g5 — none applied: the theme verbs (theme, token, theme_css) were
 #            probed against the enum-member / reserved-keyword bindings on
 #            in-tree radix 0.80.0 (a free fn may share a class name; G5's
 #            collision is enum-member-specific) — no collision, no prefix
@@ -460,34 +460,34 @@ fn css(Stilum stilum) → string {
 #            weakened.
 # ---------------------------------------------------------------------------
 
-# Scopulum: one named token — dotted path (chart.axis.muted) + resolved CSS
+# Token: one named token — dotted path (chart.axis.muted) + resolved CSS
 # value. U5-proven spelling (proof/benchmark/extension-lib declares the same
 # shape).
-class Scopulum {
-    string nomen
-    string valor
+class Token {
+    string name
+    string value
 }
 
-# Thema: a named theme — a token collection over the core baseline. Two
-# materially different themes = two Thema values over the same component tree
+# Theme: a named theme — a token collection over the core baseline. Two
+# materially different themes = two Theme values over the same component tree
 # (campaign §5; variants are tokens, not new machinery).
-class Thema {
-    string nomen
-    list<Scopulum> scopuli
+class Theme {
+    string name
+    list<Token> tokens
 }
 
 # Kernel-owned constructors (G3 posture — ordinary functions over the same
 # public values, like the Stage 1 kernel constructors).
-fn scopulum(string nomen, string valor) → Scopulum {
-    return Scopulum { nomen = nomen, valor = valor }
+fn token(string name, string value) → Token {
+    return Token { name = name, value = value }
 }
 
-fn thema(string nomen, list<Scopulum> scopuli) → Thema {
-    return Thema { nomen = nomen, scopuli = scopuli }
+fn theme(string name, list<Token> tokens) → Theme {
+    return Theme { name = name, tokens = tokens }
 }
 
 # The core token baseline — the required token set a theme must cover.
-fn scopuli_core() → list<string> {
+fn core_tokens() → list<string> {
     return [
         "surface.canvas", "surface.panel",
         "text.primary", "text.muted",
@@ -497,14 +497,14 @@ fn scopuli_core() → list<string> {
     ]
 }
 
-# Dotted path → CSS custom property: `--` + nomen with `.` → `-`.
+# Dotted path → CSS custom property: `--` + name with `.` → `-`.
 # Deterministic single-character scan (sequential independent ifs — the
-# TS-emitter-safe pattern from escapa).
-fn nomen_scopuli_proprietas(string nomen) → string {
+# TS-emitter-safe pattern from escape).
+fn token_property_name(string name) → string {
     var string accum ← "--"
     var int i ← 0
-    while i < nomen.longitudo() {
-        const string c ← nomen.sectio(i, i + 1)
+    while i < name.longitudo() {
+        const string c ← name.sectio(i, i + 1)
         if c ≡ "." then accum ← accum + "-"
         if c ≠ "." then accum ← accum + c
         i ← i + 1
@@ -514,76 +514,76 @@ fn nomen_scopuli_proprietas(string nomen) → string {
 
 # Token-name lexical shape: the dotted path must pass the U2 attribute-name
 # predicate (letters/digits/-/_/. /:; rejects whitespace, =, quotes, < > /,
-# and control characters). A token nomen is a dotted path, so the
+# and control characters). A token name is a dotted path, so the
 # attribute-name charset covers it fail-closed.
-fn nomen_scopuli_validum(string nomen) → bool {
-    return valida.valida_nomen_attributi(nomen)
+fn token_name_valid(string name) → bool {
+    return validate.valid_attribute_name(name)
 }
 
 # Required-token coverage: every core baseline token name must be present in
 # the theme's token collection.
-fn thema_scopuli_core_parati(Thema thema) → bool {
-    const list<string> core ← scopuli_core()
+fn theme_has_core_tokens(Theme theme) → bool {
+    const list<string> core ← core_tokens()
     var int i ← 0
     while i < core.longitudo() {
-        if not thema_habet_scopulum(thema, core[i]) then return false
+        if not theme_has_token(theme, core[i]) then return false
         i ← i + 1
     }
     return true
 }
 
-fn thema_habet_scopulum(Thema thema, string nomen) → bool {
-    for from thema.scopuli const scopulus {
-        if scopulus.nomen ≡ nomen then return true
+fn theme_has_token(Theme theme, string name) → bool {
+    for from theme.tokens const token {
+        if token.name ≡ name then return true
     }
     return false
 }
 
 # Public theme renderer verb (policy (b)): emits the token layer as one
-# :root Regula through the existing css(Stilum) serializer. Fail-closed:
+# :root Rule through the existing css(Style) serializer. Fail-closed:
 # missing required core token, invalid token name, or duplicate token
 # identity with different content → null (no output). Deterministic bytes
 # over author order.
-fn thema_css(Thema thema) → string ∪ null {
-    const Stilum ∪ null stilum_result ← thema_stilum(thema)
+fn theme_css(Theme theme) → string ∪ null {
+    const Style ∪ null stilum_result ← theme_style(theme)
     if stilum_result is null then return null
-    return css(Stilum { regulae = stilum_result!.regulae })
+    return css(Style { rules = stilum_result!.rules })
 }
 
-# Token-layer builder shared by thema_css and the product assembler (U2):
-# the :root Regula over the resolved tokens. Fail-closed: missing required
+# Token-layer builder shared by theme_css and the product assembler (U2):
+# the :root Rule over the resolved tokens. Fail-closed: missing required
 # core token → null; invalid token name → null; duplicate token identity —
 # identical content dedups, different content rejects (policy (e); the
 # stage-scope duplicate-token rule exercised here, the renderer surface).
 # Deterministic bytes over author order.
-fn thema_stilum(Thema thema) → Stilum ∪ null {
-    if not thema_scopuli_core_parati(thema) then return null
-    var list<Declaratio> declarationes ← vacua
+fn theme_style(Theme theme) → Style ∪ null {
+    if not theme_has_core_tokens(theme) then return null
+    var list<Declaration> declarations ← vacua
     var int i ← 0
-    while i < thema.scopuli.longitudo() {
-        const Scopulum scopulus ← thema.scopuli[i]
-        if not nomen_scopuli_validum(scopulus.nomen) then return null
-        var bool duplicatum ← false
+    while i < theme.tokens.longitudo() {
+        const Token token ← theme.tokens[i]
+        if not token_name_valid(token.name) then return null
+        var bool duplicate ← false
         var int j ← 0
         while j < i {
-            const Scopulum prior ← thema.scopuli[j]
-            if prior.nomen ≡ scopulus.nomen {
-                if prior.valor ≠ scopulus.valor then return null
-                duplicatum ← true
+            const Token prior ← theme.tokens[j]
+            if prior.name ≡ token.name {
+                if prior.value ≠ token.value then return null
+                duplicate ← true
             }
             j ← j + 1
         }
-        if not duplicatum {
-            declarationes.appende(Declaratio {
-                nomen = nomen_scopuli_proprietas(scopulus.nomen),
-                valor = scopulus.valor
+        if not duplicate {
+            declarations.appende(Declaration {
+                name = token_property_name(token.name),
+                value = token.value
             })
         }
         i ← i + 1
     }
-    return Stilum {
-        regulae = [
-            Regula { selector = ":root", declarationes = declarationes }
+    return Style {
+        rules = [
+            Rule { selector = ":root", declarations = declarations }
         ]
     }
 }
@@ -591,8 +591,8 @@ fn thema_stilum(Thema thema) → Stilum ∪ null {
 # ---------------------------------------------------------------------------
 # Stage 2 U2 — Product assembly + cascade ordering (campaign §4/§7; policy (e)).
 #
-# assemble(...) → Stilum ∪ null — a PURE function over explicit inputs:
-#   thema       — the selected theme (renders the tela.tokens :root layer)
+# assemble(...) → Style ∪ null — a PURE function over explicit inputs:
+#   theme       — the selected theme (renders the tela.tokens :root layer)
 #   reset       — optional reset bundle (tela.reset layer; v1 ships NO reset
 #                 by default — the layer emits only when a bundle is given)
 #   componentes — component style bundles (tela.components layer, input order)
@@ -620,7 +620,7 @@ fn thema_stilum(Thema thema) → Stilum ∪ null {
 #
 # FAIL-CLOSED (U2 done_when (d)): dependency cycles reject; duplicate bundle
 # identities with different content reject; duplicate token identities with
-# different content reject (thema_stilum); identical duplicates dedup;
+# different content reject (theme_style); identical duplicates dedup;
 # invalid rule/declaration output (empty selector/property/value or CSS
 # structure-breaking characters) rejects before emission.
 #
@@ -633,61 +633,61 @@ fn thema_stilum(Thema thema) → Stilum ∪ null {
 #            TS lane is the proven runtime lane.
 #   The nullable-result consumption (field-copy reconstructions) follows the
 #   established kernel pattern (binding/argument `!` unwrap is rejected by
-#   the parser — the same workaround family as the U1 thema_css wrapper).
+#   the parser — the same workaround family as the U1 theme_css wrapper).
 # ---------------------------------------------------------------------------
 
-# A style bundle: stable identity + the Stilum it contributes. Stable
+# A style bundle: stable identity + the Style it contributes. Stable
 # identity = the locked package/bundle name (policy (e) — the deterministic
 # tie-break basis).
-class Codicillus {
-    string identitas
-    Stilum stilum
+class Bundle {
+    string identity
+    Style style
 }
 
 # One package-order entry: package identity + its dependency identities.
 # The explicit package-order map — stdlib-only, no import introspection.
-class Ordo {
-    string identitas
-    list<string> dependet
+class Order {
+    string identity
+    list<string> depends
 }
 
 # Kernel-owned constructors (G3 posture).
-fn codicillus(string identitas, Stilum stilum) → Codicillus {
-    return Codicillus { identitas = identitas, stilum = stilum }
+fn bundle(string identity, Style style) → Bundle {
+    return Bundle { identity = identity, style = style }
 }
 
-fn ordo(string identitas, list<string> dependet) → Ordo {
-    return Ordo { identitas = identitas, dependet = dependet }
+fn order(string identity, list<string> depends) → Order {
+    return Order { identity = identity, depends = depends }
 }
 
 # Bundle dedup by stable identity (policy (e)): identical duplicates (same
 # rendered css) collapse to one; duplicate identity with different content
 # → null (fail-closed).
-fn codicilli_dedupata(list<Codicillus> codicilli) → list<Codicillus> ∪ null {
-    var list<Codicillus> unici ← vacua
+fn deduplicated_bundles(list<Bundle> codicilli) → list<Bundle> ∪ null {
+    var list<Bundle> unique ← vacua
     var int i ← 0
     while i < codicilli.longitudo() {
-        const Codicillus codicillus ← codicilli[i]
-        var bool duplicatum ← false
+        const Bundle bundle ← codicilli[i]
+        var bool duplicate ← false
         var int j ← 0
         while j < i {
-            const Codicillus prior ← codicilli[j]
-            if prior.identitas ≡ codicillus.identitas {
-                if css(prior.stilum) ≠ css(codicillus.stilum) then return null
-                duplicatum ← true
+            const Bundle prior ← codicilli[j]
+            if prior.identity ≡ bundle.identity {
+                if css(prior.style) ≠ css(bundle.style) then return null
+                duplicate ← true
             }
             j ← j + 1
         }
-        if not duplicatum then unici.appende(codicillus)
+        if not duplicate then unique.appende(bundle)
         i ← i + 1
     }
-    return unici
+    return unique
 }
 
 # Set membership over a string list.
-fn in_lista(list<string> collatio, string nomen) → bool {
-    for from collatio const item {
-        if item ≡ nomen then return true
+fn in_list(list<string> collection, string name) → bool {
+    for from collection const item {
+        if item ≡ name then return true
     }
     return false
 }
@@ -695,14 +695,14 @@ fn in_lista(list<string> collatio, string nomen) → bool {
 # A package is ready when its declared dependencies are all already placed.
 # An identity absent from the ordines map is never ready (its dependencies
 # are unknowable) — the topo fails closed.
-fn pendeant_parata(list<Ordo> ordines, string identitas, list<string> praeposita) → bool {
+fn dependencies_met(list<Order> ordines, string identity, list<string> placed) → bool {
     var int i ← 0
     while i < ordines.longitudo() {
-        const Ordo ordo ← ordines[i]
-        if ordo.identitas ≡ identitas {
+        const Order order ← ordines[i]
+        if order.identity ≡ identity {
             var int j ← 0
-            while j < ordo.dependet.longitudo() {
-                if not in_lista(praeposita, ordo.dependet[j]) then return false
+            while j < order.depends.longitudo() {
+                if not in_list(placed, order.depends[j]) then return false
                 j ← j + 1
             }
             return true
@@ -717,37 +717,37 @@ fn pendeant_parata(list<Ordo> ordines, string identitas, list<string> praeposita
 # stable identity is the deterministic tie-break (lexicographic via the list
 # ordinata intrinsic — content-independent). A cycle (no ready package while
 # identities remain) or an unresolvable dependency → null (fail-closed).
-fn ordine_ordinata(list<Ordo> ordines, list<string> identitates) → list<string> ∪ null {
+fn topological_order(list<Order> ordines, list<string> identities) → list<string> ∪ null {
     var list<string> ordinata ← vacua
-    var list<string> reliqua ← identitates
-    while reliqua.longitudo() > 0 {
-        var list<string> parata ← vacua
+    var list<string> remaining ← identities
+    while remaining.longitudo() > 0 {
+        var list<string> ready ← vacua
         var int i ← 0
-        while i < reliqua.longitudo() {
-            if pendeant_parata(ordines, reliqua[i], ordinata) then parata.appende(reliqua[i])
+        while i < remaining.longitudo() {
+            if dependencies_met(ordines, remaining[i], ordinata) then ready.appende(remaining[i])
             i ← i + 1
         }
-        if parata.longitudo() ≡ 0 then return null
-        parata ← parata.ordinata()
-        const string electa ← parata[0]
-        ordinata.appende(electa)
-        var list<string> novae ← vacua
+        if ready.longitudo() ≡ 0 then return null
+        ready ← ready.ordinata()
+        const string chosen ← ready[0]
+        ordinata.appende(chosen)
+        var list<string> next ← vacua
         var int j ← 0
-        while j < reliqua.longitudo() {
-            if reliqua[j] ≠ electa then novae.appende(reliqua[j])
+        while j < remaining.longitudo() {
+            if remaining[j] ≠ chosen then next.appende(remaining[j])
             j ← j + 1
         }
-        reliqua ← novae
+        remaining ← next
     }
     return ordinata
 }
 
 # CSS-structure-breaking characters in selector / property / value text make
 # the emitted rule invalid — fail-closed before emission.
-fn stilum_textus_immundus(string textus) → bool {
+fn unclean_style_text(string text) → bool {
     var int i ← 0
-    while i < textus.longitudo() {
-        const string c ← textus.sectio(i, i + 1)
+    while i < text.longitudo() {
+        const string c ← text.sectio(i, i + 1)
         if c ≡ "{" then return true
         if c ≡ "}" then return true
         if c ≡ ";" then return true
@@ -759,131 +759,131 @@ fn stilum_textus_immundus(string textus) → bool {
 
 # Fail-closed rule/declaration shape: non-empty selector / property / value
 # and no CSS-structure-breaking characters.
-fn stilum_validum(Stilum stilum) → bool {
-    for from stilum.regulae const regula {
+fn style_valid(Style style) → bool {
+    for from style.rules const regula {
         if regula.selector.longitudo() ≡ 0 then return false
-        if stilum_textus_immundus(regula.selector) then return false
-        for from regula.declarationes const decl {
-            if decl.nomen.longitudo() ≡ 0 then return false
-            if decl.valor.longitudo() ≡ 0 then return false
-            if stilum_textus_immundus(decl.nomen) then return false
-            if stilum_textus_immundus(decl.valor) then return false
+        if unclean_style_text(regula.selector) then return false
+        for from regula.declarations const decl {
+            if decl.name.longitudo() ≡ 0 then return false
+            if decl.value.longitudo() ≡ 0 then return false
+            if unclean_style_text(decl.name) then return false
+            if unclean_style_text(decl.value) then return false
         }
     }
     return true
 }
 
-# Find the Stilum a package identity contributes (the library-layer bundle
+# Find the Style a package identity contributes (the library-layer bundle
 # lookup). Unknown identity → null (the topo already failed closed).
-fn codicillus_ex(string identitas, list<Codicillus> codicilli) → Stilum ∪ null {
-    for from codicilli const codicillus {
-        if codicillus.identitas ≡ identitas then return codicillus.stilum
+fn bundle_for(string identity, list<Bundle> codicilli) → Style ∪ null {
+    for from codicilli const bundle {
+        if bundle.identity ≡ identity then return bundle.style
     }
     return null
 }
 
-# Public product-assembly verb (policy (b); campaign §7): one ordered Stilum
+# Public product-assembly verb (policy (b); campaign §7): one ordered Style
 # grouped in cascade-layer order. Fail-closed (no output on any reject).
 # Deterministic bytes over the explicit inputs.
 fn assemble(
-    Thema thema,
-    Stilum ∪ null reset,
-    list<Codicillus> componentes,
-    list<Ordo> ordines,
-    list<Codicillus> codicilli,
-    Codicillus ∪ null applicatio
-) → Stilum ∪ null {
+    Theme theme,
+    Style ∪ null reset,
+    list<Bundle> componentes,
+    list<Order> ordines,
+    list<Bundle> codicilli,
+    Bundle ∪ null applicatio
+) → Style ∪ null {
     # tela.tokens — the rendered :root token layer (fail-closed).
-    const Stilum ∪ null tokens_result ← thema_stilum(thema)
+    const Style ∪ null tokens_result ← theme_style(theme)
     if tokens_result is null then return null
-    const Stilum tokens ← Stilum { regulae = tokens_result!.regulae }
+    const Style tokens ← Style { rules = tokens_result!.rules }
 
     # tela.reset — validity only (emission order handled below); v1 ships no
     # reset by default, so the layer emits only when a bundle is provided.
     if reset not is null {
-        if not stilum_validum(Stilum { regulae = reset!.regulae }) then return null
+        if not style_valid(Style { rules = reset!.rules }) then return null
     }
 
     # tela.components — dedup + fail-closed rule shape, input order.
-    const list<Codicillus> ∪ null componentes_unici ← codicilli_dedupata(componentes)
+    const list<Bundle> ∪ null componentes_unici ← deduplicated_bundles(componentes)
     if componentes_unici is null then return null
-    const list<Codicillus> componente_vacua ← vacua
-    const list<Codicillus> componentes_finales ← componentes_unici coalesce componente_vacua
+    const list<Bundle> componente_vacua ← vacua
+    const list<Bundle> componentes_finales ← componentes_unici coalesce componente_vacua
     var int ci ← 0
     while ci < componentes_finales.longitudo() {
-        if not stilum_validum(componentes_finales[ci].stilum) then return null
+        if not style_valid(componentes_finales[ci].style) then return null
         ci ← ci + 1
     }
 
     # Library packages — dedup, rule shape, then topo order over the explicit
-    # ordines map (every codicillus identity must appear in ordines).
-    const list<Codicillus> ∪ null codicilli_unici ← codicilli_dedupata(codicilli)
+    # ordines map (every bundle identity must appear in ordines).
+    const list<Bundle> ∪ null codicilli_unici ← deduplicated_bundles(codicilli)
     if codicilli_unici is null then return null
-    const list<Codicillus> codicilli_vacui ← vacua
-    const list<Codicillus> codicilli_finales ← codicilli_unici coalesce codicilli_vacui
+    const list<Bundle> codicilli_vacui ← vacua
+    const list<Bundle> codicilli_finales ← codicilli_unici coalesce codicilli_vacui
     var int li ← 0
     while li < codicilli_finales.longitudo() {
-        if not stilum_validum(codicilli_finales[li].stilum) then return null
+        if not style_valid(codicilli_finales[li].style) then return null
         li ← li + 1
     }
-    var list<string> identitates ← vacua
+    var list<string> identities ← vacua
     var int m ← 0
     while m < codicilli_finales.longitudo() {
-        identitates.appende(codicilli_finales[m].identitas)
+        identities.appende(codicilli_finales[m].identity)
         m ← m + 1
     }
-    const list<string> ∪ null librariae_result ← ordine_ordinata(ordines, identitates)
+    const list<string> ∪ null librariae_result ← topological_order(ordines, identities)
     if librariae_result is null then return null
     const list<string> librariae_vacuae ← vacua
     const list<string> librariae ← librariae_result coalesce librariae_vacuae
 
     # tela.applicatio — the last layer; validity only.
     if applicatio not is null {
-        if not stilum_validum(Stilum { regulae = applicatio!.stilum.regulae }) then return null
+        if not style_valid(Style { rules = applicatio!.style.rules }) then return null
     }
 
-    # Assemble the ordered Stilum — layer order IS emission order.
-    var list<Regula> regulae ← vacua
+    # Assemble the ordered Style — layer order IS emission order.
+    var list<Rule> rules ← vacua
     if reset not is null {
-        for from reset!.regulae const regula {
-            regulae.appende(regula)
+        for from reset!.rules const regula {
+            rules.appende(regula)
         }
     }
-    for from tokens.regulae const regula {
-        regulae.appende(regula)
+    for from tokens.rules const regula {
+        rules.appende(regula)
     }
     var int idx ← 0
     while idx < componentes_finales.longitudo() {
-        for from componentes_finales[idx].stilum.regulae const regula {
-            regulae.appende(regula)
+        for from componentes_finales[idx].style.rules const regula {
+            rules.appende(regula)
         }
         idx ← idx + 1
     }
     var int ord ← 0
     while ord < librariae.longitudo() {
-        const Stilum ∪ null stilum ← codicillus_ex(librariae[ord], codicilli_finales)
-        if stilum is null then return null
-        for from stilum!.regulae const regula {
-            regulae.appende(regula)
+        const Style ∪ null style ← bundle_for(librariae[ord], codicilli_finales)
+        if style is null then return null
+        for from style!.rules const regula {
+            rules.appende(regula)
         }
         ord ← ord + 1
     }
     if applicatio not is null {
-        for from applicatio!.stilum.regulae const regula {
-            regulae.appende(regula)
+        for from applicatio!.style.rules const regula {
+            rules.appende(regula)
         }
     }
-    return Stilum { regulae = regulae }
+    return Style { rules = rules }
 }
 
 # ---------------------------------------------------------------------------
 # Stage 3 U1 — Behavior carriers (behavior-design §2/§3; policy (b)).
 #
-# The pure behavior-plan carriers for the Branch B adjacent plan: Eventum
-# (the event value), Effectus (declarative host effects keyed by stable
-# identity), Renovatio (the update result `replace` carries). Closure-free
+# The pure behavior-plan carriers for the Branch B adjacent plan: EventName
+# (the event value), Effect (declarative host effects keyed by stable
+# identity), Update (the update result `replace` carries). Closure-free
 # and web:dom-free — carriers are plain values; the kernel explicitly does
-# NOT own Vinculum/Nuntius/Program (the radix D1 generic-construction defect
+# NOT own EventBinding/Message/Program (the radix D1 generic-construction defect
 # + the concrete-message-type constraint: the app-typed plan is U3's
 # surface, recorded here, never kernel-generic).
 #
@@ -903,8 +903,8 @@ fn assemble(
 # carriers, so no f64 oracle pins apply.
 #
 # fix:<id> markers applied in this unit:
-#   fix:g5 — NONE: the carrier verbs (eventum, restitue, dirige, ancora,
-#            renovatio) + variant names (Restitue/Dirige/Ancora) probed
+#   fix:g5 — NONE: the carrier verbs (event_name, restore, direct, anchor,
+#            update) + variant names (Restore/Direct/Anchor) probed
 #            collision-free on in-tree radix 0.80.0 (a free fn may share a
 #            class name; union variants do not bind top-level the way enum
 #            members do).
@@ -912,54 +912,54 @@ fn assemble(
 #            recorded); the TS lane is the proven runtime lane.
 #   fix:sem001 — consumer-side match over an imported union's variants does
 #            not bind (SEM001.unknown_variant); the kernel owns the only
-#            matcher (effectus_identitas below) — the G3-family imported-
+#            matcher (effect_identity below) — the G3-family imported-
 #            union matching gap, recorded + escalated to the radix lane.
 # ---------------------------------------------------------------------------
 
-# Eventum: the event value — a typed event-name carrier (policy (b) locked
+# EventName: the event value — a typed event-name carrier (policy (b) locked
 # spelling). Closure-free: an event carries a name, not behavior.
-class Eventum {
-    string nomen
+class EventName {
+    string name
 }
 
-# Effectus: the declarative host effects from behavior-design §3.2 — exactly
+# Effect: the declarative host effects from behavior-design §3.2 — exactly
 # three variants, each keyed by a stable identity (the data-tela value the
 # Stage 1 hydration seam binds to):
-#   Restitue — focus restoration: restore focus to the node that held it
+#   Restore — focus restoration: restore focus to the node that held it
 #     before replacement (by its stable identity);
-#   Dirige   — focus movement: move focus to a declared target identity;
-#   Ancora   — scroll anchoring: scroll-preservation intent for the region.
-union Effectus {
-    Restitue { string identitas },
-    Dirige { string identitas },
-    Ancora { string identitas }
+#   Direct   — focus movement: move focus to a declared target identity;
+#   Anchor   — scroll anchoring: scroll-preservation intent for the region.
+union Effect {
+    Restore { string identity },
+    Direct { string identity },
+    Anchor { string identity }
 }
 
-# Renovatio: the update result `replace` carries (behavior-design §3) — the
+# Update: the update result `replace` carries (behavior-design §3) — the
 # next view plus the declarative effects the host executes after
 # replacement.
-class Renovatio {
-    Visus visus
-    list<Effectus> effectus
+class Update {
+    View view
+    list<Effect> effects
 }
 
 # Kernel-owned constructors (G3 posture — ordinary functions over the same
 # public values, like the Stage 1/2 kernel constructors; probed
 # collision-free).
-fn eventum(string nomen) → Eventum {
-    return Eventum { nomen = nomen }
+fn event_name(string name) → EventName {
+    return EventName { name = name }
 }
 
-fn restitue(string identitas) → Effectus {
-    return variant Restitue { identitas = identitas } ∷ Effectus
+fn restore(string identity) → Effect {
+    return variant Restore { identity = identity } ∷ Effect
 }
 
-fn dirige(string identitas) → Effectus {
-    return variant Dirige { identitas = identitas } ∷ Effectus
+fn direct(string identity) → Effect {
+    return variant Direct { identity = identity } ∷ Effect
 }
 
-fn ancora(string identitas) → Effectus {
-    return variant Ancora { identitas = identitas } ∷ Effectus
+fn anchor(string identity) → Effect {
+    return variant Anchor { identity = identity } ∷ Effect
 }
 
 # Effect-key accessor: the stable identity an effect keys to. The host
@@ -969,20 +969,20 @@ fn ancora(string identitas) → Effectus {
 # imported-union variant pattern does not bind from a consumer; recorded).
 # fix:sem001 — removal = grep-replace after the radix fix lands.
 # Total over the three variants — never null.
-fn effectus_identitas(Effectus effectus) → string {
-    match effectus {
-        case Restitue const identitas {
-            return identitas
+fn effect_identity(Effect effects) → string {
+    match effects {
+        case Restore const identity {
+            return identity
         }
-        case Dirige const identitas {
-            return identitas
+        case Direct const identity {
+            return identity
         }
-        case Ancora const identitas {
-            return identitas
+        case Anchor const identity {
+            return identity
         }
     }
 }
 
-fn renovatio(Visus visus, list<Effectus> effectus) → Renovatio {
-    return Renovatio { visus = visus, effectus = effectus }
+fn update(View view, list<Effect> effects) → Update {
+    return Update { view = view, effects = effects }
 }
