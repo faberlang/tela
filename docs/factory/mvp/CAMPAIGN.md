@@ -2,7 +2,7 @@
 
 **Created**: 2026-07-18
 **Updated**: 2026-07-18 — moved into the initialized Tela repository after review reconciliation
-**Status**: active — Stage 0 accepted, Stage 1 accepted, Stage 2 accepted — initial accept record corrected (fire-9 independent audit 2026-08-09 confirmed the closeout evidence; the original accept asserted a prior audit that did not exist); Stage 3 accepted (step-6 review + independent audit clean_pass 2026-08-09, audit-before-acceptance held); Stage 4 accepted (non-interactive proof U1–U5, independent audit clean_pass 2026-08-09, audit-before-acceptance held — verdict mail a7a89c12; interactive gate U6/U7 MET 2026-08-09 — verdict mail f9b616c0, scoped claim wording); Stage 5 (reference catalog) waits on the interactive seam closing
+**Status**: active — Stage 0 accepted, Stage 1 accepted, Stage 2 accepted — initial accept record corrected (fire-9 independent audit 2026-08-09 confirmed the closeout evidence; the original accept asserted a prior audit that did not exist); Stage 3 accepted (step-6 review + independent audit clean_pass 2026-08-09, audit-before-acceptance held); Stage 4 accepted (non-interactive proof U1–U5, independent audit clean_pass 2026-08-09, audit-before-acceptance held — verdict mail a7a89c12; interactive gate U6/U7 MET 2026-08-09 — verdict mail f9b616c0, scoped claim wording); Stage 5 (reference catalog) active — delivery admitted 2026-08-09 (stage-5-delivery.md, U0 English-adoption in flight)
 **Mode**: repository campaign routing artifact; do not implement directly from this file
 **Target workspace**: `/Users/ianzepp/work/faberlang`
 **Control-plane repo**: `/Users/ianzepp/work/faberlang/tela`
