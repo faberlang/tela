@@ -5,11 +5,13 @@
 # (single-file emits of the import-bearing exempla are not self-contained —
 # they keep `provider:module` imports and bare type references), then
 # `tsc --noEmit` (strict). The spec gate is radix check + the TS lane
-# (delivery U6 (b)); no runtime run is required — a development-time runtime
-# run of the assembled validation exempla surfaced a U2 defect (valida.fab's
-# html-only name set omits `img`, so valida_nomen_in_spatio("img","svg")
-# returns true while validation.fab asserts rejection) — that defect is
-# escalated to the radix/U2 lane, not papered over here.
+# (delivery U6 (b)); no runtime run is required. A development-time runtime
+# run of the assembled validation exempla in U6 surfaced a U2 defect
+# (valida.fab's html-only name set omitted `img`, so
+# valida_nomen_in_spatio("img","svg") returned true while validation.fab
+# asserts rejection) — that defect was escalated and is FIXED by the Stage 1
+# closeout repair (img added to nomen_html_soli; commit tela-s1-img-repair),
+# and the runtime predicate was re-verified at the closeout.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

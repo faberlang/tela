@@ -116,7 +116,7 @@ fn valida_spatium(string spatium) → bool {
 # namespace context fails closed.
 fn valida_nomen_in_spatio(string nomen, string spatium) → bool {
     const string nomen_svg_soli ← "svg g defs symbol use path rect circle ellipse line polyline polygon text tspan textPath foreignObject image linearGradient radialGradient stop clipPath mask pattern marker view switch metadata animate animateTransform animateMotion set mpath"
-    const string nomen_html_soli ← "div span p br hr wbr h1 h2 h3 h4 h5 h6 ul ol li dl dt dd table thead tbody tfoot tr td th caption colgroup form input button select option optgroup textarea label fieldset legend datalist output progress meter section article header footer nav main aside figure figcaption blockquote pre code em strong small sub sup mark time abbr address cite b i u s del ins q kbd samp var iframe video audio canvas template dialog details summary picture source track map area link meta menu"
+    const string nomen_html_soli ← "div span p br hr wbr h1 h2 h3 h4 h5 h6 ul ol li dl dt dd table thead tbody tfoot tr td th caption colgroup form input button select option optgroup textarea label fieldset legend datalist output progress meter section article header footer nav main aside figure figcaption blockquote pre code em strong small sub sup mark time abbr address cite b i u s del ins q kbd samp var img iframe video audio canvas template dialog details summary picture source track map area link meta menu"
     if not valida_nomen_tag(nomen) then return false
     if spatium ≡ "html" {
         if valida_in_gregis(nomen, nomen_svg_soli) then return false
