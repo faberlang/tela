@@ -168,6 +168,45 @@ then extended by U3 (escaping + serializers) — **strictly sequential**.
 bound to the policy-locked surface. Benchmark (U5) needs the serializer;
 tests + determinism (U6) need the composition.
 
+## Stage 2 authoring notes (style and theme protocol)
+
+Design record: [`docs/design/theme-protocol.md`](docs/design/theme-protocol.md).
+The kernel's theme/token surface lives in the same flat module
+(`src/tela.fab` — `Scopulum`/`Thema` + `thema_css`, Stage 2 U1 e194621);
+exempla: `exempla/thema.fab`.
+
+- **`fix:<defect-id>` workaround-marker discipline.** Radix-lane
+  workarounds are marked at the site (`fix:g4`, `fix:g5`,
+  `fix:codegen001`, TS-emitter markers); **removal = grep-replace after
+  each radix fix lands** (e.g. `grep -rn 'fix:codegen001' src/` →
+  remove the markers once CODEGEN001 is fixed). A colliding locked verb is
+  **escalated, never silently renamed** (the G5/G6 rule — the `html` →
+  `html_visus` precedent).
+- **Theme/token authoring constraints.** Token `nomen` is a dotted path;
+  the 8-token core baseline is pinned in the kernel header (U1) — a theme
+  must cover it or `thema_css` returns `null` (fail-closed). The theme
+  verbs (`thema`, `scopulum`, `thema_css`) are collision-free (probed on
+  in-tree radix 0.80.0). Renderer verbs stay English (policy (b));
+  protocol types stay Faber-Latin. Extension tokens use namespaced paths
+  (`chart.axis.muted`) and are collected app-side (the compose-without /
+  G4-independent pattern — never a provider export that trips
+  `WARN014`).
+- **Assembly input shape (policy (e)).** `assemble(...) → Stilum` is a
+  pure function over: the package-order map
+  (`list<`(package identity, dependencies)`>`), collected style bundles
+  with stable identities, the selected theme, an optional reset bundle.
+  Dedup by stable identity; topological order with stable-identity
+  tie-break; cycles / duplicate-identity-different-content / invalid
+  output reject.
+- **Two-theme benchmark seam.** The two-theme proof (U3) renders the
+  SAME component tree under two materially different `Thema` values (no
+  component changes) and asserts byte-identical HTML under both; the
+  theme CSS cascades are the two token layers.
+- **Cascade order.** Emission order is the cascade order: reset
+  (opt-in only) → tokens → components → library packages → application;
+  `@layer` at-rules are deferred (policy (c) growth). U2's assembly/cascade
+  record is the authoritative reconciliation point when it lands.
+
 ## Branch B (frozen for Stage 1)
 
 The kernel is the Branch B shape — pure non-generic recursive `Visus` +
