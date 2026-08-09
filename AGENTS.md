@@ -18,7 +18,7 @@ file is the operating summary; the docs are the contract.
 | Path | Role |
 | --- | --- |
 | `faber.toml` | Package `tela`, provider `tela`, `[paths] source = "src"`, `[build] kind = "lib"`, `targets = ["rust", "ts"]`, `[reader] locale = "en"`, edition 2026, version `0.0.0` (versioning is a Stage 8 decision) |
-| `src/tela.fab` | The kernel — **one flat, import-free module** (imported as `tela:tela`), stdlib-only (no `norma`/`triga`/`faber-runtime` dependency) |
+| `src/tela.fab` | The kernel — **one flat module** (imported as `tela:tela`), stdlib-only (no `norma`/`triga`/`faber-runtime` dependency); import-free through U1, U3 adds ONE same-package sibling import (`tela:valida`) for the fail-closed glue |
 | `src/valida.fab` | Validation module (imported as `tela:valida`) — flat, import-free, public surface string/bool only |
 | `exempla/` | Exempla-mode tests (`+++` frontmatter, `locale = "en"`); one exempla file per unit surface (e.g. `validation.fab`, `serializer.fab`) |
 | `scripta/` | Validation harnesses (Stage 1 U6: `check-compile`, `check-exempla`, `check-determinism`) |
@@ -39,12 +39,17 @@ by framework-contract weakening.
   references an imported sibling type is skipped in the export snapshot
   (`WARN014.file_interface_export_skipped`). Provider modules must be **flat
   (single file)** so every referenced type is local to the module. The kernel
-  is therefore **one flat, import-free module** (`tela/src/tela.fab`,
-  `tela:tela`) — G4-safe and matching the proven spike single-file shape.
+  is therefore **one flat module** (`tela/src/tela.fab`, `tela:tela`) —
+  G4-safe and matching the proven spike single-file shape. It is stdlib-only
+  plus ONE same-package sibling import (`tela:valida`, added by U3 for the
+  fail-closed glue); no public signature references a `valida` type, so the
+  G4-safe shape holds.
 - **Enum-member top-level binding (G5).** Enum members bind as top-level
   module names — a `fn html()` collides with the `Spatium.html` member
   binding (`SEM005.duplicate_definition`). Prefix helpers that shadow members
-  (`html_spatium`, `svg_spatium`).
+  (`html_spatium`, `svg_spatium`). This is why the HTML renderer verb is
+  **`html_visus`** (U3 recorded + escalated; the G5 radix-lane fix restores
+  the exact `html` verb).
 - **Reserved-keyword spellings (G6).** Reserved `conversio` keywords are
   unavailable as identifiers — `fn tabula(...)` collides with the `tabula`
   type keyword (`PARSE001.retired_type_call_constructor`). Avoid the reserved
@@ -81,16 +86,19 @@ by framework-contract weakening.
 | Surface | Vocabulary | Examples |
 | --- | --- | --- |
 | Protocol types + fields (`tela:*`) | **Faber-Latin** | `Visus`, `Elementum`, `Textus`, `Fragmentum`, `Spatium`, `Attributum`, `Proprietas`, `Identitas`; fields `nomen`, `valor`, `liberi`, `attributa`, `proprietates`, `identitas`, `spatium`, `nomen_tag` |
-| Renderer / host verbs | **English** | `html`, `css` (the public serializer verbs); `mount`, `replace`, `dispose`, `assemble` |
+| Renderer / host verbs | **English** | `html_visus` (HTML serializer verb — G5 workaround: exact `html` collides with the `Spatium.html` member binding, `SEM005`; fail-closed `→ string ∪ null`), `css` (verbatim, not reserved), and `mount`, `replace`, `dispose`, `assemble` |
 | Theme tokens | **English web terms** | `surface.canvas`, `text.primary`, `chart.axis.muted`, `form.field.invalid` |
 | Extension-contract verbs | **English** | define, return, publish, declare |
 
 `liberi` (not `children`) is locked — the field vocabulary is one consistent
 Faber-Latin scheme; the Stage 7 Speculum migration maps `children` → `liberi`
 at the boundary. Renderer-internal helpers may follow the spike spellings
-(`escapa`, `seri_*`) or English; the public serializer verbs are `html`/`css`.
-If a locked verb name collides (G5/G6), **escalate rather than silently
-rename** (policy (b) locks the English renderer verbs).
+(`escapa`, `seri_*`) or English; the public serializer verbs are
+`html_visus`/`css`. The exact `html` verb collided with the `Spatium.html`
+enum-member binding (G5, `SEM005`) and was **escalated rather than silently
+renamed** — `html_visus` preserves the locked English stem (policy (b)), and
+the G5 radix-lane fix restores the exact `html` verb. When a locked verb name
+collides (G5/G6), follow the same rule: escalate, keep the stem.
 
 ## No raw markup (policy (a))
 

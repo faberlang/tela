@@ -11,10 +11,9 @@ baseline).
 
 This record documents the one hydration-ready identity form that Stage 1
 serializes and Stage 3 binds to. It makes no implementation claim beyond what
-the landed kernel (`src/tela.fab`, U1) and the locked serializer spec (U3)
-define; where the serializer has not yet landed, this record documents the
-locked baseline and carries the reconciliation as a Stage 1 closeout residual
-(§8).
+the landed kernel (`src/tela.fab`, U1 + U3) defines. The serializer has
+landed (U3, commit `05909f7`); this record is reconciled to that emission
+(§2, §5, §10).
 
 ---
 
@@ -45,8 +44,10 @@ canonical emitted form is single-quoted per the spike baseline and the Stage 1
 delivery spec (U3 done_when (b): "`Attributa` serialize as `nomen='valor'`
 (quote style per the spike baseline — single quotes — and documented)").
 
-If the landed U3 emission records a different quote style, this doc is
-reconciled to the emission at Stage 1 closeout (done_when (c); §8).
+Reconciliation (U3 landed, commit `05909f7`): the serializer emits
+attribute values with single quotes exactly as documented here —
+`seri_attributa` emits `nomen='valor'` and `seri_identitas` emits
+`data-tela='<escaped valor>'`. **No quote-style deviation.**
 
 ## 3. Which elements carry it
 
@@ -82,9 +83,20 @@ The escape set (locked by U3 done_when (a)):
 | Text | `&`, `<`, `>` |
 | Attribute values (incl. the `data-tela` valor) | `&`, `<`, `>`, plus `"` and `'` |
 
-The concrete entity spellings are the serializer's choice within this set;
-the set itself is the contract. The ampersand is mapped first so an
-already-escaped sequence is not double-escaped.
+The landed emission (`escapa`, commit `05909f7`) maps each character through
+one single-pass scan; the concrete spellings are:
+
+| Character | Text | Attribute value (incl. `data-tela` valor) |
+| --- | --- | --- |
+| `&` | `&amp;` | `&amp;` |
+| `<` | `&lt;` | `&lt;` |
+| `>` | `&gt;` | `&gt;` |
+| `"` | — | `&quot;` |
+| `'` | — | `&#39;` |
+
+Because each input character is consumed exactly once (single-character scan,
+sequential branches), no emitted entity is re-scanned — an already-escaped
+sequence is never double-escaped.
 
 Because the quote style is single quotes, a single quote inside the valor is
 escaped — a valor cannot break out of its attribute.
@@ -144,15 +156,31 @@ structure only — DOM properties are not HTML attributes, and static HTML stays
 honest. This posture is recorded in the kernel header and here; Stage 3
 defines any static/hydration presence for properties.
 
-## 10. Reconciliation state (Stage 1 closeout item)
+## 10. Reconciliation state (DONE — U3 landed, commit `05909f7`)
 
-The serializer reconciliation item (done_when (c)): quote style and escaping
-must agree with the landed U3 emission. At the time this record was written
-(2026-08-09), **U3 has not landed** (no serializer commit in `tela/` git
-log). This record documents the locked baseline — single quotes per the spike
-baseline, escape set `& < > " '` for the attribute path — and the Stage 1
-closeout must re-check this doc against the landed emission and reconcile any
-deviation. This item is recorded as a Stage 1 closeout residual.
+The serializer reconciliation item (U4 done_when (c)) is **DONE**. The U3
+emission (`05909f7`) was verified against this record:
+
+- **Quote style**: single quotes — confirmed, no deviation (§2).
+  `seri_attributa` emits `nomen='valor'`; `seri_identitas` emits
+  `data-tela='<escaped valor>'`.
+- **Escape set**: text `& < >`; attribute values additionally `" '` —
+  confirmed, no deviation (§5). Landed spellings `&amp;` / `&lt;` / `&gt;` /
+  `&quot;` / `&#39;`.
+- **data-tela through the same attribute-escape path**: confirmed —
+  `seri_identitas` calls `escapa(identitas?.valor coalesce "", true)`
+  (policy (d)).
+- **Serializer verb**: the HTML renderer verb is **`html_visus`**, not
+  `html` — the exact `html` verb collides with the `Spatium.html`
+  enum-member top-level binding (G5, `SEM005.duplicate_definition`;
+  recorded + escalated by U3). The `html_` prefix keeps the locked English
+  stem (policy (b)); `css` is verbatim (verified not reserved). See
+  `AGENTS.md` vocabulary.
+- **Fail-closed mechanism**: `html_visus(Visus) → string ∪ null` — null when
+  the `valida_arbor` pre-pass rejects; invalid input never emits markup.
+
+No deviations required a doc change beyond this reconciliation; the U4
+record's Stage 1 closeout residual for this item is closed.
 
 ---
 
