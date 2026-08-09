@@ -2,7 +2,7 @@
 
 **Created**: 2026-07-18
 **Updated**: 2026-07-18 — moved into the initialized Tela repository after review reconciliation
-**Status**: active — Stage 0 accepted, Stage 1 accepted, Stage 2 accepted — initial accept record corrected (fire-9 independent audit 2026-08-09 confirmed the closeout evidence; the original accept asserted a prior audit that did not exist); Stage 3 accepted (step-6 review + independent audit clean_pass 2026-08-09, audit-before-acceptance held); Stage 4 selected next
+**Status**: active — Stage 0 accepted, Stage 1 accepted, Stage 2 accepted — initial accept record corrected (fire-9 independent audit 2026-08-09 confirmed the closeout evidence; the original accept asserted a prior audit that did not exist); Stage 3 accepted (step-6 review + independent audit clean_pass 2026-08-09, audit-before-acceptance held); Stage 4 accepted (non-interactive proof U1–U5, independent audit clean_pass 2026-08-09, audit-before-acceptance held — verdict mail a7a89c12; the interactive gate U6/U7 recorded NOT MET: cds-u5/cds-u6 not landed — gated workstream post-closeout); Stage 5 (reference catalog) waits on the interactive seam closing
 **Mode**: repository campaign routing artifact; do not implement directly from this file
 **Target workspace**: `/Users/ianzepp/work/faberlang`
 **Control-plane repo**: `/Users/ianzepp/work/faberlang/tela`
@@ -303,7 +303,12 @@ TypeScript async gap before claiming fetch-driven updates.
 
 ### Stage 4 — Independent Extension Package Proof
 
-**Status**: planned — selected next (Stage 4); depends on Stage 3
+**Status**: accepted — non-interactive proof complete (U1–U5; independent
+audit clean_pass 2026-08-09, audit-before-acceptance held, verdict mail
+a7a89c12); the interactive gate U6/U7 is RECORDED NOT MET (CTO10-3 —
+`cds-u5-provider-locale` + `cds-u6-file-interface-exports` not landed); the
+gated workstream executes post-closeout when both fixes land; the entry
+conditions above stand until then
 **Entry conditions (recorded, not met)**: the Stage 4 interactive-proof gate
 per the Stage 3 closeout (CTO10-3) — `fix:web-dom-locale` (a real en→la
 `web:dom` import) and `fix:g4` (the `tela:browser` lifecycle exported and
