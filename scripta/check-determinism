@@ -28,6 +28,19 @@
 # control static render, and the behavior-plan marker. The sha supersedes
 # the Stage 3 record (77516916…e5490) — see stage-4-extension-proof.md.
 #
+# Stage 5 U10 (tela-s5-u10-tests-determinism-evidence — the OFFICIAL Stage
+# 5 evidence boundary): the double-build input is the FINAL composition —
+# tela kernel (valida + tela) + reference + formslib + extension-lib +
+# canary-app (the U9 composition, incl. the emitted web:dom seam + the
+# tela:browser binding). The official sha re-records here — the U9 record's
+# sha (6927187ec0…) STANDS as the official Stage 5 sha (U10 authored no
+# product code; the supersession chain 8dfcb143 → 6927187ec0 holds) — see
+# stage-5-evidence.md. The Rust primary path is ATTEMPTED first; the
+# recorded CODEGEN001 defect is re-recorded when it fires (R2: when the
+# Rust path lands, its capture must equal the TS-lane capture — sha
+# equality — and the Rust primary path activates automatically, no harness
+# change).
+#
 # Determinism posture: determinism applies to STATIC/MOUNT-TIME
 # serialization ONLY (the segmented control's initial HTML + the forms
 # static render + the full cascade); interactive state is time-variant —
