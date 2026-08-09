@@ -1,0 +1,274 @@
+# tela/proof/extension-forms/src/forms.fab — formslib — the forms component
+# family (the Stage 4 independent-extension proof, provider `formslib`).
+#
+# Stage 4 U2 (component-family — the static half). A SEPARATE package from
+# the kernel (own faber.toml, own provider identity `formslib`, imported
+# through the benchmark library-home machinery). The identity freeze +
+# authoring constraints come from the U1 discovery record
+# (stage-4-discovery.md).
+#
+# The family (four surface groups per the delivery U2 done_when (b)):
+#   field (text input)    — campum / Props_campi   → form-field-<nomen>
+#   checkbox              — boxum / Props_boxi     → form-checkbox-<nomen>
+#   select                — selego / Props_selecti → form-select-<nomen>
+#   error/live-region association — error_regionum (→ form-error-<nomen>,
+#     the identity a field's aria-describedby references) + regio_viva_forma
+#     (the form-level live region, form-live) + agmen_campi (the field
+#     group: field + error node under form-control-<nomen>).
+# The keyboard/validation structure is DECLARED here: the field/checkbox/
+# select are natively focusable (native field semantics — Tab reaches them
+# directly, the campaign §8 keyboard contract); the form-level
+# focus-move/validation behavior belongs to the app-typed plan (U4).
+#
+# G4 consumability record (per export, the stage-1 §3 + U1 §4.2 evidence):
+#   - The `→ tela.Visus` component fns (campum/selego/boxum/error_regionum/
+#     regio_viva_forma/agmen_campi) reference the imported sibling type
+#     tela.Visus in their signatures → WARN014 export-skipped for consumers
+#     today (fix:g4). The package KEEPS its seam (never a duplicated Visus
+#     in the package); the consumer's cross-package family composition stays
+#     behind the documented compose-without workaround until g4 lands; the
+#     gated U7 composes through normal qualified imports after the fix.
+#   - The G4-safe surface stays on the exported file interface: the props
+#     constructors (→ local classes — the Scopulus precedent, consumable)
+#     and the `_html` string-returning render helpers (→ string — the U1
+#     probe finding: the exempla asserts byte-exact through these, since the
+#     exempla cannot consume the `→ tela.Visus` component fns through the
+#     provider interface).
+#   - Cross-package consumption (probed, U2 close): `forms.campum_html(
+#     forms.props_campi(...))` (direct call result as an argument) and
+#     `forms.props_campi(...).nomen` (field access on the call result)
+#     resolve from a consumer; binding the constructor result to a `const`
+#     with inferred type hits the provider-interface inference gap
+#     (PARSE001 — the recorded G4/dialect family). The consumer composes
+#     with the direct-call pattern until g4 lands.
+#
+# fix:<id> markers:
+#   fix:g4 — the union-returning component exports are WARN014-skipped for
+#     consumers (recorded above); removal = grep-replace after cds-u6
+#     (file-interface-exports) lands; the gated U7 removes the workaround.
+#   fix:g5 — NONE: campum/boxum/selego/error_regionum/regio_viva_forma/
+#     agmen_campi/props_campi/props_boxi/props_selecti/*_html probed
+#     collision-free on in-tree radix 0.80.0 (a free fn may share a class
+#     name — G5's collision is enum-member-specific).
+#   fix:snapshot-nomen-collision — the props classes (Props_campi/
+#     Props_selecti/Props_boxi) avoid kernel type names (Spatium/Stilum/
+#     Scopulum/Thema/Eventum/Effectus/Renovatio/Visus/…) AND the canary-app's
+#     plan type names (Props_controlli/Vinculum/Nuntius — the app-typed plan
+#     in U3/U4 lives app-side; the forms package keeps distinct names).
+#   fix:codegen001 — Rust emit-across-imports persists (the TS lane is the
+#     proven lane; recorded, never the gate).
+
+import from "tela:tela" public * ut tela
+
+# ---------------------------------------------------------------------------
+# Typed props (per-component state carriers — local classes, consumable).
+# ---------------------------------------------------------------------------
+
+# The field (text input) props. `invalid` = "true"/"false" (aria-invalid);
+# `error` = the error message ("" = none — the group renders an empty error
+# node; aria-describedby → form-error-<nomen> when invalid).
+class Props_campi {
+    string nomen
+    string label
+    string valor
+    string invalid
+    string error
+}
+
+# The select props (option list; aria-invalid + aria-describedby surface).
+class Props_selecti {
+    string nomen
+    string label
+    list<string> optiones
+    string invalid
+}
+
+# The checkbox props. `selectus` = "true"/"false" (aria-checked).
+class Props_boxi {
+    string nomen
+    string label
+    string selectus
+    string invalid
+}
+
+# Kernel-owned constructors (G3 posture — ordinary functions over the same
+# public values; local-class-returning → consumable by the consumer today).
+fn props_campi(string nomen, string label, string valor, string invalid, string error) → Props_campi {
+    return Props_campi { nomen = nomen, label = label, valor = valor, invalid = invalid, error = error }
+}
+
+fn props_selecti(string nomen, string label, list<string> optiones, string invalid) → Props_selecti {
+    return Props_selecti { nomen = nomen, label = label, optiones = optiones, invalid = invalid }
+}
+
+fn props_boxi(string nomen, string label, string selectus, string invalid) → Props_boxi {
+    return Props_boxi { nomen = nomen, label = label, selectus = selectus, invalid = invalid }
+}
+
+# ---------------------------------------------------------------------------
+# The field (text input) — form-field-<nomen>.
+# ---------------------------------------------------------------------------
+
+fn campum(Props_campi props) → tela.Visus {
+    var list<tela.Attributum> attributa ← vacua
+    attributa.appende(tela.Attributum { nomen = "type", valor = "text" })
+    attributa.appende(tela.Attributum { nomen = "aria-label", valor = props.label })
+    attributa.appende(tela.Attributum { nomen = "aria-invalid", valor = props.invalid })
+    if props.invalid ≡ "true" {
+        attributa.appende(tela.Attributum { nomen = "aria-describedby", valor = "form-error-" + props.nomen })
+    }
+    if not (props.valor ≡ "") {
+        attributa.appende(tela.Attributum { nomen = "value", valor = props.valor })
+    }
+    return tela.elementum_omne(
+        tela.nova_identitas("form-field-" + props.nomen),
+        tela.html_spatium(),
+        "input",
+        attributa,
+        [],
+        []
+    )
+}
+
+# ---------------------------------------------------------------------------
+# The checkbox — form-checkbox-<nomen> (aria-checked + the invalid surface).
+# ---------------------------------------------------------------------------
+
+fn boxum(Props_boxi props) → tela.Visus {
+    var list<tela.Attributum> attributa ← vacua
+    attributa.appende(tela.Attributum { nomen = "type", valor = "checkbox" })
+    attributa.appende(tela.Attributum { nomen = "aria-label", valor = props.label })
+    attributa.appende(tela.Attributum { nomen = "aria-checked", valor = props.selectus })
+    attributa.appende(tela.Attributum { nomen = "aria-invalid", valor = props.invalid })
+    if props.invalid ≡ "true" {
+        attributa.appende(tela.Attributum { nomen = "aria-describedby", valor = "form-error-" + props.nomen })
+    }
+    return tela.elementum_omne(
+        tela.nova_identitas("form-checkbox-" + props.nomen),
+        tela.html_spatium(),
+        "input",
+        attributa,
+        [],
+        []
+    )
+}
+
+# ---------------------------------------------------------------------------
+# The select — form-select-<nomen> (native option children).
+# ---------------------------------------------------------------------------
+
+fn selego(Props_selecti props) → tela.Visus {
+    var list<tela.Attributum> attributa ← vacua
+    attributa.appende(tela.Attributum { nomen = "aria-label", valor = props.label })
+    attributa.appende(tela.Attributum { nomen = "aria-invalid", valor = props.invalid })
+    if props.invalid ≡ "true" {
+        attributa.appende(tela.Attributum { nomen = "aria-describedby", valor = "form-error-" + props.nomen })
+    }
+    var list<tela.Visus> liberi ← vacua
+    var int i ← 0
+    while i < props.optiones.longitudo() {
+        liberi.appende(tela.elementum_view(tela.html_spatium(), "option", [ tela.textus_view(props.optiones[i]) ]))
+        i ← i + 1
+    }
+    return tela.elementum_omne(
+        tela.nova_identitas("form-select-" + props.nomen),
+        tela.html_spatium(),
+        "select",
+        attributa,
+        [],
+        liberi
+    )
+}
+
+# ---------------------------------------------------------------------------
+# The error / live-region association.
+# ---------------------------------------------------------------------------
+
+# The error node for a field: role=alert + the identity the field's
+# aria-describedby references (form-error-<nomen>). Empty text = empty node
+# (the association structure is stable — the group always carries it).
+fn error_regionum(string nomen, string textus) → tela.Visus {
+    var list<tela.Visus> liberi ← vacua
+    if not (textus ≡ "") {
+        liberi.appende(tela.textus_view(textus))
+    }
+    return tela.elementum_omne(
+        tela.nova_identitas("form-error-" + nomen),
+        tela.html_spatium(),
+        "div",
+        [ tela.Attributum { nomen = "role", valor = "alert" } ],
+        [],
+        liberi
+    )
+}
+
+# The form-level live region (the Stage 3 §1.5 pattern extended to forms):
+# role=status + aria-live=polite, form-live. The announcement policy (on a
+# validation-state change, silent on no-op) is the app-typed plan's (U4).
+fn regio_viva_forma() → tela.Visus {
+    return tela.elementum_omne(
+        tela.nova_identitas("form-live"),
+        tela.html_spatium(),
+        "div",
+        [
+            tela.Attributum { nomen = "role", valor = "status" },
+            tela.Attributum { nomen = "aria-live", valor = "polite" }
+        ],
+        [],
+        []
+    )
+}
+
+# The field group — the association surface: the field (aria-describedby →
+# form-error-<nomen> when invalid) + its error node under form-control-<nomen>.
+fn agmen_campi(Props_campi props) → tela.Visus {
+    var list<tela.Visus> liberi ← vacua
+    liberi.appende(campum(props))
+    liberi.appende(error_regionum(props.nomen, props.error))
+    return tela.elementum_omne(
+        tela.nova_identitas("form-control-" + props.nomen),
+        tela.html_spatium(),
+        "div",
+        [],
+        [],
+        liberi
+    )
+}
+
+# ---------------------------------------------------------------------------
+# G4-safe render helpers (the U1 probe finding): the exempla asserts the
+# byte-exact static render through these string-returning helpers, since
+# the `→ tela.Visus` component fns are WARN014-skipped for consumers
+# (fix:g4). Serializer emission order: attributa in author order, then
+# data-tela. Deterministic bytes over author order.
+# ---------------------------------------------------------------------------
+
+fn campum_html(Props_campi props) → string {
+    const string markup ← tela.html_visus(campum(props)) coalesce ""
+    return markup
+}
+
+fn boxum_html(Props_boxi props) → string {
+    const string markup ← tela.html_visus(boxum(props)) coalesce ""
+    return markup
+}
+
+fn selego_html(Props_selecti props) → string {
+    const string markup ← tela.html_visus(selego(props)) coalesce ""
+    return markup
+}
+
+fn error_regionum_html(string nomen, string textus) → string {
+    const string markup ← tela.html_visus(error_regionum(nomen, textus)) coalesce ""
+    return markup
+}
+
+fn regio_viva_forma_html() → string {
+    const string markup ← tela.html_visus(regio_viva_forma()) coalesce ""
+    return markup
+}
+
+fn agmen_campi_html(Props_campi props) → string {
+    const string markup ← tela.html_visus(agmen_campi(props)) coalesce ""
+    return markup
+}
