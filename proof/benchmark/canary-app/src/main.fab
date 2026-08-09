@@ -120,10 +120,24 @@
 #     documented compose-without posture).
 #   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the
 #     TS lane is the proven runtime lane.
+#
+# Stage 4 U7 (interactive-provider-seam) — the CTO10-3 interactive claim.
+# This module now imports the REAL seam — web:dom (en→la, cds-u5) +
+# tela:browser (exported, consumable, cds-u6) — and composes the forms
+# components through NORMAL qualified imports (the → tela.Visus component
+# fns are consumable: no compose-without, no *_html helper route, no
+# harness-assembly bypass, no tela-side shim). The seam call goes through
+# the app's OWN imports (montium_formae: dom.scope + browser.mount). The
+# scripted interaction sequence executes against the DOCUMENTED faber-web
+# host binding (bindings/ts.toml → runtime/dom.ts) under
+# check-forms-interactive; this module supplies the plan surface (the
+# composition + the app-typed update loop + the seam mount).
 
 import from "tela:tela" public * ut tela
 import from "extensionlib:extension" public * ut ext
 import from "formslib:forms" public * ut forms
+import from "tela:browser" public * ut browser
+import from "web:dom" public * ut dom
 
 # --- Themed panel: a div with a stable identity + accessible name; the panel
 # rule in main's style bundle keys on the identity (policy (d) seam).
@@ -638,6 +652,83 @@ fn props_ex_statu(string nomen, string label, Statu_Campi statu) → forms.Props
     )
 }
 
+# ===========================================================================
+# Stage 4 U7 — the interactive plan surface.
+#
+# The mounted forms composition (the REAL component fns through the normal
+# package interface), the app-typed re-render (the model → the next Visus),
+# and the seam mount (dom.scope + browser.mount through the app's OWN
+# imports). The scripted interaction driver (check-forms-interactive) calls
+# these against the documented faber-web host binding.
+# ===========================================================================
+
+# The interactive proof's theme (the 8-token core baseline).
+fn thema_formae() → tela.Thema {
+    return tela.thema("formae", [
+        tela.scopulum("surface.canvas", "#ffffff"),
+        tela.scopulum("surface.panel", "#f9fafb"),
+        tela.scopulum("text.primary", "#111827"),
+        tela.scopulum("text.muted", "#6b7280"),
+        tela.scopulum("border.default", "#e5e7eb"),
+        tela.scopulum("accent.primary", "#2563eb"),
+        tela.scopulum("state.positive", "#16a34a"),
+        tela.scopulum("state.caution", "#d97706")
+    ])
+}
+
+# The forms composition — the family's `→ tela.Visus` component fns through
+# the NORMAL qualified imports (the U7 "no compose-without" condition): the
+# field group + the checkbox + the select + the form-level live region
+# under one group identity.
+fn compositio_formae() → tela.Visus {
+    return tela.elementum_omne(
+        tela.nova_identitas("forma"),
+        tela.html_spatium(),
+        "div",
+        [],
+        [],
+        [
+            forms.agmen_campi(forms.props_campi("name", "Name", "", "false", "")),
+            forms.boxum(forms.props_boxi("agree", "Agree", "false", "false")),
+            forms.selego(forms.props_selecti("tone", "Tone", ["Light", "Dark"], "false")),
+            forms.regio_viva_forma()
+        ]
+    )
+}
+
+fn veritas_textus(bool b) → string {
+    if b then return "true"
+    return "false"
+}
+
+# The composition re-rendered from the app model (the field's validation
+# state + the checkbox + the select state) — the update loop's view-render
+# input (the driver applies the model via the messages).
+fn compositio_formae_ex_statu(Statu_Campi statu, bool agree, string tone) → tela.Visus {
+    return tela.elementum_omne(
+        tela.nova_identitas("forma"),
+        tela.html_spatium(),
+        "div",
+        [],
+        [],
+        [
+            forms.agmen_campi(props_ex_statu("name", "Name", statu)),
+            forms.boxum(forms.props_boxi("agree", "Agree", veritas_textus(agree), "false")),
+            forms.selego(forms.props_selecti("tone", "Tone", ["Light", "Dark"], "false")),
+            forms.regio_viva_forma()
+        ]
+    )
+}
+
+# The seam call through the app's OWN imports: a real web:dom scope +
+# tela.browser.mount (the cds-u5/u6 conditions at the app boundary). The
+# driver (the node host) calls this; the pre-existing hydration state is
+# read via dom.snapshot inside mount.
+fn montium_formae(string selector) → browser.Mounted ∪ null {
+    const dom.Scope scopus ← dom.scope(selector)
+    return browser.mount(scopus, compositio_formae(), thema_formae())
+}
+
 main {
     # G4 seam attempt (recorded in the evidence record): ext.bar_metrum
     # resolves to WARN014 export-skip; the app composes the meter with tela
@@ -1094,4 +1185,21 @@ main {
     print forma_composita
     print "forms family static rendered (field/checkbox/select + error/live; tela-s4-u3)"
     print "forms behavior plan asserted (input/toggle/change/submit + validation semantics; tela-s4-u4)"
+
+    # --- The U7 interactive plan surface (the provider-seam claim) --------
+    # The composition mounts through the app's own seam call (dom.scope +
+    # browser.mount); the pure surface is asserted here, the scripted DOM
+    # sequence executes under check-forms-interactive (the documented
+    # faber-web host binding).
+    const tela.Visus compositio ← compositio_formae()
+    assert tela.html_visus(compositio) not is null
+    assert tela.html_visus(compositio) coalesce "" ≡ "<div data-tela='forma'><div data-tela='form-control-name'><input type='text' aria-label='Name' aria-invalid='false' data-tela='form-field-name'><div role='alert' data-tela='form-error-name'></div></div><input type='checkbox' aria-label='Agree' aria-checked='false' aria-invalid='false' data-tela='form-checkbox-agree'><select aria-label='Tone' aria-invalid='false' data-tela='form-select-tone'><option>Light</option><option>Dark</option></select><div role='status' aria-live='polite' data-tela='form-live'></div></div>"
+    assert veritas_textus(true) ≡ "true"
+    assert veritas_textus(false) ≡ "false"
+    const Statu_Campi statu_invalida ← statum_campi("form-field-name", "", "Required")
+    const string compositio_invalida ← tela.html_visus(compositio_formae_ex_statu(statu_invalida, false, "Light")) coalesce ""
+    assert compositio_invalida.continet("aria-invalid='true'")
+    assert compositio_invalida.continet("aria-describedby='form-error-name'")
+    assert compositio_invalida.continet(">Required</div>")
+    print "forms interactive plan surface asserted (real imports + seam mount; tela-s4-u7)"
 }

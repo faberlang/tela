@@ -84,7 +84,7 @@ BROWSER_NS="const browser = { radiculum, subscriptio, ligamen, parse_identitates
 # scope with `root`, the emitted Scope type carries only `selector`).
 DOM_NS="const dom = { scope: webDomScope, snapshot: ((scope: any): Array<Nodus> | null => webDomSnapshot(scope)), query: webDomQuery, require: webDomRequire, all: webDomAll, value: webDomValue };"
 EXT_NS="const ext = { chart_axis_muted, chart_axis_muted_tenebrae, chart_grid_muted, chart_grid_muted_tenebrae, chart_scopuli, chart_scopuli_tenebrae, bar_metrum, chart_stilum, Scopulus };"
-FORMS_NS="const forms = { props_campi, props_boxi, props_selecti, campum_html, boxum_html, selego_html, error_regionum_html, regio_viva_forma_html, agmen_campi_html, form_field_invalid, form_field_valid, form_focus, scopulae_formae, form_stilum, eventus_campi, eventus_mutationis, eventus_submissionis, eventus_click, invalid_textus, error_praesens };"
+FORMS_NS="const forms = { props_campi, props_boxi, props_selecti, campum, boxum, selego, error_regionum, regio_viva_forma, agmen_campi, campum_html, boxum_html, selego_html, error_regionum_html, regio_viva_forma_html, agmen_campi_html, form_field_invalid, form_field_valid, form_focus, scopulae_formae, form_stilum, eventus_campi, eventus_mutationis, eventus_submissionis, eventus_click, invalid_textus, error_praesens };"
 
 cat > "$SCRATCH/driver.ts" <<'DRIVER'
 // ---- tela-s3-u4 interaction-gate driver (appended by check-mount) ------

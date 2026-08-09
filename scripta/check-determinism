@@ -122,12 +122,18 @@ else
 fi
 
 # ---- TS-lane composition lane (proven fallback; U5 evidence shape) -------
-echo "TS lane: emitting valida / tela / extension / forms / main"
+echo "TS lane: emitting valida / tela / extension / forms / browser / dom / main"
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/valida.fab" -o "$SCRATCH/valida.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/extension-lib/src/extension.fab" -o "$SCRATCH/extension.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab" -o "$SCRATCH/main.ts" >/dev/null
+# Stage 4 U7: the canary-app imports tela:browser + web:dom (the real seam).
+# The composition assembly binds the browser module + the emitted web:dom
+# provider module (types + inert stubs — the main IIFE never calls the seam
+# at load here).
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/browser.fab" -o "$SCRATCH/browser.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale la "$ROOT/../faber-web/src/dom.fab" -o "$SCRATCH/dom.ts" >/dev/null
 
 echo "TS lane: double-emit byte-identity (kernel + forms package)"
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela-b.ts" >/dev/null
@@ -145,15 +151,23 @@ fi
 # imports): drop the radix header (2 lines) and import lines, bind the
 # imported namespaces as const objects.
 strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
+# The emitted web:dom provider module's preamble + `Element` genus are
+# renamed so they do not collide with the tela module's own preamble / the
+# DOM lib's `Element`.
+strip_dom() { sed '1,2d' "$1" | grep -v '^import .* from "' | sed -e 's/\bFaberResult\b/FaberResultDom/g' -e 's/\bFaberDisplayHint\b/FaberDisplayHintDom/g' -e 's/\b__faberDisplayFractus\b/__faberDisplayDomFractus/g' -e 's/\b__faberDisplayList\b/__faberDisplayDomList/g' -e 's/\b__faberDisplayTensor\b/__faberDisplayDomTensor/g' -e 's/\b__faberDisplaySparsa\b/__faberDisplayDomSparsa/g' -e 's/\b__faberDisplayMap\b/__faberDisplayDomMap/g' -e 's/\b__faberDisplayValor\b/__faberDisplayDomValor/g' -e 's/\b__faberDisplayTaggedValor\b/__faberDisplayDomTaggedValor/g' -e 's/\b__faberDisplay\b/__faberDisplayDom/g' -e 's/\bElement\b/DomElement/g'; }
 {
   strip "$SCRATCH/valida.ts"
   echo "const valida = { valida_spatium, valida_nomen_tag, valida_nomen_attributi, valida_nomen_in_spatio, valida_void_html, valida_void_structura };"
   strip "$SCRATCH/tela.ts"
   echo "const tela = { html_visus, css, thema_css, thema_stilum, thema, scopulum, scopuli_core, nomen_scopuli_proprietas, nomen_scopuli_validum, thema_scopuli_core_parati, thema_habet_scopulum, assemble, codicillus, ordo, codicilli_dedupata, ordine_ordinata, stilum_validum, stilum_textus_immundus, codicillus_ex, in_lista, pendeant_parata, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, eventum, restitue, dirige, ancora, renovatio, effectus_identitas, Attributum, Proprietas, Declaratio, Regula, Stilum, Scopulum, Thema, Codicillus, Ordo };"
+  strip_dom "$SCRATCH/dom.ts"
+  echo "const dom = { scope, query, require, all, snapshot, text_set, attr_set, attr_remove, class_add, class_remove, class_toggle, on, unsubscribe, value, value_set, on_input, on_submit, on_frame, on_resize, on_keyboard, on_pointer, on_focus, pointer_lock_state, request_pointer_lock, exit_pointer_lock, on_pointer_lock, prevent_default, fetch_text };"
+  strip "$SCRATCH/browser.ts"
+  echo "const browser = { radiculum, subscriptio, ligamen, parse_identitates, elementum_tag, quotiens, identitates_duplicatae, nomen_tagi, tag_at, identitates_ex_nodis, tags_ex_nodis, ligamen_status, diagnosia_hydrationis, mount, replace, dispose, focus_tenet, focus_optata };"
   strip "$SCRATCH/extension.ts"
   echo "const ext = { chart_axis_muted, chart_axis_muted_tenebrae, chart_grid_muted, chart_grid_muted_tenebrae, chart_scopuli, chart_scopuli_tenebrae, bar_metrum, chart_stilum, Scopulus };"
   strip "$SCRATCH/forms.ts"
-  echo "const forms = { props_campi, props_boxi, props_selecti, campum_html, boxum_html, selego_html, error_regionum_html, regio_viva_forma_html, agmen_campi_html, form_field_invalid, form_field_valid, form_focus, scopulae_formae, form_stilum, eventus_campi, eventus_mutationis, eventus_submissionis, eventus_click, invalid_textus, error_praesens };"
+  echo "const forms = { props_campi, props_boxi, props_selecti, campum, boxum, selego, error_regionum, regio_viva_forma, agmen_campi, campum_html, boxum_html, selego_html, error_regionum_html, regio_viva_forma_html, agmen_campi_html, form_field_invalid, form_field_valid, form_focus, scopulae_formae, form_stilum, eventus_campi, eventus_mutationis, eventus_submissionis, eventus_click, invalid_textus, error_praesens };"
   strip "$SCRATCH/main.ts"
 } > "$SCRATCH/composition.ts"
 

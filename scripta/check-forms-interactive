@@ -1,0 +1,366 @@
+#!/usr/bin/env bash
+# tela/scripta/check-forms-interactive — the Stage 4 U7 interactive
+# provider-seam gate (the CTO10-3 interactive claim).
+#
+# Assembles the canary-app's REAL-IMPORT composition (web:dom en→la +
+# tela:browser + formslib — all through the NORMAL package interface) and
+# executes the scripted interaction sequence against the DOCUMENTED
+# faber-web host binding — the ACTUAL route:
+#
+#   web:dom import (the emitted app/browser code references dom.scope /
+#   dom.snapshot / …) → the generated provider reference (the emitted
+#   faber-web web:dom module — the bare Scope/Nodus/… types) → the
+#   bindings/ts.toml mapping (web:dom.snapshot → webDomSnapshot, …) → the
+#   runtime/dom.ts implementation (faber-web's ACTUAL runtime source,
+#   included verbatim, export keywords stripped).
+#
+# The node host environment is a fake DOM modeled on the WEB5 fixture
+# precedent (examples/browser-app/tests/fake-dom.mjs + web-shim-dom.js —
+# read-only references); no same-named webDom* globals and NO tela-side
+# shim is used for this claim (head-cto fire-13): the web:dom surface is
+# faber-web's own runtime/dom.ts implementation.
+#
+# Fail-closed: every scripted assertion runs under node; any assertion
+# failure or non-zero exit FAILS the gate. Synchronous-only (the routed
+# async-gap boundary — no @ futura, no fetch claims).
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRATCH="$(mktemp -d "${TMPDIR:-/tmp}/tela-u7-interactive.XXXXXX")"
+trap 'rm -rf "$SCRATCH"' EXIT
+
+if [[ -n "${RADIX_ROOT:-}" ]]; then
+  RADIX="$RADIX_ROOT"
+elif [[ -d "$ROOT/../radix/crates/radix" ]]; then
+  RADIX="$ROOT/../radix"
+else
+  RADIX="$ROOT/../../../radix"
+fi
+
+if [[ ! -d "$RADIX/crates/radix" ]]; then
+  echo "check-forms-interactive: missing radix checkout at $RADIX" >&2
+  exit 1
+fi
+
+RADIX_BIN="$RADIX/target/debug/radix"
+if [[ ! -x "$RADIX_BIN" ]]; then
+  (cd "$RADIX" && cargo build -q -p radix --bin radix)
+fi
+
+export FABER_LIBRARY_HOME="$ROOT/proof/benchmark/libhome"
+
+echo "check-forms-interactive: radix check the real-import composition (benchmark libhome)"
+"$RADIX_BIN" check --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab"
+
+echo "check-forms-interactive: TS emit valida / tela / dom / browser / extension / forms / main"
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/valida.fab" -o "$SCRATCH/valida.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/browser.fab" -o "$SCRATCH/browser.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/extension-lib/src/extension.fab" -o "$SCRATCH/extension.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab" -o "$SCRATCH/main.ts" >/dev/null
+# The generated provider reference: the emitted web:dom module (the bare
+# Scope/Nodus/… type declarations — the la locale emit is the package's own
+# reader).
+"$RADIX_BIN" emit -t ts --locale la "$ROOT/../faber-web/src/dom.fab" -o "$SCRATCH/dom.ts" >/dev/null
+
+strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
+# The emitted web:dom provider module's preamble (FaberDisplayHint + the
+# __faberDisplay helpers) and its `Element` genus are renamed so they do not
+# collide with the tela module's own preamble / the DOM lib's `Element`.
+strip_dom() { sed '1,2d' "$1" | grep -v '^import .* from "' | sed -e 's/\bFaberResult\b/FaberResultDom/g' -e 's/\bFaberDisplayHint\b/FaberDisplayHintDom/g' -e 's/\b__faberDisplayFractus\b/__faberDisplayDomFractus/g' -e 's/\b__faberDisplayList\b/__faberDisplayDomList/g' -e 's/\b__faberDisplayTensor\b/__faberDisplayDomTensor/g' -e 's/\b__faberDisplaySparsa\b/__faberDisplayDomSparsa/g' -e 's/\b__faberDisplayMap\b/__faberDisplayDomMap/g' -e 's/\b__faberDisplayValor\b/__faberDisplayDomValor/g' -e 's/\b__faberDisplayTaggedValor\b/__faberDisplayDomTaggedValor/g' -e 's/\b__faberDisplay\b/__faberDisplayDom/g' -e 's/\bElement\b/DomElement/g'; }
+# The host runtime: faber-web's ACTUAL runtime/dom.ts implementation,
+# included verbatim (export keywords stripped). tsc type-checks it here
+# against the DOM lib (its own source typing); node runs it against the
+# installed fake DOM.
+strip_runtime() { sed 's/^export //' "$1"; }
+
+VALIDA_NS="const valida = { valida_spatium, valida_nomen_tag, valida_nomen_attributi, valida_nomen_in_spatio, valida_void_html, valida_void_structura };"
+TELA_NS="const tela = { html_visus, css, thema_css, thema_stilum, thema, scopulum, scopuli_core, nomen_scopuli_proprietas, nomen_scopuli_validum, thema_scopuli_core_parati, thema_habet_scopulum, assemble, codicillus, ordo, codicilli_dedupata, ordine_ordinata, stilum_validum, stilum_textus_immundus, codicillus_ex, in_lista, pendeant_parata, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, eventum, restitue, dirige, ancora, renovatio, effectus_identitas, Attributum, Proprietas, Declaratio, Regula, Stilum, Scopulum, Thema, Codicillus, Ordo };"
+BROWSER_NS="const browser = { radiculum, subscriptio, ligamen, parse_identitates, elementum_tag, quotiens, identitates_duplicatae, nomen_tagi, tag_at, identitates_ex_nodis, tags_ex_nodis, ligamen_status, diagnosia_hydrationis, mount, replace, dispose, focus_tenet, focus_optata };"
+EXT_NS="const ext = { chart_axis_muted, chart_axis_muted_tenebrae, chart_grid_muted, chart_grid_muted_tenebrae, chart_scopuli, chart_scopuli_tenebrae, bar_metrum, chart_stilum, Scopulus };"
+FORMS_NS="const forms = { props_campi, props_boxi, props_selecti, campum, boxum, selego, error_regionum, regio_viva_forma, agmen_campi, campum_html, boxum_html, selego_html, error_regionum_html, regio_viva_forma_html, agmen_campi_html, form_field_invalid, form_field_valid, form_focus, scopulae_formae, form_stilum, eventus_campi, eventus_mutationis, eventus_submissionis, eventus_click, invalid_textus, error_praesens };"
+# The DOM_NS: the ACTUAL bindings/ts.toml mapping (web:dom.<fn> →
+# webDom<Fn>) over faber-web's runtime/dom.ts implementation. The snapshot
+# binding is widened at the harness boundary (the emitted Scope type carries
+# only `selector`; the runtime scope also carries `root`).
+DOM_NS="const dom = { scope: webDomScope, query: webDomQuery, require: webDomRequire, all: webDomAll, snapshot: ((scope: any): Array<Nodus> | null => webDomSnapshot(scope)), text_set: webDomTextSet, attr_set: webDomAttrSet, attr_remove: webDomAttrRemove, class_add: webDomClassAdd, class_remove: webDomClassRemove, class_toggle: webDomClassToggle, on: webDomOn, unsubscribe: webDomUnsubscribe, value: webDomValue, value_set: webDomValueSet, on_input: webDomOnInput, on_submit: webDomOnSubmit, on_frame: webDomOnFrame, on_resize: webDomOnResize, on_keyboard: webDomOnKeyboard, on_pointer: webDomOnPointer, on_focus: webDomOnFocus, pointer_lock_state: webDomPointerLockState, request_pointer_lock: webDomRequestPointerLock, exit_pointer_lock: webDomExitPointerLock, on_pointer_lock: webDomOnPointerLock, prevent_default: webDomPreventDefault, fetch_text: webDomFetchText };"
+
+cat > "$SCRATCH/host-driver.ts" <<'HOST_DRIVER'
+// ---- node host environment (modeled on the WEB5 fake-dom.mjs precedent) --
+class FakeClassList {
+  _s: Set<string>;
+  constructor() { this._s = new Set(); }
+  add(c: string) { this._s.add(c); }
+  remove(c: string) { this._s.delete(c); }
+  toggle(c: string) { if (this._s.has(c)) { this._s.delete(c); return false; } this._s.add(c); return true; }
+  has(c: string) { return this._s.has(c); }
+}
+type FakeListener = (event: FakeEvent) => void;
+class FakeEvent {
+  type: string;
+  defaultPrevented: boolean;
+  [key: string]: unknown;
+  constructor(type: string, fields: Record<string, unknown> = {}) { this.type = type; this.defaultPrevented = false; Object.assign(this, fields); }
+  preventDefault() { this.defaultPrevented = true; }
+}
+class FakeElement {
+  tagName: string;
+  children: FakeElement[];
+  _attrs: Map<string, string>;
+  _listeners: Map<string, Set<FakeListener>>;
+  _ownText: string;
+  value: string;
+  classList: FakeClassList;
+  focused: boolean;
+  token: string;
+  constructor(tagName: string) {
+    this.tagName = tagName;
+    this.children = [];
+    this._attrs = new Map();
+    this._listeners = new Map();
+    this._ownText = "";
+    this.value = "";
+    this.classList = new FakeClassList();
+    this.focused = false;
+    this.token = "";
+  }
+  get dataTela() { return this.getAttribute("data-tela") ?? ""; }
+  get id() { return this.getAttribute("id") ?? ""; }
+  get textContent() {
+    if (this.tagName === "#text") return this._ownText;
+    let a = this._ownText;
+    for (const c of this.children) a += c.textContent;
+    return a;
+  }
+  set textContent(v: string) { this._ownText = v; if (this.tagName !== "#text") this.children = []; }
+  setAttribute(n: string, v: string) { this._attrs.set(n, String(v)); }
+  removeAttribute(n: string) { this._attrs.delete(n); }
+  getAttribute(n: string) { return this._attrs.get(n) ?? null; }
+  hasAttribute(n: string) { return this._attrs.has(n); }
+  addEventListener(t: string, h: FakeListener) { if (!this._listeners.has(t)) this._listeners.set(t, new Set()); this._listeners.get(t)!.add(h); }
+  removeEventListener(t: string, h: FakeListener) { this._listeners.get(t)?.delete(h); }
+  dispatchEvent(ev: FakeEvent) { for (const h of this._listeners.get(ev.type) ?? []) h(ev); return !ev.defaultPrevented; }
+  appendChild(c: FakeElement) { this.children.push(c); return c; }
+  matches(sel: string) {
+    if (sel === "[data-tela]") return this.hasAttribute("data-tela");
+    if (sel.startsWith("#")) return this.id === sel.slice(1);
+    if (sel.startsWith(".")) return this.classList.has(sel.slice(1));
+    const m = /^\[([\w-]+)=['"]?([^'"\]]*)['"]?\]$/.exec(sel);
+    if (m) return this.getAttribute(m[1]) === m[2];
+    return this.tagName === sel;
+  }
+  _queryAll(sel: string, out: FakeElement[]) {
+    for (const ch of this.children) { if (ch.matches(sel)) out.push(ch); ch._queryAll(sel, out); }
+    return out;
+  }
+  querySelector(sel: string) { return this._queryAll(sel, [])[0] ?? null; }
+  querySelectorAll(sel: string) { return this._queryAll(sel, []); }
+}
+class FakeDocument {
+  body: FakeElement;
+  activeElement: FakeElement | null;
+  constructor() { this.body = new FakeElement("body"); this.activeElement = null; }
+  querySelector(sel: string) { return this.body.querySelector(sel); }
+  querySelectorAll(sel: string) { return this.body.querySelectorAll(sel); }
+  hasFocus() { return true; }
+  focusNode(el: FakeElement | null) { this.activeElement = el; }
+}
+// Bounded HTML parser for the serializer's markup shape (elements +
+// single-quoted attributes + `data-tela` identities + nested children +
+// void elements). The host's DOM sync after each replace.
+const VOID_TAGS = new Set(["input", "br", "hr", "img", "link", "meta", "area", "base", "col", "embed", "source", "track", "wbr"]);
+function parseFragment(html: string): FakeElement[] {
+  const root = new FakeElement("#fragment");
+  const stack: FakeElement[] = [root];
+  let current = root;
+  let i = 0;
+  while (i < html.length) {
+    const lt = html.indexOf("<", i);
+    if (lt === -1) {
+      if (i < html.length) { const t = html.slice(i); const tn = new FakeElement("#text"); tn.textContent = t; current.children.push(tn); }
+      break;
+    }
+    if (lt > i) { const t = html.slice(i, lt); const tn = new FakeElement("#text"); tn.textContent = t; current.children.push(tn); }
+    const gt = html.indexOf(">", lt);
+    if (gt === -1) break;
+    const tagText = html.slice(lt + 1, gt);
+    const close = /^\/([\w-]+)/.exec(tagText);
+    if (close) { stack.pop(); current = stack[stack.length - 1] ?? root; i = gt + 1; continue; }
+    const m = /^([\w-]+)([^>]*)$/.exec(tagText);
+    if (!m) { i = gt + 1; continue; }
+    const el = new FakeElement(m[1]);
+    const attrRe = /([\w-]+)='([^']*)'/g;
+    let am: RegExpExecArray | null;
+    while ((am = attrRe.exec(m[2])) !== null) el.setAttribute(am[1], am[2]);
+    const attrRe2 = /([\w-]+)="([^"]*)"/g;
+    while ((am = attrRe2.exec(m[2])) !== null) el.setAttribute(am[1], am[2]);
+    current.children.push(el);
+    if (!VOID_TAGS.has(m[1]) && !tagText.endsWith("/")) { stack.push(el); current = el; }
+    i = gt + 1;
+  }
+  return root.children;
+}
+function installFakeDom(): FakeDocument {
+  const doc = new FakeDocument();
+  const root = new FakeElement("div");
+  root.setAttribute("id", "root");
+  doc.body.appendChild(root);
+  globalThis.document = doc as unknown as Document;
+  globalThis.window = { addEventListener() {}, removeEventListener() {}, innerWidth: 800, innerHeight: 600, devicePixelRatio: 1 } as unknown as Window & typeof globalThis;
+  globalThis.requestAnimationFrame = (cb: (t: number) => void) => setTimeout(() => cb(Date.now()), 16);
+  globalThis.cancelAnimationFrame = (id: unknown) => clearTimeout(id as any);
+  globalThis.fetch = () => Promise.reject(new Error("no fetch in the interactive gate"));
+  return doc;
+}
+
+// ---- scripted interaction driver (the host executing the app's plan) -----
+const assert = (cond: boolean, msg: string): void => { if (!cond) throw new Error(`check-forms-interactive assert failed: ${msg}`); };
+const doc = installFakeDom();
+const identityNodes = (): FakeElement[] => doc.querySelectorAll("[data-tela]");
+const byIdentity = (id: string): FakeElement | undefined => identityNodes().find((n) => n.dataTela === id);
+const plantRegion = (selector: string, markup: string): void => {
+  const region = doc.querySelector(selector) as FakeElement;
+  region.children = [];
+  for (const node of parseFragment(markup)) region.appendChild(node);
+};
+const syncRegion = (selector: string, visus: unknown): void => {
+  const html = tela.html_visus(visus as any) ?? "";
+  plantRegion(selector, html);
+};
+
+// --- app state (the update loop's model) ----------------------------------
+let model: Statu_Campi = statum_campi("form-field-name", "", "");
+let agree: boolean = false;
+let tone: string = "Light";
+let announcements = 0;
+
+let m: Mounted;
+const applyMessage = (msg: Nuntius_Formae): string => {
+  const next = update_campi(model, msg);
+  const announced = annuntium_formae(model, next);
+  if (msg.tag === "Boxum_Toggle") agree = msg.selectus;
+  if (msg.tag === "Selectum_Mutatio") tone = msg.electum;
+  model = next;
+  const nextVisus = compositio_formae_ex_statu(model, agree, tone);
+  const r = browser.replace(m, nextVisus) as Renovatio;
+  syncRegion("#root", nextVisus);
+  if (announced !== "") {
+    const live = byIdentity("form-live");
+    assert(live !== undefined, "live region present");
+    webDomTextSet(live as unknown as Element, announced);
+    announcements += 1;
+  }
+  return announced;
+};
+
+// --- 1. hydration: mount onto a scope pre-rendered with the SAME composition
+const praesensMarkup = tela.html_visus(compositio_formae()) ?? "";
+plantRegion("#root", praesensMarkup);
+m = montium_formae("#root") as Mounted;
+assert(m !== null, "mount returns a plan");
+assert(m.ligamina.length === 7, "seven binding-plan entries (forma + field group + field + error + checkbox + select + live)");
+assert(m.ligamina.every((l) => l.status === "ligare"), "hydration: every matching identity binds (the dom.snapshot read)");
+assert(byIdentity("form-field-name") !== undefined, "field node present from the praesens");
+
+// --- 2. field input → empty → invalid transition ---------------------------
+{
+  const announced = applyMessage(nuntius_campi_textus("form-field-name", ""));
+  assert(announced === "form-field-name invalid: Required", "invalid transition announces");
+  assert(announcements === 1, "announced once");
+  const field = byIdentity("form-field-name");
+  assert(field !== undefined && field.getAttribute("aria-invalid") === "true", "aria-invalid flips true");
+  assert(field !== undefined && field.getAttribute("aria-describedby") === "form-error-name", "describedby wired to the error identity");
+  assert(byIdentity("form-error-name")?.textContent === "Required", "error text written");
+  assert(byIdentity("form-live")?.textContent === "form-field-name invalid: Required", "live region announces");
+}
+
+// --- 3. field input → valid → cleared --------------------------------------
+{
+  const announced = applyMessage(nuntius_campi_textus("form-field-name", "Ada"));
+  assert(announced === "form-field-name valid", "valid transition announces");
+  assert(announcements === 2, "announced once");
+  const field = byIdentity("form-field-name");
+  assert(field !== undefined && field.getAttribute("aria-invalid") === "false", "aria-invalid clears");
+  assert(field !== undefined && field.getAttribute("aria-describedby") === null, "describedby removed");
+  assert(byIdentity("form-error-name")?.textContent === "", "error text cleared");
+}
+
+// --- 4. no-op input (same value) → silent ----------------------------------
+{
+  const announced = applyMessage(nuntius_campi_textus("form-field-name", "Ada"));
+  assert(announced === "", "the no-op rule: silent");
+  assert(announcements === 2, "no announcement on the no-op");
+}
+
+// --- 5. checkbox toggle flips aria-checked ---------------------------------
+{
+  applyMessage(nuntius_boxi_toggle("form-checkbox-agree", true));
+  assert(announcements === 3, "the toggle announces once");
+  const box = byIdentity("form-checkbox-agree");
+  assert(box !== undefined && box.getAttribute("aria-checked") === "true", "aria-checked flips true");
+  assert(agree, "the app model tracks the checkbox state");
+}
+
+// --- 6. select change updates the model ------------------------------------
+{
+  applyMessage(nuntius_selecti_mutatio("form-select-tone", "Dark"));
+  assert(model.valor === "Dark", "select change updates the model");
+  assert(tone === "Dark", "the app model tracks the select state");
+}
+
+// --- 7. replace across the region: focus restoration + scroll anchor -------
+{
+  const mFocused = browser.focus_tenet(m, "form-field-name");
+  const r = browser.replace(mFocused, compositio_formae_ex_statu(model, agree, tone)) as Renovatio;
+  const keys = r.effectus.map((e) => tela.effectus_identitas(e));
+  assert(keys.length === 2 && keys[0] === "form-field-name" && keys[1] === "#root",
+    "effects are Restitue(form-field-name) + Ancora(#root)");
+  const target = byIdentity("form-field-name");
+  assert(target !== undefined, "focus target present");
+  doc.focusNode(target as FakeElement);
+  assert(doc.activeElement?.dataTela === "form-field-name", "focus restored by identity");
+}
+
+// --- 8. dispose: subscriptions live before, gone after ---------------------
+{
+  const node = byIdentity("form-field-name");
+  assert(node !== undefined, "binding target present");
+  let clicks = 0;
+  const sub = webDomOn(node as unknown as Element, "click", () => { clicks += 1; });
+  (node as FakeElement).dispatchEvent(new FakeEvent("click"));
+  assert(clicks === 1, "subscription live before dispose");
+  browser.dispose(m);
+  webDomUnsubscribe(sub);
+  (node as FakeElement).dispatchEvent(new FakeEvent("click"));
+  assert(clicks === 1, "post-dispose dispatch no-ops (unsubscribed)");
+}
+
+console.log("forms interactive provider-seam gate green (scripted sequence; tela-s4-u7)");
+HOST_DRIVER
+
+{
+  strip "$SCRATCH/valida.ts"
+  echo "$VALIDA_NS"
+  strip "$SCRATCH/tela.ts"
+  echo "$TELA_NS"
+  strip_dom "$SCRATCH/dom.ts"
+  strip_runtime "$ROOT/../faber-web/runtime/dom.ts"
+  echo "$DOM_NS"
+  strip "$SCRATCH/browser.ts"
+  echo "$BROWSER_NS"
+  strip "$SCRATCH/extension.ts"
+  echo "$EXT_NS"
+  strip "$SCRATCH/forms.ts"
+  echo "$FORMS_NS"
+  strip "$SCRATCH/main.ts"
+  cat "$SCRATCH/host-driver.ts"
+} > "$SCRATCH/interactive.ts"
+
+echo "check-forms-interactive: tsc --noEmit (strict; the DOM lib hosts the faber-web runtime typing)"
+tsc --noEmit --strict --target ES2020 --lib ES2020,DOM --module ESNext --moduleResolution bundler --skipLibCheck "$SCRATCH/interactive.ts"
+
+echo "check-forms-interactive: node — the scripted interaction gate (fail-closed)"
+node "$SCRATCH/interactive.ts"
+
+echo "check-forms-interactive: green (real provider seam; scripted sequence; node exit 0)"
