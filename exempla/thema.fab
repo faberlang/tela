@@ -1,0 +1,107 @@
++++
+term = "thema"
+kind = "concept"
+category = "library"
+locale = "en"
++++
+
+# tela/exempla/thema.fab — Stage 2 U1 exempla for the theme/token protocol
+# in src/tela.fab. Covers every U1 done_when (f) case: a token renders as
+# --chart-axis-muted: #6b7280 under :root; a dotted-path → dashed mapping
+# edge (multi-dot path); a theme missing a required core token rejects
+# (fail-closed — thema_css returns null, no output); an invalid token name
+# rejects; two materially different Thema values (light/dark palettes)
+# resolve against the same tree.
+#
+# fix:<id> markers: none applied in this exempla beyond the kernel's —
+# the theme verbs (thema/scopulum/thema_css) probed collision-free on
+# in-tree radix 0.80.0 (fix:g5 — NONE); fix:codegen001 — the Rust
+# emit-across-imports block persists, the TS lane is the proven lane.
+
+import from "tela:tela" private tela
+
+main {
+    # --- light palette: core baseline + the namespaced extension token -----
+    const tela.Thema lumen ← tela.thema("lumen", [
+        tela.scopulum("surface.canvas", "#ffffff"),
+        tela.scopulum("surface.panel", "#f9fafb"),
+        tela.scopulum("text.primary", "#111827"),
+        tela.scopulum("text.muted", "#6b7280"),
+        tela.scopulum("border.default", "#e5e7eb"),
+        tela.scopulum("accent.primary", "#2563eb"),
+        tela.scopulum("state.positive", "#16a34a"),
+        tela.scopulum("state.caution", "#d97706"),
+        tela.scopulum("chart.axis.muted", "#6b7280")
+    ])
+
+    # --- (f) a token renders as --chart-axis-muted under :root -------------
+    # Multi-dot path (chart.axis.muted) → the dashed custom property
+    # --chart-axis-muted; the :root selected root; author order preserved.
+    const string lumen_css ← tela.thema_css(lumen) coalesce ""
+    assert lumen_css ≡ ":root { --surface-canvas: #ffffff; --surface-panel: #f9fafb; --text-primary: #111827; --text-muted: #6b7280; --border-default: #e5e7eb; --accent-primary: #2563eb; --state-positive: #16a34a; --state-caution: #d97706; --chart-axis-muted: #6b7280; }\n"
+
+    # --- (f) a dotted-path → dashed mapping edge (deeper dotted path) ------
+    const tela.Thema alta ← tela.thema("alta", [
+        tela.scopulum("surface.canvas", "#ffffff"),
+        tela.scopulum("surface.panel", "#f9fafb"),
+        tela.scopulum("text.primary", "#111827"),
+        tela.scopulum("text.muted", "#6b7280"),
+        tela.scopulum("border.default", "#e5e7eb"),
+        tela.scopulum("accent.primary", "#2563eb"),
+        tela.scopulum("state.positive", "#16a34a"),
+        tela.scopulum("state.caution", "#d97706"),
+        tela.scopulum("form.field.invalid", "#dc2626")
+    ])
+    const string alta_css ← tela.thema_css(alta) coalesce ""
+    assert alta_css ≡ ":root { --surface-canvas: #ffffff; --surface-panel: #f9fafb; --text-primary: #111827; --text-muted: #6b7280; --border-default: #e5e7eb; --accent-primary: #2563eb; --state-positive: #16a34a; --state-caution: #d97706; --form-field-invalid: #dc2626; }\n"
+
+    # --- (f) missing required core token rejects (fail-closed) -------------
+    # The core baseline requires state.caution; this theme omits it.
+    const tela.Thema carens ← tela.thema("carens", [
+        tela.scopulum("surface.canvas", "#ffffff"),
+        tela.scopulum("surface.panel", "#f9fafb"),
+        tela.scopulum("text.primary", "#111827"),
+        tela.scopulum("text.muted", "#6b7280"),
+        tela.scopulum("border.default", "#e5e7eb"),
+        tela.scopulum("accent.primary", "#2563eb"),
+        tela.scopulum("state.positive", "#16a34a")
+    ])
+    const string ∪ null carens_result ← tela.thema_css(carens)
+    assert carens_result ≡ null
+
+    # --- (f) invalid token name rejects (fail-closed) ----------------------
+    # A whitespace-containing nomen fails the lexical predicate.
+    const tela.Thema mala ← tela.thema("mala", [
+        tela.scopulum("surface.canvas", "#ffffff"),
+        tela.scopulum("surface.panel", "#f9fafb"),
+        tela.scopulum("text.primary", "#111827"),
+        tela.scopulum("text.muted", "#6b7280"),
+        tela.scopulum("border.default", "#e5e7eb"),
+        tela.scopulum("accent.primary", "#2563eb"),
+        tela.scopulum("state.positive", "#16a34a"),
+        tela.scopulum("state.caution", "#d97706"),
+        tela.scopulum("bad name", "#000000")
+    ])
+    const string ∪ null mala_result ← tela.thema_css(mala)
+    assert mala_result ≡ null
+
+    # --- (f) two materially different themes resolve against the same tree --
+    # Dark palette: different values for the same token names (incl. the
+    # namespaced extension token). Same component tree by construction —
+    # themes supply values, not markup (campaign §5); U3 owns the
+    # byte-identical-HTML proof.
+    const tela.Thema tenebrae ← tela.thema("tenebrae", [
+        tela.scopulum("surface.canvas", "#0f172a"),
+        tela.scopulum("surface.panel", "#1e293b"),
+        tela.scopulum("text.primary", "#f8fafc"),
+        tela.scopulum("text.muted", "#94a3b8"),
+        tela.scopulum("border.default", "#334155"),
+        tela.scopulum("accent.primary", "#3b82f6"),
+        tela.scopulum("state.positive", "#22c55e"),
+        tela.scopulum("state.caution", "#f59e0b"),
+        tela.scopulum("chart.axis.muted", "#9ca3af")
+    ])
+    const string tenebrae_css ← tela.thema_css(tenebrae) coalesce ""
+    assert tenebrae_css ≡ ":root { --surface-canvas: #0f172a; --surface-panel: #1e293b; --text-primary: #f8fafc; --text-muted: #94a3b8; --border-default: #334155; --accent-primary: #3b82f6; --state-positive: #22c55e; --state-caution: #f59e0b; --chart-axis-muted: #9ca3af; }\n"
+    assert tenebrae_css ≠ lumen_css
+}

@@ -78,6 +78,17 @@
 # constraint; the policy (b) English stem is preserved, NOT silently renamed.
 # ESCALATED To mind: the G5 radix-lane fix restores the exact `html` verb
 # (repro: SEM005.duplicate_definition on fn html(Visus) with
+# Spatium.html). fix:g5 — removal = grep-replace after the radix fix.
+#
+# Stage 2 U1 (theme/token protocol) — this module gains the kernel-owned
+# theme/token value types (Scopulum/Thema), the core token baseline, and the
+# fail-closed deterministic thema_css renderer. fix:<id> markers applied in
+# this unit: fix:g5 — NONE (the theme verbs thema/scopulum/thema_css were
+# probed collision-free on in-tree radix 0.80.0; a free fn may share a class
+# name — G5's collision is enum-member-specific); fix:codegen001 — the Rust
+# emit-across-imports block persists (provider-module locale propagation),
+# the Rust lane is attempted + recorded, the TS lane is the proven runtime
+# lane. See the Stage 2 U1 section header for the pinned core baseline.
 # enum Spatium { html, svg } in one module; in-tree radix 0.80.0,
 # 2026-08-09).
 
@@ -399,4 +410,136 @@ fn css(Stilum stilum) → string {
         accum ← accum + "}\n"
     }
     return accum
+}
+
+# ---------------------------------------------------------------------------
+# Stage 2 U1 — Theme / token protocol (campaign §5; policies (b)/(c)).
+#
+# CORE TOKEN BASELINE (v1 subset, pinned here): surface.canvas, surface.panel,
+# text.primary, text.muted, border.default, accent.primary, state.positive,
+# state.caution — the interoperable required set from the campaign §5
+# families surface.* / text.* / border.* / accent.* / state.*. The v1 subset
+# deliberately excludes the space/radius/type/motion families (small + honest;
+# future subsets add tokens, never a closed enum — campaign §5).
+#
+# RENDERING CONVENTION (locked): a token nomen is a dotted path
+# (chart.axis.muted); the CSS custom property is `--` + nomen with `.` → `-`
+# (--chart-axis-muted — the U5-consumed spelling). thema_css emits the
+# resolved tokens as one Regula { selector = ":root", … } — the selected root
+# (campaign §5) — rendered through the existing css(Stilum) serializer.
+#
+# FAIL-CLOSED (U1 done_when (d)): a theme missing a required core token
+# → null (no output); an invalid token name (fails the lexical predicate)
+# → null. Deterministic bytes over author order (no unordered iteration).
+#
+# fix:<id> markers applied in this unit:
+#   fix:g5 — none applied: the theme verbs (thema, scopulum, thema_css) were
+#            probed against the enum-member / reserved-keyword bindings on
+#            in-tree radix 0.80.0 (a free fn may share a class name; G5's
+#            collision is enum-member-specific) — no collision, no prefix
+#            workaround needed. css stays the exact policy (b) verb.
+#   fix:codegen001 — Rust emit-across-imports remains blocked (provider-module
+#            locale propagation); the Rust lane is attempted + recorded; the
+#            TS lane is the proven runtime lane. Never the gate, never
+#            weakened.
+# ---------------------------------------------------------------------------
+
+# Scopulum: one named token — dotted path (chart.axis.muted) + resolved CSS
+# value. U5-proven spelling (proof/benchmark/extension-lib declares the same
+# shape).
+class Scopulum {
+    string nomen
+    string valor
+}
+
+# Thema: a named theme — a token collection over the core baseline. Two
+# materially different themes = two Thema values over the same component tree
+# (campaign §5; variants are tokens, not new machinery).
+class Thema {
+    string nomen
+    list<Scopulum> scopuli
+}
+
+# Kernel-owned constructors (G3 posture — ordinary functions over the same
+# public values, like the Stage 1 kernel constructors).
+fn scopulum(string nomen, string valor) → Scopulum {
+    return Scopulum { nomen = nomen, valor = valor }
+}
+
+fn thema(string nomen, list<Scopulum> scopuli) → Thema {
+    return Thema { nomen = nomen, scopuli = scopuli }
+}
+
+# The core token baseline — the required token set a theme must cover.
+fn scopuli_core() → list<string> {
+    return [
+        "surface.canvas", "surface.panel",
+        "text.primary", "text.muted",
+        "border.default",
+        "accent.primary",
+        "state.positive", "state.caution"
+    ]
+}
+
+# Dotted path → CSS custom property: `--` + nomen with `.` → `-`.
+# Deterministic single-character scan (sequential independent ifs — the
+# TS-emitter-safe pattern from escapa).
+fn nomen_scopuli_proprietas(string nomen) → string {
+    var string accum ← "--"
+    var int i ← 0
+    while i < nomen.longitudo() {
+        const string c ← nomen.sectio(i, i + 1)
+        if c ≡ "." then accum ← accum + "-"
+        if c ≠ "." then accum ← accum + c
+        i ← i + 1
+    }
+    return accum
+}
+
+# Token-name lexical shape: the dotted path must pass the U2 attribute-name
+# predicate (letters/digits/-/_/. /:; rejects whitespace, =, quotes, < > /,
+# and control characters). A token nomen is a dotted path, so the
+# attribute-name charset covers it fail-closed.
+fn nomen_scopuli_validum(string nomen) → bool {
+    return valida.valida_nomen_attributi(nomen)
+}
+
+# Required-token coverage: every core baseline token name must be present in
+# the theme's token collection.
+fn thema_scopuli_core_parati(Thema thema) → bool {
+    const list<string> core ← scopuli_core()
+    var int i ← 0
+    while i < core.longitudo() {
+        if not thema_habet_scopulum(thema, core[i]) then return false
+        i ← i + 1
+    }
+    return true
+}
+
+fn thema_habet_scopulum(Thema thema, string nomen) → bool {
+    for from thema.scopuli const scopulus {
+        if scopulus.nomen ≡ nomen then return true
+    }
+    return false
+}
+
+# Public theme renderer verb (policy (b)): emits the token layer as one
+# :root Regula through the existing css(Stilum) serializer. Fail-closed:
+# missing required core token or invalid token name → null (no output).
+# Deterministic bytes over author order.
+fn thema_css(Thema thema) → string ∪ null {
+    if not thema_scopuli_core_parati(thema) then return null
+    var list<Declaratio> declarationes ← vacua
+    for from thema.scopuli const scopulus {
+        if not nomen_scopuli_validum(scopulus.nomen) then return null
+        declarationes.appende(Declaratio {
+            nomen = nomen_scopuli_proprietas(scopulus.nomen),
+            valor = scopulus.valor
+        })
+    }
+    return css(Stilum {
+        regulae = [
+            Regula { selector = ":root", declarationes = declarationes }
+        ]
+    })
 }
