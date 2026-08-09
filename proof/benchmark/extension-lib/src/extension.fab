@@ -23,24 +23,60 @@
 #     app falls back to composing with tela constructors + consuming the
 #     token + style bundle — recorded in stage-1-benchmark-static.md; the
 #     contract is not weakened (no duplicated Visus in this extension).
+#
+# Stage 2 U3 — fix:snapshot-nomen-collision (NEW observation, escalated to
+# the radix lane): the extension's local token class was originally named
+# `Scopulum`, which COLLIDES with the kernel's U1 `Scopulum` type in the
+# shared file-interface snapshot — importing BOTH packages made the snapshot
+# skip every class-returning export in both providers (WARN014 cascade) and
+# broke the app's token binding. The workaround: the extension's local token
+# class is renamed `Scopulus` (a distinct name — extension-local classes must
+# avoid kernel type names). Additionally the extension-local class name is
+# NOT a nameable qualified type from the app (SEM002 qualified_type_not_exported),
+# so consumers read tokens via field access on the zero-arg accessor call
+# results (tela.scopulum(ext.chart_axis_muted().nomen, ...).valor)) — the
+# compose-without collect-app-side pattern. Removal of both workarounds is a
+# grep-replace after the radix snapshot fix lands.
 
 import from "tela:tela" public * ut tela
 
 # --- Namespaced theme token (declared only; theme/token rendering is Stage 2)
 
-class Scopulum {
+class Scopulus {
     string nomen
     string valor
 }
 
-fn chart_axis_muted() → Scopulum {
-    return Scopulum { nomen = "chart.axis.muted", valor = "#6b7280" }
+fn chart_axis_muted() → Scopulus {
+    return Scopulus { nomen = "chart.axis.muted", valor = "#6b7280" }
+}
+
+# --- Tenebrae (dark) theme tokens — the second, materially different token
+# collection (Stage 2 U3). Same namespaced paths as the light palette, with
+# different values: the two-theme proof renders the same component tree
+# under both, and only the token layer differs.
+
+fn chart_axis_muted_tenebrae() → Scopulus {
+    return Scopulus { nomen = "chart.axis.muted", valor = "#9ca3af" }
+}
+
+fn chart_grid_muted() → Scopulus {
+    return Scopulus { nomen = "chart.grid.muted", valor = "#e5e7eb" }
+}
+
+fn chart_grid_muted_tenebrae() → Scopulus {
+    return Scopulus { nomen = "chart.grid.muted", valor = "#1f2937" }
 }
 
 # The extension's token collection (what a product assembler would collect;
 # product assembly / cascade ordering is Stage 2).
-fn chart_scopuli() → list<Scopulum> {
-    return [ chart_axis_muted() ]
+fn chart_scopuli() → list<Scopulus> {
+    return [ chart_axis_muted(), chart_grid_muted() ]
+}
+
+# The extension's dark token collection (the tenebrae palette).
+fn chart_scopuli_tenebrae() → list<Scopulus> {
+    return [ chart_axis_muted_tenebrae(), chart_grid_muted_tenebrae() ]
 }
 
 # --- Custom view helper (G4 seam): horizontal bar meter with label + textual

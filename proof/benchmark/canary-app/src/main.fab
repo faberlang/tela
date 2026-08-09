@@ -14,8 +14,10 @@
 # (G5, SEM005.duplicate_definition; stage-0-canary.md §5; recorded in the
 # tela.fab header). css is verbatim. U6 determinism consumes this runner.
 #
-# Static composition only — no behavior/mount (Stage 3), no theme/token
-# rendering or cascade ordering (Stage 2), no catalog.
+# Static composition only — no behavior/mount (Stage 3), no catalog.
+# Stage 2 U3 extends the runner: the same arbor renders under two materially
+# different Thema values (lumen/tenebrae) with the full cascade CSS assembled
+# per theme (the campaign gate bullets 1+2 proof, TS-lane runner).
 
 import from "tela:tela" private tela
 import from "extensionlib:extension" public * ut ext
@@ -87,12 +89,40 @@ main {
         bar
     ])
 
-    # --- Extension style bundle + namespaced token (consumed, declared only;
-    # theme/token RENDERING is Stage 2).
-    const tela.Stilum ext_stilum ← ext.chart_stilum()
-    const ext.Scopulum axis_muted ← ext.chart_axis_muted()
+    # --- Extension tokens — both palettes (zero-arg accessors per the
+    # G4-safe seam; consumed via field access on the call result, since the
+    # extension-local token class name is not a nameable qualified type from
+    # the app — fix:snapshot-nomen-collision, see the extension header).
+    const tela.Thema lumen ← tela.thema("lumen", [
+        tela.scopulum("surface.canvas", "#ffffff"),
+        tela.scopulum("surface.panel", "#f9fafb"),
+        tela.scopulum("text.primary", "#111827"),
+        tela.scopulum("text.muted", "#6b7280"),
+        tela.scopulum("border.default", "#e5e7eb"),
+        tela.scopulum("accent.primary", "#2563eb"),
+        tela.scopulum("state.positive", "#16a34a"),
+        tela.scopulum("state.caution", "#d97706"),
+        tela.scopulum(ext.chart_axis_muted().nomen, ext.chart_axis_muted().valor),
+        tela.scopulum(ext.chart_grid_muted().nomen, ext.chart_grid_muted().valor)
+    ])
+    const tela.Thema tenebrae ← tela.thema("tenebrae", [
+        tela.scopulum("surface.canvas", "#0f172a"),
+        tela.scopulum("surface.panel", "#1e293b"),
+        tela.scopulum("text.primary", "#f8fafc"),
+        tela.scopulum("text.muted", "#94a3b8"),
+        tela.scopulum("border.default", "#334155"),
+        tela.scopulum("accent.primary", "#3b82f6"),
+        tela.scopulum("state.positive", "#22c55e"),
+        tela.scopulum("state.caution", "#f59e0b"),
+        tela.scopulum(ext.chart_axis_muted_tenebrae().nomen, ext.chart_axis_muted_tenebrae().valor),
+        tela.scopulum(ext.chart_grid_muted_tenebrae().nomen, ext.chart_grid_muted_tenebrae().valor)
+    ])
 
-    # --- App style bundle: panel rule keys on the data-tela identity.
+    # --- App + extension style bundles (identical under both themes) -------
+    const tela.Stilum ext_stilum ← ext.chart_stilum()
+    const tela.Codicillus ext_bundle ← tela.codicillus("extensionlib", ext_stilum)
+
+    # App style bundle: panel rule keys on the data-tela identity.
     const tela.Stilum app_stilum ← tela.Stilum {
         regulae = [
             tela.Regula {
@@ -105,13 +135,44 @@ main {
             }
         ]
     }
+    const tela.Codicillus app_bundle ← tela.codicillus("canary-app", app_stilum)
 
-    # --- Static render (the U6 runner): print the full HTML + CSS bytes ---
-    const string html_out ← tela.html_visus(arbor) coalesce ""
-    const string css_app ← tela.css(app_stilum)
-    const string css_ext ← tela.css(ext_stilum)
-    print html_out
-    print css_app
-    print css_ext
-    print "canary static rendered (token " + axis_muted.nomen + "; tela-s1-u5)"
+    # --- Full cascade under each theme (assemble: tokens -> extensionlib ->
+    # canary-app; the token layer is the only difference between the two).
+    const tela.Stilum ∪ null cascade_lumen_result ← tela.assemble(
+        lumen,
+        null,
+        [],
+        [ tela.ordo("extensionlib", []) ],
+        [ext_bundle],
+        app_bundle
+    )
+    const tela.Stilum ∪ null cascade_tenebrae_result ← tela.assemble(
+        tenebrae,
+        null,
+        [],
+        [ tela.ordo("extensionlib", []) ],
+        [ext_bundle],
+        app_bundle
+    )
+    assert not (cascade_lumen_result ≡ null)
+    assert not (cascade_tenebrae_result ≡ null)
+    const string css_lumen ← tela.css(tela.Stilum { regulae = cascade_lumen_result!.regulae }) coalesce ""
+    const string css_tenebrae ← tela.css(tela.Stilum { regulae = cascade_tenebrae_result!.regulae }) coalesce ""
+
+    # --- The campaign gate proof (bullets 1 + 2) ---------------------------
+    # HTML is theme-independent: the same arbor renders byte-identically
+    # (themes supply values, not markup).
+    const string html_a ← tela.html_visus(arbor) coalesce ""
+    const string html_b ← tela.html_visus(arbor) coalesce ""
+    assert html_a ≡ html_b
+    # The two theme token layers differ materially.
+    assert css_lumen ≠ css_tenebrae
+
+    # --- The static-render runner output: HTML once, the full cascade CSS
+    # under each theme (the U6/U3 double-build hook consumes this).
+    print html_a
+    print css_lumen
+    print css_tenebrae
+    print "two-theme static rendered (lumen vs tenebrae; tela-s2-u3)"
 }
