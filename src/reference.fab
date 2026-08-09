@@ -346,16 +346,24 @@
 #     SegmentedProps/ButtonProps; U7: FieldInputProps — NOT FieldProps,
 #     the formslib carrier in the shared harness assemblies).
 #   fix:verum-b — en-locale naming: no verum/falsum identifiers.
-#   G6 note (U6, the keyword-collision record): the delivery's button
-#     "variant" prop semantic is spelled **variant_name** — `variant` is
-#     the en-locale UNION-VARIANT-CONSTRUCTION keyword (the `variant
-#     Selected { … }` spelling, main.fab) and is unavailable as an
-#     identifier (PARSE001 — the G6 reserved-keyword rule, probed live on
-#     in-tree radix 0.80.0). The working spelling carries the semantic;
-#     the data-ref-variant ATTRIBUTE keeps the exact "variant" spelling
-#     (attribute names are data). Removal = grep-replace
-#     (`variant_name` → `variant`) only if/when a radix-lane keyword
-#     change lands; never silently renamed after.
+#   G6 note (U6, REVISED by the probe): the delivery's button "variant"
+#     prop semantic is spelled **variant** — `variant` is the en-locale
+#     UNION-VARIANT-CONSTRUCTION keyword (the `variant Selected { … }`
+#     spelling, main.fab) but parses clean as a contextual identifier in
+#     NAME positions: the empirical probe on in-tree radix 0.80.0
+#     (--locale en) accepts `variant` as a record field name + as a
+#     constructor field name with a literal/other-identifier value (exit
+#     0). The U6 PARSE001 finding did NOT reproduce for the prop name — a
+#     false alarm; the variant_name spelling reverts to variant (this
+#     unit). ONE value-position limit persists: the bare identifier
+#     `variant` as a constructor VALUE fails PARSE001 (probed: `P2 {
+#     variant = variant }` where the RHS names the helper param) — the
+#     button_props helper param is therefore spelled **variant_value**
+#     (fix:g6-value-position — the field/param NAME stays `variant`; the
+#     data-ref-variant ATTRIBUTE keeps the exact "variant" spelling,
+#     attribute names are data). Removal = grep-replace
+#     (`variant_value` → `variant`) only if/when a radix-lane expression-
+#     position keyword change lands; never silently renamed after.
 #   G6 note (U7, the keyword-collision record): the FIELD prop names were
 #     checked against the en keyword pack (radix/stdlib/locale/en/
 #     pack.toml) before authoring — name/label/value/error/disabled are
@@ -901,17 +909,17 @@ fn segmented_control(SegmentedProps props) → tela.View {
 class ButtonProps {
     string name
     string label
-    string variant_name
+    string variant
     string state
     string event_name
     string aria_label
 }
 
-fn button_props(string name, string label, string variant_name, string state, string event_name, string aria_label) → ButtonProps {
+fn button_props(string name, string label, string variant_value, string state, string event_name, string aria_label) → ButtonProps {
     return ButtonProps {
         name = name,
         label = label,
-        variant_name = variant_name,
+        variant = variant_value,
         state = state,
         event_name = event_name,
         aria_label = aria_label
@@ -931,7 +939,7 @@ fn button_event() → string {
 # activate) rides the native semantics — the plan binds ONLY the declared
 # activation event. The disabled state: the native `disabled` attribute
 # when state = "disabled" — the button leaves the tab sequence, no
-# activation fires, the state is exposed natively. The variant_name (the
+# activation fires, the state is exposed natively. The variant (the
 # visual treatment, token-keyed — never semantic) rides the
 # data-ref-variant attribute. Attribute author order: aria-label (when
 # present) → disabled (when disabled) → data-ref-variant → data-tela.
@@ -943,7 +951,7 @@ fn button(ButtonProps props) → tela.View {
     if props.state ≡ "disabled" {
         attributes.appende(tela.Attribute { name = "disabled", value = "" })
     }
-    attributes.appende(tela.Attribute { name = "data-ref-variant", value = props.variant_name })
+    attributes.appende(tela.Attribute { name = "data-ref-variant", value = props.variant })
     return tela.element_full(
         tela.new_identity("ref-button-" + props.name),
         tela.html_space(),

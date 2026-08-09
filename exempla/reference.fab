@@ -41,9 +41,13 @@ locale = "en"
 #
 # fix:<id> markers: none applied beyond reference.fab's (fix:g5 — NONE,
 # fix:codegen001, fix:snapshot-name-collision, fix:verum-b; the G6 notes —
-# the button variant prop spelled variant_name, the `variant` en keyword;
-# the U7 field prop names probed against the en pack — no collisions; the
-# LOCALE002 advisory on the BadgeProps status field — recorded).
+# the button variant prop spelled variant (probe: the contextual keyword
+# accepts the NAME positions — field/param — the U6 PARSE001 finding did
+# NOT reproduce for the prop name, a false alarm; the value-position limit
+# + the variant_value helper-param workaround are recorded in reference.fab
+# as fix:g6-value-position); the U7 field prop names probed against the en
+# pack — no collisions; the LOCALE002 advisory on the BadgeProps status
+# field — recorded).
 
 import from "tela:tela" private tela
 import from "tela:reference" private ref
@@ -304,8 +308,8 @@ main {
     # activate — rides the native semantics). The accessible name is the
     # label text (native) or the declared aria-label override. The
     # disabled state is the native `disabled` attribute (no activation,
-    # the state exposed). The variant_name (the visual treatment,
-    # token-keyed — never semantic) rides the data-ref-variant attribute.
+    # the state exposed). The variant (the visual treatment, token-keyed
+    # — never semantic) rides the data-ref-variant attribute.
     # Attribute author order: aria-label (when present) → disabled (when
     # disabled) → data-ref-variant → data-tela.
     assert tela.html_visus(ref.button(ref.button_props("save", "Save", "primary", "enabled", "click", ""))) coalesce "" ≡ "<button data-ref-variant='primary' data-tela='ref-button-save'>Save</button>"

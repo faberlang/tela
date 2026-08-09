@@ -301,8 +301,13 @@
 #     the harnesses read the emitted file directly, the snapshot does not
 #     apply at runtime).
 #   G6 note — the catalog's button "variant" prop semantic is spelled
-#     variant_name (the `variant` en union keyword); the app call sites
-#     pass the variant_name argument.
+#     variant (the probe: `variant` parses clean as a contextual
+#     identifier in NAME positions — field + constructor field name — on
+#     in-tree radix 0.80.0 --locale en; the U6 PARSE001 finding did NOT
+#     reproduce for the prop name, a false alarm; the value-position
+#     limit + the variant_value helper-param workaround are recorded in
+#     reference.fab as fix:g6-value-position); the app call sites pass
+#     the variant argument.
 #
 # DETERMINISM SUPERSESSION (done_when (d)): the runner output extends with
 # the button-family render — the determinism sha stays SUPERSEDED (U10
