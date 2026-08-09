@@ -20,7 +20,15 @@
 # removed) + the U2 mount-proof driver, so the assembled browser exempla
 # executes the full mount proof under `node` (empty mount / hydration /
 # mismatch / duplicate / replace effects / dispose) — the harness-assembly
-# path (fix:g4 — the snapshot does not apply at runtime).
+# path.
+#
+# Stage 4 U6 (seam restoration): the browser case also binds the DOM_NS
+# const over the dom-shim runtime (the fake-DOM Node host env; the bare
+# Scope/Nodus types come from the shim — the emitted provider module's
+# `class Element` would collide with the DOM lib). The driver constructs
+# the scope through the provider seam (webDomScope); mount reads the
+# planted pre-existing markup through webDomSnapshot (the real provider
+# route shape). fix:g4 / fix:web-dom-locale are REMOVED.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -62,11 +70,20 @@ strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
 
 VALIDA_NS="const valida = { valida_spatium, valida_nomen_tag, valida_nomen_attributi, valida_nomen_in_spatio, valida_void_html, valida_void_structura };"
 TELA_NS="const tela = { html_visus, css, thema_css, thema_stilum, thema, scopulum, scopuli_core, nomen_scopuli_proprietas, nomen_scopuli_validum, thema_scopuli_core_parati, thema_habet_scopulum, assemble, codicillus, ordo, codicilli_dedupata, ordine_ordinata, stilum_validum, stilum_textus_immundus, codicillus_ex, in_lista, pendeant_parata, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, eventum, restitue, dirige, ancora, renovatio, effectus_identitas, Attributum, Proprietas, Declaratio, Regula, Stilum, Scopulum, Thema, Codicillus, Ordo };"
-BROWSER_NS="const browser = { scopus, radiculum, subscriptio, ligamen, parse_identitates, elementum_tag, quotiens, identitates_duplicatae, ligamen_status, diagnosia_hydrationis, mount, replace, dispose, focus_tenet, focus_optata };"
+# Stage 4 U6: the web:dom namespace binds the DOM-SHIM's runtime surface
+# (the fake-DOM Node host env). The bare Scope/Nodus types come from the
+# shim itself (the emitted provider module's `class Element` would collide
+# with the DOM lib). The `snapshot` binding is widened (the harness
+# boundary is any-typed — the shim's webDomSnapshot expects the runtime
+# scope with `root`; the emitted Scope type carries only `selector`).
+DOM_NS="const dom = { scope: webDomScope, snapshot: ((scope: any): Array<Nodus> | null => webDomSnapshot(scope)), query: webDomQuery, require: webDomRequire, all: webDomAll, value: webDomValue };"
+BROWSER_NS="const browser = { radiculum, subscriptio, ligamen, parse_identitates, elementum_tag, quotiens, identitates_duplicatae, nomen_tagi, tag_at, identitates_ex_nodis, tags_ex_nodis, ligamen_status, diagnosia_hydrationis, mount, replace, dispose, focus_tenet, focus_optata };"
 
 # The U2 mount-proof driver glue: calls executeMountProof (dom-shim) with
 # the assembled browser exempla's scenario inputs — the runtime gate for
-# the browser exempla's DOM-level assertions.
+# the browser exempla's DOM-level assertions. The scope is constructed
+# through the provider seam (webDomScope); mount reads the planted
+# pre-existing markup via webDomSnapshot.
 BROWSER_DRIVER="
 const domProofApi = {
   mount: browser.mount,
@@ -74,7 +91,7 @@ const domProofApi = {
   dispose: browser.dispose,
   focus_tenet: browser.focus_tenet,
   focus_optata: browser.focus_optata,
-  scopus: browser.scopus,
+  scopus: webDomScope,
   html_visus: tela.html_visus,
   effectus_identitas: tela.effectus_identitas,
   arbor: arbor_controlli,
@@ -150,21 +167,25 @@ for f in "$ROOT"/exempla/*.fab; do
       } > "$SCRATCH/${name}-joined.ts"
       ;;
     browser)
-      # exempla/browser.fab imports tela:tela + tela:browser. The dom-shim
-      # (export keywords removed) + the mount-proof driver are bound so the
-      # assembled exempla executes the FULL U2 mount proof under node (the
-      # harness-assembly path — the WARN014 export-skip does not apply at
-      # runtime, fix:g4).
+      # exempla/browser.fab imports tela:tela + tela:browser + web:dom. The
+      # DOM_NS const binds the dom-shim's runtime surface (the fake-DOM
+      # Node host env — the bare Scope/Nodus types come from the shim); the
+      # dom-shim + the mount-proof driver execute the FULL mount proof
+      # under node — mount reads the planted pre-existing markup through
+      # the snapshot (the real provider route shape).
       {
         strip "$SCRATCH/valida.ts"
         echo "$VALIDA_NS"
         strip "$SCRATCH/tela.ts"
         echo "$TELA_NS"
+        echo "$DOM_NS"
         strip "$SCRATCH/browser.ts"
         echo "$BROWSER_NS"
+        # The shim precedes the exempla so its `class Nodus`/`class Scope`
+        # declarations are in scope before the exempla's `new Nodus()`.
+        sed 's/^export //' "$ROOT/scripta/dom-shim.ts"
         strip "$SCRATCH/browser-exempla.ts"
         echo ""
-        sed 's/^export //' "$ROOT/scripta/dom-shim.ts"
         echo "$BROWSER_DRIVER"
       } > "$SCRATCH/${name}-joined.ts"
       ;;

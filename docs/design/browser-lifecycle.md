@@ -1,8 +1,11 @@
-# Browser Lifecycle — design record (tela Stage 3 U5)
+# Browser Lifecycle — design record (tela Stage 3 U5 + Stage 4 U6)
 
-**Record**: `tela-s3-u5-docs` (stage-3-delivery.md U5) — the browser
+**Record**: `tela-s3-u5-docs` + `tela-s4-u6-seam-restoration` — the browser
 mount/update/dispose lifecycle + the Branch B behavior plan written down for
 later Hands, reviewers, and the Stage 4 independent-extension gate.
+**Status**: active (U6 seam restoration reconciled — the CTO10-3 gate is
+open and the seam flips to the real `dom.Scope` with snapshot-based
+hydration; §12).
 **Sources**: the landed Stage 3 U1 kernel emission (`src/tela.fab`,
 `4ca331a`), the Stage 3 delivery spec (Normalized Spec; Async-gap Routing;
 Coordination Constraints; Escalation Path), `stage-0-behavior-design.md`
@@ -36,16 +39,20 @@ dispose(Mounted)           → void
 
 - The English verbs (`mount`/`replace`/`dispose`), the three-argument shape,
   and the fail-closed nullable returns are unchanged from the spec sketch.
-- **`dom.Scope` → tela:browser's `Scope`** (reconciled deviation): the
-  spec-locked sketch read `mount(dom.Scope, Visus, Thema)`. The en→la
-  `web:dom` import is **blocked** on in-tree radix 0.80.0 (PARSE001/SEM002
-  at any real use — `fix:web-dom-locale`, §11), so per delivery U2 done_when
-  (h) the seam carries the blocked `dom.Scope` type as tela:browser's own
-  opaque `Scope` handle (`{ selector, textus_praesens }`). The DOM surface
-  binds at the harness level (the dom-shim binds the `webDom*` surface, §7
-  /§8); web:dom is never re-authored inside tela and the contract is never
-  weakened. After the radix fix lands, the seam flips back to `dom.Scope`
-  (grep-replace, §11).
+- **`dom.Scope` → the REAL `dom.Scope`** (restored — Stage 4 U6
+  `tela-s4-u6`): the spec-locked sketch read `mount(dom.Scope, Visus, Thema)`.
+  The en→la `web:dom` import was blocked on in-tree radix 0.80.0
+  (PARSE001/SEM002 at any real use), so U2 carried the blocked `dom.Scope`
+  type as tela:browser's own opaque `Scope` handle (`{ selector,
+  textus_praesens }`). The CTO10-3 gate opened: cds-u5 (cross-package
+  locale propagation, radix `e32397630`) + cds-u6 (file-interface exports,
+  radix `2103f8a7f`) landed, and U6 flips the seam back to the real
+  `dom.Scope` (`mount(dom.Scope, Visus, Thema)` — the pinned shape). The
+  opaque `Scope` carrier and its `textus_praesens` field are REMOVED — the
+  pre-existing hydration state is READ from the DOM through the provider's
+  typed snapshot (`web:dom.snapshot`, faber-web `0d79f5b`), never carried.
+  The marker rows for the two workarounds flip to removed (§11); the
+  grep-replace predicates are verified (no live marker site in `tela/src`).
 - **`dispose(Mounted) → void`** (reconciled deviation): the spec/U5 sketch
   read `→ vacuum`. `void` is the en-locale void type (the reader pack maps
   `vacuum = "void"`); `vacua` is the empty-collection value, not a type.
@@ -53,27 +60,28 @@ dispose(Mounted)           → void
 
 ```fab
 class Mounted {
-    Scope scopus                    # the scoped host region handle
-    Radiculum radix                 # the mounted region root handle
-    tela.Visus visus                # current View
-    tela.Thema thema                # active theme
-    string textus_markup            # serialized View (the render plan)
-    string textus_css               # theme cascade CSS (the render plan)
-    list<string> identitates        # data-tela identity index (document order)
-    list<string> diagnosia          # hydration diagnostics (empty list = clean)
-    list<Ligamen> ligamina          # per-identity binding plan ("ligare"/"creare")
+    dom.Scope scopus               # the scoped host region handle (real seam)
+    Radiculum radix                # the mounted region root handle
+    tela.Visus visus               # current View
+    tela.Thema thema               # active theme
+    string textus_markup           # serialized View (the render plan)
+    string textus_css              # theme cascade CSS (the render plan)
+    list<string> identitates       # data-tela identity index (document order)
+    list<string> diagnosia         # hydration diagnostics (empty list = clean)
+    list<Ligamen> ligamina         # per-identity binding plan ("ligare"/"creare")
     list<Subscriptio> subscriptiones # region-bind subscription descriptors
-    string identitas_focus          # modeled pre-replacement focused identity
-    string identitas_focus_optata   # modeled declared focus-movement target
+    string identitas_focus         # modeled pre-replacement focused identity
+    string identitas_focus_optata  # modeled declared focus-movement target
 }
 ```
 
-  The module-local host carriers are `Scope { selector, textus_praesens }`,
-  `Radiculum { identitas }`, `Subscriptio { identitas, nomen_eventi }`,
-  `Ligamen { identitas, status }` (kernel-owned constructors `scopus`,
-  `radiculum`, `subscriptio`, `ligamen`). `textus_praesens` is the region's
-  current markup as the state model knows it ("" = empty); the harness
-  mirrors it onto the actual DOM at execution time.
+  The module-local value carriers are `Radiculum { identitas }`,
+  `Subscriptio { identitas, nomen_eventi }`, `Ligamen { identitas, status }`
+  (kernel-owned constructors `radiculum`, `subscriptio`, `ligamen`); the
+  scope is constructed by the CALLER through the provider seam
+  (`dom.scope(selector)` — the U6 flip removed the tela-local `scopus`
+  constructor). The `textus_praesens` carrier is GONE (U6): the region's
+  current markup is read from the DOM via the typed hydration snapshot.
 - **`Renovatio`** — the update result `replace` returns: the next view plus
   the declarative effects (`{ Visus visus, list<Effectus> effectus }`).
 - **Fail-closed returns** — a mount/replace that cannot complete returns
@@ -152,31 +160,54 @@ On mount into a scope whose root already contains Tela-rendered markup
   rendered markup are a hydration-match ambiguity (identity-hydration.md
   §6) → **diagnosed** per the Stage 3 policy, never a silent bind.
 
-### Hydration policy functions (landed — U2 `9f23095`)
+### Hydration policy functions (landed — U2 `9f23095` + U6 `tela-s4-u6`)
 
 The policy lives in exported G4-safe pure functions (string/list signatures
-only — they stay on the exported file interface, unlike the WARN014-skipped
-`mount`/`replace`, §11) that `mount` composes and the check-time exempla
-asserts directly:
+only — they stay on the exported file interface) that `mount` composes and
+the check-time exempla asserts directly. **Stage 4 U6 (the seam flip)**: the
+pre-existing identity set + per-identity tag names come from the provider's
+TYPED hydration snapshot (`web:dom.snapshot`, faber-web `0d79f5b` — one
+`Nodus { identitas, tag }` per data-tela descendant), so the policy fns'
+praesens input is the **aligned tag-index** (`tags_praesentes`) — the
+`textus_praesens` markup string is gone (no textual DOM parse):
 
 ```fab
-parse_identitates(string markup) → list<string>        # data-tela identities in document order
-elementum_tag(string markup, string identitas) → string ∪ null  # the identity node's open-tag shape
+parse_identitates(string markup) → list<string>        # VIEW markup: data-tela identities in document order
+elementum_tag(string markup, string identitas) → string ∪ null  # the identity node's open-tag shape (VIEW)
+nomen_tagi(string tag) → string                        # open-tag → tag name ("<button …>" → "button")
 quotiens(list<string> collatio, string nomen) → int    # occurrence count
 identitates_duplicatae(list<string> collatio) → list<string>    # distinct identities appearing > once
-ligamen_status(identitas, identitates_view, identitates_praesentes, markup, praesens) → string  # "ligare" | "creare"
-diagnosia_hydrationis(markup, praesens, identitates_view, identitates_praesentes) → list<string>
+identitates_ex_nodis(list<dom.Nodus> ∪ null) → list<string>     # snapshot → the praesens identity set
+tags_ex_nodis(list<dom.Nodus> ∪ null) → list<string>            # snapshot → the aligned tag names
+tag_at(identitas, identitates_praesentes, tags_praesentes) → string  # the praesens tag for an identity
+ligamen_status(identitas, identitates_view, identitates_praesentes, markup, tags_praesentes) → string  # "ligare" | "creare"
+diagnosia_hydrationis(markup, identitates_view, identitates_praesentes, tags_praesentes) → list<string>
 ```
 
 - `ligamen_status` returns **`"ligare"`** (bind the existing matching node —
-  hydration) only when the identity is unique in both markups and the
-  open-tag shapes match; **`"creare"`** (create/replace from the View)
-  otherwise — including every ambiguous/mismatched case.
+  hydration) only when the identity is unique in both markups AND the VIEW
+  element's tag name equals the PRAESENS node's typed tag name;
+  **`"creare"`** (create/replace from the View) otherwise — including every
+  ambiguous/mismatched case.
+- **The tag-name comparison (the U6 quote-normalization resolution)**: both
+  sides normalize to TAG NAMES — the view side extracts the tag name from
+  the serializer's open tag (`nomen_tagi`), the praesens side uses the
+  snapshot's typed tag. Tag names carry no quotes, so the serializer's
+  single-quote vs the real DOM's double-quote serialization never enters
+  the comparison (the U6 discovery's quote-style finding, resolved at the
+  comparison level).
 - `diagnosia_hydrationis` emits the deterministic diagnostic prefixes:
   `duplicata:<id>` (identity appears more than once in either markup),
   `extranea:<id>` (a pre-existing identity absent from the View), and
-  `muta:<id>` (present in both, unique in both, but the open-tag shapes
-  differ).
+  `muta:<id>` (present in both, unique in both, but the element TAG NAMES
+  differ). **Fidelity narrowing (recorded honestly)**: the landed
+  `web:dom.snapshot` carries identity + tag NAME only (faber-web `0d79f5b`
+  chose `tagName.toLowerCase()`), so `muta` fires on a tag-name mismatch,
+  not on an attribute-level open-tag shape difference. The U2-era
+  attribute-shape `muta` (e.g. a same-tag class change) is superseded; the
+  mismatch proof fixtures moved to tag-name mismatches. The full open-tag
+  shape comparison would require the snapshot to carry attributes — a
+  future faber-web host extension if a consumer needs it (overlap rule).
 
 ## 4. Update strategy
 
@@ -255,40 +286,42 @@ reviewers see it without re-reading the campaign:
 
 ## 7. Host-seam consumption
 
-- **`web:dom` binds at the harness level (landed posture — `fix:web-dom-locale`).** The en→la `web:dom` import is **blocked** on in-tree radix
-  0.80.0 (PARSE001/SEM002 at any real use — calls, type inference,
-  construction, class-field types), so `tela:browser` does **not** import
-  `web:dom`; the DOM surface binds at the **harness level** — the dom-shim
-  (`tela/scripta/dom-shim.ts`) implements the `webDom*` runtime-binding
-  surface (`webDomScope`/`webDomQuery`/`webDomRequire`/`webDomAll`/
-  `webDomTextSet`/`webDomAttrSet`/`webDomClassAdd`/`webDomOn`/
-  `webDomUnsubscribe`/… — mirroring `faber-web/runtime/dom.ts`), and the
-  assembled runner binds it. The spec's listed seam functions
-  (`scope(selector)`, `query`/`require`/`all`, `text_set`/`attr_set`/
-  `class_add`, `on`/`unsubscribe`, `on_input`/`on_keyboard`/`on_pointer`/
-  `on_focus`/`on_submit`, `prevent_default`) are the **web:dom surface the
-  harness exposes**, not `tela:browser`'s own surface. The `@ futura`
-  `fetch_text` surface is out of scope (the async gap, §6). web:dom is
-  NEVER re-authored inside tela.
+- **`web:dom` consumed directly through the documented host seam (Stage 4
+  U6 — the flip).** `tela:browser` imports `web:dom` (`import from "web:dom"
+  public * ut dom`) and consumes the REAL seam: `dom.Scope` in signatures/
+  field types/call sites, the `dom.scope(selector)` constructor, and the
+  typed hydration snapshot `dom.snapshot(scope)`. The en→la import was
+  **blocked** on in-tree radix 0.80.0 (PARSE001/SEM002 at any real use —
+  calls, type inference, construction, class-field types); the CTO10-3 gate
+  opened with cds-u5 (cross-package locale propagation, radix `e32397630`)
+  + cds-u6 (file-interface exports, radix `2103f8a7f`), and the blocked
+  posture is REMOVED. The harness-level `webDom*` binding posture (U2–U5)
+  is reduced to the **fake-DOM Node host env**: the dom-shim
+  (`tela/scripta/dom-shim.ts`) implements the same `webDom*`
+  runtime-binding surface the real host binds, and the assembled runner
+  binds it — the seam shape the module consumes is now the provider's
+  (Scope/Nodus/scope/snapshot), not tela's own carriers. web:dom is NEVER
+  re-authored inside tela (the flip kept that invariant).
 - **No ambient global document shortcuts** for descendant lookup
   (behavior-design §5; `faber-web/README.md`) — DOM operations flow through
   an explicit `Scope`.
-- **`faber-web` is read-only in Stage 3** — consumed through documented
-  host seams, not edited. Extended only for general host gaps per the
-  campaign overlap rule; no general host gap is known at lowering time
-  (recorded).
-- **Dialect/locale gap (NEW named escalation — landed)**: `faber-web` is
-  authored in the Latin dialect (`faber.toml` `[reader] locale = "la"`),
-  targets **ts only**, and its proven consumer path is la (WEB5 fixture).
-  The en-locale tela package importing `web:dom` cross-package was
-  **ATTEMPTED at `radix check` + TS emit** and **failed** with the
-  provider-module locale-propagation family (PARSE001 — the CODEGEN001
-  mechanism; SEM002 at qualified class-field types) — marker
-  `fix:web-dom-locale`. The fallback posture **landed**: the DOM surface
-  binds at the harness level (assembled runner + dom-shim bind the
-  `webDom*` surface, mirroring `web-shim-dom.js`); **never re-author a
-  `web:dom` copy inside tela**, never weaken the contract. The seam's
-  `Scope` handle carries the blocked `dom.Scope` type (see §1).
+- **`faber-web` is read-only in this campaign** — consumed through
+  documented host seams, not edited. The one seam extension the tela
+  hydration contract needed (the typed snapshot op) landed as a **faber-web
+  host extension** (`0d79f5b` — `web:dom.snapshot` → `webDomSnapshot`,
+  routed separately per the overlap rule, not a tela-campaign edit).
+- **Locale/dialect posture (RESOLVED — cds-u5)**: `faber-web` is authored
+  in the Latin dialect (`faber.toml` `[reader] locale = "la"`), targets
+  **ts only**. The en-locale tela package importing `web:dom` cross-package
+  was **blocked** by the provider-module locale-propagation family
+  (PARSE001 — the CODEGEN001 mechanism; SEM002 at qualified class-field
+  types); cds-u5 fixed the propagation (an import target's reader surface
+  resolves from ITS OWN chain — frontmatter > package locale > the importing
+  module's pack > Latin default). Re-verified live at the U6 gate: the
+  en-locale `web:dom` import checks + emits clean at real use (call sites,
+  construction, class-field types, fn signatures, the snapshot route).
+
+## 8. DOM-shim proof vehicle + bounded fidelity
 
 ## 8. DOM-shim proof vehicle + bounded fidelity
 
@@ -297,7 +330,14 @@ convention) through a **DOM shim** (`tela/scripta/dom-shim.ts`, U2
 `9f23095`): a minimal in-memory DOM implementing the `webDom*`
 runtime-binding surface — the WEB5 fixture precedent
 (`examples/browser-app/tests/fake-dom.mjs` + the `web-shim-dom.js` binding
-facade). Landed driver surface (U4 `check-mount` builds on these):
+facade). **Stage 4 U6**: the shim implements the typed hydration snapshot
+read (`webDomSnapshot`, mirroring faber-web `0d79f5b`) + the bare
+`Scope`/`Nodus` types the emitted module references; mount reads the
+planted pre-existing markup through the snapshot (the real provider route
+shape — the driver plants the praesens DOM, then the scope is constructed
+through the provider seam `webDomScope`, and mount derives the hydration
+state from `dom.snapshot`). Landed driver surface (U4 `check-mount` builds
+on these):
 
 - `parseFragment(markup)` — the bounded HTML parser for the serializer's
   markup shape (elements + single-quoted attributes + `data-tela`
@@ -346,26 +386,34 @@ inventing a premature interface.
 - **R2 note** (`stage-2-determinism.md` §3): when the CODEGEN001
   Rust-lane fix lands, the Rust-lane capture must equal the TS-lane
   capture (sha equality); Rust emit of a `web:dom`-importing module is
-  doubly out (`web:dom` is ts-only) — recorded, never the gate.
+  doubly out (`web:dom` is ts-only) — recorded, never the gate. **Stage 4
+  U6 observation (recorded honestly)**: cds-u5 fixed the provider-module
+  locale-propagation half, but the Rust lane remains BLOCKED on a NEW
+  CODEGEN001 manifestation (`definition id … could not be resolved during
+  code generation` — observed at the U6 check-determinism run; the
+  three-package TS-lane sha `28f63f75…d1d39b` is unchanged). The R2
+  activation is re-checked on the first post-fix run (a further radix
+  codegen fix is required, not a harness change).
 
 ## 11. `fix:<id>` discipline inventory
 
-The Stage 3 marker inventory (from the delivery's Escalation Path +
-Coordination Constraint 3). This is the inventory record; the authoritative
-markers applied per file live **at the site** in the module headers.
+The marker inventory (from the delivery's Escalation Path + Coordination
+Constraint 3). This is the inventory record; the authoritative markers
+applied per file live **at the site** in the module headers.
 **Removal = grep-replace after each radix fix lands**; the Stage 3 closeout
-re-check records the re-confirmed status.
+re-check records the re-confirmed status. **Stage 4 U6**: the two removal
+predicates (cds-u5 + cds-u6) are executed — the rows below flip to REMOVED.
 
-| Defect | Marker | Stage 3 posture |
+| Defect | Marker | Posture |
 | --- | --- | --- |
-| `web:dom` locale/dialect gap (en→la) | `fix:web-dom-locale` | **ATTEMPTED and FAILED** at check/emit on in-tree radix 0.80.0 (PARSE001/SEM002 — probe matrix in the `browser.fab` header). Landed fallback: harness-level DOM binding (dom-shim binds the `webDom*` surface); the seam carries `dom.Scope` as tela:browser's `Scope` handle; never re-author a `web:dom` copy inside tela |
+| `web:dom` locale/dialect gap (en→la) | `fix:web-dom-locale` | **REMOVED (Stage 4 U6)** — cds-u5 (cross-package locale propagation, radix `e32397630`) landed; the en→la `web:dom` import re-verified green at real use; `tela:browser` consumes `dom.Scope` directly; the marker has no live site in `tela/src` (grep-verified) |
 | imported-union variant matching from a consumer | `fix:sem001` | **Landed (U1, `4ca331a`; row added at the Stage 3 closeout)**: a consumer-side `match` over an imported union's variants does not bind — the kernel owns the only `Effectus` matcher (`effectus_identitas`, `src/tela.fab:970` + module-header marker `src/tela.fab:913`); consumers read effect keys through the accessor. Removal = grep-replace after the radix fix lands |
-| G4 — WARN014 snapshot skip on public signatures referencing imported sibling types | `fix:g4` | **Landed observation**: the pinned seam fns `mount`/`replace` (imported `tela` sibling types in signatures) are export-skipped for consumers. Workaround: the G4-safe pure policy fns (string/list signatures) stay exported for check-time exempla; the harness-assembly workaround covers the skipped fns (the snapshot does not apply at runtime — the driver calls the emitted `mount`/`replace` directly) |
-| **primitive nullable bindings in fn bodies (NEW parser observation)** | **`fix:prim-nullable`** | **Landed, new**: a primitive `∪ null` const/var annotation and a `!` unwrap of a primitive nullable do not parse inside named function bodies on in-tree radix 0.80.0 (PARSE030/PARSE001; the same forms work in `main`, and class `∪ null` works in fn bodies — the kernel's `thema_css` pattern). Workaround: null checks run against the call (`if f(x) is null then …`), then the value binds via `coalesce ""`; shape comparisons carry a boolean `habet` flag |
-| CODEGEN001 — Rust emit-across-imports | `fix:codegen001` | Rust path attempted + recorded; `web:dom` is ts-only so Rust emit of a browser module is doubly out; TS lane is the proven lane; R2 sha-equality |
-| G5/G6 — verb/identifier collisions (`mount`/`replace`/`dispose` + new identifiers) | `fix:g5` | Probed collision-free (U2: `scopus`/`radiculum`/`subscriptio`/`ligamen`/`focus_tenet`/`focus_optata`/`parse_identitates`/`elementum_tag` — NONE); a colliding verb is escalated, never silently renamed |
+| G4 — WARN014 snapshot skip on public signatures referencing imported sibling types | `fix:g4` | **REMOVED (Stage 4 U6)** — cds-u6 (file-interface exports, radix `2103f8a7f`) landed; `tela:browser`'s `mount`/`replace` export cleanly (no WARN014 on the tela-side surface; the remaining `dom.*` WARN014s at the import are the la provider's OWN handler-typed exports, not tela's — the seam surface tela consumes resolves). The marker has no live site in `tela/src` (grep-verified) |
+| **primitive nullable bindings in fn bodies (NEW parser observation)** | **`fix:prim-nullable`** | **Extended (Stage 4 U6)**: a `lista<X> ∪ nihil` cannot call methods directly in an en fn body on this radix (the non-null / optional chain Member resolution does not route to list methods). Workaround (landed): bind the `∪ null`, check `is null`, then narrow inside `if nodi not is null { … }` to a non-null copy (the triga `vp_result![k]` precedent extended); method calls run on the copy |
+| CODEGEN001 — Rust emit-across-imports | `fix:codegen001` | **PARTIAL (Stage 4 U6)**: the provider-module locale-propagation half is fixed (cds-u5); the Rust lane remains blocked on a NEW manifestation (`definition id … could not be resolved during code generation`); `web:dom` is ts-only so Rust emit of a browser module is doubly out; TS lane is the proven lane; R2 sha-equality re-checked on the first post-fix run |
+| G5/G6 — verb/identifier collisions (`mount`/`replace`/`dispose` + new identifiers) | `fix:g5` | Probed collision-free (U2: `scopus`/`radiculum`/`subscriptio`/`ligamen`/`focus_tenet`/`focus_optata`/`parse_identitates`/`elementum_tag` — NONE; U6: `nomen_tagi`/`tag_at`/`identitates_ex_nodis`/`tags_ex_nodis` — NONE); a colliding verb is escalated, never silently renamed |
 | TS-emitter observations | `fix:ts-emitter` | Workarounds held; fragile against emitter changes |
-| snapshot-nomen-collision | `fix:snapshot-nomen-collision` | Stage 2 workaround held; new identifiers avoid kernel type names |
+| snapshot-nomen-collision | `fix:snapshot-nomen-collision` | Stage 2 workaround held; new identifiers avoid kernel type names (U6: the seam types `Scope`/`Nodus` are imported from web:dom, never re-declared) |
 
 ## 12. Reconciliation state (U1 + U2 + U3 landed; all reconciled)
 
@@ -422,6 +470,30 @@ re-check records the re-confirmed status.
   4. **`fix:<id>` inventory (§11)** — gained `fix:sem001` (the kernel owns
      the only `Effectus` matcher, `effectus_identitas`) at the closeout
      (auditor-4 P2-1).
+- **U6 emission (`tela-s4-u6`) — the seam restoration, reconciled.** The
+  CTO10-3 gate opened (cds-u5 `e32397630` + cds-u6 `2103f8a7f` + the
+  faber-web snapshot op `0d79f5b`); this record + `browser.fab` reflect the
+  flip:
+  1. **Seam call shape restored** — `mount(dom.Scope, Visus, Thema)`, the
+     spec-locked shape (§1). The opaque `Scope { selector,
+     textus_praesens }` carrier + the `scopus` constructor are REMOVED; the
+     scope is constructed by the caller through the provider seam.
+  2. **Snapshot-based hydration** — `mount` reads the pre-existing identity
+     set + per-identity tag names from `dom.snapshot(scope)` (the typed
+     read; no textual DOM parse); the policy fns take the aligned tag-index
+     (`tags_praesentes`) instead of the praesens markup string (§3).
+  3. **Tag-name shape comparison** — both sides normalize to tag names; the
+     `muta` diagnostic fires on a tag-name mismatch (the landed snapshot's
+     fidelity — attribute-level open-tag shape comparison superseded,
+     recorded honestly in §3).
+  4. **Markers flipped (§11)** — the two removal predicates executed
+     (grep-verified: no live marker site in `tela/src`); the R2 note
+     updated (the Rust lane's CODEGEN001 changed manifestation after
+     cds-u5 — recorded, §10).
+  5. **Harness surface** — the dom-shim implements `webDomSnapshot` + the
+     bare `Scope`/`Nodus` types; the driver constructs scopes through the
+     provider seam and mount reads the planted pre-existing markup through
+     the snapshot (§8).
 
 ## Non-goals
 

@@ -1,5 +1,5 @@
 // tela/scripta/dom-shim.ts — the node host simulation for the Stage 3
-// mount/update runtime gate (tela-s3-u2-browser-mount).
+// mount/update runtime gate (tela-s3-u2-browser-mount + tela-s4-u6).
 //
 // Implements the `webDom*` runtime-binding surface (mirroring
 // faber-web/runtime/dom.ts) over a minimal in-memory DOM, plus a bounded
@@ -7,12 +7,15 @@
 // driver (`executeMountProof`). WEB5 precedent:
 // examples/browser-app/tests/fake-dom.mjs + runtime-bridge.mjs.
 //
-// Why the harness binds the webDom* surface: the en→la `web:dom` import is
-// blocked on in-tree radix 0.80.0 (fix:web-dom-locale — PARSE001/SEM002 at
-// any real use), so the DOM surface binds at the HARNESS level per the
-// delivery U2 done_when (h) fallback. web:dom is NEVER re-authored inside
-// tela — this shim is the harness's node-side DOM, keyed by the same
-// webDom* symbols the faber-web runtime exports.
+// Stage 4 U6 (the seam restoration): this is the fake-DOM NODE HOST ENV for
+// the REAL provider route — browser.fab consumes the real web:dom seam
+// (dom.Scope + dom.snapshot), and the assembled runner binds this shim's
+// webDom* symbols exactly as the real host binds faber-web's. The shim
+// adds the typed hydration snapshot read (`webDomSnapshot`, mirroring the
+// faber-web op 0d79f5b) + the bare Scope/Nodus types the emitted module
+// references. web:dom is NEVER re-authored inside tela — this shim is the
+// harness's node-side DOM, keyed by the same webDom* symbols the faber-web
+// runtime exports.
 //
 // Bounded fidelity (recorded): the fake DOM supports the selector, event,
 // class, attribute, text, focus, and subscription operations the Stage 3
@@ -384,6 +387,21 @@ function scopedRequire(root: FakeElement, selector: string): FakeElement {
   return element;
 }
 
+// Stage 4 U6 — the bare web:dom types the emitted tela:browser module
+// references (the seam flip: browser.fab imports web:dom). The emitted
+// web:dom module's own `class Element` collides with the DOM lib's
+// `Element`, so the harness declares the two types tela actually uses
+// (Scope + Nodus — constructible, matching the emitted shape) instead of
+// assembling the emitted provider module. webDomScope's return (which also
+// carries `root`) is structurally assignable to Scope.
+class Scope {
+  selector!: string;
+}
+class Nodus {
+  identitas!: string;
+  tag!: string;
+}
+
 export function webDomScope(selector: string, root: FakeElement = installedDocument()): WebDomScope {
   const scopedRoot = selector.length === 0 ? root : scopedRequire(root, selector);
   return { root: scopedRoot, selector };
@@ -399,6 +417,22 @@ export function webDomRequire(scope: WebDomScope, selector: string): FakeElement
 
 export function webDomAll(scope: WebDomScope, selector: string): FakeElement[] {
   return Array.from(scope.root.querySelectorAll(selector));
+}
+
+// Stage 4 U6 — the typed hydration snapshot read (mirrors faber-web's
+// webDomSnapshot, faber-web 0d79f5b): one Nodus per data-tela descendant of
+// the scoped root (identity + tag name). The mount planner reads the
+// pre-existing hydration state through this op — a typed read, no textual
+// DOM parse. Null only for a null scope (fail-closed).
+export type WebDomNodus = { readonly identitas: string; readonly tag: string };
+export function webDomSnapshot(scope: WebDomScope | null): WebDomNodus[] | null {
+  if (scope === null) {
+    return null;
+  }
+  return Array.from(scope.root.querySelectorAll("[data-tela]")).map((el) => ({
+    identitas: el.getAttribute("data-tela") ?? "",
+    tag: el.tagName.toLowerCase(),
+  }));
 }
 
 export function webDomTextSet(element: FakeElement, value: string): void {
@@ -593,7 +627,7 @@ function openTagEquals(a: FakeElement, b: FakeElement): boolean {
 // ---------------------------------------------------------------------------
 
 export interface MountedLike {
-  scopus: { selector: string; textus_praesens: string };
+  scopus: { selector: string };
   radix: { identitas: string };
   textus_markup: string;
   textus_css: string;
@@ -620,7 +654,11 @@ export interface MountProofApi {
   dispose: (mounted: any) => void;
   focus_tenet: (mounted: any, identitas: string) => any;
   focus_optata: (mounted: any, identitas: string) => any;
-  scopus: (selector: string, praesens: string) => any;
+  // Stage 4 U6: the scope is constructed through the REAL provider seam
+  // (webDomScope — the dom-shim's web:dom runtime) — no tela-side `scopus`
+  // constructor exists anymore. The pre-existing hydration state is READ by
+  // mount via webDomSnapshot; the driver plants the praesens DOM first.
+  scopus: (selector: string) => any;
   html_visus: (visus: any) => string | null;
   effectus_identitas: (effectus: any) => string;
   arbor: () => any;
@@ -761,8 +799,9 @@ export function executeMountProof(api: MountProofApi): void {
     document.focusNode(null);
     return region;
   };
-  // Pre-render the region from the state model's praesens markup (the DOM
-  // mirror of `Scope.textus_praesens`), then execute the mount plan.
+  // Stage 4 U6: the driver plants the pre-existing markup into the fake DOM
+  // (the real provider route reads it via webDomSnapshot — the scope no
+  // longer carries a textus_praesens field), then mount reads it.
   const preRenderRegion = (selector: string, markup: string): void => {
     const region = resetRegion(selector);
     for (const node of parseFragment(markup)) {
@@ -773,7 +812,7 @@ export function executeMountProof(api: MountProofApi): void {
   // --- scenario 1: mount onto an EMPTY scope ------------------------------
   {
     resetRegion("#root");
-    const mounted = api.mount(api.scopus("#root", ""), api.arbor(), api.thema());
+    const mounted = api.mount(api.scopus("#root"), api.arbor(), api.thema());
     assert(mounted !== null, "mount onto an empty scope returns a plan");
     const m = mounted as MountedLike;
     assert(m.textus_markup === api.textus_arboris(), "plan markup is the serialized View");
@@ -792,7 +831,7 @@ export function executeMountProof(api: MountProofApi): void {
   {
     const praesens = api.praesens_hydrationis();
     preRenderRegion("#root", praesens);
-    const mounted = api.mount(api.scopus("#root", praesens), api.arbor(), api.thema());
+    const mounted = api.mount(api.scopus("#root"), api.arbor(), api.thema());
     assert(mounted !== null, "hydration mount returns a plan");
     const m = mounted as MountedLike;
     assert(m.diagnosia.length === 0, "hydration: no diagnostics");
@@ -812,7 +851,7 @@ export function executeMountProof(api: MountProofApi): void {
   {
     const praesens = api.praesens_mismatch();
     preRenderRegion("#root", praesens);
-    const mounted = api.mount(api.scopus("#root", praesens), api.arbor(), api.thema());
+    const mounted = api.mount(api.scopus("#root"), api.arbor(), api.thema());
     assert(mounted !== null, "mismatch mount returns a plan");
     const m = mounted as MountedLike;
     assert(m.diagnosia.includes("muta:tela-seg-2"), "mismatch diagnosed");
@@ -828,7 +867,7 @@ export function executeMountProof(api: MountProofApi): void {
   {
     const praesens = api.praesens_duplicata();
     preRenderRegion("#root", praesens);
-    const mounted = api.mount(api.scopus("#root", praesens), api.arbor_duplicata(), api.thema());
+    const mounted = api.mount(api.scopus("#root"), api.arbor_duplicata(), api.thema());
     assert(mounted !== null, "duplicate mount returns a plan");
     const m = mounted as MountedLike;
     assert(m.diagnosia.includes("duplicata:tela-dup"), "duplicate identity diagnosed");
@@ -842,7 +881,7 @@ export function executeMountProof(api: MountProofApi): void {
   // --- scenario 5: replace → declarative effects execute ------------------
   {
     resetRegion("#root");
-    const mounted = api.mount(api.scopus("#root", ""), api.arbor(), api.thema());
+    const mounted = api.mount(api.scopus("#root"), api.arbor(), api.thema());
     assert(mounted !== null, "replace scenario: mount returns a plan");
     const m = mounted as MountedLike;
     executeMountPlan(document, "#root", m, true);
@@ -881,7 +920,7 @@ export function executeMountProof(api: MountProofApi): void {
   // --- scenario 5b: declared focus movement adds Dirige ------------------
   {
     resetRegion("#root");
-    const mounted = api.mount(api.scopus("#root", ""), api.arbor(), api.thema());
+    const mounted = api.mount(api.scopus("#root"), api.arbor(), api.thema());
     assert(mounted !== null, "movement scenario: mount returns a plan");
     const m = mounted as MountedLike;
     executeMountPlan(document, "#root", m, true);
@@ -917,7 +956,7 @@ export function executeMountProof(api: MountProofApi): void {
   // --- scenario 6: dispose unsubscribes + clears the region --------------
   {
     resetRegion("#root");
-    const mounted = api.mount(api.scopus("#root", ""), api.arbor(), api.thema());
+    const mounted = api.mount(api.scopus("#root"), api.arbor(), api.thema());
     assert(mounted !== null, "dispose scenario: mount returns a plan");
     const m = mounted as MountedLike;
     assert(m.subscriptiones.length === 3, "one subscription descriptor per View identity");

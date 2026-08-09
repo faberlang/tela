@@ -1,90 +1,70 @@
 # tela/src/browser.fab — tela:browser — the browser mount/update/dispose lifecycle.
 #
-# Stage 3 U2 (browser-mount). The host seam is web:dom (faber-web — la
-# locale, ts-only, read-only). The en→la cross-package import is BLOCKED on
-# in-tree radix 0.80.0: the provider-module locale-propagation defect (the
-# CODEGEN001 mechanism) — PARSE001 at any real use of a dom.* value
-# (call sites, type inference, construction) and SEM002 at qualified
-# class-field types. ATTEMPTED (probe matrix, 2026-08-09) + recorded +
-# escalated: fix:web-dom-locale.
-#
-# FALLBACK POSTURE (delivery U2 done_when (h)): the DOM surface binds at the
-# HARNESS level — tela/scripta/dom-shim.ts implements the webDom* runtime-
-# binding surface over a minimal in-memory DOM (WEB5 precedent
-# examples/browser-app/tests/fake-dom.mjs + runtime-bridge.mjs), and the
-# assembled runner binds it. This module carries its OWN opaque host seam
-# carriers (Scope/Radiculum/Subscriptio) — the pinned seam call shape
-# `mount(dom.Scope, Visus, Thema)` is preserved with tela:browser's Scope
-# handle standing in for the blocked dom.Scope type; web:dom is NEVER
-# re-authored inside tela and the contract is NEVER weakened.
+# Stage 3 U2 (browser-mount) + Stage 4 U6 (seam restoration). The host seam
+# is web:dom (faber-web — la locale, ts-only). The CTO10-3 gate is OPEN:
+# cds-u5 (cross-package locale propagation, radix e32397630) + cds-u6
+# (file-interface-exports, radix 2103f8a7f) landed, and the hydration
+# snapshot op landed in faber-web (0d79f5b — web:dom.snapshot →
+# webDomSnapshot). This module now consumes web:dom DIRECTLY through the
+# documented host seam — the spec-locked shape
+# `mount(dom.Scope, Visus, Thema)` per browser-lifecycle.md §1. The en→la
+# import + the WARN014 export-skip removal predicates are re-verified live
+# (never assumed); the opaque fallback carriers + the harness-level webDom*
+# binding posture are REMOVED — the marker records flip to removed in
+# browser-lifecycle.md §11 (grep-verified: no live marker site in tela/src).
 #
 # MODULE SHAPE (locked):
-#   - FLAT + G4-safe: public signatures reference tela:tela types + this
-#     module's own carriers ONLY. The cross-package snapshot-skip risk on
-#     public web:dom-typed signatures (WARN014 — fix:g4) is avoided by
-#     construction: no imported web:dom types appear anywhere.
-#   - PURE: no web:dom calls in this module (blocked). mount/replace/dispose
-#     are PURE PLANNERS over the host seam — they compute the render plan
-#     (serialized markup, theme cascade, identity index, hydration
-#     diagnostics, binding plan, effect list); the harness executes the plan
-#     against the dom-shim. Deterministic bytes over author order.
-#   - The scope's CURRENT markup rides the Scope carrier as data
-#     (textus_praesens — the state model); the harness mirrors it onto the
-#     actual DOM at execution time. Bounded fidelity: identity values are
-#     parsed from the serializer's own data-tela emission; the proof corpus
-#     avoids text/attributes embedding the exact marker string
-#     ` data-tela='` (recorded).
+#   - FLAT: public signatures reference tela:tela types + the web:dom seam
+#     types (dom.Scope/dom.Nodus) — the cross-package export skip no longer
+#     applies (cds-u6: imported-sibling signatures export).
+#   - PURE: mount/replace/dispose are PURE PLANNERS over the host seam —
+#     they compute the render plan (serialized markup, theme cascade,
+#     identity index, hydration diagnostics, binding plan, effect list);
+#     the host executes the plan against the DOM. Deterministic bytes over
+#     author order.
+#   - HYDRATION VIA THE TYPED SNAPSHOT (head-cto fire-13 + the U6 seam
+#     discovery): mount derives the pre-existing identity set + the
+#     per-identity tag names from `dom.snapshot(scope)` — a TYPED read
+#     (identity + tag per data-tela descendant; NO textual DOM parse). The
+#     bind-vs-create + muta comparison normalizes BOTH sides to TAG NAMES:
+#     the view side extracts the tag name from the serializer's open tag,
+#     the praesens side uses the snapshot's typed tag. Tag names carry no
+#     quotes, so the serializer's single-quote vs the real DOM's
+#     double-quote serialization never enters the comparison (the
+#     discovery's quote-style finding resolved at the comparison level).
 #
 # fix:<id> markers:
-#   fix:web-dom-locale — en→la web:dom import blocked (PARSE001/SEM002);
-#     fallback seam = this module's opaque carriers; the harness binds the
-#     webDom* surface. Removal after the radix fix = the seam flips to
-#     dom.Scope + the module consumes web:dom directly (grep-replace).
-#   fix:g4 — WARN014 snapshot-skip family. The pinned seam fns
-#     mount/replace carry imported sibling types (tela.Visus/Thema/Renovatio)
-#     in their public signatures and are EXPORT-SKIPPED for consumers (the
-#     WARN014 file-interface skip, observed at radix check on in-tree radix
-#     0.80.0 — the recorded G4-family posture). Workaround: the G4-safe pure
-#     policy fns (ligamen_status/diagnosia_hydrationis/parse_identitates —
-#     string/list signatures only) stay on the exported interface for the
-#     check-time exempla, and the harness-assembly workaround covers the
-#     skipped fns (the snapshot does not apply at runtime — the driver calls
-#     the emitted mount/replace directly). Removal after the radix fix =
-#     grep-replace the WARN014 note.
-#   fix:g5 — NONE: mount/replace/dispose/scopus/radiculum/subscriptio/
-#     ligamen/focus_tenet/focus_optata/parse_identitates/elementum_tag
-#     probed collision-free on in-tree radix 0.80.0 (a free fn may share a
-#     class name — G5's collision is enum-member-specific).
-#   fix:prim-nullable — NEW parser observation, 2026-08-09: a primitive
-#     ∪ null const/var annotation and a `!` unwrap of a primitive nullable
-#     do not parse inside named function bodies on in-tree radix 0.80.0
-#     (PARSE030/PARSE001; the same annotations/unwraps work in `main`, and
-#     class ∪ null annotations + unwraps work in fn bodies — the kernel's
-#     thema_css pattern). Workaround held: null checks run against the CALL
-#     expression (`if f(x) is null then …`), then the value binds via
-#     `coalesce ""`; shape comparisons carry a boolean habet flag.
-#     Escalated to the radix lane with the module (fix:prim-nullable).
-#   fix:codegen001 — Rust emit-across-imports: browser.fab imports tela:tela,
-#     so Rust emit re-analyzes the provider without the en reader pack
-#     (PARSE001). web:dom is ts-only in any case — Rust emit of this module
-#     is doubly out; the TS lane is the proven lane. Recorded, never the
-#     gate.
+#   (the web:dom locale-gap workaround — REMOVED by cds-u5; the WARN014
+#   export-skip workaround — REMOVED by cds-u6; both marker rows flip to
+#   removed in browser-lifecycle.md §11 — grep-verified: no live marker
+#   site remains in tela/src).
+#   fix:codegen001 — PARTIAL: the provider-module locale-propagation half
+#     is fixed (cds-u5); browser.fab remains ts-only because web:dom is
+#     ts-only (Rust emit of a web:dom-importing module is doubly out) —
+#     recorded, never the gate.
+#   fix:prim-nullable — extended observation: a `lista<X> ∪ nihil` cannot
+#     call methods directly in an en fn body on this radix (the non-null /
+#     optional chain Member resolution does not route to list methods).
+#     Workaround (landed): bind the ∪ null, check `is null`, then narrow
+#     inside `if nodi not is null { … }` to a non-null copy (the triga
+#     `vp_result![k]` precedent extended); method calls run on the copy.
+#   fix:g5 — NONE: mount/replace/dispose/radiculum/subscriptio/ligamen/
+#     focus_tenet/focus_optata/parse_identitates/elementum_tag/nomen_tagi/
+#     tag_at/identitates_ex_nodis/tags_ex_nodis probed collision-free on
+#     in-tree radix 0.80.0 (a free fn may share a class name — G5's
+#     collision is enum-member-specific).
+#   fix:snapshot-nomen-collision — the carrier names avoid kernel type
+#     names (Eventum/Effectus/Renovatio/Visus/…) AND the web:dom genus
+#     names (Scope/Element/Nodus/DomEvent/… — the seam types are imported,
+#     never re-declared).
 
 import from "tela:tela" public * ut tela
+import from "web:dom" public * ut dom
 
 # ---------------------------------------------------------------------------
-# Host seam carriers (the fallback seam — opaque handles the harness
-# resolves to web:dom values at runtime).
+# Mounted-region carriers (the locked Mounted state shape — plain value
+# carriers, not DOM seam handles; the seam handle IS dom.Scope).
 # ---------------------------------------------------------------------------
-
-# The scoped host region handle. Mirrors the web:dom Scope genus by name;
-# the harness resolves selector → a webDomScope at runtime.
-# textus_praesens is the region's CURRENT Tela markup as the state model
-# knows it ("" = empty); the harness derives it from the actual DOM.
-class Scope {
-    string selector
-    string textus_praesens
-}
 
 # A mounted region root handle (the region this mount owns — the scope
 # selector doubles as the region identity for scroll-anchor intent).
@@ -92,8 +72,8 @@ class Radiculum {
     string identitas
 }
 
-# A live subscription handle; the harness maps identitas → webDomSubscription
-# on the bound node (data-tela='identitas').
+# A live subscription handle; the host maps identitas → the bound
+# web:dom subscription on the node (data-tela='identitas').
 class Subscriptio {
     string identitas
     string nomen_eventi
@@ -112,7 +92,7 @@ class Ligamen {
 # render plan (markup + css), the identity index, the hydration
 # diagnostics, and the modeled focus state.
 class Mounted {
-    Scope scopus
+    dom.Scope scopus
     Radiculum radix
     tela.Visus visus
     tela.Thema thema
@@ -127,11 +107,8 @@ class Mounted {
 }
 
 # Kernel-owned constructors (G3 posture — ordinary functions over the same
-# public values, like the Stage 1/2/3-U1 kernel constructors).
-fn scopus(string selector, string textus_praesens) → Scope {
-    return Scope { selector = selector, textus_praesens = textus_praesens }
-}
-
+# public values, like the Stage 1/2/3-U1 kernel constructors). The scope is
+# constructed by the CALLER via the provider seam (`dom.scope(selector)`).
 fn radiculum(string identitas) → Radiculum {
     return Radiculum { identitas = identitas }
 }
@@ -158,7 +135,8 @@ fn nota_identitatis() → string {
 # Identity parsing over serialized Tela markup. Returns every data-tela
 # identity in document order (escaped form unescaped). Bounded fidelity:
 # text/attributes embedding the exact marker string are out of the proof
-# corpus (recorded).
+# corpus (recorded). Operates on the VIEW markup ONLY (tela's own serializer
+# output) — the praesens identity set comes from the typed snapshot.
 # ---------------------------------------------------------------------------
 
 fn unescape(string textus) → string {
@@ -226,9 +204,8 @@ fn parse_identitates(string textus) → list<string> {
 }
 
 # The open-tag shape of the element carrying the given identity (from the
-# previous '<' to the next '>'), or null when the identity is absent or the
-# element is malformed. Shape equality across the praesens markup and the
-# View markup detects out-of-shape nodes (hydration diagnosis).
+# previous '<' to the next '>') in the VIEW markup, or null when the
+# identity is absent or the element is malformed.
 fn elementum_tag(string textus, string identitas) → string ∪ null {
     var int i ← 0
     while i < textus.longitudo() {
@@ -280,6 +257,30 @@ fn elementum_tag(string textus, string identitas) → string ∪ null {
     return null
 }
 
+# The TAG NAME of an open-tag string ("<button role='radio' …>" →
+# "button") — the first token after '<'. The hydration comparison
+# normalizes both sides to tag names: the view side extracts the tag name
+# from the serializer's open tag; the praesens side uses the typed tag name
+# from the hydration snapshot. Tag names carry no quotes, so the
+# serializer's single-quote vs the real DOM's double-quote serialization
+# never enters the comparison (the U6 discovery's quote-style finding).
+fn nomen_tagi(string tag) → string {
+    var string result ← ""
+    var int i ← 1
+    var bool finitum ← false
+    while i < tag.longitudo() and not finitum {
+        const string ch ← tag.sectio(i, i + 1)
+        if ch ≡ " " or ch ≡ ">" {
+            finitum ← true
+        }
+        if not (ch ≡ " ") and not (ch ≡ ">") {
+            result ← result + ch
+        }
+        i ← i + 1
+    }
+    return result
+}
+
 # Occurrence count of an identity in a list.
 fn quotiens(list<string> collatio, string nomen) → int {
     var int quotiens ← 0
@@ -308,6 +309,57 @@ fn identitates_duplicatae(list<string> collatio) → list<string> {
 }
 
 # ---------------------------------------------------------------------------
+# The G4-safe tag-index adapters (the U6 discovery's item 4): consume the
+# provider's TYPED hydration snapshot (web:dom.snapshot → lista<Nodus> ∪
+# nihil — identity + tag name per data-tela descendant) and produce the two
+# parallel string lists the pure policy fns take — the pre-existing
+# identity set + the aligned per-identity tag names. No textual DOM parse:
+# the identity set + tags arrive typed from the snapshot. A null snapshot
+# (the runtime returns null only for a null scope) narrows to empty.
+# ---------------------------------------------------------------------------
+
+fn identitates_ex_nodis(list<dom.Nodus> ∪ null nodi) → list<string> {
+    var list<dom.Nodus> certa ← vacua
+    if nodi not is null {
+        certa ← nodi
+    }
+    var list<string> result ← vacua
+    var int i ← 0
+    while i < certa.longitudo() {
+        result.appende(certa[i].identitas)
+        i ← i + 1
+    }
+    return result
+}
+
+fn tags_ex_nodis(list<dom.Nodus> ∪ null nodi) → list<string> {
+    var list<dom.Nodus> certa ← vacua
+    if nodi not is null {
+        certa ← nodi
+    }
+    var list<string> result ← vacua
+    var int i ← 0
+    while i < certa.longitudo() {
+        result.appende(certa[i].tag)
+        i ← i + 1
+    }
+    return result
+}
+
+# The tag name for a pre-existing identity: the aligned tag-index lookup
+# ("" when the identity is absent from the praesens set).
+fn tag_at(string identitas, list<string> identitates, list<string> tags) → string {
+    var int i ← 0
+    while i < identitates.longitudo() {
+        if identitates[i] ≡ identitas {
+            return tags[i]
+        }
+        i ← i + 1
+    }
+    return ""
+}
+
+# ---------------------------------------------------------------------------
 # The hydration policy, exposed as pure string/list functions (G4-safe —
 # these signatures carry NO imported types, so they stay on the exported
 # file interface; mount composes them). The exempla + the assembled driver
@@ -317,23 +369,22 @@ fn identitates_duplicatae(list<string> collatio) → list<string> {
 
 # The binding-status decision for one View identity: "ligare" (bind the
 # existing matching node — hydration) only when the identity is unique in
-# both markups and the open-tag shapes match; "creare" (create/replace the
-# node from the View) otherwise — including every ambiguous/mismatched
-# case (duplicated identity, out-of-shape node, missing node).
+# both markups AND the VIEW element's tag name equals the PRAESENS node's
+# typed tag name (from the hydration snapshot); "creare" (create/replace
+# the node from the View) otherwise — including every ambiguous/mismatched
+# case (duplicated identity, out-of-shape tag, missing node).
 fn ligamen_status(
     string identitas,
     list<string> identitates_view,
     list<string> identitates_praesentes,
     string markup,
-    string praesens
+    list<string> tags_praesentes
 ) → string {
     var bool ligare ← false
     if quotiens(identitates_praesentes, identitas) ≡ 1 and quotiens(identitates_view, identitas) ≡ 1 {
-        const bool tag_view_habet ← elementum_tag(markup, identitas) not is null
-        const bool tag_praesens_habet ← elementum_tag(praesens, identitas) not is null
-        const string tag_view ← elementum_tag(markup, identitas) coalesce ""
-        const string tag_praesens ← elementum_tag(praesens, identitas) coalesce ""
-        if tag_view_habet and tag_praesens_habet and tag_view ≡ tag_praesens {
+        const string tag_view ← nomen_tagi(elementum_tag(markup, identitas) coalesce "")
+        const string tag_praesens ← tag_at(identitas, identitates_praesentes, tags_praesentes)
+        if not (tag_view ≡ "") and not (tag_praesens ≡ "") and tag_view ≡ tag_praesens {
             ligare ← true
         }
     }
@@ -348,12 +399,15 @@ fn ligamen_status(
 #   extranea:<id> — a pre-existing identity absent from the View (mismatch
 #     → the region is replaced from the View);
 #   muta:<id> — the identity is present in both, unique in both, but the
-#     open-tag shapes differ (out-of-shape node → replaced from the View).
+#     element TAG NAMES differ (out-of-shape node → replaced from the View;
+#     the fidelity is the snapshot's tag-name surface — the landed
+#     web:dom.snapshot carries identity + tag name, recorded in
+#     browser-lifecycle.md).
 fn diagnosia_hydrationis(
     string markup,
-    string praesens,
     list<string> identitates_view,
-    list<string> identitates_praesentes
+    list<string> identitates_praesentes,
+    list<string> tags_praesentes
 ) → list<string> {
     var list<string> diagnosia ← vacua
     const list<string> duplicatae_view ← identitates_duplicatae(identitates_view)
@@ -380,11 +434,9 @@ fn diagnosia_hydrationis(
     while mi < identitates_view.longitudo() {
         const string identitas ← identitates_view[mi]
         if quotiens(identitates_praesentes, identitas) ≡ 1 and quotiens(identitates_view, identitas) ≡ 1 {
-            const bool tag_view_habet ← elementum_tag(markup, identitas) not is null
-            const bool tag_praesens_habet ← elementum_tag(praesens, identitas) not is null
-            const string tag_view ← elementum_tag(markup, identitas) coalesce ""
-            const string tag_praesens ← elementum_tag(praesens, identitas) coalesce ""
-            if tag_view_habet and tag_praesens_habet and tag_view ≠ tag_praesens {
+            const string tag_view ← nomen_tagi(elementum_tag(markup, identitas) coalesce "")
+            const string tag_praesens ← tag_at(identitas, identitates_praesentes, tags_praesentes)
+            if not (tag_view ≡ "") and not (tag_praesens ≡ "") and tag_view ≠ tag_praesens {
                 diagnosia.appende("muta:" + identitas)
             }
         }
@@ -396,41 +448,52 @@ fn diagnosia_hydrationis(
 # ---------------------------------------------------------------------------
 # The mount lifecycle. Pure planner over the host seam: renders the View
 # into the scope (serialized markup), applies the theme cascade, and
-# hydrates — matching data-tela nodes bind instead of being recreated;
+# hydrates — the pre-existing identity set + per-identity tag names come
+# from the provider's TYPED hydration snapshot (dom.snapshot — no textual
+# DOM parse); matching data-tela nodes bind instead of being recreated;
 # mismatch diagnoses + replaces the mismatched region from the View
 # (declared policy); duplicate data-tela values are diagnosed, never a
 # silent bind (identity-hydration.md §6).
 # ---------------------------------------------------------------------------
 
-fn mount(Scope scopus, tela.Visus visus, tela.Thema thema) → Mounted ∪ null {
-    # Fail-closed: an invalid View (html_visus null) or an invalid Theme
-    # (thema_css null) never mounts — no partial region. The nullable
-    # checks run against the call (fix:prim-nullable workaround — primitive
-    # ∪ null bindings do not parse in fn bodies).
+fn mount(dom.Scope scopus, tela.Visus visus, tela.Thema thema) → Mounted ∪ null {
+    # Fail-closed: an invalid View (html_visus null), an invalid Theme
+    # (thema_css null), or a null hydration snapshot (the runtime returns
+    # null only for a null scope) never mounts — no partial region. The
+    # nullable checks run against the call / the bound nullable
+    # (fix:prim-nullable workaround).
     if tela.html_visus(visus) is null then return null
     const string markup ← tela.html_visus(visus) coalesce ""
     if tela.thema_css(thema) is null then return null
     const string css ← tela.thema_css(thema) coalesce ""
 
     const list<string> identitates_view ← parse_identitates(markup)
-    const list<string> identitates_praesentes ← parse_identitates(scopus.textus_praesens)
+
+    # The typed hydration read (head-cto fire-13 + the U6 discovery): the
+    # provider's snapshot per data-tela descendant → the parallel string
+    # lists the policy fns consume. The Scope.textus_praesens carrier is
+    # GONE — the pre-existing state is READ from the DOM, never carried.
+    const list<dom.Nodus> ∪ null nodi ← dom.snapshot(scopus)
+    if nodi is null then return null
+    const list<string> identitates_praesentes ← identitates_ex_nodis(nodi)
+    const list<string> tags_praesentes ← tags_ex_nodis(nodi)
 
     # The hydration policy (diagnose + bind) lives in the exposed pure
     # functions above — mount composes them into the plan.
-    const list<string> diagnosia ← diagnosia_hydrationis(markup, scopus.textus_praesens, identitates_view, identitates_praesentes)
+    const list<string> diagnosia ← diagnosia_hydrationis(markup, identitates_view, identitates_praesentes, tags_praesentes)
 
     # Binding plan: per View identity in order (ligamen_status decides).
     var list<Ligamen> ligamina ← vacua
     var int li ← 0
     while li < identitates_view.longitudo() {
-        const string status ← ligamen_status(identitates_view[li], identitates_view, identitates_praesentes, markup, scopus.textus_praesens)
+        const string status ← ligamen_status(identitates_view[li], identitates_view, identitates_praesentes, markup, tags_praesentes)
         ligamina.appende(ligamen(identitates_view[li], status))
         li ← li + 1
     }
 
     # Region-bind subscriptions: one per View identity (the U2 dispose
     # proof surface; the app's event bindings are app-typed in U3). The
-    # harness binds a webDomOn(node, "tela:ligamen") per descriptor.
+    # host binds a web:dom on(node, "tela:ligamen") per descriptor.
     var list<Subscriptio> subscriptiones ← vacua
     var int sub ← 0
     while sub < identitates_view.longitudo() {
@@ -461,7 +524,7 @@ fn mount(Scope scopus, tela.Visus visus, tela.Thema thema) → Mounted ∪ null 
 # (behavior-design §3.1/§3.2): focus restoration to the pre-replacement
 # focused identity (modeled via focus_tenet), declared focus movement
 # (modeled via focus_optata), and scroll-anchor intent for the region.
-# The harness executes the effects after replacement — declarative on the
+# The host executes the effects after replacement — declarative on the
 # update result, never imperative post-update user-code calls.
 # ---------------------------------------------------------------------------
 
@@ -479,15 +542,15 @@ fn replace(Mounted m, tela.Visus visus) → tela.Renovatio ∪ null {
 }
 
 # The dispose lifecycle. Unsubscribes every active subscription and clears
-# the region. Pure marker here (the harness executes the unsubscribe plan —
-# the webDom* surface binds at the harness level under fix:web-dom-locale).
+# the region. Pure marker here (the host executes the unsubscribe plan —
+# the web:dom surface binds through the documented provider seam).
 fn dispose(Mounted m) → void {
 }
 
 # --- modeled focus state (before/after state for effect derivation) ------
 
 # Model: the pre-replacement focused identity (→ Restitue on replace).
-# The harness mirrors the model onto the actual DOM focus at execution.
+# The host mirrors the model onto the actual DOM focus at execution.
 fn focus_tenet(Mounted m, string identitas) → Mounted {
     return Mounted {
         scopus = m.scopus,
