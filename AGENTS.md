@@ -217,32 +217,49 @@ lifecycle + hydration over the `web:dom` host seam, a DOM shim for the node
 runtime gate, and the segmented-control interaction proof.
 
 - **Browser-module conventions.** The browser module `src/browser.fab`
-  (`tela:browser`, U2) imports `web:dom` through the documented host seam —
-  `web:dom` is consumed read-only (faber-web authored la, targets ts only).
+  (`tela:browser`, U2 `9f23095`) owns the mount/update/dispose lifecycle.
   The **pinned seam call shape** (policy (b) English renderer/host verbs;
-  behavior-design §5): `mount(dom.Scope, Visus, Thema) → Mounted ∪ null`,
-  `replace(Mounted, Visus) → Renovatio ∪ null`, `dispose(Mounted) → vacuum`.
-  `Mounted` carries host state (scope, mounted root, current `Visus`, active
-  theme, subscription list). The kernel owns the pure carriers only —
-  Faber-Latin protocol spellings `Eventum { nomen }`, `union Effectus`
-  (`Restitue`/`Dirige`/`Ancora`, each keyed by `identitas`), `Renovatio {
-  Visus visus, list<Effectus> effectus }`, with kernel-owned constructors
-  (`eventum`, `restitue`, `dirige`, `ancora`, `renovatio`) and the
-  `effectus_identitas` accessor. The message-typed behavior plan is
-  **app-typed** (radix D1 blocks generic user-type construction — never
-  kernel-generic; the campaign's conceptual `mount(Scope, Program, Theme)`
-  decomposes at the app boundary, attaching through the `data-tela` seam).
-  Never ambient global document shortcuts — DOM operations flow through the
-  `Scope`.
+  behavior-design §5) as landed: `mount(Scope, Visus, Thema) → Mounted ∪
+  null`, `replace(Mounted, Visus) → Renovatio ∪ null`, `dispose(Mounted) →
+  void`. The spec sketch's `dom.Scope` is carried by tela:browser's own
+  `Scope { selector, textus_praesens }` handle: the en→la `web:dom` import
+  is **blocked** on in-tree radix 0.80.0 (PARSE001/SEM002 —
+  `fix:web-dom-locale`), so the module does **not** import `web:dom` and
+  the DOM surface binds at the **harness level** (the dom-shim binds the
+  `webDom*` surface). `void` is the en void type (the reader pack maps
+  `vacuum = "void"`), not `vacua`. `Mounted` carries host state (scope,
+  mounted root, current `Visus`, active theme, render plan
+  `textus_markup`/`textus_css`, identity index, hydration diagnostics,
+  binding plan, subscription list, modeled focus). The module-local
+  carriers are `Scope`/`Radiculum`/`Subscriptio`/`Ligamen`; the hydration
+  policy lives in exported G4-safe pure fns (`parse_identitates`,
+  `elementum_tag`, `quotiens`, `identitates_duplicatae`,
+  `ligamen_status`, `diagnosia_hydrationis`). The kernel owns the pure
+  carriers only — Faber-Latin protocol spellings `Eventum { nomen }`,
+  `union Effectus` (`Restitue`/`Dirige`/`Ancora`, each keyed by
+  `identitas`), `Renovatio { Visus visus, list<Effectus> effectus }`, with
+  kernel-owned constructors (`eventum`, `restitue`, `dirige`, `ancora`,
+  `renovatio`) and the `effectus_identitas` accessor. The message-typed
+  behavior plan is **app-typed** (radix D1 blocks generic user-type
+  construction — never kernel-generic; the campaign's conceptual
+  `mount(Scope, Program, Theme)` decomposes at the app boundary, attaching
+  through the `data-tela` seam). Never ambient global document shortcuts —
+  DOM operations flow through the `Scope`.
 - **Escalation markers (G4/dialect).** `fix:g4` — WARN014 snapshot skip on
-  public signatures referencing imported sibling types (the browser module's
-  `web:dom`-typed signatures; the union-returning signature family); the
-  harness-assembly workaround binds the `webDom*` surface directly, so the
-  snapshot does not apply at runtime. `fix:web-dom-locale` — en→la
-  provider-module locale/dialect propagation at `radix check`
-  (PARSE001-family, the CODEGEN001 mechanism): **attempt the import**; on
-  failure record + escalate; fall back to the harness-level DOM binding;
-  **never re-author a `web:dom` copy inside tela**.
+  public signatures referencing imported sibling types; **landed
+  observation**: the pinned seam fns `mount`/`replace` (imported `tela`
+  types in signatures) are export-skipped for consumers — the G4-safe pure
+  policy fns (string/list signatures) stay exported for the check-time
+  exempla, and the harness-assembly workaround binds the `webDom*` surface
+  directly, so the snapshot does not apply at runtime. `fix:web-dom-locale`
+  — en→la provider-module locale/dialect propagation at `radix check`
+  (PARSE001-family, the CODEGEN001 mechanism): **attempted and failed** on
+  in-tree radix 0.80.0; the landed fallback is the harness-level DOM
+  binding (dom-shim binds the `webDom*` surface); **never re-author a
+  `web:dom` copy inside tela**. `fix:prim-nullable` (NEW) — a primitive
+  `∪ null` const/var annotation and a `!` unwrap of a primitive nullable do
+  not parse in named fn bodies (PARSE030/PARSE001); workaround = null
+  checks against the call + `coalesce ""`.
 - **DOM shim + check-mount harness.** The node runtime gate runs the
   mount/update proofs through `scripta/dom-shim.ts` (U2) — a minimal
   in-memory DOM implementing the `webDom*` runtime-binding surface (the
@@ -268,7 +285,9 @@ runtime gate, and the segmented-control interaction proof.
   async-shaped need records the workaround + escalation To mind; it never
   weakens the contract and never waits.
 - **`fix:<id>` discipline inventory (Stage 3).** Markers: `fix:web-dom-locale`
-  (NEW), `fix:g4`, `fix:g5`, `fix:codegen001`, `fix:ts-emitter`,
+  (NEW, landed — attempt failed, harness-level fallback), `fix:g4`,
+  `fix:g5`, `fix:prim-nullable` (NEW — primitive nullable bindings in fn
+  bodies), `fix:codegen001`, `fix:ts-emitter`,
   `fix:snapshot-nomen-collision`. Every applied workaround is marked at the
   site in the module header; **removal = grep-replace after each radix fix
   lands** (e.g. `grep -rn 'fix:web-dom-locale' src/`). A colliding locked

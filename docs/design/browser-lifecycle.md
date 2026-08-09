@@ -9,13 +9,14 @@ Coordination Constraints; Escalation Path), `stage-0-behavior-design.md`
 §1/§3/§4/§5, `docs/design/identity-hydration.md` §6/§7,
 `stage-0-protocol-policies.md` policies (b)/(d), `CAMPAIGN.md` §6/§7, and
 the Stage 1/2 records (`stage-2-determinism.md` R2 note; closeouts).
-**Status**: active (Stage 3 U5 docs unit). U1 landed (`4ca331a`); U2/U3 were
-in flight at writing — see §12 (Reconciliation state) for the boundary.
+**Status**: active (Stage 3 U5 docs unit, reconciled against the landed U2
+emission). U1 landed (`4ca331a`), U2 landed (`9f23095`) — see §12
+(Reconciliation state) for the deviation ledger. U3 pending.
 
 This record documents the Stage 3 lifecycle surface **as the delivery locks
-it** and the behavior carriers **as U1 landed them**. It makes no
-implementation claim beyond the landed kernel emission and the spec-locked
-browser surface.
+it** and **as the U1/U2 emissions landed them** (the landed emission is the
+authority; the spec-locked sketch governs only where no emission exists yet —
+see §12 for the deviation ledger).
 
 ---
 
@@ -24,18 +25,55 @@ browser surface.
 The browser module `tela:browser` (`src/browser.fab`, U2) owns the
 mount/update/dispose lifecycle + hydration over the `web:dom` host seam.
 The **pinned seam call shape** (behavior-design §5 "Stage 3 pins the exact
-seam call shape"; policy (b) renderer/host verbs English; campaign §7):
+seam call shape"; policy (b) renderer/host verbs English; campaign §7) as
+**landed by U2 (`9f23095`)**:
 
 ```text
-mount(dom.Scope, Visus, Thema) → Mounted ∪ null
-replace(Mounted, Visus)        → Renovatio ∪ null
-dispose(Mounted)               → vacuum
+mount(Scope, Visus, Thema) → Mounted ∪ null
+replace(Mounted, Visus)    → Renovatio ∪ null
+dispose(Mounted)           → void
 ```
 
-- **`Mounted`** — the host-state carrier (U2): scope, mounted root, current
-  `Visus`, active theme, subscription list. Its fields reference `web:dom`
-  types — module-local; the cross-package snapshot-skip risk is recorded
-  `fix:g4`.
+- The English verbs (`mount`/`replace`/`dispose`), the three-argument shape,
+  and the fail-closed nullable returns are unchanged from the spec sketch.
+- **`dom.Scope` → tela:browser's `Scope`** (reconciled deviation): the
+  spec-locked sketch read `mount(dom.Scope, Visus, Thema)`. The en→la
+  `web:dom` import is **blocked** on in-tree radix 0.80.0 (PARSE001/SEM002
+  at any real use — `fix:web-dom-locale`, §11), so per delivery U2 done_when
+  (h) the seam carries the blocked `dom.Scope` type as tela:browser's own
+  opaque `Scope` handle (`{ selector, textus_praesens }`). The DOM surface
+  binds at the harness level (the dom-shim binds the `webDom*` surface, §7
+  /§8); web:dom is never re-authored inside tela and the contract is never
+  weakened. After the radix fix lands, the seam flips back to `dom.Scope`
+  (grep-replace, §11).
+- **`dispose(Mounted) → void`** (reconciled deviation): the spec/U5 sketch
+  read `→ vacuum`. `void` is the en-locale void type (the reader pack maps
+  `vacuum = "void"`); `vacua` is the empty-collection value, not a type.
+- **`Mounted`** — the host-state carrier (landed fields):
+
+```fab
+class Mounted {
+    Scope scopus                    # the scoped host region handle
+    Radiculum radix                 # the mounted region root handle
+    tela.Visus visus                # current View
+    tela.Thema thema                # active theme
+    string textus_markup            # serialized View (the render plan)
+    string textus_css               # theme cascade CSS (the render plan)
+    list<string> identitates        # data-tela identity index (document order)
+    list<string> diagnosia          # hydration diagnostics (empty list = clean)
+    list<Ligamen> ligamina          # per-identity binding plan ("ligare"/"creare")
+    list<Subscriptio> subscriptiones # region-bind subscription descriptors
+    string identitas_focus          # modeled pre-replacement focused identity
+    string identitas_focus_optata   # modeled declared focus-movement target
+}
+```
+
+  The module-local host carriers are `Scope { selector, textus_praesens }`,
+  `Radiculum { identitas }`, `Subscriptio { identitas, nomen_eventi }`,
+  `Ligamen { identitas, status }` (kernel-owned constructors `scopus`,
+  `radiculum`, `subscriptio`, `ligamen`). `textus_praesens` is the region's
+  current markup as the state model knows it ("" = empty); the harness
+  mirrors it onto the actual DOM at execution time.
 - **`Renovatio`** — the update result `replace` returns: the next view plus
   the declarative effects (`{ Visus visus, list<Effectus> effectus }`).
 - **Fail-closed returns** — a mount/replace that cannot complete returns
@@ -114,6 +152,32 @@ On mount into a scope whose root already contains Tela-rendered markup
   rendered markup are a hydration-match ambiguity (identity-hydration.md
   §6) → **diagnosed** per the Stage 3 policy, never a silent bind.
 
+### Hydration policy functions (landed — U2 `9f23095`)
+
+The policy lives in exported G4-safe pure functions (string/list signatures
+only — they stay on the exported file interface, unlike the WARN014-skipped
+`mount`/`replace`, §11) that `mount` composes and the check-time exempla
+asserts directly:
+
+```fab
+parse_identitates(string markup) → list<string>        # data-tela identities in document order
+elementum_tag(string markup, string identitas) → string ∪ null  # the identity node's open-tag shape
+quotiens(list<string> collatio, string nomen) → int    # occurrence count
+identitates_duplicatae(list<string> collatio) → list<string>    # distinct identities appearing > once
+ligamen_status(identitas, identitates_view, identitates_praesentes, markup, praesens) → string  # "ligare" | "creare"
+diagnosia_hydrationis(markup, praesens, identitates_view, identitates_praesentes) → list<string>
+```
+
+- `ligamen_status` returns **`"ligare"`** (bind the existing matching node —
+  hydration) only when the identity is unique in both markups and the
+  open-tag shapes match; **`"creare"`** (create/replace from the View)
+  otherwise — including every ambiguous/mismatched case.
+- `diagnosia_hydrationis` emits the deterministic diagnostic prefixes:
+  `duplicata:<id>` (identity appears more than once in either markup),
+  `extranea:<id>` (a pre-existing identity absent from the View), and
+  `muta:<id>` (present in both, unique in both, but the open-tag shapes
+  differ).
+
 ## 4. Update strategy
 
 - **Rerender/replace the explicitly mounted region** (behavior-design
@@ -128,6 +192,14 @@ On mount into a scope whose root already contains Tela-rendered markup
   (`Restitue` restore by identity, `Dirige` move to a declared target,
   `Ancora` scroll anchoring). Never imperative post-update host calls in
   user code — the component boundary stays pure.
+- **Modeled focus state (landed — U2 `9f23095`)**: the before/after state
+  rides `Mounted` as data, set through two model functions —
+  `focus_tenet(Mounted, identitas) → Mounted` (the pre-replacement focused
+  identity → `Restitue` on replace) and
+  `focus_optata(Mounted, identitas) → Mounted` (a declared focus-movement
+  target → `Dirige` on replace). The harness mirrors the model onto the
+  actual DOM focus at execution time; `replace` always adds `Ancora`
+  (scroll-anchor intent) keyed to the region identity.
 - **No keyed reconciliation, signals, hooks, or concurrent rendering**
   (campaign §6 deferral) — deferred until measured application pressure
   earns them.
@@ -170,12 +242,21 @@ reviewers see it without re-reading the campaign:
 
 ## 7. Host-seam consumption
 
-- The browser module consumes `web:dom` **through documented host seams**
-  (behavior-design §5): `Scope`-scoped query/mutation/subscription —
-  `scope(selector)`, `query`/`require`/`all`, `text_set`/`attr_set`/
+- **`web:dom` binds at the harness level (landed posture — `fix:web-dom-locale`).** The en→la `web:dom` import is **blocked** on in-tree radix
+  0.80.0 (PARSE001/SEM002 at any real use — calls, type inference,
+  construction, class-field types), so `tela:browser` does **not** import
+  `web:dom`; the DOM surface binds at the **harness level** — the dom-shim
+  (`tela/scripta/dom-shim.ts`) implements the `webDom*` runtime-binding
+  surface (`webDomScope`/`webDomQuery`/`webDomRequire`/`webDomAll`/
+  `webDomTextSet`/`webDomAttrSet`/`webDomClassAdd`/`webDomOn`/
+  `webDomUnsubscribe`/… — mirroring `faber-web/runtime/dom.ts`), and the
+  assembled runner binds it. The spec's listed seam functions
+  (`scope(selector)`, `query`/`require`/`all`, `text_set`/`attr_set`/
   `class_add`, `on`/`unsubscribe`, `on_input`/`on_keyboard`/`on_pointer`/
-  `on_focus`/`on_submit`, `prevent_default`. The `@ futura` `fetch_text`
-  surface is out of scope (the async gap, §6).
+  `on_focus`/`on_submit`, `prevent_default`) are the **web:dom surface the
+  harness exposes**, not `tela:browser`'s own surface. The `@ futura`
+  `fetch_text` surface is out of scope (the async gap, §6). web:dom is
+  NEVER re-authored inside tela.
 - **No ambient global document shortcuts** for descendant lookup
   (behavior-design §5; `faber-web/README.md`) — DOM operations flow through
   an explicit `Scope`.
@@ -183,24 +264,43 @@ reviewers see it without re-reading the campaign:
   host seams, not edited. Extended only for general host gaps per the
   campaign overlap rule; no general host gap is known at lowering time
   (recorded).
-- **Dialect/locale gap (NEW named escalation)**: `faber-web` is authored in
-  the Latin dialect (`faber.toml` `[reader] locale = "la"`), targets **ts
-  only**, and its proven consumer path is la (WEB5 fixture). The en-locale
-  tela package importing `web:dom` cross-package is **unproven** and may
-  hit the provider-module locale-propagation family (PARSE001 — the
-  CODEGEN001 mechanism) at `radix check` — marker `fix:web-dom-locale`.
-  Posture: **attempt the import**; on failure record + escalate; fall back
-  to the harness-level DOM binding (the assembled runner + dom-shim bind
-  the `webDom*` surface, mirroring `web-shim-dom.js`); **never re-author a
-  `web:dom` copy inside tela**, never weaken the contract.
+- **Dialect/locale gap (NEW named escalation — landed)**: `faber-web` is
+  authored in the Latin dialect (`faber.toml` `[reader] locale = "la"`),
+  targets **ts only**, and its proven consumer path is la (WEB5 fixture).
+  The en-locale tela package importing `web:dom` cross-package was
+  **ATTEMPTED at `radix check` + TS emit** and **failed** with the
+  provider-module locale-propagation family (PARSE001 — the CODEGEN001
+  mechanism; SEM002 at qualified class-field types) — marker
+  `fix:web-dom-locale`. The fallback posture **landed**: the DOM surface
+  binds at the harness level (assembled runner + dom-shim bind the
+  `webDom*` surface, mirroring `web-shim-dom.js`); **never re-author a
+  `web:dom` copy inside tela**, never weaken the contract. The seam's
+  `Scope` handle carries the blocked `dom.Scope` type (see §1).
 
 ## 8. DOM-shim proof vehicle + bounded fidelity
 
 The mount/update proofs ride the **node runtime gate** (Stage 2 residual R1
-convention) through a **DOM shim** (`tela/scripta/dom-shim.ts`, U2): a
-minimal in-memory DOM implementing the `webDom*` runtime-binding surface —
-the WEB5 fixture precedent (`examples/browser-app/tests/fake-dom.mjs` + the
-`web-shim-dom.js` binding facade).
+convention) through a **DOM shim** (`tela/scripta/dom-shim.ts`, U2
+`9f23095`): a minimal in-memory DOM implementing the `webDom*`
+runtime-binding surface — the WEB5 fixture precedent
+(`examples/browser-app/tests/fake-dom.mjs` + the `web-shim-dom.js` binding
+facade). Landed driver surface (U4 `check-mount` builds on these):
+
+- `parseFragment(markup)` — the bounded HTML parser for the serializer's
+  markup shape (elements + single-quoted attributes + `data-tela`
+  identities + nested children + void elements).
+- `executeMountPlan(document, selector, mounted, stamp)` — executes a mount
+  plan at node level: `"ligare"` identities bind to the existing matching
+  node (stamped `"original"` when `stamp` is set), `"creare"` identities
+  are created/replaced from the View, extra/duplicated identity nodes are
+  removed.
+- `bindRegionSubscriptions(document, selector, mounted, handler)` — binds a
+  `webDomOn` subscription per `Mounted.subscriptiones` descriptor.
+- `executeMountProof(api)` — the full Stage 3 U2 mount proof: drives the
+  emitted `mount`/`replace`/`dispose` against the fake DOM and asserts the
+  done_when (g) DOM outcomes (empty mount; hydration binds matching nodes —
+  not recreated; mismatch diagnose+replace; duplicate collapse; replace
+  effects `Restitue`/`Dirige`/`Ancora`; dispose unsubscribes + clears).
 
 - **Bounded fidelity**: assertions at the **state level** (selection / ARIA
   / live-region / subscription / focus / scroll intent), not real layout.
@@ -245,14 +345,15 @@ re-check records the re-confirmed status.
 
 | Defect | Marker | Stage 3 posture |
 | --- | --- | --- |
-| `web:dom` locale/dialect gap (en→la) | `fix:web-dom-locale` | ATTEMPTED at check/emit; on failure record + escalate; fallback = harness-level DOM binding; never re-author a `web:dom` copy inside tela |
-| G4 — WARN014 snapshot skip on public signatures referencing imported sibling types | `fix:g4` | Compose-without + harness-assembly workaround (the snapshot does not apply at runtime); app-local consumption |
+| `web:dom` locale/dialect gap (en→la) | `fix:web-dom-locale` | **ATTEMPTED and FAILED** at check/emit on in-tree radix 0.80.0 (PARSE001/SEM002 — probe matrix in the `browser.fab` header). Landed fallback: harness-level DOM binding (dom-shim binds the `webDom*` surface); the seam carries `dom.Scope` as tela:browser's `Scope` handle; never re-author a `web:dom` copy inside tela |
+| G4 — WARN014 snapshot skip on public signatures referencing imported sibling types | `fix:g4` | **Landed observation**: the pinned seam fns `mount`/`replace` (imported `tela` sibling types in signatures) are export-skipped for consumers. Workaround: the G4-safe pure policy fns (string/list signatures) stay exported for check-time exempla; the harness-assembly workaround covers the skipped fns (the snapshot does not apply at runtime — the driver calls the emitted `mount`/`replace` directly) |
+| **primitive nullable bindings in fn bodies (NEW parser observation)** | **`fix:prim-nullable`** | **Landed, new**: a primitive `∪ null` const/var annotation and a `!` unwrap of a primitive nullable do not parse inside named function bodies on in-tree radix 0.80.0 (PARSE030/PARSE001; the same forms work in `main`, and class `∪ null` works in fn bodies — the kernel's `thema_css` pattern). Workaround: null checks run against the call (`if f(x) is null then …`), then the value binds via `coalesce ""`; shape comparisons carry a boolean `habet` flag |
 | CODEGEN001 — Rust emit-across-imports | `fix:codegen001` | Rust path attempted + recorded; `web:dom` is ts-only so Rust emit of a browser module is doubly out; TS lane is the proven lane; R2 sha-equality |
-| G5/G6 — verb/identifier collisions (`mount`/`replace`/`dispose` + new identifiers) | `fix:g5` | Probed collision-free; a colliding verb is escalated, never silently renamed |
+| G5/G6 — verb/identifier collisions (`mount`/`replace`/`dispose` + new identifiers) | `fix:g5` | Probed collision-free (U2: `scopus`/`radiculum`/`subscriptio`/`ligamen`/`focus_tenet`/`focus_optata`/`parse_identitates`/`elementum_tag` — NONE); a colliding verb is escalated, never silently renamed |
 | TS-emitter observations | `fix:ts-emitter` | Workarounds held; fragile against emitter changes |
 | snapshot-nomen-collision | `fix:snapshot-nomen-collision` | Stage 2 workaround held; new identifiers avoid kernel type names |
 
-## 12. Reconciliation state (U1 landed; U2/U3 pending)
+## 12. Reconciliation state (U1 + U2 landed; U3 pending)
 
 - **U1 emission (`4ca331a`) — verified, no deviation.** The behavior-carrier
   spellings in §2 (`Eventum { nomen }`, `union Effectus` with
@@ -261,12 +362,34 @@ re-check records the re-confirmed status.
   delivery's sketches. The delivery left "exact variant/field spellings are
   the Hand's" — the landed spelling is authoritative and this record
   documents it.
-- **U2 (browser module + dom-shim) and U3 (segmented-interactive) were in
-  flight at the completion of this unit.** This record writes the browser
-  surface against the **spec-locked** seam call shape (§1) and hydration
-  policy (§3). If the U2/U3 emission differs by the time it lands,
-  reconcile within U5 scope or route the deviation to Mind — recorded as a
-  residual, not blocking (done_when (c) path).
+- **U2 emission (`9f23095`) — reconciled, deviations recorded.** This unit
+  is the U5 reconciliation residual (U5 done_when (c)): the record now
+  documents the **landed** browser surface. Every spec-locked sketch
+  deviation, with the authoritative landed shape:
+  1. **Seam call shape** — landed `mount(Scope, Visus, Thema) →
+     Mounted ∪ null`, `replace(Mounted, Visus) → Renovatio ∪ null`,
+     `dispose(Mounted) → void` (§1). The spec sketch's `dom.Scope` is
+     carried by tela:browser's own `Scope` handle (the blocked en→la
+     `web:dom` import, `fix:web-dom-locale`); `vacuum` is the en `void`
+     type (the reader-pack mapping), not `vacua`.
+  2. **`Mounted` fields** — landed spellings in §1 (incl. the render-plan
+     fields `textus_markup`/`textus_css`, the identity index, the
+     diagnostics, the binding plan, the subscription list, and the modeled
+     focus state).
+  3. **Hydration fn names** — landed `parse_identitates`/`elementum_tag`/
+     `quotiens`/`identitates_duplicatae`/`ligamen_status`/
+     `diagnosia_hydrationis` (§3), exposed as G4-safe exported pure fns.
+  4. **`fix:<id>` inventory** — gained `fix:prim-nullable` (NEW parser
+     observation) and the landed g4/web-dom-locale observations (§11).
+  5. **Synchronous-only + shim-boundary statements** — verified unchanged;
+     §7/§8 now record the harness-level `webDom*` binding as the landed
+     posture and the landed dom-shim driver entry points.
+- **U3 (segmented-interactive) is pending.** The interaction proof + the
+  app-typed plan (benchmark `canary-app`, U3) will mount through the
+  landed seam; U4 (`check-mount`) consumes the dom-shim driver surface
+  (§8). When U3 lands, reconcile this record's §5 (live-region policy) and
+  the interaction-gate statements against its emission — the same residual
+  path.
 
 ## Non-goals
 
