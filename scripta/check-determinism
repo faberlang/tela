@@ -18,11 +18,22 @@
 # supersedes the Stage 2 record (3d22b9c7…8340a) and the U3 informational
 # sha (d23a62bb…c74c) — see stage-3-mount-determinism.md.
 #
+# Stage 4 U3/U4 (tela-s4-u3/u4): the runner (canary-app main.fab, 689e87d)
+# now ALSO prints the forms family static render (field/checkbox/select +
+# error/live bytes via the G4-safe *_html helpers) and the U4 behavior-plan
+# status line. The double-build input is therefore the full THREE-PACKAGE
+# composition (extensionlib → formslib → canary-app): the theme-independent
+# HTML, the full cascade under both themes (incl. the formslib bundle rules
+# + the --form-* token layer), the forms static render, the segmented-
+# control static render, and the behavior-plan marker. The sha supersedes
+# the Stage 3 record (77516916…e5490) — see stage-4-extension-proof.md.
+#
 # Determinism posture: determinism applies to STATIC/MOUNT-TIME
-# serialization ONLY (the segmented control's initial HTML + the full
-# cascade); interactive state is time-variant — recorded, not claimed. The
-# interaction sequence is a scripted deterministic assertion sequence under
-# check-mount, not a racy timing test.
+# serialization ONLY (the segmented control's initial HTML + the forms
+# static render + the full cascade); interactive state is time-variant —
+# recorded, not claimed. The interaction sequence is a scripted
+# deterministic assertion sequence under check-mount, not a racy timing
+# test.
 #
 # Lanes:
 #   Primary (Rust): emit canary-app to Rust -> scratch crate OUTSIDE the
@@ -111,16 +122,22 @@ else
 fi
 
 # ---- TS-lane composition lane (proven fallback; U5 evidence shape) -------
-echo "TS lane: emitting valida / tela / extension / main"
+echo "TS lane: emitting valida / tela / extension / forms / main"
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/valida.fab" -o "$SCRATCH/valida.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/extension-lib/src/extension.fab" -o "$SCRATCH/extension.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab" -o "$SCRATCH/main.ts" >/dev/null
 
-echo "TS lane: double-emit byte-identity (kernel)"
+echo "TS lane: double-emit byte-identity (kernel + forms package)"
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela-b.ts" >/dev/null
 if ! cmp -s "$SCRATCH/tela.ts" "$SCRATCH/tela-b.ts"; then
   echo "FAIL: double-emit of the kernel is not byte-identical" >&2
+  exit 1
+fi
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms-b.ts" >/dev/null
+if ! cmp -s "$SCRATCH/forms.ts" "$SCRATCH/forms-b.ts"; then
+  echo "FAIL: double-emit of the forms package is not byte-identical" >&2
   exit 1
 fi
 
@@ -135,6 +152,8 @@ strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
   echo "const tela = { html_visus, css, thema_css, thema_stilum, thema, scopulum, scopuli_core, nomen_scopuli_proprietas, nomen_scopuli_validum, thema_scopuli_core_parati, thema_habet_scopulum, assemble, codicillus, ordo, codicilli_dedupata, ordine_ordinata, stilum_validum, stilum_textus_immundus, codicillus_ex, in_lista, pendeant_parata, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, eventum, restitue, dirige, ancora, renovatio, effectus_identitas, Attributum, Proprietas, Declaratio, Regula, Stilum, Scopulum, Thema, Codicillus, Ordo };"
   strip "$SCRATCH/extension.ts"
   echo "const ext = { chart_axis_muted, chart_axis_muted_tenebrae, chart_grid_muted, chart_grid_muted_tenebrae, chart_scopuli, chart_scopuli_tenebrae, bar_metrum, chart_stilum, Scopulus };"
+  strip "$SCRATCH/forms.ts"
+  echo "const forms = { props_campi, props_boxi, props_selecti, campum_html, boxum_html, selego_html, error_regionum_html, regio_viva_forma_html, agmen_campi_html, form_field_invalid, form_field_valid, form_focus, scopulae_formae, form_stilum, eventus_campi, eventus_mutationis, eventus_submissionis, eventus_click, invalid_textus, error_praesens };"
   strip "$SCRATCH/main.ts"
 } > "$SCRATCH/composition.ts"
 

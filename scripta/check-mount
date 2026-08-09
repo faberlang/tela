@@ -16,6 +16,15 @@
 # WARN014 export-skip on mount/replace does not apply at runtime; the driver
 # calls the emitted functions directly). The webDom* surface binds at the
 # harness level (fix:web-dom-locale — the dom-shim).
+#
+# Stage 4 U5 (tela-s4-u5): the assembly also binds the formslib namespace
+# (FORMS_NS) — the canary-app runner (U3/U4, 9335ad1/689e87d) consumes
+# `forms.*` (the three-package cascade + the forms static render + the U4
+# behavior-plan assertions), so the assembled composition needs the forms
+# binding exactly like the other namespaces. This was a silent break at the
+# U3/U4 boundary (check-mount was not run at those closeouts); repaired here
+# with the same namespace-binding mechanics. The interaction gate itself is
+# unchanged (the segmented-control driver consumes no forms surface).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -46,11 +55,12 @@ echo "check-mount: radix check both benchmark packages (benchmark library home)"
 "$RADIX_BIN" check --locale en "$ROOT/proof/benchmark/extension-lib/src/extension.fab"
 "$RADIX_BIN" check --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab"
 
-echo "check-mount: TS emit valida / tela / browser / extension / main"
+echo "check-mount: TS emit valida / tela / browser / extension / forms / main"
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/valida.fab" -o "$SCRATCH/valida.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/browser.fab" -o "$SCRATCH/browser.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/extension-lib/src/extension.fab" -o "$SCRATCH/extension.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab" -o "$SCRATCH/main.ts" >/dev/null
 
 # Assemble one self-contained file: strip the radix header (2 lines) +
@@ -62,6 +72,7 @@ VALIDA_NS="const valida = { valida_spatium, valida_nomen_tag, valida_nomen_attri
 TELA_NS="const tela = { html_visus, css, thema_css, thema_stilum, thema, scopulum, scopuli_core, nomen_scopuli_proprietas, nomen_scopuli_validum, thema_scopuli_core_parati, thema_habet_scopulum, assemble, codicillus, ordo, codicilli_dedupata, ordine_ordinata, stilum_validum, stilum_textus_immundus, codicillus_ex, in_lista, pendeant_parata, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, eventum, restitue, dirige, ancora, renovatio, effectus_identitas, Attributum, Proprietas, Declaratio, Regula, Stilum, Scopulum, Thema, Codicillus, Ordo };"
 BROWSER_NS="const browser = { scopus, radiculum, subscriptio, ligamen, parse_identitates, elementum_tag, quotiens, identitates_duplicatae, ligamen_status, diagnosia_hydrationis, mount, replace, dispose, focus_tenet, focus_optata };"
 EXT_NS="const ext = { chart_axis_muted, chart_axis_muted_tenebrae, chart_grid_muted, chart_grid_muted_tenebrae, chart_scopuli, chart_scopuli_tenebrae, bar_metrum, chart_stilum, Scopulus };"
+FORMS_NS="const forms = { props_campi, props_boxi, props_selecti, campum_html, boxum_html, selego_html, error_regionum_html, regio_viva_forma_html, agmen_campi_html, form_field_invalid, form_field_valid, form_focus, scopulae_formae, form_stilum, eventus_campi, eventus_mutationis, eventus_submissionis, eventus_click, invalid_textus, error_praesens };"
 
 cat > "$SCRATCH/driver.ts" <<'DRIVER'
 // ---- tela-s3-u4 interaction-gate driver (appended by check-mount) ------
@@ -332,6 +343,8 @@ DRIVER
   echo "$BROWSER_NS"
   strip "$SCRATCH/extension.ts"
   echo "$EXT_NS"
+  strip "$SCRATCH/forms.ts"
+  echo "$FORMS_NS"
   strip "$SCRATCH/main.ts"
   echo ""
   sed 's/^export //' "$ROOT/scripta/dom-shim.ts"

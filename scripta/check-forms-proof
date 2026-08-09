@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+# tela/scripta/check-forms-proof — the Stage 4 fire-9 package-test harness
+# (tela-s4-u5-tests-harness-determinism). Validates the formslib proof
+# package + the consumer under the benchmark library home — the OFFICIAL
+# package test surface (fire-9 norm, stage-4-discovery.md §2).
+#
+#   1. radix check — the package src, the package exempla (exempla-mode,
+#      `+++` frontmatter), and the consumer (canary-app) under the
+#      benchmark libhome.
+#   2. TS lane A — the PACKAGE EXEMPLA GATE: emit valida/tela/forms + the
+#      exempla, assemble ONE self-contained file (strip + namespace
+#      bindings — the check-exempla mechanics), `tsc --noEmit`, then
+#      `node` — the exempla's byte-exact static + ARIA assertions EXECUTE
+#      (fail-closed: any assertion failure or non-zero exit FAILS the
+#      check).
+#   3. TS lane B — the CONSUMER ASSEMBLY GATE: emit valida/tela/extension/
+#      forms/main, assemble, `tsc --noEmit`, then `node` — the three-
+#      package assembly + ordering + dedup + fail-closed regressions + the
+#      U4 pure behavior-plan assertions EXECUTE (fail-closed).
+#
+# The package exempla cannot consume the `→ tela.Visus` component fns
+# through the provider interface (fix:g4 — WARN014 export-skip, recorded);
+# the byte-exact proof rides the G4-safe string-returning `*_html` helpers.
+# The consumer assembly is consumed through the harness-assembly path
+# (fix:g4 — the WARN014 skip does not apply at runtime).
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRATCH="$(mktemp -d "${TMPDIR:-/tmp}/tela-u5-forms-proof.XXXXXX")"
+trap 'rm -rf "$SCRATCH"' EXIT
+
+if [[ -n "${RADIX_ROOT:-}" ]]; then
+  RADIX="$RADIX_ROOT"
+elif [[ -d "$ROOT/../radix/crates/radix" ]]; then
+  RADIX="$ROOT/../radix"
+else
+  RADIX="$ROOT/../../../radix"
+fi
+
+if [[ ! -d "$RADIX/crates/radix" ]]; then
+  echo "check-forms-proof: missing radix checkout at $RADIX" >&2
+  exit 1
+fi
+
+RADIX_BIN="$RADIX/target/debug/radix"
+if [[ ! -x "$RADIX_BIN" ]]; then
+  (cd "$RADIX" && cargo build -q -p radix --bin radix)
+fi
+
+export FABER_LIBRARY_HOME="$ROOT/proof/benchmark/libhome"
+
+echo "check-forms-proof: radix check the proof package + the consumer (benchmark libhome)"
+"$RADIX_BIN" check --locale en "$ROOT/proof/extension-forms/src/forms.fab"
+"$RADIX_BIN" check --locale en "$ROOT/proof/extension-forms/exempla/forms.fab"
+"$RADIX_BIN" check --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab"
+
+echo "check-forms-proof: TS emit valida / tela / forms / exempla / extension / main"
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/valida.fab" -o "$SCRATCH/valida.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/extension-forms/exempla/forms.fab" -o "$SCRATCH/exempla-forms.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/extension-lib/src/extension.fab" -o "$SCRATCH/extension.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab" -o "$SCRATCH/main.ts" >/dev/null
+
+# Assemble a self-contained TS file: drop the radix header (2 lines) and
+# every `import ... from "…"` line, then bind the imported namespaces as
+# plain const objects (the emitted modules declare their top-level bindings
+# without exports).
+strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
+
+VALIDA_NS="const valida = { valida_spatium, valida_nomen_tag, valida_nomen_attributi, valida_nomen_in_spatio, valida_void_html, valida_void_structura };"
+TELA_NS="const tela = { html_visus, css, thema_css, thema_stilum, thema, scopulum, scopuli_core, nomen_scopuli_proprietas, nomen_scopuli_validum, thema_scopuli_core_parati, thema_habet_scopulum, assemble, codicillus, ordo, codicilli_dedupata, ordine_ordinata, stilum_validum, stilum_textus_immundus, codicillus_ex, in_lista, pendeant_parata, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, eventum, restitue, dirige, ancora, renovatio, effectus_identitas, Attributum, Proprietas, Declaratio, Regula, Stilum, Scopulum, Thema, Codicillus, Ordo };"
+EXT_NS="const ext = { chart_axis_muted, chart_axis_muted_tenebrae, chart_grid_muted, chart_grid_muted_tenebrae, chart_scopuli, chart_scopuli_tenebrae, bar_metrum, chart_stilum, Scopulus };"
+FORMS_NS="const forms = { props_campi, props_boxi, props_selecti, campum_html, boxum_html, selego_html, error_regionum_html, regio_viva_forma_html, agmen_campi_html, form_field_invalid, form_field_valid, form_focus, scopulae_formae, form_stilum, eventus_campi, eventus_mutationis, eventus_submissionis, eventus_click, invalid_textus, error_praesens };"
+
+# ---- TS lane A: the package exempla gate (byte-exact static + ARIA) ------
+{
+  strip "$SCRATCH/valida.ts"
+  echo "$VALIDA_NS"
+  strip "$SCRATCH/tela.ts"
+  echo "$TELA_NS"
+  strip "$SCRATCH/forms.ts"
+  echo "$FORMS_NS"
+  strip "$SCRATCH/exempla-forms.ts"
+} > "$SCRATCH/exempla.ts"
+
+echo "check-forms-proof: exempla gate — tsc --noEmit"
+tsc --noEmit --strict --target ES2020 --module ESNext --moduleResolution bundler --skipLibCheck "$SCRATCH/exempla.ts"
+
+echo "check-forms-proof: exempla gate — node (the byte-exact assertions execute; fail-closed)"
+node "$SCRATCH/exempla.ts" >/dev/null
+
+# ---- TS lane B: the consumer assembly gate (assembly + ordering + dedup +
+# fail-closed regressions + the U4 pure behavior plan) ---------------------
+{
+  strip "$SCRATCH/valida.ts"
+  echo "$VALIDA_NS"
+  strip "$SCRATCH/tela.ts"
+  echo "$TELA_NS"
+  strip "$SCRATCH/extension.ts"
+  echo "$EXT_NS"
+  strip "$SCRATCH/forms.ts"
+  echo "$FORMS_NS"
+  strip "$SCRATCH/main.ts"
+} > "$SCRATCH/consumer.ts"
+
+echo "check-forms-proof: consumer assembly gate — tsc --noEmit"
+tsc --noEmit --strict --target ES2020 --module ESNext --moduleResolution bundler --skipLibCheck "$SCRATCH/consumer.ts"
+
+echo "check-forms-proof: consumer assembly gate — node (assembly + ordering + dedup + fail-closed + behavior assertions execute; fail-closed)"
+node "$SCRATCH/consumer.ts" >/dev/null
+
+echo "check-forms-proof: green (package exempla gate + consumer assembly gate; node exit 0)"
