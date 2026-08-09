@@ -1,0 +1,337 @@
+# tela/src/dom.fab — tela:dom — the tela-owned scoped browser DOM contracts
+# and runtime binding surface (English-first).
+#
+# SOURCE: faber-web/src/dom.fab (la) converted to the English-first surface
+# (web-surface-import U1, web-import-u1-tela-dom-source; DELIVERY.md §U1 +
+# §5.2 naming resolutions). The la `web:dom` provider dependency leaves
+# tela/src once the browser flip lands (U4); the runtime symbols (`webDom*`)
+# are KEPT (the documented host-binding contract — §5.2). This module is
+# **import-free** (the G4-safe flat shape, mirroring the kernel).
+#
+# THE CONVERSION RECORD (byte-honest, DELIVERY done_when (d)): every public
+# symbol of faber-web/src/dom.fab has exactly one en counterpart here — 14
+# classes, 9 handler `type` aliases, 29 fns — with the recorded renames:
+#   Nodus → DomNode       (the snapshot node; DELIVERY §5.2)
+#   identitas → identity  (the identity field; matches the Stage 5 U0
+#                          kernel rename)
+#   value → input_value   (FORCED rename: the en-locale type keyword `value`
+#                          (canonical `valor`) makes `fn value` a
+#                          SEM005.duplicate_definition — probe P2/P3; the
+#                          route is tela:dom.input_value → webDomValue)
+# Keyword surface (en): genus→class, textus→string, bivalens→bool,
+# numerus→int, sponte→optional, typus→type, functio→fn, redde→return,
+# nota→print (the en surface of the stub marker — the `print` bodies emit
+# console.log in TS, never executed; the runtime does the work, C8),
+# vacuum→void, verum/falsum→true/false, @ futura→@ future (the ⇥ glyph
+# is never localizes). The Latin-named stdlib call `vacua` is kept (the
+# documented exception list).
+#
+# fix:<id> markers:
+#   fix:sem005-renamed — value → input_value (the forced rename; recorded,
+#     DELIVERY §5.2 — removal = revert after the G6/reserved-keyword fix
+#     lands; the v1 surface keeps the working spelling).
+#   fix:g4 — the 9 `dom.on*` WARN014 skips are RECORDED: they appear on
+#     IMPORTERS of this module (the handler-typed exports — on, on_input,
+#     on_submit, on_frame, on_resize, on_keyboard, on_pointer, on_focus,
+#     on_pointer_lock), read through the documented host binding at the
+#     harness boundary (the DOM_NS assembly). A clean module check is
+#     expected here.
+#   fix:codegen001 — the Rust emit-across-imports block persists; the TS
+#     lane is the proven runtime lane (attempted + recorded per boundary).
+#   LOCALE002 advisories (recorded, non-blocking — Q3 resolution: leave;
+#     they parse + emit): `local`, `width`, `alt`, `shift`, `id`, `status`,
+#     `ok`, `require`, `on` as field/fn names on this surface.
+
+class Scope {
+    string selector = ""
+}
+
+class Element {
+    string selector = ""
+}
+
+# Hydration snapshot node: the identity set of the scoped root — one DomNode
+# per descendant carrying a data-tela attribute. Local type. The canonical
+# pair (namespace + local) mirrors DOM namespaceURI + localName,
+# case-preserved, so SVG camel-case names (foreignObject) and HTML/SVG
+# same-local-name elements stay distinguishable; tag remains for the landed
+# consumers.
+class DomNode {
+    string identity = ""
+    string tag = ""
+    string namespace = ""
+    string local = ""
+}
+
+class DomEvent {
+    string kind = ""
+    bool default_prevented = false
+}
+
+class FrameState {
+    int frame = 0
+    f32 time_ms = 0.0
+    f32 delta_ms = 0.0
+}
+
+class ResizeState {
+    int width = 0
+    int height = 0
+    f32 device_pixel_ratio = 1.0
+}
+
+class KeyboardState {
+    string kind = ""
+    string key = ""
+    string code = ""
+    bool repeat = false
+    bool alt = false
+    bool ctrl = false
+    bool shift = false
+    bool meta = false
+}
+
+class PointerState {
+    string kind = ""
+    f32 x = 0.0
+    f32 y = 0.0
+    f32 movement_x = 0.0
+    f32 movement_y = 0.0
+    int button = 0
+    bool primary = false
+}
+
+class FocusState {
+    bool focused = false
+}
+
+class PointerLockState {
+    bool supported = false
+    bool locked = false
+    bool denied = false
+    bool target_matches = false
+}
+
+class Subscription {
+    int id = 0
+}
+
+class SubmitOptions {
+    bool prevent_default = true
+}
+
+class FetchRequest {
+    string url
+    string method = "GET"
+    string body optional
+}
+
+class FetchResponse {
+    int status = 0
+    bool ok = false
+    string body = ""
+}
+
+type EventHandler = (DomEvent) → void
+
+type InputHandler = (Element, string) → void
+
+type SubmitHandler = (Element) → void
+
+type FrameHandler = (FrameState) → void
+
+type ResizeHandler = (ResizeState) → void
+
+type KeyboardHandler = (KeyboardState) → void
+
+type PointerHandler = (PointerState) → void
+
+type FocusHandler = (FocusState) → void
+
+type PointerLockHandler = (PointerLockState) → void
+
+fn scope(string selector) → Scope {
+    return Scope { selector = selector }
+}
+
+fn element(string selector) → Element {
+    return Element { selector = selector }
+}
+
+# Scoped query returns null when no descendant matches. Runtime binding:
+# webDomQuery(scope, selector).
+fn query(Scope scope, string selector) → Element ∪ null {
+    print scope
+    print selector
+    return null
+}
+
+# Scoped require traps on a missing descendant. Runtime binding:
+# webDomRequire(scope, selector).
+fn require(Scope scope, string selector) → Element {
+    print scope
+    return Element { selector = selector }
+}
+
+# Scoped all returns every matching descendant. Runtime binding:
+# webDomAll(scope, selector).
+fn all(Scope scope, string selector) → list<Element> {
+    print scope
+    print selector
+    const list<Element> elements ← vacua
+    return elements
+}
+
+# Scoped hydration snapshot: one DomNode per descendant of the scoped root
+# carrying a data-tela attribute (identity + tag + canonical namespace/local
+# pair). Fail-closed on a null scope; empty list when no [data-tela] nodes
+# exist. Runtime binding: webDomSnapshot(scope).
+fn snapshot(Scope scope) → list<DomNode> ∪ null {
+    print scope
+    return null
+}
+
+fn text_set(Element element, string value) → void {
+    print element
+    print value
+}
+
+fn attr_set(Element element, string name, string value) → void {
+    print element
+    print name
+    print value
+}
+
+fn attr_remove(Element element, string name) → void {
+    print element
+    print name
+}
+
+fn class_add(Element element, string class_name) → void {
+    print element
+    print class_name
+}
+
+fn class_remove(Element element, string class_name) → void {
+    print element
+    print class_name
+}
+
+fn class_toggle(Element element, string class_name) → void {
+    print element
+    print class_name
+}
+
+fn on(Element element, string event_name, EventHandler handler) → Subscription {
+    print element
+    print event_name
+    print handler
+    return Subscription { id = 0 }
+}
+
+fn unsubscribe(Subscription subscription) → void {
+    print subscription
+}
+
+# The forced rename (fix:sem005-renamed): the en type keyword `value` makes
+# the exact `value` spelling a duplicate definition (SEM005, probe P2/P3);
+# the working spelling is `input_value` (route tela:dom.input_value →
+# webDomValue). The value READ of an Element.
+fn input_value(Element element) → string {
+    print element
+    return ""
+}
+
+fn value_set(Element element, string value) → void {
+    print element
+    print value
+}
+
+fn on_input(Element element, InputHandler handler) → Subscription {
+    print element
+    print handler
+    return Subscription { id = 0 }
+}
+
+fn on_submit(Element element, SubmitOptions options, SubmitHandler handler) → Subscription {
+    print element
+    print options
+    print handler
+    return Subscription { id = 0 }
+}
+
+fn on_frame(FrameHandler handler) → Subscription {
+    print handler
+    return Subscription { id = 0 }
+}
+
+fn on_resize(ResizeHandler handler) → Subscription {
+    print handler
+    return Subscription { id = 0 }
+}
+
+fn on_keyboard(Element element, string event_name, KeyboardHandler handler) → Subscription {
+    print element
+    print event_name
+    print handler
+    return Subscription { id = 0 }
+}
+
+fn on_pointer(Element element, string event_name, PointerHandler handler) → Subscription {
+    print element
+    print event_name
+    print handler
+    return Subscription { id = 0 }
+}
+
+fn on_focus(Element element, string event_name, FocusHandler handler) → Subscription {
+    print element
+    print event_name
+    print handler
+    return Subscription { id = 0 }
+}
+
+fn pointer_lock_state(Element element) → PointerLockState {
+    print element
+    return PointerLockState {
+        supported = false,
+        locked = false,
+        denied = false,
+        target_matches = false
+    }
+}
+
+fn request_pointer_lock(Element element) → PointerLockState {
+    print element
+    return PointerLockState {
+        supported = false,
+        locked = false,
+        denied = true,
+        target_matches = false
+    }
+}
+
+fn exit_pointer_lock() → PointerLockState {
+    return PointerLockState {
+        supported = false,
+        locked = false,
+        denied = false,
+        target_matches = false
+    }
+}
+
+fn on_pointer_lock(Element element, PointerLockHandler handler) → Subscription {
+    print element
+    print handler
+    return Subscription { id = 0 }
+}
+
+fn prevent_default(DomEvent event) → DomEvent {
+    return DomEvent { kind = event.kind, default_prevented = true }
+}
+
+@ future
+fn fetch_text(FetchRequest request) → FetchResponse ⇥ string {
+    print request
+    return FetchResponse { status = 0, ok = false, body = "" }
+}
