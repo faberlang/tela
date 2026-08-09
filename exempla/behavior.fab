@@ -1,0 +1,72 @@
++++
+term = "behavior"
+kind = "concept"
+category = "library"
+locale = "en"
++++
+
+# tela/exempla/behavior.fab — Stage 3 U1 exempla for the behavior carriers
+# in src/tela.fab. Covers every U1 done_when (e) case: event-name
+# construction; every effect variant; an update result carrying a view +
+# effects; pure-carrier composition; the no-closure property (carriers are
+# plain values — construct, combine, read fields, render; no behavior
+# smuggled in).
+#
+# The carrier shapes match behavior-design §1/§3.2: Eventum (typed event
+# name), Effectus (the three declarative host effects — focus restoration,
+# focus movement, scroll anchoring — keyed by stable identity), Renovatio
+# (the update result carrying the next view + effects).
+#
+# PARTIAL (CTO Q2 bar, compile-level): carrier construction + composition
+# are fully proven here (radix check + the TS lane + the runtime gate). The
+# BEHAVIORAL EXECUTION of the effects (mount/replace/dispose, hydration,
+# host effect execution) is deferred to U2 (browser mount) + U3 (the
+# segmented-interactive proof). No f64 arithmetic in the carriers — no f64
+# oracle pins apply.
+#
+# fix:<id> markers: none applied beyond the kernel's — the carrier verbs +
+# variant names probed collision-free on in-tree radix 0.80.0 (fix:g5 —
+# NONE); fix:codegen001 — the Rust emit-across-imports block persists, the
+# TS lane is the proven lane.
+
+import from "tela:tela" private tela
+
+main {
+    # --- event-name construction (the typed event value) -------------------
+    const tela.Eventum event ← tela.eventum("segment-select")
+    assert event.nomen ≡ "segment-select"
+
+    # --- every effect variant (declarative host effects keyed by identity)
+    # Focus restoration — restore focus to the pre-replacement focused node.
+    const tela.Effectus restore ← tela.restitue("tela-seg-2")
+    assert tela.effectus_identitas(restore) ≡ "tela-seg-2"
+    # Focus movement — to a declared target identity.
+    const tela.Effectus move ← tela.dirige("tela-seg-3")
+    assert tela.effectus_identitas(move) ≡ "tela-seg-3"
+    # Scroll anchoring — scroll-preservation intent for the region.
+    const tela.Effectus anchor ← tela.ancora("tela-control")
+    assert tela.effectus_identitas(anchor) ≡ "tela-control"
+
+    # --- an update result carrying a view + effects ------------------------
+    const tela.Visus arbor ← tela.elementum_view(
+        tela.html_spatium(),
+        "div",
+        [ tela.textus_view("segment") ]
+    )
+    const tela.Renovatio update ← tela.renovatio(arbor, [restore, move, anchor])
+    assert update.effectus.longitudo() ≡ 3
+    const string rendered ← tela.html_visus(update.visus) coalesce ""
+    assert rendered ≡ "<div>segment</div>"
+
+    # --- pure-carrier composition: combine effects into an update result ---
+    const tela.Renovatio combined ← tela.renovatio(arbor, [anchor, restore])
+    assert combined.effectus.longitudo() ≡ 2
+
+    # --- the no-closure property: carriers are plain values ---------------
+    # Construct, combine, read fields, render — every carrier is a plain
+    # value (no function/closure field exists anywhere in the three shapes).
+    const tela.Eventum another ← tela.eventum("pointer-down")
+    assert another.nomen ≠ event.nomen
+    const string rendered_combined ← tela.html_visus(combined.visus) coalesce ""
+    assert rendered_combined ≡ "<div>segment</div>"
+}

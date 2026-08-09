@@ -98,6 +98,13 @@
 # components → library packages (topo) → tela.applicatio (last). fix:<id>
 # markers: fix:g5 — NONE (assemble verb not reserved, probed); fix:codegen001
 # — Rust emit-across-imports block persists (attempted + recorded).
+#
+# Stage 3 U1 (behavior carriers) — this module gains the pure behavior-plan
+# carriers Eventum/Effectus/Renovatio (closure-free, web:dom-free, G4-safe
+# flat shape). fix:<id> markers: fix:g5 — NONE (all carrier verbs + variant
+# names probed collision-free); fix:codegen001 — the Rust block persists.
+# PARTIAL marks + the D1/Vinculum constraint are recorded in the Stage 3 U1
+# section header.
 # enum Spatium { html, svg } in one module; in-tree radix 0.80.0,
 # 2026-08-09).
 
@@ -867,4 +874,110 @@ fn assemble(
         }
     }
     return Stilum { regulae = regulae }
+}
+
+# ---------------------------------------------------------------------------
+# Stage 3 U1 — Behavior carriers (behavior-design §2/§3; policy (b)).
+#
+# The pure behavior-plan carriers for the Branch B adjacent plan: Eventum
+# (the event value), Effectus (declarative host effects keyed by stable
+# identity), Renovatio (the update result `replace` carries). Closure-free
+# and web:dom-free — carriers are plain values; the kernel explicitly does
+# NOT own Vinculum/Nuntius/Program (the radix D1 generic-construction defect
+# + the concrete-message-type constraint: the app-typed plan is U3's
+# surface, recorded here, never kernel-generic).
+#
+# The carrier shapes match behavior-design §1/§3.2: the segmented-control
+# contract (§1) consumes event names; the update strategy (§3.2) consumes
+# the three declarative effects — focus restoration (by the pre-replacement
+# focused node's stable identity), focus movement (to a declared target
+# identity), scroll anchoring (scroll-preservation intent) — executed by the
+# host after replacement, declarative on the update result, never imperative
+# post-update user-code calls.
+#
+# PARTIAL marks (CTO Q2 bar, compile-level): the carrier shapes + kernel
+# construction are fully proven here (exempla + lanes). The BEHAVIORAL
+# EXECUTION of the effects (the host executing them; mount/replace/dispose;
+# hydration) is PARTIAL at U1 — deferred to U2 (browser mount) + U3 (the
+# segmented-interactive proof). No f64 arithmetic is involved in the
+# carriers, so no f64 oracle pins apply.
+#
+# fix:<id> markers applied in this unit:
+#   fix:g5 — NONE: the carrier verbs (eventum, restitue, dirige, ancora,
+#            renovatio) + variant names (Restitue/Dirige/Ancora) probed
+#            collision-free on in-tree radix 0.80.0 (a free fn may share a
+#            class name; union variants do not bind top-level the way enum
+#            members do).
+#   fix:codegen001 — Rust emit-across-imports remains blocked (attempted +
+#            recorded); the TS lane is the proven runtime lane.
+# ---------------------------------------------------------------------------
+
+# Eventum: the event value — a typed event-name carrier (policy (b) locked
+# spelling). Closure-free: an event carries a name, not behavior.
+class Eventum {
+    string nomen
+}
+
+# Effectus: the declarative host effects from behavior-design §3.2 — exactly
+# three variants, each keyed by a stable identity (the data-tela value the
+# Stage 1 hydration seam binds to):
+#   Restitue — focus restoration: restore focus to the node that held it
+#     before replacement (by its stable identity);
+#   Dirige   — focus movement: move focus to a declared target identity;
+#   Ancora   — scroll anchoring: scroll-preservation intent for the region.
+union Effectus {
+    Restitue { string identitas },
+    Dirige { string identitas },
+    Ancora { string identitas }
+}
+
+# Renovatio: the update result `replace` carries (behavior-design §3) — the
+# next view plus the declarative effects the host executes after
+# replacement.
+class Renovatio {
+    Visus visus
+    list<Effectus> effectus
+}
+
+# Kernel-owned constructors (G3 posture — ordinary functions over the same
+# public values, like the Stage 1/2 kernel constructors; probed
+# collision-free).
+fn eventum(string nomen) → Eventum {
+    return Eventum { nomen = nomen }
+}
+
+fn restitue(string identitas) → Effectus {
+    return variant Restitue { identitas = identitas } ∷ Effectus
+}
+
+fn dirige(string identitas) → Effectus {
+    return variant Dirige { identitas = identitas } ∷ Effectus
+}
+
+fn ancora(string identitas) → Effectus {
+    return variant Ancora { identitas = identitas } ∷ Effectus
+}
+
+# Effect-key accessor: the stable identity an effect keys to. The host
+# executes effects by reading this key (U2 effect execution; U3 the
+# segmented-interactive proof) — and the kernel is the only place a
+# consumer-imported union's variants can be matched (the G3-family
+# imported-union variant pattern does not bind from a consumer; recorded).
+# Total over the three variants — never null.
+fn effectus_identitas(Effectus effectus) → string {
+    match effectus {
+        case Restitue const identitas {
+            return identitas
+        }
+        case Dirige const identitas {
+            return identitas
+        }
+        case Ancora const identitas {
+            return identitas
+        }
+    }
+}
+
+fn renovatio(Visus visus, list<Effectus> effectus) → Renovatio {
+    return Renovatio { visus = visus, effectus = effectus }
 }
