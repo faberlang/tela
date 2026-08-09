@@ -89,6 +89,15 @@
 # emit-across-imports block persists (provider-module locale propagation),
 # the Rust lane is attempted + recorded, the TS lane is the proven runtime
 # lane. See the Stage 2 U1 section header for the pinned core baseline.
+#
+# Stage 2 U2 (product assembly + cascade) — this module gains the kernel-owned
+# Codicillus/Ordo carriers, bundle dedup by stable identity, the topo-ordering
+# of library packages over the explicit ordines map (stable-identity
+# tie-break), and the assemble(...) → Stilum ∪ null product assembler with
+# cascade layers: tela.reset (opt-in; v1 ships none) → tela.tokens → tela.
+# components → library packages (topo) → tela.applicatio (last). fix:<id>
+# markers: fix:g5 — NONE (assemble verb not reserved, probed); fix:codegen001
+# — Rust emit-across-imports block persists (attempted + recorded).
 # enum Spatium { html, svg } in one module; in-tree radix 0.80.0,
 # 2026-08-09).
 
@@ -525,21 +534,327 @@ fn thema_habet_scopulum(Thema thema, string nomen) → bool {
 
 # Public theme renderer verb (policy (b)): emits the token layer as one
 # :root Regula through the existing css(Stilum) serializer. Fail-closed:
-# missing required core token or invalid token name → null (no output).
-# Deterministic bytes over author order.
+# missing required core token, invalid token name, or duplicate token
+# identity with different content → null (no output). Deterministic bytes
+# over author order.
 fn thema_css(Thema thema) → string ∪ null {
+    const Stilum ∪ null stilum_result ← thema_stilum(thema)
+    if stilum_result is null then return null
+    return css(Stilum { regulae = stilum_result!.regulae })
+}
+
+# Token-layer builder shared by thema_css and the product assembler (U2):
+# the :root Regula over the resolved tokens. Fail-closed: missing required
+# core token → null; invalid token name → null; duplicate token identity —
+# identical content dedups, different content rejects (policy (e); the
+# stage-scope duplicate-token rule exercised here, the renderer surface).
+# Deterministic bytes over author order.
+fn thema_stilum(Thema thema) → Stilum ∪ null {
     if not thema_scopuli_core_parati(thema) then return null
     var list<Declaratio> declarationes ← vacua
-    for from thema.scopuli const scopulus {
+    var int i ← 0
+    while i < thema.scopuli.longitudo() {
+        const Scopulum scopulus ← thema.scopuli[i]
         if not nomen_scopuli_validum(scopulus.nomen) then return null
-        declarationes.appende(Declaratio {
-            nomen = nomen_scopuli_proprietas(scopulus.nomen),
-            valor = scopulus.valor
-        })
+        var bool duplicatum ← false
+        var int j ← 0
+        while j < i {
+            const Scopulum prior ← thema.scopuli[j]
+            if prior.nomen ≡ scopulus.nomen {
+                if prior.valor ≠ scopulus.valor then return null
+                duplicatum ← true
+            }
+            j ← j + 1
+        }
+        if not duplicatum {
+            declarationes.appende(Declaratio {
+                nomen = nomen_scopuli_proprietas(scopulus.nomen),
+                valor = scopulus.valor
+            })
+        }
+        i ← i + 1
     }
-    return css(Stilum {
+    return Stilum {
         regulae = [
             Regula { selector = ":root", declarationes = declarationes }
         ]
-    })
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Stage 2 U2 — Product assembly + cascade ordering (campaign §4/§7; policy (e)).
+#
+# assemble(...) → Stilum ∪ null — a PURE function over explicit inputs:
+#   thema       — the selected theme (renders the tela.tokens :root layer)
+#   reset       — optional reset bundle (tela.reset layer; v1 ships NO reset
+#                 by default — the layer emits only when a bundle is given)
+#   componentes — component style bundles (tela.components layer, input order)
+#   ordines     — the explicit package-order map (identity + dependency list;
+#                 stdlib-only, no import introspection)
+#   codicilli   — extension/library style bundles keyed by package identity
+#                 (ordered by the ordines topo map)
+#   applicatio  — the optional application style bundle (last layer)
+#
+# CASCADE LAYER ORDER (emission order — later rules win, the deterministic
+# cascade guarantee): tela.reset (opt-in) → tela.tokens (rendered :root
+# token layer) → tela.components → extension/library packages in topo order
+# → tela.applicatio (last). @layer at-rule syntax is NOT modeled in v1
+# (policy (c) growth; recorded deferred).
+#
+# BUNDLE DEDUP (policy (e)): stable-identity dedup — identical duplicates
+# (same rendered css) collapse to one; duplicate identity with different
+# content rejects (fail-closed).
+#
+# LIBRARY ORDERING: dependency-graph topological order over the explicit
+# ordines map, then stable package identity as the deterministic
+# content-independent tie-break (lexicographic via the list ordinata
+# intrinsic). Cycles, unknown dependencies, and codicilli identities absent
+# from the ordines map reject (fail-closed).
+#
+# FAIL-CLOSED (U2 done_when (d)): dependency cycles reject; duplicate bundle
+# identities with different content reject; duplicate token identities with
+# different content reject (thema_stilum); identical duplicates dedup;
+# invalid rule/declaration output (empty selector/property/value or CSS
+# structure-breaking characters) rejects before emission.
+#
+# fix:<id> markers applied in this unit:
+#   fix:g5 — NONE: the assemble verb verified against the reserved-keyword /
+#            enum-member bindings on in-tree radix 0.80.0 (not reserved; the
+#            probe in U1 established that a free fn may share a class name).
+#   fix:codegen001 — Rust emit-across-imports remains blocked (provider-module
+#            locale propagation); the Rust lane is attempted + recorded; the
+#            TS lane is the proven runtime lane.
+#   The nullable-result consumption (field-copy reconstructions) follows the
+#   established kernel pattern (binding/argument `!` unwrap is rejected by
+#   the parser — the same workaround family as the U1 thema_css wrapper).
+# ---------------------------------------------------------------------------
+
+# A style bundle: stable identity + the Stilum it contributes. Stable
+# identity = the locked package/bundle name (policy (e) — the deterministic
+# tie-break basis).
+class Codicillus {
+    string identitas
+    Stilum stilum
+}
+
+# One package-order entry: package identity + its dependency identities.
+# The explicit package-order map — stdlib-only, no import introspection.
+class Ordo {
+    string identitas
+    list<string> dependet
+}
+
+# Kernel-owned constructors (G3 posture).
+fn codicillus(string identitas, Stilum stilum) → Codicillus {
+    return Codicillus { identitas = identitas, stilum = stilum }
+}
+
+fn ordo(string identitas, list<string> dependet) → Ordo {
+    return Ordo { identitas = identitas, dependet = dependet }
+}
+
+# Bundle dedup by stable identity (policy (e)): identical duplicates (same
+# rendered css) collapse to one; duplicate identity with different content
+# → null (fail-closed).
+fn codicilli_dedupata(list<Codicillus> codicilli) → list<Codicillus> ∪ null {
+    var list<Codicillus> unici ← vacua
+    var int i ← 0
+    while i < codicilli.longitudo() {
+        const Codicillus codicillus ← codicilli[i]
+        var bool duplicatum ← false
+        var int j ← 0
+        while j < i {
+            const Codicillus prior ← codicilli[j]
+            if prior.identitas ≡ codicillus.identitas {
+                if css(prior.stilum) ≠ css(codicillus.stilum) then return null
+                duplicatum ← true
+            }
+            j ← j + 1
+        }
+        if not duplicatum then unici.appende(codicillus)
+        i ← i + 1
+    }
+    return unici
+}
+
+# Set membership over a string list.
+fn in_lista(list<string> collatio, string nomen) → bool {
+    for from collatio const item {
+        if item ≡ nomen then return true
+    }
+    return false
+}
+
+# A package is ready when its declared dependencies are all already placed.
+# An identity absent from the ordines map is never ready (its dependencies
+# are unknowable) — the topo fails closed.
+fn pendeant_parata(list<Ordo> ordines, string identitas, list<string> praeposita) → bool {
+    var int i ← 0
+    while i < ordines.longitudo() {
+        const Ordo ordo ← ordines[i]
+        if ordo.identitas ≡ identitas {
+            var int j ← 0
+            while j < ordo.dependet.longitudo() {
+                if not in_lista(praeposita, ordo.dependet[j]) then return false
+                j ← j + 1
+            }
+            return true
+        }
+        i ← i + 1
+    }
+    return false
+}
+
+# Topological order of the package identities over the explicit ordines map
+# (policy (e)): dependencies precede dependents; among the ready packages the
+# stable identity is the deterministic tie-break (lexicographic via the list
+# ordinata intrinsic — content-independent). A cycle (no ready package while
+# identities remain) or an unresolvable dependency → null (fail-closed).
+fn ordine_ordinata(list<Ordo> ordines, list<string> identitates) → list<string> ∪ null {
+    var list<string> ordinata ← vacua
+    var list<string> reliqua ← identitates
+    while reliqua.longitudo() > 0 {
+        var list<string> parata ← vacua
+        var int i ← 0
+        while i < reliqua.longitudo() {
+            if pendeant_parata(ordines, reliqua[i], ordinata) then parata.appende(reliqua[i])
+            i ← i + 1
+        }
+        if parata.longitudo() ≡ 0 then return null
+        parata ← parata.ordinata()
+        const string electa ← parata[0]
+        ordinata.appende(electa)
+        var list<string> novae ← vacua
+        var int j ← 0
+        while j < reliqua.longitudo() {
+            if reliqua[j] ≠ electa then novae.appende(reliqua[j])
+            j ← j + 1
+        }
+        reliqua ← novae
+    }
+    return ordinata
+}
+
+# CSS-structure-breaking characters in selector / property / value text make
+# the emitted rule invalid — fail-closed before emission.
+fn stilum_textus_immundus(string textus) → bool {
+    var int i ← 0
+    while i < textus.longitudo() {
+        const string c ← textus.sectio(i, i + 1)
+        if c ≡ "{" then return true
+        if c ≡ "}" then return true
+        if c ≡ ";" then return true
+        if c ≡ "\n" then return true
+        i ← i + 1
+    }
+    return false
+}
+
+# Fail-closed rule/declaration shape: non-empty selector / property / value
+# and no CSS-structure-breaking characters.
+fn stilum_validum(Stilum stilum) → bool {
+    for from stilum.regulae const regula {
+        if regula.selector.longitudo() ≡ 0 then return false
+        if stilum_textus_immundus(regula.selector) then return false
+        for from regula.declarationes const decl {
+            if decl.nomen.longitudo() ≡ 0 then return false
+            if decl.valor.longitudo() ≡ 0 then return false
+            if stilum_textus_immundus(decl.nomen) then return false
+            if stilum_textus_immundus(decl.valor) then return false
+        }
+    }
+    return true
+}
+
+# Find the Stilum a package identity contributes (the library-layer bundle
+# lookup). Unknown identity → null (the topo already failed closed).
+fn codicillus_ex(string identitas, list<Codicillus> codicilli) → Stilum ∪ null {
+    for from codicilli const codicillus {
+        if codicillus.identitas ≡ identitas then return codicillus.stilum
+    }
+    return null
+}
+
+# Public product-assembly verb (policy (b); campaign §7): one ordered Stilum
+# grouped in cascade-layer order. Fail-closed (no output on any reject).
+# Deterministic bytes over the explicit inputs.
+fn assemble(
+    Thema thema,
+    Stilum ∪ null reset,
+    list<Codicillus> componentes,
+    list<Ordo> ordines,
+    list<Codicillus> codicilli,
+    Codicillus ∪ null applicatio
+) → Stilum ∪ null {
+    # tela.tokens — the rendered :root token layer (fail-closed).
+    const Stilum ∪ null tokens_result ← thema_stilum(thema)
+    if tokens_result is null then return null
+    const Stilum tokens ← Stilum { regulae = tokens_result!.regulae }
+
+    # tela.reset — validity only (emission order handled below); v1 ships no
+    # reset by default, so the layer emits only when a bundle is provided.
+    if reset not is null {
+        if not stilum_validum(Stilum { regulae = reset!.regulae }) then return null
+    }
+
+    # tela.components — dedup by stable identity; input order preserved.
+    const list<Codicillus> ∪ null componentes_unici ← codicilli_dedupata(componentes)
+    if componentes_unici is null then return null
+    const list<Codicillus> componente_vacua ← vacua
+    const list<Codicillus> componentes_finales ← componentes_unici coalesce componente_vacua
+
+    # Library packages — dedup, then topo order over the explicit ordines
+    # map (every codicillus identity must appear in ordines).
+    const list<Codicillus> ∪ null codicilli_unici ← codicilli_dedupata(codicilli)
+    if codicilli_unici is null then return null
+    const list<Codicillus> codicilli_vacui ← vacua
+    const list<Codicillus> codicilli_finales ← codicilli_unici coalesce codicilli_vacui
+    var list<string> identitates ← vacua
+    var int m ← 0
+    while m < codicilli_finales.longitudo() {
+        identitates.appende(codicilli_finales[m].identitas)
+        m ← m + 1
+    }
+    const list<string> ∪ null librariae_result ← ordine_ordinata(ordines, identitates)
+    if librariae_result is null then return null
+    const list<string> librariae_vacuae ← vacua
+    const list<string> librariae ← librariae_result coalesce librariae_vacuae
+
+    # tela.applicatio — the last layer; validity only.
+    if applicatio not is null {
+        if not stilum_validum(Stilum { regulae = applicatio!.stilum.regulae }) then return null
+    }
+
+    # Assemble the ordered Stilum — layer order IS emission order.
+    var list<Regula> regulae ← vacua
+    if reset not is null {
+        for from reset!.regulae const regula {
+            regulae.appende(regula)
+        }
+    }
+    for from tokens.regulae const regula {
+        regulae.appende(regula)
+    }
+    var int idx ← 0
+    while idx < componentes_finales.longitudo() {
+        for from componentes_finales[idx].stilum.regulae const regula {
+            regulae.appende(regula)
+        }
+        idx ← idx + 1
+    }
+    var int ord ← 0
+    while ord < librariae.longitudo() {
+        const Stilum ∪ null stilum ← codicillus_ex(librariae[ord], codicilli_finales)
+        if stilum is null then return null
+        for from stilum!.regulae const regula {
+            regulae.appende(regula)
+        }
+        ord ← ord + 1
+    }
+    if applicatio not is null {
+        for from applicatio!.stilum.regulae const regula {
+            regulae.appende(regula)
+        }
+    }
+    return Stilum { regulae = regulae }
 }

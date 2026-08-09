@@ -1,0 +1,198 @@
++++
+term = "assemble"
+kind = "concept"
+category = "library"
+locale = "en"
++++
+
+# tela/exempla/assemble.fab — Stage 2 U2 exempla for product assembly +
+# cascade ordering in src/tela.fab. Covers every U2 done_when (f) case:
+# bundle dedup (two identical bundles → one); topo order (a depends-on-b →
+# b precedes a); stable-identity tie-break (unrelated packages ordered
+# lexicographically); cycle rejection; duplicate-identity-different-content
+# rejection; cascade layer order (reset → tokens → components → libraries →
+# application) with and without a reset bundle; invalid rule rejection;
+# duplicate token identity with different content rejection (the shared
+# token-layer rule).
+#
+# fix:<id> markers: none applied beyond the kernel's — the assemble verb is
+# not reserved (fix:g5 — NONE); fix:codegen001 — the Rust emit-across-imports
+# block persists, the TS lane is the proven lane.
+
+import from "tela:tela" private tela
+
+main {
+    # The base theme (full core baseline; the token layer is identical across
+    # every assembly below).
+    const tela.Thema solaris ← tela.thema("solaris", [
+        tela.scopulum("surface.canvas", "#ffffff"),
+        tela.scopulum("surface.panel", "#f9fafb"),
+        tela.scopulum("text.primary", "#111827"),
+        tela.scopulum("text.muted", "#6b7280"),
+        tela.scopulum("border.default", "#e5e7eb"),
+        tela.scopulum("accent.primary", "#2563eb"),
+        tela.scopulum("state.positive", "#16a34a"),
+        tela.scopulum("state.caution", "#d97706")
+    ])
+    const string tokens_css ← ":root { --surface-canvas: #ffffff; --surface-panel: #f9fafb; --text-primary: #111827; --text-muted: #6b7280; --border-default: #e5e7eb; --accent-primary: #2563eb; --state-positive: #16a34a; --state-caution: #d97706; }\n"
+
+    # --- (f) bundle dedup: two identical bundles → one --------------------
+    const tela.Codicillus panel ← tela.codicillus("panel", tela.Stilum {
+        regulae = [
+            tela.Regula {
+                selector = ".panel",
+                declarationes = [ tela.Declaratio { nomen = "color", valor = "var(--text-primary)" } ]
+            }
+        ]
+    })
+    const tela.Stilum ∪ null dedup_result ← tela.assemble(solaris, null, [panel, panel], [], [], null)
+    assert not (dedup_result ≡ null)
+    const string dedup_css ← tela.css(tela.Stilum { regulae = dedup_result!.regulae }) coalesce ""
+    assert dedup_css ≡ tokens_css + ".panel { color: var(--text-primary); }\n"
+
+    # --- (f) topo order: a depends-on-b → b precedes a --------------------
+    const tela.Codicillus lib_a ← tela.codicillus("a", tela.Stilum {
+        regulae = [
+            tela.Regula {
+                selector = ".a",
+                declarationes = [ tela.Declaratio { nomen = "display", valor = "grid" } ]
+            }
+        ]
+    })
+    const tela.Codicillus lib_b ← tela.codicillus("b", tela.Stilum {
+        regulae = [
+            tela.Regula {
+                selector = ".b",
+                declarationes = [ tela.Declaratio { nomen = "display", valor = "block" } ]
+            }
+        ]
+    })
+    const tela.Stilum ∪ null topo_result ← tela.assemble(
+        solaris,
+        null,
+        [],
+        [ tela.ordo("a", ["b"]), tela.ordo("b", []) ],
+        [lib_a, lib_b],
+        null
+    )
+    const string topo_css ← tela.css(tela.Stilum { regulae = topo_result!.regulae }) coalesce ""
+    assert topo_css ≡ tokens_css + ".b { display: block; }\n.a { display: grid; }\n"
+
+    # --- (f) tie-break: unrelated packages ordered by stable identity -----
+    const tela.Codicillus lib_zeta ← tela.codicillus("zeta", tela.Stilum {
+        regulae = [
+            tela.Regula {
+                selector = ".zeta",
+                declarationes = [ tela.Declaratio { nomen = "color", valor = "red" } ]
+            }
+        ]
+    })
+    const tela.Codicillus lib_alpha ← tela.codicillus("alpha", tela.Stilum {
+        regulae = [
+            tela.Regula {
+                selector = ".alpha",
+                declarationes = [ tela.Declaratio { nomen = "color", valor = "blue" } ]
+            }
+        ]
+    })
+    const tela.Stilum ∪ null tie_result ← tela.assemble(
+        solaris,
+        null,
+        [],
+        [ tela.ordo("zeta", []), tela.ordo("alpha", []) ],
+        [lib_zeta, lib_alpha],
+        null
+    )
+    const string tie_css ← tela.css(tela.Stilum { regulae = tie_result!.regulae }) coalesce ""
+    assert tie_css ≡ tokens_css + ".alpha { color: blue; }\n.zeta { color: red; }\n"
+
+    # --- (f) cycle rejection (fail-closed) --------------------------------
+    const tela.Stilum ∪ null cycle_result ← tela.assemble(
+        solaris,
+        null,
+        [],
+        [ tela.ordo("a", ["b"]), tela.ordo("b", ["a"]) ],
+        [lib_a, lib_b],
+        null
+    )
+    assert cycle_result ≡ null
+
+    # --- (f) duplicate-identity-different-content rejection ---------------
+    const tela.Codicillus panel_altera ← tela.codicillus("panel", tela.Stilum {
+        regulae = [
+            tela.Regula {
+                selector = ".panel",
+                declarationes = [ tela.Declaratio { nomen = "color", valor = "blue" } ]
+            }
+        ]
+    })
+    const tela.Stilum ∪ null conflict_result ← tela.assemble(solaris, null, [panel, panel_altera], [], [], null)
+    assert conflict_result ≡ null
+
+    # --- (f) cascade layer order WITH a reset bundle ----------------------
+    const tela.Stilum reset ← tela.Stilum {
+        regulae = [
+            tela.Regula {
+                selector = "*",
+                declarationes = [ tela.Declaratio { nomen = "margin", valor = "0" } ]
+            }
+        ]
+    }
+    const tela.Codicillus app ← tela.codicillus("app", tela.Stilum {
+        regulae = [
+            tela.Regula {
+                selector = ".app",
+                declarationes = [ tela.Declaratio { nomen = "gap", valor = "1rem" } ]
+            }
+        ]
+    })
+    const tela.Stilum ∪ null full_result ← tela.assemble(
+        solaris,
+        reset,
+        [panel],
+        [ tela.ordo("a", ["b"]), tela.ordo("b", []) ],
+        [lib_a, lib_b],
+        app
+    )
+    const string full_css ← tela.css(tela.Stilum { regulae = full_result!.regulae }) coalesce ""
+    assert full_css ≡ "* { margin: 0; }\n" + tokens_css + ".panel { color: var(--text-primary); }\n.b { display: block; }\n.a { display: grid; }\n.app { gap: 1rem; }\n"
+
+    # --- (f) cascade layer order WITHOUT a reset bundle -------------------
+    const tela.Stilum ∪ null no_reset_result ← tela.assemble(
+        solaris,
+        null,
+        [panel],
+        [ tela.ordo("a", ["b"]), tela.ordo("b", []) ],
+        [lib_a, lib_b],
+        app
+    )
+    const string no_reset_css ← tela.css(tela.Stilum { regulae = no_reset_result!.regulae }) coalesce ""
+    assert no_reset_css ≡ tokens_css + ".panel { color: var(--text-primary); }\n.b { display: block; }\n.a { display: grid; }\n.app { gap: 1rem; }\n"
+
+    # --- (f) invalid rule rejection (empty selector) ----------------------
+    const tela.Codicillus malum ← tela.codicillus("malum", tela.Stilum {
+        regulae = [
+            tela.Regula {
+                selector = "",
+                declarationes = [ tela.Declaratio { nomen = "color", valor = "red" } ]
+            }
+        ]
+    })
+    const tela.Stilum ∪ null invalid_result ← tela.assemble(solaris, null, [malum], [], [], null)
+    assert invalid_result ≡ null
+
+    # --- (d) duplicate token identity with different content rejects ------
+    const tela.Thema gemina ← tela.thema("gemina", [
+        tela.scopulum("surface.canvas", "#ffffff"),
+        tela.scopulum("surface.panel", "#f9fafb"),
+        tela.scopulum("text.primary", "#111827"),
+        tela.scopulum("text.muted", "#6b7280"),
+        tela.scopulum("border.default", "#e5e7eb"),
+        tela.scopulum("accent.primary", "#2563eb"),
+        tela.scopulum("state.positive", "#16a34a"),
+        tela.scopulum("state.caution", "#d97706"),
+        tela.scopulum("state.caution", "#000000")
+    ])
+    const tela.Stilum ∪ null token_dup_result ← tela.assemble(gemina, null, [], [], [], null)
+    assert token_dup_result ≡ null
+}
