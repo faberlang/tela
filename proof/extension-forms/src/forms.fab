@@ -272,3 +272,95 @@ fn agmen_campi_html(Props_campi props) → string {
     const string markup ← tela.html_visus(agmen_campi(props)) coalesce ""
     return markup
 }
+
+# ---------------------------------------------------------------------------
+# Stage 4 U3 — namespaced `form.*` theme tokens, the component style
+# bundles, and the product-assembly input (the three-package cascade's
+# formslib contribution).
+#
+# Token surface (delivery U3 done_when (a)): zero-arg accessors returning
+# the local token-carrier class (the extension `Scopulus` precedent) —
+# consumers read fields on the call result (`forms.form_field_invalid()
+# .nomen`/`.valor`); never a nameable qualified type, never a widened
+# kernel `Scopulum` record. Token rendering is the kernel's (`thema_css` →
+# `--form-field-invalid`). `form.focus` is the focus-ring token.
+# ---------------------------------------------------------------------------
+
+# The local token-carrier class (distinct from the kernel `Scopulum` and the
+# extension's `Scopulus` — fix:snapshot-nomen-collision).
+class Scopula_formae {
+    string nomen
+    string valor
+}
+
+fn form_field_invalid() → Scopula_formae {
+    return Scopula_formae { nomen = "form.field.invalid", valor = "#dc2626" }
+}
+
+fn form_field_valid() → Scopula_formae {
+    return Scopula_formae { nomen = "form.field.valid", valor = "#16a34a" }
+}
+
+fn form_focus() → Scopula_formae {
+    return Scopula_formae { nomen = "form.focus", valor = "#2563eb" }
+}
+
+# The token collection (the package's assembly-input convenience — the
+# consumer composes the theme via the individual accessors, the field-access
+# pattern; the collection is the package's self-usable summary).
+fn scopulae_formae() → list<Scopula_formae> {
+    return [ form_field_invalid(), form_field_valid(), form_focus() ]
+}
+
+# ---------------------------------------------------------------------------
+# The family's component style bundle (delivery U3 done_when (b)): rules
+# keyed on the family's data-tela identities (the dynamic identities ride
+# attribute-prefix selectors), referencing the `--form-*` tokens. The
+# Stilum-returning signature is class-returning → consumable from the
+# consumer today (the stage-1 §3 evidence: `→ tela.Stilum` resolves).
+# ---------------------------------------------------------------------------
+
+fn form_stilum() → tela.Stilum {
+    return tela.Stilum {
+        regulae = [
+            tela.Regula {
+                selector = "[data-tela^='form-field-']",
+                declarationes = [
+                    tela.Declaratio { nomen = "border-bottom", valor = "2px solid var(--form-field-invalid)" },
+                    tela.Declaratio { nomen = "color", valor = "var(--form-field-valid)" }
+                ]
+            },
+            tela.Regula {
+                selector = "[data-tela^='form-field-']:focus",
+                declarationes = [
+                    tela.Declaratio { nomen = "outline", valor = "2px solid var(--form-focus)" }
+                ]
+            },
+            tela.Regula {
+                selector = "[data-tela^='form-error-']",
+                declarationes = [
+                    tela.Declaratio { nomen = "color", valor = "var(--form-field-invalid)" },
+                    tela.Declaratio { nomen = "font-size", valor = "0.875rem" }
+                ]
+            },
+            tela.Regula {
+                selector = "[data-tela='form-live']",
+                declarationes = [
+                    tela.Declaratio { nomen = "font-weight", valor = "600" },
+                    tela.Declaratio { nomen = "color", valor = "var(--form-field-valid)" }
+                ]
+            },
+            tela.Regula {
+                selector = "[data-tela^='form-checkbox-']",
+                declarationes = [
+                    tela.Declaratio { nomen = "accent-color", valor = "var(--form-field-valid)" }
+                ]
+            }
+        ]
+    }
+}
+
+# The product-assembly input surface (delivery U3 done_when (c)): the
+# package contributes its Stilum-returning bundle + its package identity
+# (`formslib` — the app declares the ordo entry app-side). The consumer
+# wraps it: `tela.codicillus("formslib", forms.form_stilum())`.

@@ -58,9 +58,32 @@
 #            WARN014 export-skip does not apply at runtime).
 #   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the TS
 #            lane is the proven runtime lane.
+#
+# Stage 4 U3 (tokens-styles-assembly) — the THREE-PACKAGE cascade. This
+# module imports formslib:forms (the Stage 4 proof package) and composes:
+#   - the namespaced `form.*` tokens (form.field.invalid / form.field.valid
+#     / form.focus) into both themes via the field-access pattern on the
+#     zero-arg accessors (the Scopulus precedent — never a nameable
+#     qualified type, never a widened kernel theme record);
+#   - the formslib component style bundle (tela.codicillus("formslib",
+#     forms.form_stilum())) into the assemble call — the three-package
+#     cascade orders extensionlib → formslib → canary-app (topological
+#     order + the stable package-identity tie-break; the kernel's
+#     ordine_ordinata picks extensionlib before formslib by identity);
+#   - the fail-closed regressions re-asserted (cycles /
+#     duplicate-identity-different-content / invalid output reject);
+#   - the runner output: the forms family static render (via the G4-safe
+#     `*_html` helpers — the U1/U2 probe finding: the `→ tela.Visus`
+#     component fns are WARN014-skipped for consumers, fix:g4; the
+#     consumer's cross-package family composition stays behind
+#     compose-without until g4 lands — the seam kept, never weakened).
+# The Stage 3 determinism sha (77516916…e5490) is SUPERSEDED by this
+# output change — recorded; U5 re-records the official sha (check-
+# determinism is RED between U3 and U5 — flagged honestly, not a failure).
 
 import from "tela:tela" public * ut tela
 import from "extensionlib:extension" public * ut ext
+import from "formslib:forms" public * ut forms
 
 # --- Themed panel: a div with a stable identity + accessible name; the panel
 # rule in main's style bundle keys on the identity (policy (d) seam).
@@ -339,6 +362,19 @@ fn identitas_ordinata(int index) → string {
     return ordines[i]
 }
 
+# First-occurrence index of a fragment in a string (the cascade-ordering
+# assert: the extension bundle's selector appears before the forms bundle's).
+fn indice_in(string textus, string fragment) → int {
+    var int i ← 0
+    while not (i + fragment.longitudo() > textus.longitudo()) {
+        if textus.sectio(i, i + fragment.longitudo()) ≡ fragment {
+            return i
+        }
+        i ← i + 1
+    }
+    return -1
+}
+
 # The keyboard mapping (behavior-design §1.3): the app owns the key
 # semantics, the driver executes the resulting message. Arrows move focus
 # only (Motus, wrap supported); Home/End move focus to first/last; Space/
@@ -423,7 +459,10 @@ main {
         tela.scopulum("state.positive", "#16a34a"),
         tela.scopulum("state.caution", "#d97706"),
         tela.scopulum(ext.chart_axis_muted().nomen, ext.chart_axis_muted().valor),
-        tela.scopulum(ext.chart_grid_muted().nomen, ext.chart_grid_muted().valor)
+        tela.scopulum(ext.chart_grid_muted().nomen, ext.chart_grid_muted().valor),
+        tela.scopulum(forms.form_field_invalid().nomen, forms.form_field_invalid().valor),
+        tela.scopulum(forms.form_field_valid().nomen, forms.form_field_valid().valor),
+        tela.scopulum(forms.form_focus().nomen, forms.form_focus().valor)
     ])
     const tela.Thema tenebrae ← tela.thema("tenebrae", [
         tela.scopulum("surface.canvas", "#0f172a"),
@@ -435,12 +474,22 @@ main {
         tela.scopulum("state.positive", "#22c55e"),
         tela.scopulum("state.caution", "#f59e0b"),
         tela.scopulum(ext.chart_axis_muted_tenebrae().nomen, ext.chart_axis_muted_tenebrae().valor),
-        tela.scopulum(ext.chart_grid_muted_tenebrae().nomen, ext.chart_grid_muted_tenebrae().valor)
+        tela.scopulum(ext.chart_grid_muted_tenebrae().nomen, ext.chart_grid_muted_tenebrae().valor),
+        tela.scopulum(forms.form_field_invalid().nomen, forms.form_field_invalid().valor),
+        tela.scopulum(forms.form_field_valid().nomen, forms.form_field_valid().valor),
+        tela.scopulum(forms.form_focus().nomen, forms.form_focus().valor)
     ])
 
     # --- App + extension style bundles (identical under both themes) -------
     const tela.Stilum ext_stilum ← ext.chart_stilum()
     const tela.Codicillus ext_bundle ← tela.codicillus("extensionlib", ext_stilum)
+
+    # --- The formslib component style bundle (the three-package input) -----
+    # Class-returning (→ tela.Stilum) — consumable from the consumer today
+    # (the stage-1 §3 evidence); the identity "formslib" is the package's
+    # assembly-identity entry (the ordo map declares it app-side).
+    const tela.Stilum forms_stilum ← forms.form_stilum()
+    const tela.Codicillus forms_bundle ← tela.codicillus("formslib", forms_stilum)
 
     # App style bundle: the panel rule + the segmented-control rule, both
     # keyed on the data-tela identity (the control's styles are app-owned).
@@ -467,21 +516,25 @@ main {
     const tela.Codicillus app_bundle ← tela.codicillus("canary-app", app_stilum)
 
     # --- Full cascade under each theme (assemble: tokens -> extensionlib ->
-    # canary-app; the token layer is the only difference between the two).
+    # formslib -> canary-app; the token layer + the library bundles are the
+    # only differences between the two). The three-package ordo map: both
+    # extensionlib and formslib depend on nothing (tela is the shared base),
+    # so the kernel's topological tie-break (stable package identity) orders
+    # extensionlib before formslib — the documented cascade order.
     const tela.Stilum ∪ null cascade_lumen_result ← tela.assemble(
         lumen,
         null,
         [],
-        [ tela.ordo("extensionlib", []) ],
-        [ext_bundle],
+        [ tela.ordo("extensionlib", []), tela.ordo("formslib", []) ],
+        [ext_bundle, forms_bundle],
         app_bundle
     )
     const tela.Stilum ∪ null cascade_tenebrae_result ← tela.assemble(
         tenebrae,
         null,
         [],
-        [ tela.ordo("extensionlib", []) ],
-        [ext_bundle],
+        [ tela.ordo("extensionlib", []), tela.ordo("formslib", []) ],
+        [ext_bundle, forms_bundle],
         app_bundle
     )
     assert not (cascade_lumen_result ≡ null)
@@ -497,6 +550,98 @@ main {
     assert html_a ≡ html_b
     # The two theme token layers differ materially.
     assert css_lumen ≠ css_tenebrae
+
+    # --- The Stage 4 U3 three-package cascade assertions -------------------
+    # The :root token layer includes the namespaced --form-* values (the
+    # forms tokens flow through the kernel token rendering).
+    assert css_lumen.continet("--form-field-invalid: #dc2626")
+    assert css_lumen.continet("--form-field-valid: #16a34a")
+    assert css_lumen.continet("--form-focus: #2563eb")
+    # The forms component style bundle rides the cascade (keyed on the
+    # family identities, referencing the --form-* tokens).
+    assert css_lumen.continet("[data-tela^='form-field-']")
+    assert css_lumen.continet("[data-tela^='form-error-']")
+    assert css_lumen.continet("[data-tela='form-live']")
+    assert css_lumen.continet("var(--form-field-invalid)")
+    assert css_lumen.continet("var(--form-focus)")
+
+    # --- The Stage 2 fail-closed regressions re-asserted (three-package) ---
+    # A cycle in the ordo map rejects (fail-closed — no partial cascade).
+    const tela.Stilum ∪ null cycle_result ← tela.assemble(
+        lumen,
+        null,
+        [],
+        [ tela.ordo("extensionlib", ["formslib"]), tela.ordo("formslib", ["extensionlib"]) ],
+        [ext_bundle, forms_bundle],
+        app_bundle
+    )
+    assert cycle_result ≡ null
+    # Duplicate package identity with different content rejects (dedup by
+    # stable identity — fail-closed, the Stage 2 contract).
+    const tela.Codicillus forms_bundle_altera ← tela.codicillus(
+        "formslib",
+        tela.Stilum {
+            regulae = [
+                tela.Regula {
+                    selector = "[data-tela^='form-select-']",
+                    declarationes = [
+                        tela.Declaratio { nomen = "color", valor = "var(--form-focus)" }
+                    ]
+                }
+            ]
+        }
+    )
+    const tela.Stilum ∪ null duplicate_result ← tela.assemble(
+        lumen,
+        null,
+        [],
+        [ tela.ordo("extensionlib", []), tela.ordo("formslib", []) ],
+        [ext_bundle, forms_bundle, forms_bundle_altera],
+        app_bundle
+    )
+    assert duplicate_result ≡ null
+    # Invalid output (an empty-selector rule) rejects (fail-closed).
+    const tela.Codicillus malum_bundle ← tela.codicillus(
+        "mala",
+        tela.Stilum {
+            regulae = [
+                tela.Regula {
+                    selector = "",
+                    declarationes = [
+                        tela.Declaratio { nomen = "color", valor = "#000000" }
+                    ]
+                }
+            ]
+        }
+    )
+    const tela.Stilum ∪ null malum_result ← tela.assemble(
+        lumen,
+        null,
+        [],
+        [ tela.ordo("extensionlib", []), tela.ordo("formslib", []) ],
+        [ext_bundle, forms_bundle, malum_bundle],
+        app_bundle
+    )
+    assert malum_result ≡ null
+
+    # --- The forms family static render (Stage 4 U3, runner input) --------
+    # The G4-safe route (the U1/U2 probe finding): the `→ tela.Visus`
+    # component fns are WARN014-skipped for consumers (fix:g4), so the
+    # runner renders the family through the package's consumable `*_html`
+    # helpers + props constructors (the direct-call pattern); the
+    # cross-package tree composition stays behind compose-without until g4.
+    const string forma_composita ←
+        forms.campum_html(forms.props_campi("name", "Name", "", "false", "")) +
+        forms.boxum_html(forms.props_boxi("agree", "Agree", "true", "false")) +
+        forms.selego_html(forms.props_selecti("tone", "Tone", ["Light", "Dark"], "false")) +
+        forms.error_regionum_html("name", "") +
+        forms.regio_viva_forma_html()
+    assert forma_composita ≡ "<input type='text' aria-label='Name' aria-invalid='false' data-tela='form-field-name'><input type='checkbox' aria-label='Agree' aria-checked='true' aria-invalid='false' data-tela='form-checkbox-agree'><select aria-label='Tone' aria-invalid='false' data-tela='form-select-tone'><option>Light</option><option>Dark</option></select><div role='alert' data-tela='form-error-name'></div><div role='status' aria-live='polite' data-tela='form-live'></div>"
+    # The extension bundle resolves before the forms bundle in the cascade
+    # (the topological tie-break orders extensionlib before formslib).
+    const int ext_index ← indice_in(css_lumen, "[data-tela='tela-chart-bar']")
+    const int forms_index ← indice_in(css_lumen, "[data-tela^='form-field-']")
+    assert ext_index < forms_index
 
     # --- The Stage 3 static half (U3 done_when (a)) ------------------------
     # The segmented control renders deterministically through html_visus:
@@ -592,4 +737,6 @@ main {
     print "two-theme static rendered (lumen vs tenebrae; tela-s2-u3)"
     print html_controllum
     print "segmented control static rendered (initial selection tela-seg-1; tela-s3-u3)"
+    print forma_composita
+    print "forms family static rendered (field/checkbox/select + error/live; tela-s4-u3)"
 }
