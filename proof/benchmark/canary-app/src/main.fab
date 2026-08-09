@@ -5,6 +5,7 @@
 #   - a themed panel (stable data-tela identity + aria-label),
 #   - a two-column metric table (dl/dt/dd),
 #   - a horizontal bar meter with label and textual value,
+#   - the segmented control (Stage 3 U3 — the campaign gate proof),
 # rendered through the kernel serializers. main is the static-render runner
 # for U6: it prints the full HTML + CSS bytes.
 #
@@ -18,8 +19,47 @@
 # Stage 2 U3 extends the runner: the same arbor renders under two materially
 # different Thema values (lumen/tenebrae) with the full cascade CSS assembled
 # per theme (the campaign gate bullets 1+2 proof, TS-lane runner).
+#
+# Stage 3 U3 (segmented-interactive) — the campaign gate proof. This module
+# gains the segmented-control component (typed props → Visus, §1.1/§1.4/
+# §1.5 of stage-0-behavior-design.md), the app-typed behavior plan (a
+# concrete message type + Vinculum-shaped bindings keyed to the data-tela
+# identities — built app-side, the D1 constraint: never kernel-generic),
+# the subscription wiring plan (eventus + message-producing closures), the
+# update loop (update → next Visus → replace on the mounted region), and
+# the pure-level runner proof. The DOM-level interaction sequence executes
+# through the dom-shim driver (the harness-assembly path — U2's
+# mount/replace are WARN014-skipped for consumers, fix:g4; the harness
+# calls the emitted mount/replace directly, the snapshot does not apply at
+# runtime).
+#
+# Synchronous-only boundary (the named Stage 3 async-gap input, routed):
+# this proof is fully synchronous — no `@ futura`, no dom.fetch_text, no
+# fetch-driven/async update claim. The interaction sequence is a scripted
+# deterministic assertion sequence, not a racy timing test.
+#
+# fix:<id> markers applied in this unit:
+#   fix:g5 — NONE: all new identifiers (segmentatum/segmentum_view/regio_viva/
+#            props_controlli/vinculum/nuntius/electum/motus/update_controlli/
+#            nuntius_clavis/annuntium/…) probed collision-free on in-tree
+#            radix 0.80.0 (a free fn may share a class name — G5's collision
+#            is enum-member-specific).
+#   fix:sem001 — the kernel owns the only Effectus matcher
+#            (tela.effectus_identitas); the app never matches an imported
+#            union's variants (consumer-side match does not bind — the
+#            recorded G3-family gap). Removal = grep-replace after the fix.
+#   fix:snapshot-nomen-collision — new identifiers avoid kernel type names:
+#            the app-local plan types (Nuntius/Vinculum/Props_controlli) do
+#            NOT collide with kernel type names (Eventum/Effectus/Renovatio/
+#            Visus/…); probed.
+#   fix:web-dom-locale — the webDom* surface binds at the HARNESS level
+#            (dom-shim + driver); the app never re-authors a web:dom copy.
+#   fix:g4 — mount/replace consumed via the harness-assembly path (the
+#            WARN014 export-skip does not apply at runtime).
+#   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the TS
+#            lane is the proven runtime lane.
 
-import from "tela:tela" private tela
+import from "tela:tela" public * ut tela
 import from "extensionlib:extension" public * ut ext
 
 # --- Themed panel: a div with a stable identity + accessible name; the panel
@@ -77,16 +117,296 @@ fn bar_metrum_app(string label, string valor, int latitudo) → tela.Visus {
     )
 }
 
+# ===========================================================================
+# Stage 3 U3 — the segmented-control component (behavior-design §1).
+#
+# The control is an ordinary component function over typed props (no
+# compiler-known component kind) producing a Visus with:
+#   - stable data-tela identities on the group + per segment (§1.1);
+#   - role='radiogroup' on the group, role='radio' + aria-selected
+#     true/false on the segments (§1.4);
+#   - the keyboard-contract structure: one tab stop as a whole (§1.3) —
+#     the selected segment carries tabindex='0', the others tabindex='-1'
+#     (only the selected segment is in the tab sequence; Tab leaves the
+#     control as a unit);
+#   - the control-owned declared live region (role='status' +
+#     aria-live='polite', §1.5).
+# The same component function renders statically (through html_visus, below)
+# and mounts interactively (the driver) — shared-source evidence.
+# ===========================================================================
+
+class Props_controlli {
+    list<string> optiones
+    string electum
+    string nomen
+}
+
+fn selected_textus(bool selectus) → string {
+    if selectus then return "true"
+    return "false"
+}
+
+fn tabindex_viabilis(bool selectus) → string {
+    if selectus then return "0"
+    return "-1"
+}
+
+# One segment: role=radio + aria-selected + the roving tabindex (§1.3/§1.4).
+fn segmentum_view(string identitas, string optio, string tabindex, string selected) → tela.Visus {
+    return tela.elementum_omne(
+        tela.nova_identitas(identitas),
+        tela.html_spatium(),
+        "button",
+        [
+            tela.Attributum { nomen = "role", valor = "radio" },
+            tela.Attributum { nomen = "aria-selected", valor = selected },
+            tela.Attributum { nomen = "tabindex", valor = tabindex }
+        ],
+        [],
+        [ tela.textus_view(optio) ]
+    )
+}
+
+# The control-owned declared live region (§1.5): explicitly marked with a
+# live-region policy (role='status' / aria-live='polite'), owned by the
+# control, not an ambient page notification.
+fn regio_viva() → tela.Visus {
+    return tela.elementum_omne(
+        tela.nova_identitas("tela-live"),
+        tela.html_spatium(),
+        "div",
+        [
+            tela.Attributum { nomen = "role", valor = "status" },
+            tela.Attributum { nomen = "aria-live", valor = "polite" }
+        ],
+        [],
+        []
+    )
+}
+
+# The segment children in focus order (index 1-based identity: tela-seg-N).
+fn segmenta_controlli(Props_controlli props) → list<tela.Visus> {
+    var list<tela.Visus> segmenta ← vacua
+    var int i ← 1
+    while i ≤ props.optiones.longitudo() {
+        const string identitas ← "tela-seg-" + "§"(i)
+        const string optio ← props.optiones[i - 1]
+        const bool selectus ← identitas ≡ props.electum
+        segmenta.appende(segmentum_view(identitas, optio, tabindex_viabilis(selectus), selected_textus(selectus)))
+        i ← i + 1
+    }
+    segmenta.appende(regio_viva())
+    return segmenta
+}
+
+# The segmented-control component: ordinary Faber over typed props (campaign
+# §3 component contract) → a Visus keyed to stable data-tela identities.
+fn segmentatum(Props_controlli props) → tela.Visus {
+    return tela.elementum_omne(
+        tela.nova_identitas("tela-control"),
+        tela.html_spatium(),
+        "div",
+        [
+            tela.Attributum { nomen = "role", valor = "radiogroup" },
+            tela.Attributum { nomen = "aria-label", valor = props.nomen }
+        ],
+        [],
+        segmenta_controlli(props)
+    )
+}
+
+# The default control props (the shared source both renderers consume).
+fn props_controlli() → Props_controlli {
+    return Props_controlli {
+        optiones = ["One", "Two", "Three"],
+        electum = "tela-seg-1",
+        nomen = "segmented control"
+    }
+}
+
+# Props with a changed selection (the update loop's view render input).
+fn props_electi(Props_controlli props, string electum) → Props_controlli {
+    return Props_controlli {
+        optiones = props.optiones,
+        electum = electum,
+        nomen = props.nomen
+    }
+}
+
+# The interactive proof's theme (the 8-token core baseline — mount requires
+# thema_css non-null, so the mounted control needs a theme covering the core).
+fn thema_controlli() → tela.Thema {
+    return tela.thema("controllum", [
+        tela.scopulum("surface.canvas", "#ffffff"),
+        tela.scopulum("surface.panel", "#f9fafb"),
+        tela.scopulum("text.primary", "#111827"),
+        tela.scopulum("text.muted", "#6b7280"),
+        tela.scopulum("border.default", "#e5e7eb"),
+        tela.scopulum("accent.primary", "#2563eb"),
+        tela.scopulum("state.positive", "#16a34a"),
+        tela.scopulum("state.caution", "#d97706")
+    ])
+}
+
+# ===========================================================================
+# Stage 3 U3 — the app-typed behavior plan (Branch B, behavior-design §2/§3).
+#
+# The concrete message type + Vinculum-shaped bindings (eventus +
+# message-producing closures) keyed to the data-tela identities, built
+# APP-SIDE (the D1 constraint, recorded: generic user-type construction is
+# blocked, so the kernel owns only the non-generic carriers — Eventum/
+# Effectus/Renovatio — and the concrete plan is the application's surface,
+# never kernel-generic). The update function is an ordinary app function
+# over the concrete message type. Behavior is carried by typed message-
+# producing closures — never erased into strings.
+# ===========================================================================
+
+# The concrete app message type (two variants):
+#   Electum — select a segment (pointer click, Space, Enter on the focused
+#     segment) — the update loop consumes it;
+#   Motus   — move focus to a segment (arrows, Home, End) — focus only,
+#     selection unchanged, no announcement (the driver executes the DOM
+#     focus move from the message).
+union Nuntius {
+    Electum { string identitas },
+    Motus { string identitas }
+}
+
+# Vinculum-shaped binding: one event subscription keyed to a stable node
+# identity, carrying a typed message-producing closure (Branch B plan).
+class Vinculum {
+    string identitas
+    string eventus
+    (tela.Eventum) → Nuntius nuntius
+}
+
+fn electum(string identitas) → Nuntius {
+    return variant Electum { identitas = identitas }
+}
+
+fn motus(string identitas) → Nuntius {
+    return variant Motus { identitas = identitas }
+}
+
+# The pointer binding for one segment: the plan maps the click event → the
+# Electum message naming the clicked identity (the event's nomen carries it).
+fn vinculum_electi(string identitas) → Vinculum {
+    return Vinculum {
+        identitas = identitas,
+        eventus = "click",
+        nuntius = (tela.Eventum eventus) → Nuntius ∴ electum(eventus.nomen)
+    }
+}
+
+# The subscription plan: one pointer binding per segment identity (the
+# web:dom subscriptions attach by identity — never ambient document
+# shortcuts; the driver binds the webDom* surface at the harness level).
+fn vincula_controlli() → list<Vinculum> {
+    return [
+        vinculum_electi("tela-seg-1"),
+        vinculum_electi("tela-seg-2"),
+        vinculum_electi("tela-seg-3")
+    ]
+}
+
+# The focus order (one tab stop as a whole; arrows wrap at the ends).
+fn ordines_segmentorum() → list<string> {
+    return ["tela-seg-1", "tela-seg-2", "tela-seg-3"]
+}
+
+fn indice_identitatis(string identitas) → int {
+    const list<string> ordines ← ordines_segmentorum()
+    var int i ← 0
+    while i < ordines.longitudo() {
+        if ordines[i] ≡ identitas {
+            return i
+        }
+        i ← i + 1
+    }
+    return 0
+}
+
+fn identitas_ordinata(int index) → string {
+    const list<string> ordines ← ordines_segmentorum()
+    const int longitudo ← ordines.longitudo()
+    var int i ← index
+    while i < 0 {
+        i ← i + longitudo
+    }
+    while i ≥ longitudo {
+        i ← i - longitudo
+    }
+    return ordines[i]
+}
+
+# The keyboard mapping (behavior-design §1.3): the app owns the key
+# semantics, the driver executes the resulting message. Arrows move focus
+# only (Motus, wrap supported); Home/End move focus to first/last; Space/
+# Enter select the focused segment (Electum); anything else is a focus
+# no-op (Motus to the same identity). Tab is unhandled — the control's
+# single tab stop leaves as a unit (§1.3).
+fn nuntius_clavis(string identitas_focus, string clavis) → Nuntius {
+    const int index ← indice_identitatis(identitas_focus)
+    if clavis ≡ "ArrowRight" or clavis ≡ "ArrowDown" {
+        return motus(identitas_ordinata(index + 1))
+    }
+    if clavis ≡ "ArrowLeft" or clavis ≡ "ArrowUp" {
+        return motus(identitas_ordinata(index - 1))
+    }
+    if clavis ≡ "Home" {
+        return motus(identitas_ordinata(0))
+    }
+    if clavis ≡ "End" {
+        return motus(identitas_ordinata(-1))
+    }
+    if clavis ≡ "Space" or clavis ≡ "Enter" {
+        return electum(identitas_focus)
+    }
+    return motus(identitas_focus)
+}
+
+# The update function — an ordinary app function over the concrete message
+# type. Electum changes the selection; Motus leaves it unchanged (focus
+# only, live-region-silent per §1.5).
+fn update_controlli(string electum, Nuntius nuntius) → string {
+    match nuntius {
+        case Electum const identitas {
+            return identitas
+        }
+        case Motus const identitas {
+            return electum
+        }
+    }
+}
+
+# The live-region announcement text (§1.5): names the newly selected option.
+# The host writes it into the declared live region ONLY when the selection
+# changes — silent when a click/keypress lands on the already-selected
+# segment or when the update does not change selection.
+fn annuntium(Props_controlli props, string electum) → string {
+    const int index ← indice_identitatis(electum)
+    if index < props.optiones.longitudo() {
+        return props.optiones[index] + " selected"
+    }
+    return ""
+}
+
 main {
     # G4 seam attempt (recorded in the evidence record): ext.bar_metrum
     # resolves to WARN014 export-skip; the app composes the meter with tela
     # constructors (documented workaround).
     const tela.Visus bar ← bar_metrum_app("throughput", "7.4 Mbps", 74)
 
-    # --- Assembled arbor: panel > (two-column metric table, bar meter) ----
+    # --- Assembled arbor: panel > (two-column metric table, bar meter,
+    # segmented control) — the control renders statically alongside the
+    # Stage 1/2 composition (shared source: the same component function
+    # that mounts interactively).
+    const Props_controlli props ← props_controlli()
+    const tela.Visus control ← segmentatum(props)
     const tela.Visus arbor ← panelum([
         metrica_tabula(),
-        bar
+        bar,
+        control
     ])
 
     # --- Extension tokens — both palettes (zero-arg accessors per the
@@ -122,7 +442,8 @@ main {
     const tela.Stilum ext_stilum ← ext.chart_stilum()
     const tela.Codicillus ext_bundle ← tela.codicillus("extensionlib", ext_stilum)
 
-    # App style bundle: panel rule keys on the data-tela identity.
+    # App style bundle: the panel rule + the segmented-control rule, both
+    # keyed on the data-tela identity (the control's styles are app-owned).
     const tela.Stilum app_stilum ← tela.Stilum {
         regulae = [
             tela.Regula {
@@ -131,6 +452,14 @@ main {
                     tela.Declaratio { nomen = "display", valor = "grid" },
                     tela.Declaratio { nomen = "gap", valor = "1rem" },
                     tela.Declaratio { nomen = "color", valor = "var(--chart-axis-muted)" }
+                ]
+            },
+            tela.Regula {
+                selector = "[data-tela='tela-control']",
+                declarationes = [
+                    tela.Declaratio { nomen = "display", valor = "flex" },
+                    tela.Declaratio { nomen = "gap", valor = "0.25rem" },
+                    tela.Declaratio { nomen = "border-radius", valor = "0.375rem" }
                 ]
             }
         ]
@@ -160,7 +489,7 @@ main {
     const string css_lumen ← tela.css(tela.Stilum { regulae = cascade_lumen_result!.regulae }) coalesce ""
     const string css_tenebrae ← tela.css(tela.Stilum { regulae = cascade_tenebrae_result!.regulae }) coalesce ""
 
-    # --- The campaign gate proof (bullets 1 + 2) ---------------------------
+    # --- The Stage 2 campaign gate proof (bullets 1 + 2) -------------------
     # HTML is theme-independent: the same arbor renders byte-identically
     # (themes supply values, not markup).
     const string html_a ← tela.html_visus(arbor) coalesce ""
@@ -169,10 +498,98 @@ main {
     # The two theme token layers differ materially.
     assert css_lumen ≠ css_tenebrae
 
+    # --- The Stage 3 static half (U3 done_when (a)) ------------------------
+    # The segmented control renders deterministically through html_visus:
+    # exact bytes — role=radiogroup on the group, role=radio + aria-selected
+    # + the roving tabindex on the segments (§1.3/§1.4), the control-owned
+    # declared live region (§1.5), stable data-tela identities throughout.
+    const string html_controllum ← tela.html_visus(control) coalesce ""
+    # Serializer emission order: attributa in author order, then data-tela
+    # (the identity attribute) — the U2 exempla precedent.
+    assert html_controllum ≡ "<div role='radiogroup' aria-label='segmented control' data-tela='tela-control'><button role='radio' aria-selected='true' tabindex='0' data-tela='tela-seg-1'>One</button><button role='radio' aria-selected='false' tabindex='-1' data-tela='tela-seg-2'>Two</button><button role='radio' aria-selected='false' tabindex='-1' data-tela='tela-seg-3'>Three</button><div role='status' aria-live='polite' data-tela='tela-live'></div></div>"
+
+    # --- The app-typed behavior plan (U3 done_when (b)) — pure proof -------
+    # The plan is app-typed (D1 recorded, never kernel-generic) and carried
+    # by typed message-producing closures (not erased into strings).
+    const list<Vinculum> vincula ← vincula_controlli()
+    assert vincula.longitudo() ≡ 3
+    # Invoke a binding's closure: click on tela-seg-2 → Electum{tela-seg-2}.
+    const Nuntius click_msg ← vincula[1].nuntius(tela.eventum("tela-seg-2"))
+    match click_msg {
+        case Electum const identitas {
+            assert identitas ≡ "tela-seg-2"
+        }
+        case Motus const identitas {
+            assert false
+        }
+    }
+    # The update loop: Electum changes the selection.
+    const string post ← update_controlli("tela-seg-1", click_msg)
+    assert post ≡ "tela-seg-2"
+    # The keyboard mapping: arrows move focus only (Motus) — the update
+    # leaves the selection unchanged (§1.3; live-region-silent per §1.5).
+    const Nuntius arrow_msg ← nuntius_clavis("tela-seg-2", "ArrowRight")
+    match arrow_msg {
+        case Motus const identitas {
+            assert identitas ≡ "tela-seg-3"
+        }
+        case Electum const identitas {
+            assert false
+        }
+    }
+    const string post_arrow ← update_controlli(post, arrow_msg)
+    assert post_arrow ≡ post
+    # Home/End move focus to first/last (Motus); Space/Enter select.
+    match nuntius_clavis("tela-seg-3", "Home") {
+        case Motus const identitas {
+            assert identitas ≡ "tela-seg-1"
+        }
+        case Electum const identitas {
+            assert false
+        }
+    }
+    match nuntius_clavis("tela-seg-1", "End") {
+        case Motus const identitas {
+            assert identitas ≡ "tela-seg-3"
+        }
+        case Electum const identitas {
+            assert false
+        }
+    }
+    match nuntius_clavis("tela-seg-2", "Space") {
+        case Electum const identitas {
+            assert identitas ≡ "tela-seg-2"
+        }
+        case Motus const identitas {
+            assert false
+        }
+    }
+    # A no-op selection change: clicking the already-selected segment keeps
+    # the model unchanged — the update returns the same selection (silent).
+    const Nuntius noop_msg ← vincula[1].nuntius(tela.eventum("tela-seg-2"))
+    assert update_controlli(post, noop_msg) ≡ post
+    # The declarative effects (behavior-design §3.2) — the kernel carriers
+    # + the key accessor (fix:sem001 — the kernel owns the only Effectus
+    # matcher; the host executes effects by reading the key).
+    const tela.Effectus restitue ← tela.restitue("tela-seg-2")
+    assert tela.effectus_identitas(restitue) ≡ "tela-seg-2"
+    const tela.Effectus ancora ← tela.ancora("#root")
+    assert tela.effectus_identitas(ancora) ≡ "#root"
+    # The live-region announcement mapping (§1.5): names the new option.
+    assert annuntium(props, "tela-seg-2") ≡ "Two selected"
+    assert annuntium(props, "tela-seg-1") ≡ "One selected"
+    # The props carrier + the interactive theme (the driver + update loop
+    # consume these).
+    assert props_electi(props, "tela-seg-3").electum ≡ "tela-seg-3"
+    assert not (tela.thema_css(thema_controlli()) ≡ null)
+
     # --- The static-render runner output: HTML once, the full cascade CSS
-    # under each theme (the U6/U3 double-build hook consumes this).
+    # under each theme (the U6/U3 double-build hook consumes this), then
+    # the segmented-control static render (the U4 determinism hook).
     print html_a
     print css_lumen
     print css_tenebrae
     print "two-theme static rendered (lumen vs tenebrae; tela-s2-u3)"
+    print html_controllum
+    print "segmented control static rendered (initial selection tela-seg-1; tela-s3-u3)"
 }
