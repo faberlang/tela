@@ -1,9 +1,11 @@
 # tela/src/tela.fab — the real tela library kernel (Branch B).
 #
 # Stage 1 U1 kernel contract: typed HTML/SVG view values + kernel-owned
-# constructors. One FLAT, IMPORT-FREE module (G4-safe), stdlib-only — no
+# constructors. One FLAT module (G4-safe), stdlib-only — no
 # norma/triga/faber-runtime dependency. The shape proven by the Stage 0
 # U3 spike (spike/visus-b.fab) through all three lanes.
+# (Import-free through U1; U3 adds ONE same-package sibling import —
+# tela:valida — for the fail-closed glue, per the U3 write_scope.)
 #
 # Branch decision (frozen for Stage 1): Branch B — pure non-generic
 # recursive Visus union + adjacent typed behavior plan. Branch A (generic
@@ -31,6 +33,55 @@
 # correctly. Direct non-null construction into the nullable field is
 # STILL the D3 defect; the radix D3 delivery has NOT landed, so the
 # nova_identitas workaround is KEPT for Stage 1 (recorded either way).
+#
+# Stage 1 U3 (serializer) notes — this module now carries the escape
+# function, the deterministic HTML/CSS serializers, and the fail-closed
+# boundary; it gains ONE same-package sibling import (tela:valida) for the
+# namespace glue (stage-1-delivery.md U3 write_scope; U2 done_when (f)
+# non-goal: the glue lives in the kernel module, keeping valida.fab G4-safe).
+#
+# Central escaping (policy (a)2): escapa is the ONE escape path used by both
+# text and attribute-value serialization. Escape sets: & < > for text;
+# additionally " ' for attribute values (single-quote style per the Stage 0
+# spike baseline). No serializer path concatenates an unescaped value; the
+# identity valor flows through the same attribute-escape path (policy (d)).
+#
+# Fail-closed boundary (policy (a)2; U2 done_when (d)): before ANY emission
+# the serializer runs the U2 lexical/namespace/void checks over the whole
+# tree (valida_arbor). html_visus(Visus) → string ∪ null — null when any
+# check fails, so invalid input NEVER emits markup (no partial output). The
+# concrete mechanism (nullable result) is the implementing Hand's documented
+# choice within the available Faber surface; exercised by exempla/serializer.fab.
+#
+# Proprietas static posture (spec decision Q3): Proprietas are carried in the
+# tree as browser-lane DOM properties and are NOT serialized into static
+# HTML in Stage 1. The spike's provisional data-prop: marker is SUPERSEDED.
+# Recorded here for identity-hydration.md (U4).
+#
+# Emit-across-imports escalation (stage-1-delivery.md U3 done_when (g);
+# coordination §2/§5): radix check resolves the tela:valida import, and the
+# TS emit lane resolves it. The RUST emit lane re-analyzes the imported
+# provider module WITHOUT the en reader pack (PARSE001 — provider-module
+# locale propagation defect, reproduced with exempla/validation.fab on the
+# in-tree radix 0.80.0) and fails CODEGEN001. Recorded + escalated to the
+# radix lane. The contract remains covered by radix check + the import-free
+# single-module proven lane (valida.fab, U2) + the TS lane; the exempla lane
+# is not weakened.
+#
+# Verb collision (U3 done_when (h); G5/G6): `css` verified against the
+# reserved-keyword registries — not reserved, kept verbatim (policy (b)).
+# `html` COLLIDES with the Spatium.html enum-member top-level binding —
+# the RECORDED G5 defect (stage-0-canary.md §5: "A `fn html()` collides with
+# the Spatium.html member binding → SEM005.duplicate_definition. Naming
+# constraint: prefix helpers (html_spatium)"). Applied workaround: the HTML
+# renderer verb is html_visus — the `html_` prefix per the G5 recorded
+# constraint; the policy (b) English stem is preserved, NOT silently renamed.
+# ESCALATED To mind: the G5 radix-lane fix restores the exact `html` verb
+# (repro: SEM005.duplicate_definition on fn html(Visus) with
+# enum Spatium { html, svg } in one module; in-tree radix 0.80.0,
+# 2026-08-09).
+
+import from "tela:valida" private valida
 
 # Spatium: namespace enum (html | svg). The open element model keeps the
 # tag itself an ordinary string, so custom elements and future-standard
@@ -143,4 +194,209 @@ fn elementum_omne(
         proprietates = proprietates,
         liberi = liberi
     } ∷ Visus
+}
+
+# ---------------------------------------------------------------------------
+# Central escaping (policy (a)2) — ONE escape path for text AND attribute
+# values. in_attributo selects the attribute escape set: & < > for text,
+# additionally " ' for attribute values (single-quote style per the Stage 0
+# spike baseline). The identity valor flows through the same attribute-escape
+# path (policy (d)). No serializer path concatenates an unescaped value.
+# ---------------------------------------------------------------------------
+
+fn escapa(string s, bool in_attributo) → string {
+    var string accum ← ""
+    var int i ← 0
+    while i < s.longitudo() {
+        const string c ← s.sectio(i, i + 1)
+        # Sequential independent ifs (NOT an elif chain): the TS emitter
+        # compiles elif chains whose bodies are single-statement assignments
+        # into a returned conditional expression (undefined at runtime — a
+        # NEW emitter observation, escalated to the radix lane). A single
+        # character can match at most one branch, so the last match wins;
+        # the sequential form is semantically identical and emits correctly
+        # in both lanes (probe: escapa_elif vs escapa_seq, 2026-08-09).
+        # The fragment starts as "" + c (NOT ← c): the Rust emitter moves a
+        # String into a local via `let mut fragment: String = c;` while still
+        # borrowing c below (E0382 — second NEW emitter observation,
+        # escalated to the radix lane); "" + c emits a borrowing format!.
+        var string fragment ← "" + c
+        if c ≡ "&" then fragment ← "&amp;"
+        if c ≡ "<" then fragment ← "&lt;"
+        if c ≡ ">" then fragment ← "&gt;"
+        # The quote comparison spells the double-quote via ascii-literal
+        # interpolation ("§"('"')) rather than the \" escape: the TS emitter
+        # double-escapes a `\"` string payload (emits `\\\"` → runtime
+        # backslash+quote), so a bare-quote comparison written as "\"" never
+        # matches at runtime (NEW emitter observation, escalated to the radix
+        # lane; probe escapa on in-tree radix 0.80.0, 2026-08-09).
+        if in_attributo and c ≡ "§"('"') then fragment ← "&quot;"
+        if in_attributo and c ≡ "'" then fragment ← "&#39;"
+        accum ← accum + fragment
+        i ← i + 1
+    }
+    return accum
+}
+
+# ---------------------------------------------------------------------------
+# Namespace glue (U3) — maps Spatium onto the U2 string surface and applies
+# the fail-closed checks. valida.fab keeps its G4-safe string/bool surface.
+# ---------------------------------------------------------------------------
+
+fn spatium_textus(Spatium spatium) → string {
+    match spatium {
+        case Spatium.html {
+            return "html"
+        }
+        case Spatium.svg {
+            return "svg"
+        }
+    }
+}
+
+# Namespace emission: svg-namespace elements carry the xmlns declaration
+# (spike baseline; required on the svg root for inline SVG, harmless on
+# nested svg elements).
+fn seri_ns(Spatium spatium) → string {
+    match spatium {
+        case Spatium.html {
+            return ""
+        }
+        case Spatium.svg {
+            return " xmlns='http://www.w3.org/2000/svg'"
+        }
+    }
+}
+
+# Fail-closed pre-pass: the U2 lexical/namespace/void checks over the whole
+# tree, run BEFORE any emission. Text is escaped, never validated (any
+# string is safe once escaped — policy (a)2). Invalid input NEVER emits
+# markup: html_visus returns null (no output at all), never partial markup.
+fn valida_arbor(Visus v) → bool {
+    match v {
+        case Textus const valor {
+            return true
+        }
+        case Fragmentum const liberi {
+            for from liberi const liber {
+                if not valida_arbor(liber) then return false
+            }
+            return true
+        }
+        case Elementum const identitas, spatium, nomen_tag, attributa, proprietates, liberi {
+            const string spatium_s ← spatium_textus(spatium)
+            if not valida.valida_spatium(spatium_s) then return false
+            if not valida.valida_nomen_in_spatio(nomen_tag, spatium_s) then return false
+            for from attributa const attr {
+                if not valida.valida_nomen_attributi(attr.nomen) then return false
+            }
+            const bool habet_liberi ← liberi.longitudo() > 0
+            if not valida.valida_void_structura(nomen_tag, habet_liberi) then return false
+            for from liberi const liber {
+                if not valida_arbor(liber) then return false
+            }
+            return true
+        }
+    }
+}
+
+# ---------------------------------------------------------------------------
+# HTML serializer — deterministic, pure, over ordered lists. Author order of
+# attributa and liberi is preserved; no unordered/hash iteration, no
+# timestamps. Identical input → identical bytes (empirically proven by U6).
+# ---------------------------------------------------------------------------
+
+# Attributes serialize as nomen='valor' — single quotes per the spike
+# baseline; the valor is escaped through the attribute escape set.
+fn seri_attributa(list<Attributum> attributa) → string {
+    var string accum ← ""
+    for from attributa const attr {
+        accum ← accum + " " + attr.nomen + "='" + escapa(attr.valor, true) + "'"
+    }
+    return accum
+}
+
+# Identity: non-null Identitas emits data-tela='<escaped valor>' — the ONE
+# documented hydration-ready serialization form (policy (d)); elements
+# without identity emit nothing.
+fn seri_identitas(Identitas ∪ null identitas) → string {
+    match identitas {
+        case null {
+            return ""
+        }
+        default {
+            return " data-tela='" + escapa(identitas?.valor coalesce "", true) + "'"
+        }
+    }
+}
+
+fn seri_visus(Visus v) → string {
+    match v {
+        case Textus const valor {
+            return escapa(valor, false)
+        }
+        case Fragmentum const liberi {
+            var string accum ← ""
+            for from liberi const liber {
+                accum ← accum + seri_visus(liber)
+            }
+            return accum
+        }
+        case Elementum const identitas, spatium, nomen_tag, attributa, proprietates, liberi {
+            var string accum ← "<" + nomen_tag
+            accum ← accum + seri_ns(spatium)
+            accum ← accum + seri_attributa(attributa)
+            accum ← accum + seri_identitas(identitas)
+            # Proprietas are carried but NOT serialized into static HTML
+            # (Stage 1 static posture; browser-lane DOM properties).
+            var string inner ← ""
+            for from liberi const liber {
+                inner ← inner + seri_visus(liber)
+            }
+            if valida.valida_void_html(nomen_tag) then return accum + ">"
+            return accum + ">" + inner + "</" + nomen_tag + ">"
+        }
+    }
+}
+
+# Public renderer verb (policy (b)). The G5 workaround spelling (html_visus,
+# html_ prefix per stage-0-canary.md §5) carries the locked English `html`
+# stem; the exact `html` verb is blocked by the Spatium.html enum-member
+# top-level binding and is ESCALATED to the radix lane (see module header).
+# Fail-closed: null = rejected, no markup ever emitted. Deterministic bytes
+# over author order.
+fn html_visus(Visus v) → string ∪ null {
+    if not valida_arbor(v) then return null
+    return seri_visus(v)
+}
+
+# ---------------------------------------------------------------------------
+# Initial CSS — smallest honest model (policy (c); spike shape). Deterministic
+# emission preserving author order of regulae and declarationes.
+# ---------------------------------------------------------------------------
+
+class Declaratio {
+    string nomen
+    string valor
+}
+
+class Regula {
+    string selector
+    list<Declaratio> declarationes
+}
+
+class Stilum {
+    list<Regula> regulae
+}
+
+fn css(Stilum stilum) → string {
+    var string accum ← ""
+    for from stilum.regulae const regula {
+        accum ← accum + regula.selector + " { "
+        for from regula.declarationes const decl {
+            accum ← accum + decl.nomen + ": " + decl.valor + "; "
+        }
+        accum ← accum + "}\n"
+    }
+    return accum
 }
