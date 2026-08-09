@@ -1,0 +1,13 @@
+[package]
+name = "canary-app"
+version = "0.0.0"
+edition = "2026"
+
+[paths]
+source = "src"
+
+[build]
+kind = "app"
+
+[reader]
+locale = "en"

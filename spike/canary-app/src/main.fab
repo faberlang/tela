@@ -1,0 +1,80 @@
++++
+term = "canary-app"
+kind = "keyword"
+category = "type"
+locale = "en"
++++
+
+# tela/spike/canary-app/src/main.fab
+# Stage 0 U4 two-package canary — the application package.
+#
+# Imports the extension package through the provider-import seam
+# (extensionlib:* via FABER_LIBRARY_HOME → spike/libhome/extensionlib → the
+# extension-lib package) and assembles the benchmark composition:
+#   - a themed panel (stable identity + accessible name),
+#   - a two-column metric table (dl/dt/dd),
+#   - a horizontal bar meter with label and textual value,
+# using the extension custom helper (ext.bar_metrum) and the namespaced token
+# (ext.chart_axis_muted). Static composition only — no behavior/mount
+# (Stage 3), no theme rendering (Stage 2), no catalog.
+
+importa ex "extensionlib:extension" publica * ut ext
+
+# --- App-side composition, public shape only ---------------------------------
+
+# Themed panel: a div with a stable identity and an accessible name; the panel
+# rule in main's style bundle keys on the identity.
+fn panelum(list<ext.Visus> liberi) → ext.Visus {
+    return ext.elementum_omne(
+        ext.nova_identitas("canary-panelum"),
+        ext.html_spatium(),
+        "div",
+        [ ext.Attributum { nomen = "aria-label", valor = "metric panel" } ],
+        [],
+        liberi
+    )
+}
+
+# Two-column metric table: dl with dt/dd pairs (labels + values).
+fn metrica_tabula() → ext.Visus {
+    return ext.elementum_view(ext.html_spatium(), "dl", [
+        ext.elementum_view(ext.html_spatium(), "dt", [ ext.textus_view("uptime") ]),
+        ext.elementum_view(ext.html_spatium(), "dd", [ ext.textus_view("99.9%") ]),
+        ext.elementum_view(ext.html_spatium(), "dt", [ ext.textus_view("requests") ]),
+        ext.elementum_view(ext.html_spatium(), "dd", [ ext.textus_view("12 480") ]),
+        ext.elementum_view(ext.html_spatium(), "dt", [ ext.textus_view("error rate") ]),
+        ext.elementum_view(ext.html_spatium(), "dd", [ ext.textus_view("0.02%") ])
+    ])
+}
+
+main {
+    # Extension custom helper: horizontal bar meter with label + textual value.
+    const ext.Visus bar ← ext.bar_metrum("throughput", "7.4 Mbps", 74)
+
+    # Assembled arbor: panel > (two-column metric table, horizontal bar meter).
+    const _ arbor ← panelum([
+        metrica_tabula(),
+        bar
+    ])
+
+    # Extension style + namespaced token contribution (declared only).
+    const ext.Scopulum axis_muted ← ext.chart_axis_muted()
+    const _ chart_stilum ← ext.chart_stilum()
+    const _ app_stilum ← ext.Stilum {
+        regulae = [
+            ext.Regula {
+                selector = "[data-tela='canary-panelum']",
+                declarationes = [
+                    ext.Declaratio { nomen = "display", valor = "grid" },
+                    ext.Declaratio { nomen = "gap", valor = "1rem" },
+                    ext.Declaratio { nomen = "color", valor = "var(--chart-axis-muted)" }
+                ]
+            }
+        ]
+    }
+
+    # Structural assertion: the namespaced token is declared by the extension
+    # and referenced by both style bundles.
+    const string token_nomen ← axis_muted.nomen
+    print "canary assembled (token " + token_nomen + ")"
+}

@@ -1,0 +1,194 @@
++++
+term = "extension"
+kind = "keyword"
+category = "type"
+locale = "en"
++++
+
+# tela/spike/extension-lib/src/extension.fab
+# Stage 0 U4 two-package canary — the extension package's public surface.
+#
+# This package contributes, using PUBLIC SHAPE ONLY (no Tela/radix/faber-web
+# edits):
+#   1. the decided Branch B view protocol values (U3: non-generic recursive
+#      Visus union + typed Identitas + separate Proprietas/Attributa) and the
+#      standard constructors over them;
+#   2. one custom view helper — bar_metrum (horizontal bar meter with label
+#      and textual value) returning the decided view values;
+#   3. one namespaced theme token — chart.axis.muted (campaign §5: extension
+#      libraries add namespaced tokens; Tela does not widen a closed Theme)
+#      plus the extension's component style bundle referencing it.
+#
+# Flat single module: enum members and variant construction stay inside this
+# module because cross-module enum-member access (gap G1) and variant
+# construction of an imported union (gap G3) do not resolve in this radix
+# build, and a callable whose signature references an imported sibling type
+# does not snapshot to consumers (gap G4). See stage-0-canary.md for the
+# exercised seams and the recorded gaps.
+
+enum Spatium {
+    html,
+    svg
+}
+
+class Attributum {
+    string nomen
+    string valor
+}
+
+class Proprietas {
+    string nomen
+    string valor
+}
+
+class Identitas {
+    string valor
+}
+
+union Visus {
+    Elementum {
+        Identitas ∪ null identitas,
+        Spatium spatium,
+        string nomen_tag,
+        list<Attributum> attributa,
+        list<Proprietas> proprietates,
+        list<Visus> liberi
+    },
+    Textus { string valor },
+    Fragmentum { list<Visus> liberi }
+}
+
+class Declaratio {
+    string nomen
+    string valor
+}
+
+class Regula {
+    string selector
+    list<Declaratio> declarationes
+}
+
+class Stilum {
+    list<Regula> regulae
+}
+
+class Scopulum {
+    string nomen
+    string valor
+}
+
+# --- Standard constructors over the same public view values (campaign §3:
+# ergonomic helpers, not privileged compiler syntax).
+
+fn textus_view(string valor) → Visus {
+    return variant Textus { valor = valor } ∷ Visus
+}
+
+fn fragmentum_view(list<Visus> liberi) → Visus {
+    return variant Fragmentum { liberi = liberi } ∷ Visus
+}
+
+# Typed stable identity via the nullable field (U3 D3 workaround: route the
+# non-null identity through the nullable type).
+fn nova_identitas(string v) → Identitas ∪ null {
+    return Identitas { valor = v }
+}
+
+# Enum-value access through an imported namespace does not resolve (gap G1),
+# so the namespace values are exposed as plain helper functions.
+fn html_spatium() → Spatium {
+    return Spatium.html
+}
+
+fn svg_spatium() → Spatium {
+    return Spatium.svg
+}
+
+# Plain open-element shorthand: no identity, no attributes.
+fn elementum_view(Spatium spatium, string nomen_tag, list<Visus> liberi) → Visus {
+    return variant Elementum {
+        identitas = null,
+        spatium = spatium,
+        nomen_tag = nomen_tag,
+        attributa = [],
+        proprietates = [],
+        liberi = liberi
+    } ∷ Visus
+}
+
+# Full open-element constructor: identity + serialized attributes + DOM
+# properties. Cross-module variant construction does not resolve (gap G3), so
+# consumers reach the full Elementum through this constructor.
+fn elementum_omne(
+    Identitas ∪ null identitas,
+    Spatium spatium,
+    string nomen_tag,
+    list<Attributum> attributa,
+    list<Proprietas> proprietates,
+    list<Visus> liberi
+) → Visus {
+    return variant Elementum {
+        identitas = identitas,
+        spatium = spatium,
+        nomen_tag = nomen_tag,
+        attributa = attributa,
+        proprietates = proprietates,
+        liberi = liberi
+    } ∷ Visus
+}
+
+# --- Namespaced theme token (declared only; theme rendering is Stage 2).
+
+fn chart_axis_muted() → Scopulum {
+    return Scopulum { nomen = "chart.axis.muted", valor = "#6b7280" }
+}
+
+# The extension's token collection (what a product assembler would collect;
+# product assembly is Stage 2).
+fn chart_scopuli() → list<Scopulum> {
+    return [ chart_axis_muted() ]
+}
+
+# --- Custom view helper: horizontal bar meter with label + textual value,
+# returning the decided Branch B view values. Behavior stays adjacent and
+# typed (Stage 3); this canary is static composition only.
+
+fn bar_metrum(string label, string valor, int latitudo) → Visus {
+    return elementum_omne(
+        nova_identitas("tela-chart-bar"),
+        html_spatium(),
+        "div",
+        [
+            Attributum { nomen = "role", valor = "meter" },
+            Attributum { nomen = "aria-label", valor = label },
+            Attributum { nomen = "data-latitudo", valor = "§"(latitudo) }
+        ],
+        [
+            Proprietas { nomen = "aria-valuenow", valor = valor }
+        ],
+        [
+            elementum_view(html_spatium(), "span", [ textus_view(label) ]),
+            elementum_view(html_spatium(), "x-bar", [
+                elementum_view(html_spatium(), "x-fill", [ textus_view(valor) ])
+            ])
+        ]
+    )
+}
+
+# --- Extension component style bundle; the rule references the namespaced
+# token as the CSS custom property --chart-axis-muted (declared, not rendered).
+
+fn chart_stilum() → Stilum {
+    return Stilum {
+        regulae = [
+            Regula {
+                selector = "[data-tela='tela-chart-bar']",
+                declarationes = [
+                    Declaratio { nomen = "color", valor = "var(--chart-axis-muted)" },
+                    Declaratio { nomen = "display", valor = "grid" },
+                    Declaratio { nomen = "gap", valor = "0.5rem" }
+                ]
+            }
+        ]
+    }
+}
