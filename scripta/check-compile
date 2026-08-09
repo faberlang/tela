@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# tela/scripta/check-compile — Stage 1 U6 compile surface.
+# radix check every src/*.fab (kernel + validation under the container
+# library home) and both benchmark packages (under the benchmark libhome).
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if [[ -n "${RADIX_ROOT:-}" ]]; then
+  RADIX="$RADIX_ROOT"
+elif [[ -d "$ROOT/../radix/crates/radix" ]]; then
+  RADIX="$ROOT/../radix"
+else
+  RADIX="$ROOT/../../../radix"
+fi
+
+if [[ ! -d "$RADIX/crates/radix" ]]; then
+  echo "check-compile: missing radix checkout at $RADIX" >&2
+  exit 1
+fi
+
+RADIX_BIN="$RADIX/target/debug/radix"
+if [[ ! -x "$RADIX_BIN" ]]; then
+  (cd "$RADIX" && cargo build -q -p radix --bin radix)
+fi
+
+# The tela package reads English (faber.toml `[reader] locale = "en"`); the
+# radix CLI defaults to Latin, so the en reader locale is passed explicitly
+# with `--locale en`. (triga's scripta scripts still pass the renamed
+# `--locale-pack` spelling; the current radix 0.80.0 binary resolves the
+# reader pack from `--locale en` — noted in stage-1-determinism.md.)
+
+echo "check-compile: kernel + validation modules (container library home)"
+export FABER_LIBRARY_HOME="${FABER_LIBRARY_HOME:-$ROOT/..}"
+for mod in tela valida; do
+  echo "check-compile: parsing src/${mod}.fab"
+  "$RADIX_BIN" check --locale en "$ROOT/src/${mod}.fab"
+done
+
+echo "check-compile: benchmark packages (benchmark library home)"
+export FABER_LIBRARY_HOME="$ROOT/proof/benchmark/libhome"
+echo "check-compile: parsing proof/benchmark/extension-lib/src/extension.fab"
+"$RADIX_BIN" check --locale en "$ROOT/proof/benchmark/extension-lib/src/extension.fab"
+echo "check-compile: parsing proof/benchmark/canary-app/src/main.fab"
+"$RADIX_BIN" check --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab"
+
+echo "check-compile: green"

@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+# tela/scripta/check-determinism — Stage 1 U6 determinism gate.
+# Builds the benchmark composition static output TWICE and byte-compares.
+# A diff FAILS the check (fail-closed); identical builds print sha256 hashes
+# and write build/static-1.txt, build/static-2.txt, build/hashes.txt.
+#
+# Lanes:
+#   Primary (Rust): emit canary-app to Rust -> scratch crate OUTSIDE the
+#     shared workspace -> cargo run twice -> capture HTML/CSS. BLOCKED today:
+#     Rust emit of any import-bearing file fails CODEGEN001 (provider modules
+#     re-analyzed without the en reader locale — the recorded
+#     provider-module locale-propagation defect, U3/U5 escalation,
+#     stage-1-benchmark-static.md §3). The path is ATTEMPTED first and the
+#     defect is recorded when it fires; the gate is NOT weakened to pass.
+#   Fallback (TS-lane composition, the proven lane): emit valida/tela/
+#     extension/main, assemble into ONE self-contained file (single-module
+#     shape, no runtime imports), run twice, byte-compare. The U5 double-run
+#     (sha a0f1b1cb…f8613b) is the same evidence shape.
+#   TS lane analog: double-emit the kernel and byte-compare the emitted
+#     files; tsc --noEmit on the assembled composition.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+BUILD="$ROOT/build"
+SCRATCH="$(mktemp -d "${TMPDIR:-/tmp}/tela-u6-det.XXXXXX")"
+trap 'rm -rf "$SCRATCH"' EXIT
+mkdir -p "$BUILD"
+
+if [[ -n "${RADIX_ROOT:-}" ]]; then
+  RADIX="$RADIX_ROOT"
+elif [[ -d "$ROOT/../radix/crates/radix" ]]; then
+  RADIX="$ROOT/../radix"
+else
+  RADIX="$ROOT/../../../radix"
+fi
+
+if [[ ! -d "$RADIX/crates/radix" ]]; then
+  echo "check-determinism: missing radix checkout at $RADIX" >&2
+  exit 1
+fi
+
+RADIX_BIN="$RADIX/target/debug/radix"
+if [[ ! -x "$RADIX_BIN" ]]; then
+  (cd "$RADIX" && cargo build -q -p radix --bin radix)
+fi
+
+sha256() {
+  if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | awk '{print $1}'
+  else
+    sha256sum "$1" | awk '{print $1}'
+  fi
+}
+
+export FABER_LIBRARY_HOME="$ROOT/proof/benchmark/libhome"
+
+echo "== check-determinism: benchmark composition double-build =="
+
+# ---- Rust path (primary; currently BLOCKED by the recorded defect) -------
+RUST_RUN_OK=0
+if "$RADIX_BIN" emit -t rust --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab" -o "$SCRATCH/main.rs" >"$SCRATCH/rust-emit.log" 2>&1; then
+  CRATE="$SCRATCH/crate"
+  mkdir -p "$CRATE/src"
+  cp "$SCRATCH/main.rs" "$CRATE/src/main.rs"
+  cat > "$CRATE/Cargo.toml" <<EOF
+[package]
+name = "tela-u6-det"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+faber = { package = "faber-runtime", path = "$ROOT/../faber-runtime" }
+
+[workspace]
+EOF
+  echo "Rust path: emitting + cargo run (build 1/2)"
+  (cd "$CRATE" && cargo run -q) > "$BUILD/static-1.txt" 2>&1
+  (cd "$CRATE" && cargo run -q) > "$BUILD/static-2.txt" 2>&1
+  RUST_RUN_OK=1
+  echo "Rust path: green (composition built twice via scratch cargo run)"
+else
+  BLOCK_REASON="$(grep -m1 'error\[' "$SCRATCH/rust-emit.log" || tail -1 "$SCRATCH/rust-emit.log")"
+  echo "Rust path: BLOCKED — ${BLOCK_REASON}"
+  echo "  (recorded radix-lane defect: provider modules re-analyzed without"
+  echo "  the en reader locale -> CODEGEN001; U3/U5 escalation,"
+  echo "  stage-1-benchmark-static.md §3. Falling back to the proven TS-lane"
+  echo "  composition lane per spec U6 (e); the determinism gate is NOT"
+  echo "  weakened.)"
+fi
+
+# ---- TS-lane composition lane (proven fallback; U5 evidence shape) -------
+echo "TS lane: emitting valida / tela / extension / main"
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/valida.fab" -o "$SCRATCH/valida.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/extension-lib/src/extension.fab" -o "$SCRATCH/extension.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab" -o "$SCRATCH/main.ts" >/dev/null
+
+echo "TS lane: double-emit byte-identity (kernel)"
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela-b.ts" >/dev/null
+if ! cmp -s "$SCRATCH/tela.ts" "$SCRATCH/tela-b.ts"; then
+  echo "FAIL: double-emit of the kernel is not byte-identical" >&2
+  exit 1
+fi
+
+# Assemble into one self-contained file (single-module shape, no runtime
+# imports): drop the radix header (2 lines) and import lines, bind the
+# imported namespaces as const objects.
+strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
+{
+  strip "$SCRATCH/valida.ts"
+  echo "const valida = { valida_spatium, valida_nomen_tag, valida_nomen_attributi, valida_nomen_in_spatio, valida_void_html, valida_void_structura };"
+  strip "$SCRATCH/tela.ts"
+  echo "const tela = { html_visus, css, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, Attributum, Proprietas, Declaratio, Regula, Stilum };"
+  strip "$SCRATCH/extension.ts"
+  echo "const ext = { chart_axis_muted, chart_scopuli, bar_metrum, chart_stilum, Scopulum };"
+  strip "$SCRATCH/main.ts"
+} > "$SCRATCH/composition.ts"
+
+if [[ "$RUST_RUN_OK" -ne 1 ]]; then
+  echo "TS lane: running the assembled composition (build 1/2)"
+  node "$SCRATCH/composition.ts" > "$BUILD/static-1.txt" 2>&1
+  node "$SCRATCH/composition.ts" > "$BUILD/static-2.txt" 2>&1
+fi
+
+# ---- fail-closed byte comparison -----------------------------------------
+if ! cmp -s "$BUILD/static-1.txt" "$BUILD/static-2.txt"; then
+  echo "FAIL: static output differs between the two builds (fail-closed)" >&2
+  exit 1
+fi
+
+H1="$(sha256 "$BUILD/static-1.txt")"
+H2="$(sha256 "$BUILD/static-2.txt")"
+{
+  echo "static-1 sha256: $H1"
+  echo "static-2 sha256: $H2"
+  echo "byte-identical: yes"
+} > "$BUILD/hashes.txt"
+cat "$BUILD/hashes.txt"
+
+echo "TS lane: tsc --noEmit on the assembled composition"
+tsc --noEmit --strict --target ES2020 --module ESNext --moduleResolution bundler --skipLibCheck "$SCRATCH/composition.ts"
+
+echo "check-determinism: green (byte-identical double build; build/ has the evidence)"

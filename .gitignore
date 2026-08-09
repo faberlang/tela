@@ -1,4 +1,2 @@
-/target/
-/dist/
-.DS_Store
-*.log
+# Stage 1 U6 harness outputs (determinism evidence lands under build/).
+build/
