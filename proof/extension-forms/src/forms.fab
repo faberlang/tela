@@ -57,6 +57,50 @@
 #     in U3/U4 lives app-side; the forms package keeps distinct names).
 #   fix:codegen001 — Rust emit-across-imports persists (the TS lane is the
 #     proven lane; recorded, never the gate).
+#   fix:sem001 — HELD (U4): consumers read effect keys through
+#     tela.effectus_identitas, never matching an imported union (the
+#     G3-family imported-union match does not bind from a consumer); the
+#     app-typed plan owns its message union, which is app-local.
+#
+# Stage 4 U4 (behavior-semantics) — the behavior contract + the pure
+# validation-mapping surface. The components' documented
+# event/identity/validation contract (below) is the semantics the
+# consumer's plan relies on (the app-typed proof lives app-side in
+# canary-app/src/main.fab — the D1 app-typed boundary, recorded). The
+# SHARED-SOURCE statement: the same components that render statically in
+# U2 carry the behavior contract; the interactive execution is U7 (gated —
+# the dom-shim is not the interactive claim).
+#
+# The behavior contract (per component — the event surface, the identity
+# scheme, the ARIA/validation semantics):
+#   field (text input)  — identity form-field-<nomen>; events: "input"
+#     (each text entry — the live-validation event) + "click" (pointer
+#     activation on the native input); validation: aria-invalid
+#     "true"/"false" + aria-describedby → form-error-<nomen> when invalid;
+#     the error text lives in the associated error node (the agmen_campi
+#     association, U2).
+#   checkbox            — identity form-checkbox-<nomen>; events: "change"
+#     (toggle) + "click"; aria-checked "true"/"false" + the invalid
+#     surface (aria-invalid + aria-describedby → form-error-<nomen>).
+#   select              — identity form-select-<nomen>; events: "change"
+#     (selection change) + "click"; the invalid surface (aria-invalid +
+#     aria-describedby → form-error-<nomen>).
+#   form-level submit   — event "submit": the family declares the stable
+#     spelling (eventus_submissionis); the U2 static surface renders no
+#     <form> element, so the submit source is the app-declared form
+#     aggregate — the app-typed plan owns it (D1: the concrete plan is the
+#     application's surface, never kernel-generic).
+#   live region         — identity form-live; role=status +
+#     aria-live=polite; the announcement policy: announce on a
+#     validation-state change, silent on no-op (the Stage 3 §1.5 pattern
+#     extended to form validation) — carried by the app-typed plan.
+# The event-name constants + the validation-state mapping fns (the U4
+# surface at the end of this module) are pure string/bool signatures —
+# G4-safe (they stay on the exported file interface; the consumer's plan
+# builds on them without the WARN014 family). fix:g5 — the new identifiers
+# (eventus_campi/eventus_mutationis/eventus_submissionis/eventus_click/
+# invalid_textus/error_praesens) probed collision-free on in-tree radix
+# 0.80.0.
 
 import from "tela:tela" public * ut tela
 
@@ -364,3 +408,48 @@ fn form_stilum() → tela.Stilum {
 # package contributes its Stilum-returning bundle + its package identity
 # (`formslib` — the app declares the ordo entry app-side). The consumer
 # wraps it: `tela.codicillus("formslib", forms.form_stilum())`.
+
+# ---------------------------------------------------------------------------
+# Stage 4 U4 — the behavior-semantics contract surface.
+#
+# The event-name constants: the documented event spellings the consumers'
+# bindings key to (the app-typed plan consumes these accessors — never a
+# magic string in the plan). Zero-arg string accessors (G4-safe — the
+# Scopulus accessor precedent).
+# ---------------------------------------------------------------------------
+
+fn eventus_campi() → string {
+    return "input"
+}
+
+fn eventus_mutationis() → string {
+    return "change"
+}
+
+fn eventus_submissionis() → string {
+    return "submit"
+}
+
+fn eventus_click() → string {
+    return "click"
+}
+
+# ---------------------------------------------------------------------------
+# The validation-state mapping fns (pure string/bool signatures — G4-safe):
+#   invalid_textus — the validation state → the aria-invalid string
+#     ("true"/"false");
+#   error_praesens — the error text → whether the field is invalid (a
+#     non-empty error = invalid — the describedby association + the error
+#     node are live).
+# The app-typed plan's update/validation semantics build on these
+# (invalid → aria-invalid + error text; valid → cleared; the no-op rule).
+# ---------------------------------------------------------------------------
+
+fn invalid_textus(bool invalid) → string {
+    if invalid then return "true"
+    return "false"
+}
+
+fn error_praesens(string error) → bool {
+    return not (error ≡ "")
+}

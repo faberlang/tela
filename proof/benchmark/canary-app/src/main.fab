@@ -80,6 +80,46 @@
 # The Stage 3 determinism sha (77516916…e5490) is SUPERSEDED by this
 # output change — recorded; U5 re-records the official sha (check-
 # determinism is RED between U3 and U5 — flagged honestly, not a failure).
+#
+# Stage 4 U4 (behavior-semantics) — the forms behavior plan (app-typed,
+# D1). This module gains the pure-level behavior proof: a concrete message
+# type (field input / checkbox toggle / select change / submit) +
+# Vinculum-shaped bindings keyed to the forms identities
+# (form-field-name / form-checkbox-agree / form-select-tone / form-submit —
+# the submit identity is the app-declared form-level aggregate: the U2
+# static family renders no <form> element, the family declares the "submit"
+# event spelling, the app plan owns the submit source identity per D1),
+# the update/validation semantics (invalid → aria-invalid + error text;
+# valid → cleared; the no-op rule) + the live-region policy (announce on a
+# validation-state change, silent on no-op — the Stage 3 §1.5 pattern
+# extended to form validation). The SHARED-SOURCE statement: the same
+# components that render statically in U2 carry the behavior contract
+# (this unit); the interactive execution is U7 (gated — the dom-shim is
+# not the interactive claim).
+#
+# fix:<id> markers applied in this unit:
+#   fix:sem001 — HELD: consumers read effect keys through
+#     tela.effectus_identitas, never matching an imported union
+#     (consumer-side match over an imported union does not bind — the
+#     G3-family gap, recorded; the Nuntius_Formae union is app-local, so
+#     the app's match over it binds normally).
+#   fix:g5 — NONE: all new identifiers (Nuntius_Formae/Vinculum_Formae/
+#     Statu_Campi/Campi_Textus/Boxum_Toggle/Selectum_Mutatio/Submission/
+#     vinculum_campi/vinculum_boxi/vinculum_selecti/vinculum_submissionis/
+#     nuntius_campi_textus/nuntius_boxi_toggle/nuntius_selecti_mutatio/
+#     nuntius_submissionis/statum_campi/update_campi/annuntium_formae/
+#     props_ex_statu) probed collision-free on in-tree radix 0.80.0 (a
+#     free fn may share a class name — G5's collision is enum-member-
+#     specific).
+#   fix:snapshot-nomen-collision — the plan type names avoid kernel type
+#     names (Eventum/Effectus/Renovatio/Visus/…) AND the U3 plan's names
+#     (Nuntius/Vinculum/Props_controlli).
+#   fix:g4 — the `→ tela.Visus` component fns stay WARN014-skipped for
+#     consumers; the ARIA/validation round trip rides the package's
+#     string-returning helpers (*_html) + the props constructors (the
+#     documented compose-without posture).
+#   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the
+#     TS lane is the proven runtime lane.
 
 import from "tela:tela" public * ut tela
 import from "extensionlib:extension" public * ut ext
@@ -427,6 +467,177 @@ fn annuntium(Props_controlli props, string electum) → string {
     return ""
 }
 
+# ===========================================================================
+# Stage 4 U4 — the forms behavior plan (app-typed — D1, recorded).
+#
+# The concrete message type + Vinculum-shaped bindings keyed to the forms
+# identities, the update/validation semantics (invalid → aria-invalid +
+# error text; valid → cleared; the no-op rule) + the live-region policy
+# (announce on a validation-state change, silent on no-op — the Stage 3
+# §1.5 pattern extended to form validation), built APP-SIDE — the D1
+# constraint, recorded: the concrete plan is the application's surface,
+# never kernel-generic. Behavior is carried by typed message-producing
+# closures (the Branch B shape) — never erased into strings.
+# ===========================================================================
+
+# The concrete app message type (four variants — the forms plan):
+#   Campi_Textus     — a field text entry (the "input" event) — live
+#     validation per keystroke;
+#   Boxum_Toggle     — a checkbox toggle (the "change" event);
+#   Selectum_Mutatio — a select selection change (the "change" event);
+#   Submission       — the form-level submit (the "submit" event) —
+#     validates the field.
+union Nuntius_Formae {
+    Campi_Textus {
+        string identitas
+        string valor
+    },
+    Boxum_Toggle {
+        string identitas
+        bool selectus
+    },
+    Selectum_Mutatio {
+        string identitas
+        string electum
+    },
+    Submission {
+        string identitas
+    },
+}
+
+# Vinculum-shaped binding (the Branch B shape, the U3 pattern): one event
+# subscription keyed to a stable node identity, carrying a typed
+# message-producing closure. The event spellings come from the package's
+# contract constants (forms.eventus_* — the G4-safe string surface).
+class Vinculum_Formae {
+    string identitas
+    string eventus
+    (tela.Eventum) → Nuntius_Formae nuntius
+}
+
+# The form model — the app-side validation state for one field identity
+# (error "" = valid; the error text is the invalid → aria-invalid source).
+class Statu_Campi {
+    string identitas
+    string valor
+    string error
+}
+
+# Message-producing helpers (the closure bodies).
+fn nuntius_campi_textus(string identitas, string valor) → Nuntius_Formae {
+    return variant Campi_Textus { identitas = identitas, valor = valor }
+}
+
+fn nuntius_boxi_toggle(string identitas, bool selectus) → Nuntius_Formae {
+    return variant Boxum_Toggle { identitas = identitas, selectus = selectus }
+}
+
+fn nuntius_selecti_mutatio(string identitas, string electum) → Nuntius_Formae {
+    return variant Selectum_Mutatio { identitas = identitas, electum = electum }
+}
+
+fn nuntius_submissionis(string identitas) → Nuntius_Formae {
+    return variant Submission { identitas = identitas }
+}
+
+# The bindings — keyed to the forms identities; the event spellings are the
+# package's contract constants (consumable; never a magic string in the
+# plan).
+fn vinculum_campi(string identitas, string valor) → Vinculum_Formae {
+    return Vinculum_Formae {
+        identitas = identitas,
+        eventus = forms.eventus_campi(),
+        nuntius = (tela.Eventum eventus) → Nuntius_Formae ∴ nuntius_campi_textus(eventus.nomen, valor)
+    }
+}
+
+fn vinculum_boxi(string identitas, bool selectus) → Vinculum_Formae {
+    return Vinculum_Formae {
+        identitas = identitas,
+        eventus = forms.eventus_mutationis(),
+        nuntius = (tela.Eventum eventus) → Nuntius_Formae ∴ nuntius_boxi_toggle(eventus.nomen, selectus)
+    }
+}
+
+fn vinculum_selecti(string identitas, string electum) → Vinculum_Formae {
+    return Vinculum_Formae {
+        identitas = identitas,
+        eventus = forms.eventus_mutationis(),
+        nuntius = (tela.Eventum eventus) → Nuntius_Formae ∴ nuntius_selecti_mutatio(eventus.nomen, electum)
+    }
+}
+
+fn vinculum_submissionis(string identitas) → Vinculum_Formae {
+    return Vinculum_Formae {
+        identitas = identitas,
+        eventus = forms.eventus_submissionis(),
+        nuntius = (tela.Eventum eventus) → Nuntius_Formae ∴ nuntius_submissionis(eventus.nomen)
+    }
+}
+
+fn statum_campi(string identitas, string valor, string error) → Statu_Campi {
+    return Statu_Campi { identitas = identitas, valor = valor, error = error }
+}
+
+# The update function — an ordinary app function over the concrete message
+# type. Validation semantics: an empty field value is invalid (the error
+# text is set — the model flips to invalid); a non-empty value clears the
+# error (valid). The checkbox toggle / select change update the value. The
+# submit validates: the field keeps its error if still invalid, clears if
+# valid (the no-op rule: a state-unchanging update is silent downstream).
+fn update_campi(Statu_Campi statu, Nuntius_Formae nuntius) → Statu_Campi {
+    match nuntius {
+        case Campi_Textus const identitas, valor {
+            if valor ≡ "" {
+                return statum_campi(identitas, valor, "Required")
+            }
+            return statum_campi(identitas, valor, "")
+        }
+        case Boxum_Toggle const identitas, selectus {
+            if selectus {
+                return statum_campi(identitas, "true", "")
+            }
+            return statum_campi(identitas, "false", "")
+        }
+        case Selectum_Mutatio const identitas, electum {
+            return statum_campi(identitas, electum, "")
+        }
+        case Submission const identitas {
+            if statu.valor ≡ "" {
+                return statum_campi(identitas, statu.valor, "Required")
+            }
+            return statum_campi(identitas, statu.valor, "")
+        }
+    }
+}
+
+# The live-region announcement (the §1.5 pattern extended to form
+# validation): announce on a validation-state change (the value or the
+# error flipped), SILENT on a no-op (the state unchanged — "" return).
+fn annuntium_formae(Statu_Campi ante, Statu_Campi post) → string {
+    if ante.valor ≡ post.valor and ante.error ≡ post.error {
+        return ""
+    }
+    if not (post.error ≡ "") {
+        return post.identitas + " invalid: " + post.error
+    }
+    return post.identitas + " valid"
+}
+
+# The app-side mapping: the model state → the field props (the package's
+# Props_campi — consumable), so the ARIA/validation semantics round-trip
+# through the package's render helpers (invalid → aria-invalid='true' +
+# aria-describedby → the error identity + the error text; valid → cleared).
+fn props_ex_statu(string nomen, string label, Statu_Campi statu) → forms.Props_campi {
+    return forms.props_campi(
+        nomen,
+        label,
+        statu.valor,
+        forms.invalid_textus(forms.error_praesens(statu.error)),
+        statu.error
+    )
+}
+
 main {
     # G4 seam attempt (recorded in the evidence record): ext.bar_metrum
     # resolves to WARN014 export-skip; the app composes the meter with tela
@@ -728,6 +939,149 @@ main {
     assert props_electi(props, "tela-seg-3").electum ≡ "tela-seg-3"
     assert not (tela.thema_css(thema_controlli()) ≡ null)
 
+    # --- The forms behavior plan (U4 done_when (b)) — pure proof --------
+    # The plan is app-typed (D1 recorded, never kernel-generic) and carried
+    # by typed message-producing closures (not erased into strings). The
+    # bindings key to the forms identities; the event spellings are the
+    # package's contract constants (consumable — the G4-safe surface).
+    assert forms.eventus_campi() ≡ "input"
+    assert forms.eventus_mutationis() ≡ "change"
+    assert forms.eventus_submissionis() ≡ "submit"
+    assert forms.eventus_click() ≡ "click"
+    const Vinculum_Formae v_campum ← vinculum_campi("form-field-name", "Ada")
+    const Vinculum_Formae v_boxum ← vinculum_boxi("form-checkbox-agree", true)
+    const Vinculum_Formae v_selectum ← vinculum_selecti("form-select-tone", "Dark")
+    const Vinculum_Formae v_submissio ← vinculum_submissionis("form-submit")
+    assert v_campum.eventus ≡ forms.eventus_campi()
+    assert v_boxum.eventus ≡ forms.eventus_mutationis()
+    assert v_selectum.eventus ≡ forms.eventus_mutationis()
+    assert v_submissio.eventus ≡ forms.eventus_submissionis()
+    assert v_campum.identitas ≡ "form-field-name"
+    assert v_boxum.identitas ≡ "form-checkbox-agree"
+    assert v_selectum.identitas ≡ "form-select-tone"
+    assert v_submissio.identitas ≡ "form-submit"
+
+    # Invoke the bindings' closures (the event's nomen carries the
+    # identity — the event subscription keys by identity, never ambient).
+    const Nuntius_Formae m_campum ← v_campum.nuntius(tela.eventum("form-field-name"))
+    match m_campum {
+        case Campi_Textus const identitas, valor {
+            assert identitas ≡ "form-field-name"
+            assert valor ≡ "Ada"
+        }
+        case Boxum_Toggle const identitas, selectus {
+            assert false
+        }
+        case Selectum_Mutatio const identitas, electum {
+            assert false
+        }
+        case Submission const identitas {
+            assert false
+        }
+    }
+    const Nuntius_Formae m_boxum ← v_boxum.nuntius(tela.eventum("form-checkbox-agree"))
+    match m_boxum {
+        case Boxum_Toggle const identitas, selectus {
+            assert identitas ≡ "form-checkbox-agree"
+            assert selectus ≡ true
+        }
+        case Campi_Textus const identitas, valor {
+            assert false
+        }
+        case Selectum_Mutatio const identitas, electum {
+            assert false
+        }
+        case Submission const identitas {
+            assert false
+        }
+    }
+    const Nuntius_Formae m_selectum ← v_selectum.nuntius(tela.eventum("form-select-tone"))
+    match m_selectum {
+        case Selectum_Mutatio const identitas, electum {
+            assert identitas ≡ "form-select-tone"
+            assert electum ≡ "Dark"
+        }
+        case Campi_Textus const identitas, valor {
+            assert false
+        }
+        case Boxum_Toggle const identitas, selectus {
+            assert false
+        }
+        case Submission const identitas {
+            assert false
+        }
+    }
+    const Nuntius_Formae m_submissio ← v_submissio.nuntius(tela.eventum("form-submit"))
+    match m_submissio {
+        case Submission const identitas {
+            assert identitas ≡ "form-submit"
+        }
+        case Campi_Textus const identitas, valor {
+            assert false
+        }
+        case Boxum_Toggle const identitas, selectus {
+            assert false
+        }
+        case Selectum_Mutatio const identitas, electum {
+            assert false
+        }
+    }
+
+    # The update/validation semantics: an empty field input → invalid (the
+    # error text set — the model flips to invalid); the validation-state
+    # mapping flips aria-invalid to "true" + the error text is present.
+    const Statu_Campi statu_init ← statum_campi("form-field-name", "", "")
+    const Statu_Campi statu_invalidum ← update_campi(statu_init, nuntius_campi_textus("form-field-name", ""))
+    assert statu_invalidum.error ≡ "Required"
+    assert forms.invalid_textus(forms.error_praesens(statu_invalidum.error)) ≡ "true"
+    # The round trip through the package's render helper: invalid → the
+    # bytes carry aria-invalid='true' + aria-describedby → the error
+    # identity + the error text (the agmen_campi association, U2).
+    const string grex_invalidum ← forms.agmen_campi_html(props_ex_statu("name", "Name", statu_invalidum))
+    assert grex_invalidum.continet("aria-invalid='true'")
+    assert grex_invalidum.continet("aria-describedby='form-error-name'")
+    assert grex_invalidum.continet(">Required</div>")
+    # A non-empty field input → valid: the error cleared (aria-invalid
+    # flips "false", no describedby).
+    const Statu_Campi statu_validum ← update_campi(statu_invalidum, nuntius_campi_textus("form-field-name", "Ada"))
+    assert statu_validum.error ≡ ""
+    const string grex_validum ← forms.agmen_campi_html(props_ex_statu("name", "Name", statu_validum))
+    assert not grex_validum.continet("aria-invalid='true'")
+    assert not grex_validum.continet("aria-describedby")
+    # The live-region policy (§1.5 extended to form validation): the
+    # invalid → valid transition announces; a no-op input (same value,
+    # same state) is SILENT ("" — the no-op rule).
+    assert annuntium_formae(statu_invalidum, statu_validum) ≡ "form-field-name valid"
+    const Statu_Campi statu_noop ← update_campi(statu_validum, nuntius_campi_textus("form-field-name", "Ada"))
+    assert statu_noop.valor ≡ statu_validum.valor
+    assert annuntium_formae(statu_validum, statu_noop) ≡ ""
+    # The checkbox toggle + select change update the model (the change
+    # messages keyed to the forms identities); the second identical toggle
+    # is a state no-op → silent.
+    const Statu_Campi statu_boxum ← update_campi(statu_validum, nuntius_boxi_toggle("form-checkbox-agree", true))
+    assert statu_boxum.valor ≡ "true"
+    assert annuntium_formae(statu_validum, statu_boxum) ≡ "form-checkbox-agree valid"
+    const Statu_Campi statu_boxum_noop ← update_campi(statu_boxum, nuntius_boxi_toggle("form-checkbox-agree", true))
+    assert statu_boxum_noop.valor ≡ statu_boxum.valor
+    assert annuntium_formae(statu_boxum, statu_boxum_noop) ≡ ""
+    const Statu_Campi statu_selectum ← update_campi(statu_boxum, nuntius_selecti_mutatio("form-select-tone", "Dark"))
+    assert statu_selectum.valor ≡ "Dark"
+    # The submit validates: an invalid field keeps the error (a state
+    # no-op — silent); a valid field stays cleared (submitted).
+    const Statu_Campi statu_submit_invalidum ← update_campi(statu_invalidum, nuntius_submissionis("form-submit"))
+    assert statu_submit_invalidum.error ≡ "Required"
+    assert annuntium_formae(statu_invalidum, statu_submit_invalidum) ≡ ""
+    const Statu_Campi statu_submit_validum ← update_campi(statu_validum, nuntius_submissionis("form-submit"))
+    assert statu_submit_validum.error ≡ ""
+    # fix:sem001 held (the recorded G3-family gap): effect keys are read
+    # through the kernel's effectus_identitas — the app never matches an
+    # imported union. The declarative effect keys attach to the same
+    # data-tela values the bindings key to (identity-hydration §7).
+    const tela.Effectus restitue_formae ← tela.restitue("form-field-name")
+    assert tela.effectus_identitas(restitue_formae) ≡ "form-field-name"
+    const tela.Effectus ancora_formae ← tela.ancora("#root")
+    assert tela.effectus_identitas(ancora_formae) ≡ "#root"
+
     # --- The static-render runner output: HTML once, the full cascade CSS
     # under each theme (the U6/U3 double-build hook consumes this), then
     # the segmented-control static render (the U4 determinism hook).
@@ -739,4 +1093,5 @@ main {
     print "segmented control static rendered (initial selection tela-seg-1; tela-s3-u3)"
     print forma_composita
     print "forms family static rendered (field/checkbox/select + error/live; tela-s4-u3)"
+    print "forms behavior plan asserted (input/toggle/change/submit + validation semantics; tela-s4-u4)"
 }
