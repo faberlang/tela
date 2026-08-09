@@ -154,3 +154,162 @@ result = "DomEvent"
 symbol = "webDomFetchText"
 opener = "FetchRequest"
 result = "FetchResponse"
+
+# tela:canvas2d — the Canvas2D drawing-surface binding (web-surface-import
+# U3, web-import-u3-tela-canvas2d; DELIVERY.md §U3). The per-stem shim:
+# stems without an entry fall back to the package-level [shim] (dom); the
+# canvas2d stem wires to its own runtime shim. Every tela:canvas2d route
+# mirrors one `fn` in src/canvas2d.fab and one exported function in
+# runtime/canvas2d.ts (the `webCanvas2d*` symbols are KEPT — the
+# documented host-binding contract). The opener/result fields are en Faber
+# type names taken from the fn signature (`f64` is a language scalar width
+# spelling — never localizes); tests/contract-test.ts verifies the
+# bijection mechanically.
+
+[shims.canvas2d]
+path = "runtime/canvas2d.ts"
+
+[functions."tela:canvas2d.canvas2d_context"]
+symbol = "webCanvas2dContext"
+opener = "Element"
+result = "Canvas2DContext"
+
+[functions."tela:canvas2d.canvas2d_save"]
+symbol = "webCanvas2dSave"
+opener = "Canvas2DContext"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_restore"]
+symbol = "webCanvas2dRestore"
+opener = "Canvas2DContext"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_translate"]
+symbol = "webCanvas2dTranslate"
+opener = "Canvas2DContext, f64, f64"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_rotate"]
+symbol = "webCanvas2dRotate"
+opener = "Canvas2DContext, f64"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_scale"]
+symbol = "webCanvas2dScale"
+opener = "Canvas2DContext, f64, f64"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_set_transform"]
+symbol = "webCanvas2dSetTransform"
+opener = "Canvas2DContext, f64, f64, f64, f64, f64, f64"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_clear_rect"]
+symbol = "webCanvas2dClearRect"
+opener = "Canvas2DContext, f64, f64, f64, f64"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_fill_rect"]
+symbol = "webCanvas2dFillRect"
+opener = "Canvas2DContext, f64, f64, f64, f64"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_stroke_rect"]
+symbol = "webCanvas2dStrokeRect"
+opener = "Canvas2DContext, f64, f64, f64, f64"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_set_fill_style"]
+symbol = "webCanvas2dSetFillStyle"
+opener = "Canvas2DContext, string"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_set_stroke_style"]
+symbol = "webCanvas2dSetStrokeStyle"
+opener = "Canvas2DContext, string"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_begin_path"]
+symbol = "webCanvas2dBeginPath"
+opener = "Canvas2DContext"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_move_to"]
+symbol = "webCanvas2dMoveTo"
+opener = "Canvas2DContext, f64, f64"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_line_to"]
+symbol = "webCanvas2dLineTo"
+opener = "Canvas2DContext, f64, f64"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_close_path"]
+symbol = "webCanvas2dClosePath"
+opener = "Canvas2DContext"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_arc"]
+symbol = "webCanvas2dArc"
+opener = "Canvas2DContext, f64, f64, f64, f64, f64"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_ellipse"]
+symbol = "webCanvas2dEllipse"
+opener = "Canvas2DContext, f64, f64, f64, f64, f64, f64, f64"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_fill"]
+symbol = "webCanvas2dFill"
+opener = "Canvas2DContext"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_stroke"]
+symbol = "webCanvas2dStroke"
+opener = "Canvas2DContext"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_clip"]
+symbol = "webCanvas2dClip"
+opener = "Canvas2DContext"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_fill_text"]
+symbol = "webCanvas2dFillText"
+opener = "Canvas2DContext, string, f64, f64"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_set_font"]
+symbol = "webCanvas2dSetFont"
+opener = "Canvas2DContext, string"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_set_text_align"]
+symbol = "webCanvas2dSetTextAlign"
+opener = "Canvas2DContext, string"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_set_text_baseline"]
+symbol = "webCanvas2dSetTextBaseline"
+opener = "Canvas2DContext, string"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_path2d_new"]
+symbol = "webCanvas2dPath2DNew"
+opener = ""
+result = "Path2D"
+
+[functions."tela:canvas2d.canvas2d_path2d_new_from_svg"]
+symbol = "webCanvas2dPath2DNewFromSvg"
+opener = "string"
+result = "Path2D"
+
+[functions."tela:canvas2d.canvas2d_path2d_fill"]
+symbol = "webCanvas2dPath2DFill"
+opener = "Canvas2DContext, Path2D"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_path2d_stroke"]
+symbol = "webCanvas2dPath2DStroke"
+opener = "Canvas2DContext, Path2D"
+result = "void"

@@ -1,0 +1,243 @@
+# tela/src/canvas2d.fab — tela:canvas2d — the tela-owned Canvas2D
+# drawing-surface contract (English-first).
+#
+# SOURCE: faber-web/src/canvas2d.fab (la) converted to the English-first
+# surface (web-surface-import U3, web-import-u3-tela-canvas2d; DELIVERY.md
+# §U3 + §5.2 naming resolutions). The web-canvas2d Unit 1 surface (core
+# draw — context acquisition, the transform stack, rect drawing, style
+# setters) + the Unit 2 surface (paths, Path2D, text). Canvas2DContext is
+# an opaque numeric handle: the runtime resolves it to a live
+# CanvasRenderingContext2D through a module-level Map (the dom Subscription
+# lifecycle pattern); Path2D is a second handle genus resolved to a real
+# Path2D object. No explicit dispose — contexts and Path2D objects are
+# browser-owned and the handle maps accumulate until page unload. The
+# runtime symbols (`webCanvas2d*`) are KEPT (the documented host-binding
+# contract — §5.2). A standalone imperative draw surface — no view-protocol
+# coupling (C5).
+#
+# THE CONVERSION RECORD (byte-honest, DELIVERY done_when (a)): every public
+# symbol of faber-web/src/canvas2d.fab has exactly one en counterpart here
+# — 2 handle classes, 29 fns — with the recorded renames:
+#   Canvas2dContext → Canvas2DContext  (PascalCase concatenation, S5-U0
+#                                       + DELIVERY §5.2; the moduleToken
+#                                       fold in tests/contract-test.ts
+#                                       maps it to WebCanvas2dContext)
+# Keyword surface (en): importa ex "web:dom" privata → import from
+# "tela:dom" private, typus → type, genus → class, functio → fn,
+# textus → string, vacuum → void, numerus → int, nota → print (the en
+# surface of the stub marker — the `print` bodies emit console.log in TS,
+# never executed; the runtime does the work, C8), redde → return. `f64`
+# is a language scalar width spelling (the fractus widths) — never
+# localizes (the `⇥`-glyph rule). `@ annotatio` does not appear in this
+# module (the la canvas2d.fab had no annotation).
+#
+# fix:<id> markers:
+#   fix:g4 — the 9 `dom.on*` WARN014 skips are RECORDED: they appear on
+#     IMPORTERS of tela:dom (the handler-typed exports — on, on_input,
+#     on_submit, on_frame, on_resize, on_keyboard, on_pointer, on_focus,
+#     on_pointer_lock), read through the documented host binding at the
+#     harness boundary; a clean module check is expected here (the
+#     `dom.on*` skips surface on this module's importers, not on itself).
+#   fix:codegen001 — the Rust emit-across-imports block persists; the TS
+#     lane is the proven runtime lane (attempted + recorded per boundary).
+#   LOCALE002 advisories (recorded, non-blocking — Q3 resolution: leave;
+#     they parse + emit): `id` (the handle field), `ok` — keyword-like
+#     spellings on this surface.
+
+import from "tela:dom" private dom
+
+# Element is tela:dom's element class, aliased to a single token so the
+# binding surface stays `canvas2d_context(Element)`.
+type Element = dom.Element
+
+class Canvas2DContext {
+    int id = 0
+}
+
+# ===========================================================================
+# Unit 1 — the core draw surface (context acquisition, the transform
+# stack, rect drawing, style setters). Each fn is a thin shim over one
+# CanvasRenderingContext2D method; the runtime (runtime/canvas2d.ts)
+# performs the actual browser calls. The `print` bodies are the stub
+# convention (C8 — never executed; the runtime does the work).
+# ===========================================================================
+
+fn canvas2d_context(Element element) → Canvas2DContext {
+    print element
+    return Canvas2DContext { id = 0 }
+}
+
+fn canvas2d_save(Canvas2DContext ctx) → void {
+    print ctx
+}
+
+fn canvas2d_restore(Canvas2DContext ctx) → void {
+    print ctx
+}
+
+fn canvas2d_translate(Canvas2DContext ctx, f64 x, f64 y) → void {
+    print ctx
+    print x
+    print y
+}
+
+fn canvas2d_rotate(Canvas2DContext ctx, f64 radians) → void {
+    print ctx
+    print radians
+}
+
+fn canvas2d_scale(Canvas2DContext ctx, f64 x, f64 y) → void {
+    print ctx
+    print x
+    print y
+}
+
+fn canvas2d_set_transform(Canvas2DContext ctx, f64 a, f64 b, f64 c, f64 d, f64 e, f64 f) → void {
+    print ctx
+    print a
+    print b
+    print c
+    print d
+    print e
+    print f
+}
+
+fn canvas2d_clear_rect(Canvas2DContext ctx, f64 x, f64 y, f64 w, f64 h) → void {
+    print ctx
+    print x
+    print y
+    print w
+    print h
+}
+
+fn canvas2d_fill_rect(Canvas2DContext ctx, f64 x, f64 y, f64 w, f64 h) → void {
+    print ctx
+    print x
+    print y
+    print w
+    print h
+}
+
+fn canvas2d_stroke_rect(Canvas2DContext ctx, f64 x, f64 y, f64 w, f64 h) → void {
+    print ctx
+    print x
+    print y
+    print w
+    print h
+}
+
+fn canvas2d_set_fill_style(Canvas2DContext ctx, string color) → void {
+    print ctx
+    print color
+}
+
+fn canvas2d_set_stroke_style(Canvas2DContext ctx, string color) → void {
+    print ctx
+    print color
+}
+
+# ===========================================================================
+# Unit 2 — paths, Path2D, text (the web-canvas2d Unit 2 surface). Path
+# building blocks operate on the context's current path (the same
+# browser-side state as the Unit 1 style/transform setters). Path2D is a
+# second opaque numeric handle genus: the runtime resolves it to a real
+# Path2D object through a module-level Map, the same lifecycle pattern as
+# Canvas2DContext.
+# ===========================================================================
+
+class Path2D {
+    int id = 0
+}
+
+fn canvas2d_begin_path(Canvas2DContext ctx) → void {
+    print ctx
+}
+
+fn canvas2d_move_to(Canvas2DContext ctx, f64 x, f64 y) → void {
+    print ctx
+    print x
+    print y
+}
+
+fn canvas2d_line_to(Canvas2DContext ctx, f64 x, f64 y) → void {
+    print ctx
+    print x
+    print y
+}
+
+fn canvas2d_close_path(Canvas2DContext ctx) → void {
+    print ctx
+}
+
+fn canvas2d_arc(Canvas2DContext ctx, f64 x, f64 y, f64 radius, f64 start_angle, f64 end_angle) → void {
+    print ctx
+    print x
+    print y
+    print radius
+    print start_angle
+    print end_angle
+}
+
+fn canvas2d_ellipse(Canvas2DContext ctx, f64 x, f64 y, f64 radius_x, f64 radius_y, f64 rotation, f64 start_angle, f64 end_angle) → void {
+    print ctx
+    print x
+    print y
+    print radius_x
+    print radius_y
+    print rotation
+    print start_angle
+    print end_angle
+}
+
+fn canvas2d_fill(Canvas2DContext ctx) → void {
+    print ctx
+}
+
+fn canvas2d_stroke(Canvas2DContext ctx) → void {
+    print ctx
+}
+
+fn canvas2d_clip(Canvas2DContext ctx) → void {
+    print ctx
+}
+
+fn canvas2d_fill_text(Canvas2DContext ctx, string text, f64 x, f64 y) → void {
+    print ctx
+    print text
+    print x
+    print y
+}
+
+fn canvas2d_set_font(Canvas2DContext ctx, string font) → void {
+    print ctx
+    print font
+}
+
+fn canvas2d_set_text_align(Canvas2DContext ctx, string align) → void {
+    print ctx
+    print align
+}
+
+fn canvas2d_set_text_baseline(Canvas2DContext ctx, string baseline) → void {
+    print ctx
+    print baseline
+}
+
+fn canvas2d_path2d_new() → Path2D {
+    return Path2D { id = 0 }
+}
+
+fn canvas2d_path2d_new_from_svg(string path_data) → Path2D {
+    print path_data
+    return Path2D { id = 0 }
+}
+
+fn canvas2d_path2d_fill(Canvas2DContext ctx, Path2D path) → void {
+    print ctx
+    print path
+}
+
+fn canvas2d_path2d_stroke(Canvas2DContext ctx, Path2D path) → void {
+    print ctx
+    print path
+}

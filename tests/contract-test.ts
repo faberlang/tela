@@ -51,7 +51,12 @@ interface ModuleSpec {
 
 const MODULES: ModuleSpec[] = [
   { prefix: "tela:dom", fabFile: "src/dom.fab", runtimeFile: "runtime/dom.ts", typePrefix: "WebDom", moduleToken: "Dom" },
-  // tela:canvas2d routes join this list in web-import-u3-tela-canvas2d.
+  // web-import-u3-tela-canvas2d: the tela:canvas2d surface joins the
+  // bijection cross-check. The moduleToken fold: the en class is
+  // `Canvas2DContext` (PascalCase concatenation, S5-U0 / DELIVERY §5.2 —
+  // the la `Canvas2dContext`'s lower-d spelling) → folded off the
+  // `WebCanvas2d` type prefix → `WebCanvas2dContext`.
+  { prefix: "tela:canvas2d", fabFile: "src/canvas2d.fab", runtimeFile: "runtime/canvas2d.ts", typePrefix: "WebCanvas2d", moduleToken: "Canvas2D" },
 ];
 
 /** TS counterpart name for a class: WebDom + class, folding a redundant module token. */
