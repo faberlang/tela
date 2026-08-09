@@ -132,11 +132,45 @@
 # host binding (bindings/ts.toml → runtime/dom.ts) under
 # check-forms-interactive; this module supplies the plan surface (the
 # composition + the app-typed update loop + the seam mount).
+#
+# Stage 5 U2 (tela-s5-u2-layout-typography) — the reference catalog
+# composition. This module imports tela:reference (the catalog's first
+# module) and composes the layout + typography families through NORMAL
+# qualified imports (the U1 probe (i) consumability at REAL use — done_when
+# (g)): the runner output extends (the layout + typography static renders +
+# the reference bundles joining the component cascade layer + the ref.*
+# tokens joining both themes), and the mount seam fns (mount_layout /
+# mount_typography) supply the check-reference browser-proof surface.
+#
+# fix:<id> markers applied in this unit:
+#   fix:g5 — NONE: all new identifiers (reference_theme/layout_composition/
+#     typography_composition/reference_composition/mount_layout/
+#     mount_typography) probed collision-free on in-tree radix 0.80.0 (a
+#     free fn may share a class name — G5's collision is enum-member-
+#     specific).
+#   fix:snapshot-name-collision — the new identifiers avoid kernel type
+#     names AND the tela:reference prop-class names.
+#   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the
+#     TS lane is the proven runtime lane.
+#   fix:g4 — the reference families are consumed through the NORMAL
+#     package interface (the U1 probe (i) post-cds-u6 surface — no
+#     compose-without, no harness-assembly bypass for the catalog).
+#
+# DETERMINISM SUPERSESSION (done_when (f)): the runner output extends with
+# the reference composition — the Stage 4 determinism sha
+# (8dfcb1430e44758df824bc8b68943915caac499dfb7a110d6bf4800dccb50a04) is
+# SUPERSEDED by this output change — recorded. check-determinism is RED
+# between units (the honest flag): the double-build input changed AND the
+# harnesses that assemble this module's emit (check-mount /
+# check-forms-interactive) need the reference namespace wiring — U10
+# re-wires + re-records the official sha (stage-5-delivery.md U2 done_when
+# (f) + U10).
 
 import from "tela:tela" public * ut tela
 import from "extensionlib:extension" public * ut ext
 import from "formslib:forms" public * ut forms
 import from "tela:browser" public * ut browser
+import from "tela:reference" public * ut ref
 import from "web:dom" public * ut dom
 
 # --- Themed panel: a div with a stable identity + accessible name; the panel
@@ -729,6 +763,125 @@ fn mount_forms(string selector) → browser.Mounted ∪ null {
     return browser.mount(scope, forms_composition(), forms_theme())
 }
 
+# ===========================================================================
+# Stage 5 U2 — the reference catalog composition (tela:reference). The
+# layout + typography families compose through NORMAL qualified imports;
+# the mount seam fns supply the check-reference browser-proof surface.
+# ===========================================================================
+
+# The reference mount theme: the 8-token core baseline + the namespaced
+# ref.* tokens (the catalog's token surface collected app-side — the
+# compose-without pattern; mount requires a theme covering the core).
+fn reference_theme() → tela.Theme {
+    return tela.theme("referentiale", [
+        tela.token("surface.canvas", "#ffffff"),
+        tela.token("surface.panel", "#f9fafb"),
+        tela.token("text.primary", "#111827"),
+        tela.token("text.muted", "#6b7280"),
+        tela.token("border.default", "#e5e7eb"),
+        tela.token("accent.primary", "#2563eb"),
+        tela.token("state.positive", "#16a34a"),
+        tela.token("state.caution", "#d97706"),
+        ref.ref_layout_gap(),
+        ref.ref_layout_prose_measure(),
+        ref.ref_type_scale_xs(),
+        ref.ref_type_scale_sm(),
+        ref.ref_type_scale_md(),
+        ref.ref_type_scale_lg(),
+        ref.ref_type_scale_xl(),
+        ref.ref_type_heading_weight(),
+        ref.ref_type_heading_margin(),
+        ref.ref_type_prose_line_height(),
+        ref.ref_type_prose_margin()
+    ])
+}
+
+# The layout composition: the stacked rows, the two-column grid, and the
+# prose measure — the family's ordinary component fns (the ref-layout-*
+# identities; the grid columns are text — a grid of prose paragraphs would
+# reuse the static ref-typography-prose identity, which the browser
+# lifecycle diagnoses as a duplicate — asserted separately in
+# check-reference). The wrapper identity is app-owned data (the canary-*
+# precedent — MF-8).
+fn layout_composition() → tela.View {
+    return tela.element_full(
+        tela.new_identity("canary-ref-layout"),
+        tela.html_space(),
+        "div",
+        [],
+        [],
+        [
+            ref.layout_stack(ref.stack_props([
+                tela.text_view("row one"),
+                tela.text_view("row two")
+            ])),
+            ref.layout_grid(ref.grid_props([
+                tela.text_view("column one"),
+                tela.text_view("column two")
+            ])),
+            ref.layout_prose(ref.layout_prose_props([
+                ref.typography_prose(ref.prose_props([ tela.text_view("measure prose") ]))
+            ]))
+        ]
+    )
+}
+
+# The duplicate-identity case (the check-reference diagnosis assert): a
+# composition that reuses the static ref-typography-prose identity twice —
+# the browser lifecycle diagnoses the ambiguity, never a silent bind
+# (identity-hydration.md §6). The wrapper identity is app-owned data.
+fn duplicate_prose_composition() → tela.View {
+    return tela.element_full(
+        tela.new_identity("canary-ref-duplicate"),
+        tela.html_space(),
+        "div",
+        [],
+        [],
+        [
+            ref.typography_prose(ref.prose_props([ tela.text_view("first") ])),
+            ref.typography_prose(ref.prose_props([ tela.text_view("second") ]))
+        ]
+    )
+}
+
+# The typography composition: the heading hierarchy (native h1..h6), the
+# prose paragraph with mixed emphasis, and the type-scale steps — the
+# family's ordinary component fns (the ref-typography-* identities). The
+# wrapper identity is app-owned data.
+fn typography_composition() → tela.View {
+    return tela.element_full(
+        tela.new_identity("canary-ref-typography"),
+        tela.html_space(),
+        "div",
+        [],
+        [],
+        [
+            ref.typography_heading(ref.heading_props(1, "Catalog title")),
+            ref.typography_heading(ref.heading_props(2, "Section")),
+            ref.typography_prose(ref.prose_props([
+                tela.text_view("Prose with "),
+                ref.typography_emphasis(ref.emphasis_props("strong", "emphasis")),
+                tela.text_view(" carried by markup.")
+            ])),
+            ref.typography_scale(ref.scale_props("lg", "lead text")),
+            ref.typography_scale(ref.scale_props("xs", "caption text"))
+        ]
+    )
+}
+
+# The seam mounts for the browser proof: the check-reference driver calls
+# these through the app's own imports (dom.scope + browser.mount, the U7
+# pattern). Each family mounts independently — done_when (e).
+fn mount_layout(string selector) → browser.Mounted ∪ null {
+    const dom.Scope scope ← dom.scope(selector)
+    return browser.mount(scope, layout_composition(), reference_theme())
+}
+
+fn mount_typography(string selector) → browser.Mounted ∪ null {
+    const dom.Scope scope ← dom.scope(selector)
+    return browser.mount(scope, typography_composition(), reference_theme())
+}
+
 main {
     # G4 seam attempt (recorded in the evidence record): ext.bar_meter
     # resolves to WARN014 export-skip; the app composes the meter with tela
@@ -751,6 +904,8 @@ main {
     # G4-safe seam; consumed via field access on the call result, since the
     # extension-local token class name is not a nameable qualified type from
     # the app — fix:snapshot-name-collision, see the extension header).
+    # Stage 5 U2: the catalog's namespaced ref.* tokens join both themes
+    # (collected app-side via the zero-arg accessors — MF-7).
     const tela.Theme lumen ← tela.theme("lumen", [
         tela.token("surface.canvas", "#ffffff"),
         tela.token("surface.panel", "#f9fafb"),
@@ -764,7 +919,18 @@ main {
         tela.token(ext.chart_grid_muted().name, ext.chart_grid_muted().value),
         tela.token(forms.form_field_invalid().name, forms.form_field_invalid().value),
         tela.token(forms.form_field_valid().name, forms.form_field_valid().value),
-        tela.token(forms.form_focus().name, forms.form_focus().value)
+        tela.token(forms.form_focus().name, forms.form_focus().value),
+        ref.ref_layout_gap(),
+        ref.ref_layout_prose_measure(),
+        ref.ref_type_scale_xs(),
+        ref.ref_type_scale_sm(),
+        ref.ref_type_scale_md(),
+        ref.ref_type_scale_lg(),
+        ref.ref_type_scale_xl(),
+        ref.ref_type_heading_weight(),
+        ref.ref_type_heading_margin(),
+        ref.ref_type_prose_line_height(),
+        ref.ref_type_prose_margin()
     ])
     const tela.Theme tenebrae ← tela.theme("tenebrae", [
         tela.token("surface.canvas", "#0f172a"),
@@ -779,7 +945,18 @@ main {
         tela.token(ext.chart_grid_muted_dark().name, ext.chart_grid_muted_dark().value),
         tela.token(forms.form_field_invalid().name, forms.form_field_invalid().value),
         tela.token(forms.form_field_valid().name, forms.form_field_valid().value),
-        tela.token(forms.form_focus().name, forms.form_focus().value)
+        tela.token(forms.form_focus().name, forms.form_focus().value),
+        ref.ref_layout_gap(),
+        ref.ref_layout_prose_measure(),
+        ref.ref_type_scale_xs(),
+        ref.ref_type_scale_sm(),
+        ref.ref_type_scale_md(),
+        ref.ref_type_scale_lg(),
+        ref.ref_type_scale_xl(),
+        ref.ref_type_heading_weight(),
+        ref.ref_type_heading_margin(),
+        ref.ref_type_prose_line_height(),
+        ref.ref_type_prose_margin()
     ])
 
     # --- App + extension style bundles (identical under both themes) -------
@@ -792,6 +969,14 @@ main {
     # assembly-identity entry (the order map declares it app-side).
     const tela.Style forms_stilum ← forms.form_style()
     const tela.Bundle forms_bundle ← tela.bundle("formslib", forms_stilum)
+
+    # --- The reference catalog's component style bundles (Stage 5 U2) -----
+    # The component layer (input order): rules keyed on the ref-* identities,
+    # referencing the --ref-* tokens (the layout + typography bundles).
+    const tela.Style ref_layout_stilum ← ref.layout_style()
+    const tela.Bundle ref_layout_bundle ← tela.bundle("reference-layout", ref_layout_stilum)
+    const tela.Style ref_typography_stilum ← ref.typography_style()
+    const tela.Bundle ref_typography_bundle ← tela.bundle("reference-typography", ref_typography_stilum)
 
     # App style bundle: the panel rule + the segmented-control rule, both
     # keyed on the data-tela identity (the control's styles are app-owned).
@@ -826,7 +1011,7 @@ main {
     const tela.Style ∪ null cascade_lumen_result ← tela.assemble(
         lumen,
         null,
-        [],
+        [ref_layout_bundle, ref_typography_bundle],
         [ tela.order("extensionlib", []), tela.order("formslib", []) ],
         [ext_bundle, forms_bundle],
         app_bundle
@@ -834,7 +1019,7 @@ main {
     const tela.Style ∪ null cascade_tenebrae_result ← tela.assemble(
         tenebrae,
         null,
-        [],
+        [ref_layout_bundle, ref_typography_bundle],
         [ tela.order("extensionlib", []), tela.order("formslib", []) ],
         [ext_bundle, forms_bundle],
         app_bundle
@@ -866,6 +1051,22 @@ main {
     assert css_lumen.continet("[data-tela='form-live']")
     assert css_lumen.continet("var(--form-field-invalid)")
     assert css_lumen.continet("var(--form-focus)")
+
+    # --- The Stage 5 U2 reference-catalog cascade (done_when (f)) ---------
+    # The :root token layer includes the namespaced --ref-* values (the
+    # catalog tokens flow through the kernel token rendering).
+    assert css_lumen.continet("--ref-layout-gap: 1rem")
+    assert css_lumen.continet("--ref-type-scale-xl: 1.5rem")
+    # The reference component bundles ride the cascade (keyed on the ref-*
+    # identities, referencing the --ref-* tokens).
+    assert css_lumen.continet("[data-tela='ref-layout-stack']")
+    assert css_lumen.continet("[data-tela='ref-layout-grid']")
+    assert css_lumen.continet("[data-tela='ref-layout-prose']")
+    assert css_lumen.continet("[data-tela='ref-typography-heading-1']")
+    assert css_lumen.continet("[data-tela='ref-typography-prose']")
+    assert css_lumen.continet("var(--ref-layout-gap)")
+    assert css_lumen.continet("var(--ref-type-scale-xl)")
+    assert css_lumen.continet("var(--ref-type-prose-line-height)")
 
     # --- The Stage 2 fail-closed regressions re-asserted (three-package) ---
     # A cycle in the order map rejects (fail-closed — no partial cascade).
@@ -1187,6 +1388,38 @@ main {
     print forma_composita
     print "forms family static rendered (field/checkbox/select + error/live; tela-s4-u3)"
     print "forms behavior plan asserted (input/toggle/change/submit + validation semantics; tela-s4-u4)"
+
+    # --- Stage 5 U2 — the reference catalog static render (done_when (f)).
+    # The layout + typography families compose through NORMAL qualified
+    # imports (the U1 probe (i) at real use); the runner output extends —
+    # the Stage 4 determinism sha is SUPERSEDED (recorded in the header).
+    # The a11y structure asserts (the documented structure): the heading
+    # hierarchy (native h1..h6), the prose semantics (p), the semantic
+    # emphasis (strong/em/code), the scale steps — the wrapper identities
+    # are app-owned data (canary-*).
+    const string html_layout ← tela.html_visus(layout_composition()) coalesce ""
+    const string html_typography ← tela.html_visus(typography_composition()) coalesce ""
+    assert html_layout.continet("<div data-tela='ref-layout-stack'>")
+    assert html_layout.continet("<div data-tela='ref-layout-grid'>")
+    assert html_layout.continet("<div data-tela='ref-layout-prose'>")
+    assert html_layout.continet("<div data-tela='ref-layout-grid'>column onecolumn two</div>")
+    assert html_layout.continet("<p data-tela='ref-typography-prose'>measure prose</p>")
+    assert html_typography.continet("<h1 data-tela='ref-typography-heading-1'>Catalog title</h1>")
+    assert html_typography.continet("<h2 data-tela='ref-typography-heading-2'>Section</h2>")
+    assert html_typography.continet("<p data-tela='ref-typography-prose'>Prose with ")
+    assert html_typography.continet("<strong data-tela='ref-typography-emphasis-strong'>emphasis</strong>")
+    assert html_typography.continet("<span data-tela='ref-typography-scale-lg'>lead text</span>")
+    assert html_typography.continet("<span data-tela='ref-typography-scale-xs'>caption text</span>")
+    # The mount seam is the check-reference browser-proof surface (the
+    # driver calls mount_layout/mount_typography through the app's own
+    # imports AFTER installing the host DOM — main{} stays seam-free, the
+    # driver executes the seam).
+    assert not (tela.theme_css(reference_theme()) ≡ null)
+    print html_layout
+    print "layout family static rendered (stack/grid/prose; tela-s5-u2)"
+    print html_typography
+    print "typography family static rendered (headings/prose/emphasis/scale; tela-s5-u2)"
+    print "reference composition asserted (layout + typography families; tela-s5-u2)"
 
     # --- The U7 interactive plan surface (the provider-seam claim) --------
     # The composition mounts through the app's own seam call (dom.scope +

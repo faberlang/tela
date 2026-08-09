@@ -1,0 +1,317 @@
+#!/usr/bin/env bash
+# tela/scripta/check-reference — the Stage 5 U2 browser-proof gate for the
+# reference catalog (tela:reference — the layout + typography families).
+#
+# The Stage 4 interactive-seam mechanics (the check-forms-interactive
+# pattern): assembles the canary-app's REAL-IMPORT composition (web:dom
+# en→la + tela:browser + tela:reference + formslib + extensionlib — all
+# through the NORMAL package interface) and executes the mount +
+# structure/a11y proof against the DOCUMENTED faber-web host binding — the
+# ACTUAL route:
+#
+#   web:dom import → the generated provider reference (the emitted faber-web
+#   web:dom module — the bare Scope/Nodus types) → the bindings/ts.toml
+#   mapping (web:dom.snapshot → webDomSnapshot, …) → the runtime/dom.ts
+#   implementation (faber-web's ACTUAL runtime source, included verbatim,
+#   export keywords stripped).
+#
+# Each family mounts through tela.browser.mount (the app's own seam fns
+# mount_layout / mount_typography — dom.scope + browser.mount) against the
+# host binding; the structure/a11y asserts hold (node exit 0, fail-closed,
+# synchronous-only — the routed async-gap boundary). A third case mounts a
+# composition that REUSES the static ref-typography-prose identity and
+# asserts the documented duplicate-identity diagnosis (never a silent bind,
+# identity-hydration.md §6).
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRATCH="$(mktemp -d "${TMPDIR:-/tmp}/tela-u2-reference.XXXXXX")"
+trap 'rm -rf "$SCRATCH"' EXIT
+
+if [[ -n "${RADIX_ROOT:-}" ]]; then
+  RADIX="$RADIX_ROOT"
+elif [[ -d "$ROOT/../radix/crates/radix" ]]; then
+  RADIX="$ROOT/../radix"
+else
+  RADIX="$ROOT/../../../radix"
+fi
+
+if [[ ! -d "$RADIX/crates/radix" ]]; then
+  echo "check-reference: missing radix checkout at $RADIX" >&2
+  exit 1
+fi
+
+RADIX_BIN="$RADIX/target/debug/radix"
+if [[ ! -x "$RADIX_BIN" ]]; then
+  (cd "$RADIX" && cargo build -q -p radix --bin radix)
+fi
+
+export FABER_LIBRARY_HOME="$ROOT/proof/benchmark/libhome"
+
+echo "check-reference: radix check the real-import composition (benchmark libhome)"
+"$RADIX_BIN" check --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab"
+"$RADIX_BIN" check --locale en "$ROOT/src/reference.fab"
+
+echo "check-reference: TS emit valida / tela / dom / browser / extension / forms / reference / main"
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/validate.fab" -o "$SCRATCH/valida.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/browser.fab" -o "$SCRATCH/browser.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/extension-lib/src/extension.fab" -o "$SCRATCH/extension.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/reference.fab" -o "$SCRATCH/reference.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab" -o "$SCRATCH/main.ts" >/dev/null
+# The generated provider reference: the emitted web:dom module (the bare
+# Scope/Nodus/… type declarations — the la locale emit is the package's own
+# reader).
+"$RADIX_BIN" emit -t ts --locale la "$ROOT/../faber-web/src/dom.fab" -o "$SCRATCH/dom.ts" >/dev/null
+
+strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
+# The emitted web:dom provider module's preamble (FaberDisplayHint + the
+# __faberDisplay helpers) and its `Element` genus are renamed so they do not
+# collide with the tela module's own preamble / the DOM lib's `Element`.
+strip_dom() { sed '1,2d' "$1" | grep -v '^import .* from "' | sed -e 's/\bFaberResult\b/FaberResultDom/g' -e 's/\bFaberDisplayHint\b/FaberDisplayHintDom/g' -e 's/\b__faberDisplayFractus\b/__faberDisplayDomFractus/g' -e 's/\b__faberDisplayList\b/__faberDisplayDomList/g' -e 's/\b__faberDisplayTensor\b/__faberDisplayDomTensor/g' -e 's/\b__faberDisplaySparsa\b/__faberDisplayDomSparsa/g' -e 's/\b__faberDisplayMap\b/__faberDisplayDomMap/g' -e 's/\b__faberDisplayValor\b/__faberDisplayDomValor/g' -e 's/\b__faberDisplayTaggedValor\b/__faberDisplayDomTaggedValor/g' -e 's/\b__faberDisplay\b/__faberDisplayDom/g' -e 's/\bElement\b/DomElement/g'; }
+# The host runtime: faber-web's ACTUAL runtime/dom.ts implementation,
+# included verbatim (export keywords stripped). tsc type-checks it here
+# against the DOM lib (its own source typing); node runs it against the
+# installed fake DOM.
+strip_runtime() { sed 's/^export //' "$1"; }
+
+VALIDA_NS="const validate = { valid_space, valid_tag_name, valid_attribute_name, valid_name_in_space, valid_void_html, valid_void_structure };"
+TELA_NS="const tela = { html_visus, css, theme_css, theme_style, theme, token, core_tokens, token_property_name, token_name_valid, theme_has_core_tokens, theme_has_token, assemble, bundle, order, deduplicated_bundles, topological_order, style_valid, unclean_style_text, bundle_for, in_list, dependencies_met, text_view, fragment_view, new_identity, html_space, svg_space, element_view, element_full, event_name, restore, direct, anchor, update, effect_identity, Attribute, Property, Identity, Declaration, Rule, Style, Token, Theme, Bundle, Order, EventName, Update };"
+BROWSER_NS="const browser = { region_root, event_subscription, binding, parse_identities, element_tag, count_occurrences, duplicate_identities, tag_name, tag_at, identities_from_nodes, tags_from_nodes, binding_status, hydration_diagnostics, mount, replace, dispose, focus_held, focus_target };"
+EXT_NS="const ext = { chart_axis_muted, chart_axis_muted_dark, chart_grid_muted, chart_grid_muted_dark, chart_tokens, chart_tokens_dark, bar_meter, chart_style };"
+FORMS_NS="const forms = { field_props, checkbox_props, select_props, field, checkbox, select, error_region, form_live_region, field_group, form_field_invalid, form_field_valid, form_focus, form_tokens, form_style, field_event, change_event, submit_event, click_event, invalid_state, error_present };"
+# The reference catalog namespace (every tela:reference export — the
+# layout + typography families, the bundles, the ref.* token accessors).
+REF_NS="const ref = { layout_stack, layout_grid, layout_prose, stack_props, grid_props, layout_prose_props, typography_heading, typography_prose, typography_emphasis, typography_scale, heading_props, prose_props, emphasis_props, scale_props, clamped_level, layout_style, typography_style, ref_layout_gap, ref_layout_prose_measure, ref_type_scale_xs, ref_type_scale_sm, ref_type_scale_md, ref_type_scale_lg, ref_type_scale_xl, ref_type_heading_weight, ref_type_heading_margin, ref_type_prose_line_height, ref_type_prose_margin, reference_tokens, StackProps, GridProps, LayoutProseProps, HeadingProps, ProseProps, EmphasisProps, ScaleProps };"
+# The DOM_NS: the ACTUAL bindings/ts.toml mapping (web:dom.<fn> →
+# webDom<Fn>) over faber-web's runtime/dom.ts implementation. The snapshot
+# binding is widened at the harness boundary (the emitted Scope type carries
+# only `selector`; the runtime scope also carries `root`).
+DOM_NS="const dom = { scope: webDomScope, query: webDomQuery, require: webDomRequire, all: webDomAll, snapshot: ((scope: any): Array<Nodus> | null => webDomSnapshot(scope)), text_set: webDomTextSet, attr_set: webDomAttrSet, attr_remove: webDomAttrRemove, class_add: webDomClassAdd, class_remove: webDomClassRemove, class_toggle: webDomClassToggle, on: webDomOn, unsubscribe: webDomUnsubscribe, value: webDomValue, value_set: webDomValueSet, on_input: webDomOnInput, on_submit: webDomOnSubmit, on_frame: webDomOnFrame, on_resize: webDomOnResize, on_keyboard: webDomOnKeyboard, on_pointer: webDomOnPointer, on_focus: webDomOnFocus, pointer_lock_state: webDomPointerLockState, request_pointer_lock: webDomRequestPointerLock, exit_pointer_lock: webDomExitPointerLock, on_pointer_lock: webDomOnPointerLock, prevent_default: webDomPreventDefault, fetch_text: webDomFetchText };"
+
+cat > "$SCRATCH/host-driver.ts" <<'HOST_DRIVER'
+// ---- node host environment (modeled on the WEB5 fake-dom.mjs precedent) --
+class FakeClassList {
+  _s: Set<string>;
+  constructor() { this._s = new Set(); }
+  add(c: string) { this._s.add(c); }
+  remove(c: string) { this._s.delete(c); }
+  toggle(c: string) { if (this._s.has(c)) { this._s.delete(c); return false; } this._s.add(c); return true; }
+  has(c: string) { return this._s.has(c); }
+}
+type FakeListener = (event: FakeEvent) => void;
+class FakeEvent {
+  type: string;
+  defaultPrevented: boolean;
+  [key: string]: unknown;
+  constructor(type: string, fields: Record<string, unknown> = {}) { this.type = type; this.defaultPrevented = false; Object.assign(this, fields); }
+  preventDefault() { this.defaultPrevented = true; }
+}
+class FakeElement {
+  tagName: string;
+  children: FakeElement[];
+  _attrs: Map<string, string>;
+  _listeners: Map<string, Set<FakeListener>>;
+  _ownText: string;
+  value: string;
+  classList: FakeClassList;
+  focused: boolean;
+  token: string;
+  constructor(tagName: string) {
+    this.tagName = tagName;
+    this.children = [];
+    this._attrs = new Map();
+    this._listeners = new Map();
+    this._ownText = "";
+    this.value = "";
+    this.classList = new FakeClassList();
+    this.focused = false;
+    this.token = "";
+  }
+  get dataTela() { return this.getAttribute("data-tela") ?? ""; }
+  get id() { return this.getAttribute("id") ?? ""; }
+  get textContent() {
+    if (this.tagName === "#text") return this._ownText;
+    let a = this._ownText;
+    for (const c of this.children) a += c.textContent;
+    return a;
+  }
+  set textContent(v: string) { this._ownText = v; if (this.tagName !== "#text") this.children = []; }
+  setAttribute(n: string, v: string) { this._attrs.set(n, String(v)); }
+  removeAttribute(n: string) { this._attrs.delete(n); }
+  getAttribute(n: string) { return this._attrs.get(n) ?? null; }
+  hasAttribute(n: string) { return this._attrs.has(n); }
+  addEventListener(t: string, h: FakeListener) { if (!this._listeners.has(t)) this._listeners.set(t, new Set()); this._listeners.get(t)!.add(h); }
+  removeEventListener(t: string, h: FakeListener) { this._listeners.get(t)?.delete(h); }
+  dispatchEvent(ev: FakeEvent) { for (const h of this._listeners.get(ev.type) ?? []) h(ev); return !ev.defaultPrevented; }
+  appendChild(c: FakeElement) { this.children.push(c); return c; }
+  matches(sel: string) {
+    if (sel === "[data-tela]") return this.hasAttribute("data-tela");
+    if (sel.startsWith("#")) return this.id === sel.slice(1);
+    if (sel.startsWith(".")) return this.classList.has(sel.slice(1));
+    const m = /^\[([\w-]+)=['"]?([^'"\]]*)['"]?\]$/.exec(sel);
+    if (m) return this.getAttribute(m[1]) === m[2];
+    return this.tagName === sel;
+  }
+  _queryAll(sel: string, out: FakeElement[]) {
+    for (const ch of this.children) { if (ch.matches(sel)) out.push(ch); ch._queryAll(sel, out); }
+    return out;
+  }
+  querySelector(sel: string) { return this._queryAll(sel, [])[0] ?? null; }
+  querySelectorAll(sel: string) { return this._queryAll(sel, []); }
+}
+class FakeDocument {
+  body: FakeElement;
+  activeElement: FakeElement | null;
+  constructor() { this.body = new FakeElement("body"); this.activeElement = null; }
+  querySelector(sel: string) { return this.body.querySelector(sel); }
+  querySelectorAll(sel: string) { return this.body.querySelectorAll(sel); }
+  hasFocus() { return true; }
+  focusNode(el: FakeElement | null) { this.activeElement = el; }
+}
+// Bounded HTML parser for the serializer's markup shape (elements +
+// single-quoted attributes + `data-tela` identities + nested children +
+// void elements). The host's DOM sync after each replace.
+const VOID_TAGS = new Set(["input", "br", "hr", "img", "link", "meta", "area", "base", "col", "embed", "source", "track", "wbr"]);
+function parseFragment(html: string): FakeElement[] {
+  const root = new FakeElement("#fragment");
+  const stack: FakeElement[] = [root];
+  let current = root;
+  let i = 0;
+  while (i < html.length) {
+    const lt = html.indexOf("<", i);
+    if (lt === -1) {
+      if (i < html.length) { const t = html.slice(i); const tn = new FakeElement("#text"); tn.textContent = t; current.children.push(tn); }
+      break;
+    }
+    if (lt > i) { const t = html.slice(i, lt); const tn = new FakeElement("#text"); tn.textContent = t; current.children.push(tn); }
+    const gt = html.indexOf(">", lt);
+    if (gt === -1) break;
+    const tagText = html.slice(lt + 1, gt);
+    const close = /^\/([\w-]+)/.exec(tagText);
+    if (close) { stack.pop(); current = stack[stack.length - 1] ?? root; i = gt + 1; continue; }
+    const m = /^([\w-]+)([^>]*)$/.exec(tagText);
+    if (!m) { i = gt + 1; continue; }
+    const el = new FakeElement(m[1]);
+    const attrRe = /([\w-]+)='([^']*)'/g;
+    let am: RegExpExecArray | null;
+    while ((am = attrRe.exec(m[2])) !== null) el.setAttribute(am[1], am[2]);
+    const attrRe2 = /([\w-]+)="([^"]*)"/g;
+    while ((am = attrRe2.exec(m[2])) !== null) el.setAttribute(am[1], am[2]);
+    current.children.push(el);
+    if (!VOID_TAGS.has(m[1]) && !tagText.endsWith("/")) { stack.push(el); current = el; }
+    i = gt + 1;
+  }
+  return root.children;
+}
+function installFakeDom(): FakeDocument {
+  const doc = new FakeDocument();
+  const root = new FakeElement("div");
+  root.setAttribute("id", "root");
+  doc.body.appendChild(root);
+  globalThis.document = doc as unknown as Document;
+  globalThis.window = { addEventListener() {}, removeEventListener() {}, innerWidth: 800, innerHeight: 600, devicePixelRatio: 1 } as unknown as Window & typeof globalThis;
+  globalThis.requestAnimationFrame = (cb: (t: number) => void) => setTimeout(() => cb(Date.now()), 16);
+  globalThis.cancelAnimationFrame = (id: unknown) => clearTimeout(id as any);
+  globalThis.fetch = () => Promise.reject(new Error("no fetch in the reference gate"));
+  return doc;
+}
+
+// ---- scripted mount + structure/a11y driver (the check-reference gate) ---
+const assert = (cond: boolean, msg: string): void => { if (!cond) throw new Error(`check-reference assert failed: ${msg}`); };
+const doc = installFakeDom();
+const identityNodes = (): FakeElement[] => doc.querySelectorAll("[data-tela]");
+const byIdentity = (id: string): FakeElement | undefined => identityNodes().find((n) => n.dataTela === id);
+const plantRegion = (selector: string, markup: string): void => {
+  const region = doc.querySelector(selector) as FakeElement;
+  region.children = [];
+  for (const node of parseFragment(markup)) region.appendChild(node);
+};
+
+// --- 1. the layout family mounts through tela.browser.mount --------------
+// Hydration: the region is pre-rendered with the SAME composition — the
+// typed snapshot read (webDomSnapshot) makes every matching identity bind.
+const layoutMarkup = tela.html_visus(layout_composition()) ?? "";
+plantRegion("#root", layoutMarkup);
+const lm = mount_layout("#root") as Mounted;
+assert(lm !== null, "layout mount returns a plan");
+assert(lm.identities.length === 5, "layout identities: wrapper + stack + grid + prose + paragraph");
+assert(lm.bindings.every((l) => l.status === "bind"), "hydration: every layout identity binds (the dom.snapshot read)");
+// The semantic containers + the structure (campaign §8 — the documented
+// layout structure): the stack carries the rows' text, the grid carries
+// the columns' text (text views serialize as one contiguous text run — no
+// wrappers), the prose measure wraps a paragraph.
+assert(byIdentity("ref-layout-stack") !== undefined, "stack container present");
+assert(byIdentity("ref-layout-stack")!.textContent === "row onerow two", "stack carries the two rows' text");
+assert(byIdentity("ref-layout-grid") !== undefined, "grid container present");
+assert(byIdentity("ref-layout-grid")!.textContent === "column onecolumn two", "grid carries the two columns' text");
+assert(byIdentity("ref-layout-prose") !== undefined, "prose measure present");
+assert(byIdentity("ref-layout-prose")!.children.length === 1 && byIdentity("ref-layout-prose")!.children[0].tagName === "p", "prose measure wraps a paragraph (prose semantics)");
+
+// --- 2. the typography family mounts + the a11y structure holds ----------
+const typographyMarkup = tela.html_visus(typography_composition()) ?? "";
+plantRegion("#root", typographyMarkup);
+const tm = mount_typography("#root") as Mounted;
+assert(tm !== null, "typography mount returns a plan");
+assert(tm.identities.length === 7, "typography identities: wrapper + h1 + h2 + prose + strong + lg + xs");
+assert(tm.bindings.every((l) => l.status === "bind"), "hydration: every typography identity binds");
+// The heading hierarchy: the rank is the native tag (h1/h2 — screen
+// readers expose the hierarchy; never color-only communication).
+assert(byIdentity("ref-typography-heading-1")?.tagName === "h1", "heading-1 is a native h1 (hierarchy)");
+assert(byIdentity("ref-typography-heading-2")?.tagName === "h2", "heading-2 is a native h2 (hierarchy)");
+// Prose semantics.
+assert(byIdentity("ref-typography-prose")?.tagName === "p", "prose is a native p");
+// Semantic emphasis — never color-only communication: the meaning rides
+// the semantic strong tag; no color/state-carrying attribute exists.
+const strong = byIdentity("ref-typography-emphasis-strong");
+assert(strong !== undefined && strong.tagName === "strong", "emphasis is a semantic strong");
+assert(strong!.textContent === "emphasis", "emphasis text present");
+assert(strong!.getAttribute("style") === null && strong!.getAttribute("class") === null, "emphasis carries no style/class (the meaning is the markup)");
+// The type scale: decorative sizing spans at the documented steps.
+assert(byIdentity("ref-typography-scale-lg")?.tagName === "span", "scale-lg is a span");
+assert(byIdentity("ref-typography-scale-xs")?.tagName === "span", "scale-xs is a span");
+
+// --- 3. the duplicate-identity policy on a reused catalog component ------
+// The static ref-typography-prose identity reused twice is DIAGNOSED (the
+// browser lifecycle's ambiguity policy, identity-hydration.md §6) — never
+// a silent bind: the binding status for the duplicated identity is
+// "create".
+const dupMarkup = tela.html_visus(duplicate_prose_composition()) ?? "";
+plantRegion("#root", dupMarkup);
+const dm = browser.mount(webDomScope("#root"), duplicate_prose_composition(), reference_theme()) as Mounted;
+assert(dm !== null, "duplicate case: mount returns a plan");
+assert(dm.diagnostics.includes("duplicate:ref-typography-prose"), "reuse of the static identity is diagnosed (never a silent bind)");
+const dupBinding = dm.bindings.find((b) => b.identity === "ref-typography-prose");
+assert(dupBinding !== undefined && dupBinding.status === "create", "the duplicated identity creates (never silently binds)");
+
+console.log("reference catalog mount gate green (layout + typography mount + structure/a11y; tela-s5-u2)");
+HOST_DRIVER
+
+{
+  strip "$SCRATCH/valida.ts"
+  echo "$VALIDA_NS"
+  strip "$SCRATCH/tela.ts"
+  echo "$TELA_NS"
+  strip_dom "$SCRATCH/dom.ts"
+  strip_runtime "$ROOT/../faber-web/runtime/dom.ts"
+  echo "$DOM_NS"
+  strip "$SCRATCH/browser.ts"
+  echo "$BROWSER_NS"
+  strip "$SCRATCH/extension.ts"
+  echo "$EXT_NS"
+  strip "$SCRATCH/forms.ts"
+  echo "$FORMS_NS"
+  strip "$SCRATCH/reference.ts"
+  echo "$REF_NS"
+  strip "$SCRATCH/main.ts"
+  cat "$SCRATCH/host-driver.ts"
+} > "$SCRATCH/assembled.ts"
+
+echo "check-reference: tsc --noEmit (strict; the DOM lib hosts the faber-web runtime typing)"
+tsc --noEmit --strict --target ES2020 --lib ES2020,DOM --module ESNext --moduleResolution bundler --skipLibCheck "$SCRATCH/assembled.ts"
+
+echo "check-reference: node — the mount + structure/a11y gate (fail-closed)"
+node "$SCRATCH/assembled.ts"
+
+echo "check-reference: green (real provider seam; layout + typography mount cases; node exit 0)"

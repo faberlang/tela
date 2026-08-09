@@ -30,9 +30,10 @@ fi
 # `--locale-pack` spelling; the current radix 0.80.0 binary resolves the
 # reader pack from `--locale en` — noted in stage-1-determinism.md.)
 
-echo "check-compile: kernel + validation modules (container library home)"
+echo "check-compile: kernel + validation + reference modules (container library home)"
 export FABER_LIBRARY_HOME="${FABER_LIBRARY_HOME:-$ROOT/..}"
-for mod in tela validate; do
+# Stage 5 U2: the reference catalog module joins the compile surface.
+for mod in tela validate reference; do
   echo "check-compile: parsing src/${mod}.fab"
   "$RADIX_BIN" check --locale en "$ROOT/src/${mod}.fab"
 done

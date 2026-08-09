@@ -1,0 +1,117 @@
++++
+term = "reference"
+kind = "concept"
+category = "library"
+locale = "en"
++++
+
+# tela/exempla/reference.fab — Stage 5 U2 exempla for the reference catalog
+# start (tela:reference): the layout (stacked rows / two-column grid /
+# prose measures) + typography (headings / prose / emphasis / scale)
+# families. Asserts the EXACT static bytes (the serializer emission order:
+# tag, then attributes in author order, then the data-tela identity) +
+# the a11y structure (the heading hierarchy via native h1..h6, prose
+# semantics via p, semantic emphasis via strong/em/code — never
+# color-only communication, the scale as decorative sizing), fail-closed,
+# executed under node (check-exempla runtime gate).
+#
+# fix:<id> markers: none applied beyond reference.fab's (fix:g5 — NONE,
+# fix:codegen001, fix:snapshot-name-collision, fix:verum-b).
+
+import from "tela:tela" private tela
+import from "tela:reference" private ref
+
+main {
+    # --- layout: the stack — stacked rows --------------------------------
+    # No attributes, no ARIA (pure layout grouping): the identity emits
+    # after the tag; text children concatenate without a wrapper.
+    const string stack ← tela.html_visus(ref.layout_stack(ref.stack_props([
+        tela.text_view("row one"),
+        tela.text_view("row two")
+    ]))) coalesce ""
+    assert stack ≡ "<div data-tela='ref-layout-stack'>row onerow two</div>"
+
+    # --- layout: the two-column grid --------------------------------------
+    const string grid ← tela.html_visus(ref.layout_grid(ref.grid_props([
+        tela.text_view("column one"),
+        tela.text_view("column two")
+    ]))) coalesce ""
+    assert grid ≡ "<div data-tela='ref-layout-grid'>column onecolumn two</div>"
+
+    # --- layout: the prose measure container (wraps the typography prose)
+    const string prose_layout ← tela.html_visus(ref.layout_prose(ref.layout_prose_props([
+        ref.typography_prose(ref.prose_props([ tela.text_view("prose text") ]))
+    ]))) coalesce ""
+    assert prose_layout ≡ "<div data-tela='ref-layout-prose'><p data-tela='ref-typography-prose'>prose text</p></div>"
+
+    # --- typography: the heading hierarchy (native h1..h6) ----------------
+    # The heading RANK is carried in the native tag (screen readers expose
+    # the hierarchy) — never in styling alone (no color-only communication).
+    assert tela.html_visus(ref.typography_heading(ref.heading_props(1, "Title"))) coalesce "" ≡ "<h1 data-tela='ref-typography-heading-1'>Title</h1>"
+    assert tela.html_visus(ref.typography_heading(ref.heading_props(3, "Section"))) coalesce "" ≡ "<h3 data-tela='ref-typography-heading-3'>Section</h3>"
+    assert tela.html_visus(ref.typography_heading(ref.heading_props(6, "Footnote"))) coalesce "" ≡ "<h6 data-tela='ref-typography-heading-6'>Footnote</h6>"
+    # The range contract 1..6 is clamped fail-safe at the edges — h0/h7
+    # never emit (asserted, not silent).
+    assert tela.html_visus(ref.typography_heading(ref.heading_props(0, "zero"))) coalesce "" ≡ "<h1 data-tela='ref-typography-heading-1'>zero</h1>"
+    assert tela.html_visus(ref.typography_heading(ref.heading_props(9, "nine"))) coalesce "" ≡ "<h6 data-tela='ref-typography-heading-6'>nine</h6>"
+
+    # --- typography: the prose paragraph (prose semantics) ----------------
+    # Mixed content: text + semantic emphasis compose inline within the p.
+    assert tela.html_visus(ref.typography_prose(ref.prose_props([ tela.text_view("A paragraph.") ]))) coalesce "" ≡ "<p data-tela='ref-typography-prose'>A paragraph.</p>"
+    assert tela.html_visus(ref.typography_prose(ref.prose_props([
+        tela.text_view("Read the "),
+        ref.typography_emphasis(ref.emphasis_props("strong", "docs"))
+    ]))) coalesce "" ≡ "<p data-tela='ref-typography-prose'>Read the <strong data-tela='ref-typography-emphasis-strong'>docs</strong></p>"
+
+    # --- typography: semantic emphasis — strong / em / code ---------------
+    # The meaning rides the SEMANTIC TAG (strong/em/code), never color or
+    # size alone (campaign §8 no-color-only-communication).
+    assert tela.html_visus(ref.typography_emphasis(ref.emphasis_props("strong", "bold"))) coalesce "" ≡ "<strong data-tela='ref-typography-emphasis-strong'>bold</strong>"
+    assert tela.html_visus(ref.typography_emphasis(ref.emphasis_props("em", "italic"))) coalesce "" ≡ "<em data-tela='ref-typography-emphasis-em'>italic</em>"
+    assert tela.html_visus(ref.typography_emphasis(ref.emphasis_props("code", "x"))) coalesce "" ≡ "<code data-tela='ref-typography-emphasis-code'>x</code>"
+
+    # --- typography: the type scale (decorative sizing, never state) ------
+    # The scale is a span at a documented step; the size comes from the
+    # ref.type.scale.* tokens via the typography bundle — the scale never
+    # carries semantic state and never communicates by color.
+    assert tela.html_visus(ref.typography_scale(ref.scale_props("lg", "lead"))) coalesce "" ≡ "<span data-tela='ref-typography-scale-lg'>lead</span>"
+    assert tela.html_visus(ref.typography_scale(ref.scale_props("xs", "caption"))) coalesce "" ≡ "<span data-tela='ref-typography-scale-xs'>caption</span>"
+
+    # --- the layout style bundle (keyed on the identities, --ref-* tokens)
+    const string css_layout ← tela.css(ref.layout_style())
+    assert css_layout ≡ "[data-tela='ref-layout-stack'] { display: flex; flex-direction: column; gap: var(--ref-layout-gap); }\n[data-tela='ref-layout-grid'] { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--ref-layout-gap); }\n[data-tela='ref-layout-prose'] { max-width: var(--ref-layout-prose-measure); margin: 0 auto; }\n"
+
+    # --- the typography style bundle (the heading scale + prose) ----------
+    const string css_typography ← tela.css(ref.typography_style())
+    assert css_typography.continet("[data-tela='ref-typography-heading-1'] { font-size: var(--ref-type-scale-xl); font-weight: var(--ref-type-heading-weight); margin: var(--ref-type-heading-margin); }")
+    assert css_typography.continet("[data-tela='ref-typography-heading-6'] { font-size: var(--ref-type-scale-xs); font-weight: var(--ref-type-heading-weight); margin: var(--ref-type-heading-margin); }")
+    assert css_typography.continet("[data-tela='ref-typography-prose'] { font-size: var(--ref-type-scale-md); line-height: var(--ref-type-prose-line-height); margin: var(--ref-type-prose-margin); }")
+    assert css_typography.continet("[data-tela='ref-typography-scale-xl'] { font-size: var(--ref-type-scale-xl); }")
+    # Author order is the emission order (the heading scale descends from
+    # heading-1 to heading-6; the exact first rule above pins the order).
+    assert css_typography.continet("[data-tela='ref-typography-heading-1']")
+    assert css_typography.continet("[data-tela='ref-typography-heading-6']")
+
+    # --- the namespaced ref.* tokens (the kernel Token carrier, MF-7) -----
+    assert ref.ref_layout_gap().name ≡ "ref.layout.gap"
+    assert ref.ref_layout_gap().value ≡ "1rem"
+    assert ref.ref_type_scale_xl().name ≡ "ref.type.scale.xl"
+    assert ref.ref_type_scale_xl().value ≡ "1.5rem"
+    assert ref.ref_type_prose_line_height().name ≡ "ref.type.prose.line-height"
+    # Every token name passes the kernel lexical predicate (fail-closed
+    # token-name shape — theme_css/assemble reject invalid names).
+    assert tela.token_name_valid(ref.ref_layout_gap().name)
+    assert tela.token_name_valid(ref.ref_type_prose_line_height().name)
+    const list<tela.Token> collectio ← ref.reference_tokens()
+    assert collectio.longitudo() ≡ 11
+
+    # --- determinism: identical input → identical bytes -------------------
+    const string stack_b ← tela.html_visus(ref.layout_stack(ref.stack_props([
+        tela.text_view("row one"),
+        tela.text_view("row two")
+    ]))) coalesce ""
+    assert stack_b ≡ stack
+    assert tela.css(ref.layout_style()) ≡ css_layout
+
+    print "reference catalog exempla ready (layout + typography; tela-s5-u2)"
+}

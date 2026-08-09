@@ -1,0 +1,472 @@
+# tela/src/reference.fab — tela:reference — the reference catalog module.
+#
+# Stage 5 U2 (tela-s5-u2-layout-typography): the catalog STARTS — the
+# **layout** family (stacked rows / two-column grid / prose measures) and
+# the **typography** family (headings / prose / emphasis / scale), as
+# ordinary component functions over typed props → tela.View with stable
+# ref-layout-*/ref-typography-* data-tela identities, plus their style
+# bundles → tela.Style keyed on the identities and the namespaced ref.*
+# tokens (the kernel Token carrier pattern, MF-7). U3–U8 extend this one
+# flat module — strictly sequential (delivery Coordination Constraint 3).
+#
+# MODULE SHAPE (U1-locked, stage-5-discovery.md §1): ONE flat module
+# mirroring the kernel (G4-safe), stdlib-only + ONE same-package sibling
+# import (tela:tela); no public signature references a type outside the
+# kernel's own surface. Every new identifier probed collision-free on
+# in-tree radix 0.80.0 (the G5 probe discipline) — no kernel-type-name
+# collisions (View/Style/Token/Theme/Bundle/Order/...), no seam-type-name
+# collisions, no verum/falsum identifiers (fix:verum-b). Casing: types
+# PascalCase concatenation (StackProps), fns/fields snake_case, identities
+# kebab-case data (MF-8), tokens dotted lowercase (ref.*).
+#
+# THE TWO FAMILIES (delivery U2 outcome; campaign §3 component contract):
+#
+#   LAYOUT — semantic containers for arrangement, no ARIA roles (pure
+#   layout grouping; the a11y structure is the container semantics + the
+#   prose measure):
+#     layout_stack(StackProps)            → ref-layout-stack  — stacked
+#       rows: a vertical stack of child views (one per row).
+#     layout_grid(GridProps)              → ref-layout-grid   — the
+#       two-column grid: children fill the two-column track in order.
+#     layout_prose(LayoutProseProps)      → ref-layout-prose  — the prose
+#       measure container: constrains the line measure around prose
+#       content (the layout-level measure; the paragraph itself is
+#       typography_prose).
+#
+#   TYPOGRAPHY — the text semantics, communicated by MARKUP, never by
+#   color alone (campaign §8 no-color-only-communication):
+#     typography_heading(HeadingProps)    → ref-typography-heading-<level>
+#       — native h1..h6 by level: the HEADING HIERARCHY is the a11y
+#       structure (screen readers expose the native heading semantics;
+#       the level is the documented 1..6 range, clamped fail-safe at the
+#       edges so h0/h7 never emit).
+#     typography_prose(ProseProps)        → ref-typography-prose — the
+#       paragraph (prose semantics; the layout prose measure wraps it).
+#     typography_emphasis(EmphasisProps)  → ref-typography-emphasis-<kind>
+#       — semantic emphasis: kind ∈ strong | em | code, emitted as the
+#       element tag (strong/em/code are the HTML semantic tags — emphasis
+#       is NEVER communicated by color or size alone).
+#     typography_scale(ScaleProps)        → ref-typography-scale-<step> —
+#       text at a documented type-scale step (xs/sm/md/lg/xl); the scale
+#       is decorative sizing (the size comes from the ref.type.scale.*
+#       tokens), never a semantic state carrier.
+#
+# NO COLOR-ONLY COMMUNICATION (campaign §8): no component in U2 carries
+# meaning through color. Emphasis is semantic markup; the scale is
+# decorative sizing; the layout containers are structural. The style
+# bundles color no state — tokens supply values only through the selected
+# theme (campaign §5: themes supply values, not semantics).
+#
+# STYLE BUNDLES + TOKENS (delivery U2 done_when (c)):
+#   layout_style() → tela.Style      — rules keyed on the layout
+#     identities, referencing the ref.layout.* tokens.
+#   typography_style() → tela.Style  — rules keyed on the typography
+#     identities, referencing the ref.type.* tokens (the heading scale,
+#     the prose measure/leading, the scale steps).
+#   The tokens are zero-arg accessors returning the kernel tela.Token
+#   carrier (the MF-7 ONE-carrier pattern — the formslib precedent):
+#   ref.layout.gap, ref.layout.prose.measure, ref.type.scale.xs|sm|md|lg|xl,
+#   ref.type.heading.weight, ref.type.heading.margin, ref.type.prose.
+#   line-height, ref.type.prose.margin. Consumers collect them app-side
+#   into their Theme (the compose-without pattern) and pass the bundles to
+#   tela.assemble (the Stage 2 assembly contract — cascade order,
+#   fail-closed).
+#
+# fix:<id> markers applied in this unit:
+#   fix:g5 — NONE: all new identifiers (layout_stack/layout_grid/
+#     layout_prose/typography_heading/typography_prose/typography_emphasis/
+#     typography_scale/stack_props/grid_props/layout_prose_props/
+#     heading_props/prose_props/emphasis_props/scale_props/clamped_level/
+#     layout_style/typography_style/reference_tokens + the token
+#     accessors) probed collision-free on in-tree radix 0.80.0 (a free fn
+#     may share a class name — G5's collision is enum-member-specific).
+#   fix:codegen001 — the Rust emit-across-imports block persists
+#     (attempted + recorded; the TS lane is the proven runtime lane).
+#   fix:snapshot-name-collision — the props classes avoid the kernel type
+#     names AND the browser/forms carrier names (StackProps/GridProps/
+#     LayoutProseProps/HeadingProps/ProseProps/EmphasisProps/ScaleProps).
+#   fix:verum-b — en-locale naming: no verum/falsum identifiers.
+#
+# G4 consumability (done_when (g)): the `→ tela.View` component fns + the
+# `→ tela.Style`/`→ tela.Token` accessors are consumable through NORMAL
+# qualified imports (the U1 probe (i) + cds-u6; re-verified at real use by
+# the canary-app + check-reference — never assumed).
+
+import from "tela:tela" public * ut tela
+
+# ===========================================================================
+# LAYOUT family — semantic containers (ref-layout-*).
+# ===========================================================================
+
+class StackProps {
+    list<tela.View> children
+}
+
+fn stack_props(list<tela.View> children) → StackProps {
+    return StackProps { children = children }
+}
+
+# Stacked rows: a vertical stack of child views, one per row. Pure layout
+# grouping (no ARIA role); the row structure is the container semantics.
+fn layout_stack(StackProps props) → tela.View {
+    return tela.element_full(
+        tela.new_identity("ref-layout-stack"),
+        tela.html_space(),
+        "div",
+        [],
+        [],
+        props.children
+    )
+}
+
+class GridProps {
+    list<tela.View> columns
+}
+
+fn grid_props(list<tela.View> columns) → GridProps {
+    return GridProps { columns = columns }
+}
+
+# The two-column grid: children fill the two-column track in author order
+# (the CSS grid rule in layout_style declares the track). Pure layout
+# grouping; the column structure is the container semantics.
+fn layout_grid(GridProps props) → tela.View {
+    return tela.element_full(
+        tela.new_identity("ref-layout-grid"),
+        tela.html_space(),
+        "div",
+        [],
+        [],
+        props.columns
+    )
+}
+
+class LayoutProseProps {
+    list<tela.View> children
+}
+
+fn layout_prose_props(list<tela.View> children) → LayoutProseProps {
+    return LayoutProseProps { children = children }
+}
+
+# The prose measure: constrains the line measure (the ref.layout.prose.
+# measure token) around prose content. The measure is a layout-level
+# container — prose SEMANTICS live in the typography paragraph.
+fn layout_prose(LayoutProseProps props) → tela.View {
+    return tela.element_full(
+        tela.new_identity("ref-layout-prose"),
+        tela.html_space(),
+        "div",
+        [],
+        [],
+        props.children
+    )
+}
+
+# ===========================================================================
+# TYPOGRAPHY family — text semantics via markup (ref-typography-*).
+# ===========================================================================
+
+class HeadingProps {
+    int level
+    string text
+}
+
+fn heading_props(int level, string text) → HeadingProps {
+    return HeadingProps { level = level, text = text }
+}
+
+# The heading level, clamped to the documented 1..6 range (fail-safe at
+# the edges — h0/h7 never emit; the clamp is asserted by the exempla).
+fn clamped_level(int level) → int {
+    if level < 1 then return 1
+    if level > 6 then return 6
+    return level
+}
+
+# Heading: native h1..h6 by level — the HEADING HIERARCHY is the a11y
+# structure (native heading semantics for screen readers; the level is the
+# range contract 1..6). No color-only communication: the heading carries
+# its rank in the tag, never in styling alone.
+fn typography_heading(HeadingProps props) → tela.View {
+    const int level ← clamped_level(props.level)
+    return tela.element_full(
+        tela.new_identity("ref-typography-heading-" + "§"(level)),
+        tela.html_space(),
+        "h" + "§"(level),
+        [],
+        [],
+        [ tela.text_view(props.text) ]
+    )
+}
+
+class ProseProps {
+    list<tela.View> children
+}
+
+fn prose_props(list<tela.View> children) → ProseProps {
+    return ProseProps { children = children }
+}
+
+# Prose: the paragraph — prose semantics (the layout prose measure wraps
+# it; the type scale + leading come from the ref.type.* tokens). Mixed
+# content is carried by the children (text + emphasis compose inline).
+fn typography_prose(ProseProps props) → tela.View {
+    return tela.element_full(
+        tela.new_identity("ref-typography-prose"),
+        tela.html_space(),
+        "p",
+        [],
+        [],
+        props.children
+    )
+}
+
+class EmphasisProps {
+    string kind
+    string text
+}
+
+fn emphasis_props(string kind, string text) → EmphasisProps {
+    return EmphasisProps { kind = kind, text = text }
+}
+
+# Emphasis: semantic emphasis — kind ∈ strong | em | code, emitted as the
+# element tag (the HTML semantic emphasis tags). Emphasis is NEVER
+# communicated by color or size alone (campaign §8) — the meaning rides
+# the markup. The documented kind set is {strong, em, code} (the
+# open-element model keeps unknown kinds renderable; the catalog contract
+# names the three).
+fn typography_emphasis(EmphasisProps props) → tela.View {
+    return tela.element_full(
+        tela.new_identity("ref-typography-emphasis-" + props.kind),
+        tela.html_space(),
+        props.kind,
+        [],
+        [],
+        [ tela.text_view(props.text) ]
+    )
+}
+
+class ScaleProps {
+    string step
+    string text
+}
+
+fn scale_props(string step, string text) → ScaleProps {
+    return ScaleProps { step = step, text = text }
+}
+
+# Type scale: text at a documented scale step (xs/sm/md/lg/xl). The size
+# comes from the ref.type.scale.* tokens via the typography style bundle.
+# The scale is decorative sizing — it never carries semantic state (no
+# status/level meaning in size, never in color).
+fn typography_scale(ScaleProps props) → tela.View {
+    return tela.element_full(
+        tela.new_identity("ref-typography-scale-" + props.step),
+        tela.html_space(),
+        "span",
+        [],
+        [],
+        [ tela.text_view(props.text) ]
+    )
+}
+
+# ===========================================================================
+# STYLE BUNDLES — rules keyed on the ref-* identities, referencing the
+# ref.* tokens as CSS custom properties (the --ref-* emission form).
+# ===========================================================================
+
+fn layout_style() → tela.Style {
+    return tela.Style {
+        rules = [
+            tela.Rule {
+                selector = "[data-tela='ref-layout-stack']",
+                declarations = [
+                    tela.Declaration { name = "display", value = "flex" },
+                    tela.Declaration { name = "flex-direction", value = "column" },
+                    tela.Declaration { name = "gap", value = "var(--ref-layout-gap)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela='ref-layout-grid']",
+                declarations = [
+                    tela.Declaration { name = "display", value = "grid" },
+                    tela.Declaration { name = "grid-template-columns", value = "repeat(2, 1fr)" },
+                    tela.Declaration { name = "gap", value = "var(--ref-layout-gap)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela='ref-layout-prose']",
+                declarations = [
+                    tela.Declaration { name = "max-width", value = "var(--ref-layout-prose-measure)" },
+                    tela.Declaration { name = "margin", value = "0 auto" }
+                ]
+            }
+        ]
+    }
+}
+
+# The heading scale: each level maps to a scale step token
+# (h1 → xl, h2 → lg, h3 → md, h4 → sm, h5/h6 → xs).
+fn typography_style() → tela.Style {
+    return tela.Style {
+        rules = [
+            tela.Rule {
+                selector = "[data-tela='ref-typography-heading-1']",
+                declarations = [
+                    tela.Declaration { name = "font-size", value = "var(--ref-type-scale-xl)" },
+                    tela.Declaration { name = "font-weight", value = "var(--ref-type-heading-weight)" },
+                    tela.Declaration { name = "margin", value = "var(--ref-type-heading-margin)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela='ref-typography-heading-2']",
+                declarations = [
+                    tela.Declaration { name = "font-size", value = "var(--ref-type-scale-lg)" },
+                    tela.Declaration { name = "font-weight", value = "var(--ref-type-heading-weight)" },
+                    tela.Declaration { name = "margin", value = "var(--ref-type-heading-margin)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela='ref-typography-heading-3']",
+                declarations = [
+                    tela.Declaration { name = "font-size", value = "var(--ref-type-scale-md)" },
+                    tela.Declaration { name = "font-weight", value = "var(--ref-type-heading-weight)" },
+                    tela.Declaration { name = "margin", value = "var(--ref-type-heading-margin)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela='ref-typography-heading-4']",
+                declarations = [
+                    tela.Declaration { name = "font-size", value = "var(--ref-type-scale-sm)" },
+                    tela.Declaration { name = "font-weight", value = "var(--ref-type-heading-weight)" },
+                    tela.Declaration { name = "margin", value = "var(--ref-type-heading-margin)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela='ref-typography-heading-5']",
+                declarations = [
+                    tela.Declaration { name = "font-size", value = "var(--ref-type-scale-xs)" },
+                    tela.Declaration { name = "font-weight", value = "var(--ref-type-heading-weight)" },
+                    tela.Declaration { name = "margin", value = "var(--ref-type-heading-margin)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela='ref-typography-heading-6']",
+                declarations = [
+                    tela.Declaration { name = "font-size", value = "var(--ref-type-scale-xs)" },
+                    tela.Declaration { name = "font-weight", value = "var(--ref-type-heading-weight)" },
+                    tela.Declaration { name = "margin", value = "var(--ref-type-heading-margin)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela='ref-typography-prose']",
+                declarations = [
+                    tela.Declaration { name = "font-size", value = "var(--ref-type-scale-md)" },
+                    tela.Declaration { name = "line-height", value = "var(--ref-type-prose-line-height)" },
+                    tela.Declaration { name = "margin", value = "var(--ref-type-prose-margin)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela='ref-typography-scale-xs']",
+                declarations = [
+                    tela.Declaration { name = "font-size", value = "var(--ref-type-scale-xs)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela='ref-typography-scale-sm']",
+                declarations = [
+                    tela.Declaration { name = "font-size", value = "var(--ref-type-scale-sm)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela='ref-typography-scale-md']",
+                declarations = [
+                    tela.Declaration { name = "font-size", value = "var(--ref-type-scale-md)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela='ref-typography-scale-lg']",
+                declarations = [
+                    tela.Declaration { name = "font-size", value = "var(--ref-type-scale-lg)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela='ref-typography-scale-xl']",
+                declarations = [
+                    tela.Declaration { name = "font-size", value = "var(--ref-type-scale-xl)" }
+                ]
+            }
+        ]
+    }
+}
+
+# ===========================================================================
+# TOKENS — the namespaced ref.* theme tokens (the kernel Token carrier,
+# MF-7): zero-arg accessors returning tela.Token values; consumers collect
+# them app-side into their Theme (the compose-without pattern).
+# ===========================================================================
+
+fn ref_layout_gap() → tela.Token {
+    return tela.Token { name = "ref.layout.gap", value = "1rem" }
+}
+
+fn ref_layout_prose_measure() → tela.Token {
+    return tela.Token { name = "ref.layout.prose.measure", value = "65ch" }
+}
+
+fn ref_type_scale_xs() → tela.Token {
+    return tela.Token { name = "ref.type.scale.xs", value = "0.75rem" }
+}
+
+fn ref_type_scale_sm() → tela.Token {
+    return tela.Token { name = "ref.type.scale.sm", value = "0.875rem" }
+}
+
+fn ref_type_scale_md() → tela.Token {
+    return tela.Token { name = "ref.type.scale.md", value = "1rem" }
+}
+
+fn ref_type_scale_lg() → tela.Token {
+    return tela.Token { name = "ref.type.scale.lg", value = "1.25rem" }
+}
+
+fn ref_type_scale_xl() → tela.Token {
+    return tela.Token { name = "ref.type.scale.xl", value = "1.5rem" }
+}
+
+fn ref_type_heading_weight() → tela.Token {
+    return tela.Token { name = "ref.type.heading.weight", value = "600" }
+}
+
+fn ref_type_heading_margin() → tela.Token {
+    return tela.Token { name = "ref.type.heading.margin", value = "0 0 0.5rem 0" }
+}
+
+fn ref_type_prose_line_height() → tela.Token {
+    return tela.Token { name = "ref.type.prose.line-height", value = "1.6" }
+}
+
+fn ref_type_prose_margin() → tela.Token {
+    return tela.Token { name = "ref.type.prose.margin", value = "0 0 1rem 0" }
+}
+
+# The catalog's token collection (the self-usable summary — consumers
+# compose their Theme via the individual accessors; this is the package's
+# assembly-input convenience, the formslib precedent).
+fn reference_tokens() → list<tela.Token> {
+    return [
+        ref_layout_gap(),
+        ref_layout_prose_measure(),
+        ref_type_scale_xs(),
+        ref_type_scale_sm(),
+        ref_type_scale_md(),
+        ref_type_scale_lg(),
+        ref_type_scale_xl(),
+        ref_type_heading_weight(),
+        ref_type_heading_margin(),
+        ref_type_prose_line_height(),
+        ref_type_prose_margin()
+    ]
+}
