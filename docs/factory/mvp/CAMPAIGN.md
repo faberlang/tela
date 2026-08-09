@@ -2,7 +2,7 @@
 
 **Created**: 2026-07-18
 **Updated**: 2026-07-18 — moved into the initialized Tela repository after review reconciliation
-**Status**: draft/maintain complete — ready for Stage 0 delivery
+**Status**: active — Stage 0 accepted (closeout 2026-08-09); Stage 1 selected next
 **Mode**: repository campaign routing artifact; do not implement directly from this file
 **Target workspace**: `/Users/ianzepp/work/faberlang`
 **Control-plane repo**: `/Users/ianzepp/work/faberlang/tela`
@@ -190,7 +190,7 @@ instead of a Faber web ecosystem.
 
 ### Stage 0 — Protocol And Ownership Contract
 
-**Status**: selected; ready for `delivery`
+**Status**: accepted — Stage 0 delivered + closed out (2026-08-09); Stage 1 selected next
 **Source**: this campaign's Protocol Design Pass 1
 **Why now**: every repo boundary and later component depends on one accepted
 view/style/theme/behavior contract.
@@ -198,6 +198,24 @@ view/style/theme/behavior contract.
 **Lowers to**: `delivery`, then a bounded design/spike `factory` phase
 **Overlap rule**: consume existing `faber-web` and Speculum evidence; do not
 edit their public APIs during the design-only slice.
+
+**Closeout evidence** (workflow step 6, `tela/docs/factory/mvp/tela-closeout.md`):
+all five gates satisfied — C1 ownership+trace (`stage-0-ownership.md`,
+`stage-0-capability-reconciliation.md`), C2 Branch B selected
+(`spike/stage-0-branch-a-b-evidence.md`), C3 capability repaired (radix
+`31b234671`, faber-web `0cd5a1a`), C4 two-package canary green
+(`stage-0-canary.md`), C5 decisions closed (`stage-0-behavior-design.md`,
+`stage-0-protocol-policies.md`). Step-6 review (consequences + correctness +
+independent audit) passed with no blocking findings; **Stage 0 accepted**.
+Residuals routed: D0–D3 + G1–G6 → radix lane; TS async gap → Stage 3; Branch A
+re-spike on radix D1; determinism harness → Stage 1; capability truth → Stage 8.
+
+**Stage 1 readiness**: `View` shape derives from **Branch B (non-generic)** —
+pure recursive tagged union, open element model, typed `Identitas` serialized
+as `data-tela`, adjacent typed behavior plan keyed to stable identities;
+kernel owns constructors. D0–D3 compiler deliveries + G1–G6 canary gaps are
+recorded as the **radix-lane input** (repros under `tela/spike/`).
+
 **Gate**:
 
 - a checked two-package Faber spike has one extension library define a custom
