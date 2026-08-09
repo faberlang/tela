@@ -5,16 +5,19 @@ category = "library"
 locale = "en"
 +++
 
-# tela/exempla/reference.fab — Stage 5 U2/U3/U4/U5 exempla for the reference
-# catalog (tela:reference): the layout (stacked rows / two-column grid /
-# prose measures) + typography (headings / prose / emphasis / scale)
+# tela/exempla/reference.fab — Stage 5 U2/U3/U4/U5/U6 exempla for the
+# reference catalog (tela:reference): the layout (stacked rows / two-column
+# grid / prose measures) + typography (headings / prose / emphasis / scale)
 # families (U2), the panel (theme-surface container) + badge (textual
 # status — no color-only communication) + metric (label + value + delta,
 # dl/dt/dd) families (U3), and the table (headers + rows + cells + optional
 # caption — the benchmark table grammar) family (U4) + the segmented-control
 # (the Stage 3 control re-homed — radiogroup/radio + aria-selected + the
-# roving tabindex + the declared live region) family (U5). Asserts the EXACT
-# static bytes (the serializer emission order: tag, then attributes in
+# roving tabindex + the declared live region) family (U5) + the button
+# (native <button> semantics — the accessible name (label/aria-label), the
+# native keyboard contract (Space/Enter), the visible focus (:focus-visible
+# rule), the native disabled state) family (U6). Asserts the EXACT static
+# bytes (the serializer emission order: tag, then attributes in
 # author order, then the data-tela identity) + the a11y structure (the
 # heading hierarchy via native h1..h6, prose semantics via p, semantic
 # emphasis via strong/em/code — never color-only communication, the scale
@@ -23,12 +26,15 @@ locale = "en"
 # label/value structure, the table's native table/caption/thead/th[scope]/
 # tbody/tr/td semantics — the §8 table accessibility contract, and the
 # segmented control's radiogroup/radio + aria-selected + roving tabindex +
-# live-region structure), fail-closed,
+# live-region structure, and the button's native <button> semantics — no
+# ARIA role, the label/aria-label accessible name, the native disabled
+# attribute), fail-closed,
 # executed under node (check-exempla runtime gate).
 #
 # fix:<id> markers: none applied beyond reference.fab's (fix:g5 — NONE,
-# fix:codegen001, fix:snapshot-name-collision, fix:verum-b; the
-# LOCALE002 advisory on the BadgeProps status field — recorded).
+# fix:codegen001, fix:snapshot-name-collision, fix:verum-b; the G6 note —
+# the button variant prop spelled variant_name, the `variant` en keyword;
+# the LOCALE002 advisory on the BadgeProps status field — recorded).
 
 import from "tela:tela" private tela
 import from "tela:reference" private ref
@@ -115,7 +121,7 @@ main {
     assert tela.token_name_valid(ref.ref_layout_gap().name)
     assert tela.token_name_valid(ref.ref_type_prose_line_height().name)
     const list<tela.Token> collectio ← ref.reference_tokens()
-    assert collectio.longitudo() ≡ 32
+    assert collectio.longitudo() ≡ 43
 
     # --- determinism: identical input → identical bytes -------------------
     const string stack_b ← tela.html_visus(ref.layout_stack(ref.stack_props([
@@ -185,7 +191,7 @@ main {
     assert tela.token_name_valid(ref.ref_badge_radius().name)
     assert tela.token_name_valid(ref.ref_metric_value_weight().name)
     const list<tela.Token> collectio_u3 ← ref.reference_tokens()
-    assert collectio_u3.longitudo() ≡ 32
+    assert collectio_u3.longitudo() ≡ 43
 
     # =====================================================================
     # Stage 5 U4 — the table family (the benchmark table grammar).
@@ -230,7 +236,7 @@ main {
     assert tela.token_name_valid(ref.ref_table_border().name)
     assert tela.token_name_valid(ref.ref_table_caption_muted().name)
     const list<tela.Token> collectio_u4 ← ref.reference_tokens()
-    assert collectio_u4.longitudo() ≡ 32
+    assert collectio_u4.longitudo() ≡ 43
 
     # =====================================================================
     # Stage 5 U5 — the segmented-control family (the Stage 3 control
@@ -276,7 +282,74 @@ main {
     assert tela.token_name_valid(ref.ref_seg_gap().name)
     assert tela.token_name_valid(ref.ref_seg_selected_border().name)
     const list<tela.Token> collectio_u5 ← ref.reference_tokens()
-    assert collectio_u5.longitudo() ≡ 32
+    assert collectio_u5.longitudo() ≡ 43
 
-    print "reference catalog exempla ready (layout + typography + panel + badge + metric + table + segmented-control; tela-s5-u2/u3/u4/u5)"
+    # =====================================================================
+    # Stage 5 U6 — the button family (the first behavior component).
+    # =====================================================================
+
+    # --- button: native semantics — the accessible name + the keyboard
+    # contract + the disabled state ----------------------------------------
+    # The element is a NATIVE <button> (no ARIA role — a role would
+    # duplicate the native semantics; the keyboard contract — Space/Enter
+    # activate — rides the native semantics). The accessible name is the
+    # label text (native) or the declared aria-label override. The
+    # disabled state is the native `disabled` attribute (no activation,
+    # the state exposed). The variant_name (the visual treatment,
+    # token-keyed — never semantic) rides the data-ref-variant attribute.
+    # Attribute author order: aria-label (when present) → disabled (when
+    # disabled) → data-ref-variant → data-tela.
+    assert tela.html_visus(ref.button(ref.button_props("save", "Save", "primary", "enabled", "click", ""))) coalesce "" ≡ "<button data-ref-variant='primary' data-tela='ref-button-save'>Save</button>"
+    # The aria-label override (the declared accessible name — the visible
+    # label can differ) + the disabled attribute (the native disabled
+    # state: removed from the tab sequence, no activation, the state
+    # exposed to AT).
+    assert tela.html_visus(ref.button(ref.button_props("delete", "Delete", "primary", "disabled", "click", "Delete permanently"))) coalesce "" ≡ "<button aria-label='Delete permanently' disabled='' data-ref-variant='primary' data-tela='ref-button-delete'>Delete</button>"
+    # The variant treatments: secondary + ghost emit their
+    # data-ref-variant (the visual treatment rides the attribute, never
+    # the semantic).
+    assert tela.html_visus(ref.button(ref.button_props("cancel", "Cancel", "secondary", "enabled", "click", ""))) coalesce "" ≡ "<button data-ref-variant='secondary' data-tela='ref-button-cancel'>Cancel</button>"
+    assert tela.html_visus(ref.button(ref.button_props("link", "Ghost", "ghost", "enabled", "click", ""))) coalesce "" ≡ "<button data-ref-variant='ghost' data-tela='ref-button-link'>Ghost</button>"
+    # No ARIA role duplication: the native <button> carries no role
+    # attribute (the native semantics ARE the role).
+    assert not (tela.html_visus(ref.button(ref.button_props("save", "Save", "primary", "enabled", "click", ""))) coalesce "").continet("role=")
+    # The declared event surface (the activation event the plan binds).
+    assert ref.button_event() ≡ "click"
+
+    # --- the button style bundle (prefix + variant + state selectors) ----
+    # The visible-focus rule (:focus-visible — the campaign §8 visible
+    # focus; the indicator from the ref.button.focus token, never
+    # removed) + the disabled rule (:disabled — the visual dim; the
+    # SEMANTIC state rides the native attribute).
+    const string css_button ← tela.css(ref.button_style())
+    assert css_button ≡ "[data-tela^='ref-button-'] { display: inline-block; font-size: var(--ref-button-size); padding: var(--ref-button-padding); border: 1px solid var(--ref-button-border); border-radius: var(--ref-button-radius); color: var(--ref-button-text); }\n[data-tela^='ref-button-'][data-ref-variant='primary'] { background: var(--ref-button-primary-background); color: var(--ref-button-primary-text); }\n[data-tela^='ref-button-'][data-ref-variant='secondary'] { background: var(--ref-button-secondary-background); }\n[data-tela^='ref-button-'][data-ref-variant='ghost'] { background: var(--ref-button-ghost-background); }\n[data-tela^='ref-button-']:focus-visible { outline: 2px solid var(--ref-button-focus); outline-offset: 2px; }\n[data-tela^='ref-button-']:disabled { opacity: var(--ref-button-disabled-opacity); cursor: not-allowed; }\n"
+
+    # --- the ref.button.* tokens (theme-surface — the color-bearing
+    # tokens reference the theme's core tokens, no hardcoded color) ------
+    assert ref.ref_button_size().name ≡ "ref.button.size"
+    assert ref.ref_button_size().value ≡ "0.875rem"
+    assert ref.ref_button_padding().name ≡ "ref.button.padding"
+    assert ref.ref_button_padding().value ≡ "0.5rem 1rem"
+    assert ref.ref_button_radius().value ≡ "0.25rem"
+    assert ref.ref_button_border().name ≡ "ref.button.border"
+    assert ref.ref_button_border().value ≡ "var(--border-default)"
+    assert ref.ref_button_text().value ≡ "var(--text-primary)"
+    assert ref.ref_button_primary_background().name ≡ "ref.button.primary.background"
+    assert ref.ref_button_primary_background().value ≡ "var(--accent-primary)"
+    assert ref.ref_button_primary_text().value ≡ "var(--surface-canvas)"
+    assert ref.ref_button_secondary_background().value ≡ "var(--surface-panel)"
+    assert ref.ref_button_ghost_background().name ≡ "ref.button.ghost.background"
+    assert ref.ref_button_ghost_background().value ≡ "transparent"
+    assert ref.ref_button_focus().name ≡ "ref.button.focus"
+    assert ref.ref_button_focus().value ≡ "var(--accent-primary)"
+    assert ref.ref_button_disabled_opacity().name ≡ "ref.button.disabled.opacity"
+    assert ref.ref_button_disabled_opacity().value ≡ "0.6"
+    # Every token name passes the kernel lexical predicate (fail-closed).
+    assert tela.token_name_valid(ref.ref_button_focus().name)
+    assert tela.token_name_valid(ref.ref_button_primary_background().name)
+    assert tela.token_name_valid(ref.ref_button_disabled_opacity().name)
+    const list<tela.Token> collectio_u6 ← ref.reference_tokens()
+    assert collectio_u6.longitudo() ≡ 43
+
+    print "reference catalog exempla ready (layout + typography + panel + badge + metric + table + segmented-control + button; tela-s5-u2/u3/u4/u5/u6)"
 }

@@ -264,6 +264,50 @@
 # check-mount driver additionally needs the re-home re-target
 # (segmented_control → reference.segmented_control) — part of the same U10
 # re-wire.
+#
+# Stage 5 U6 (tela-s5-u6-button) — the FIRST catalog behavior component
+# composes: the button family (tela:reference — NATIVE <button> semantics
+# (no ARIA role), the label/aria-label accessible name, the native
+# Space/Enter keyboard contract, the visible-focus :focus-visible rule,
+# the native disabled attribute) joins the runner composition through
+# NORMAL qualified imports; the ref.button.* tokens join both themes; the
+# button_style bundle joins the component cascade layer (the shape +
+# variant + focus-visible + disabled rules). The app-typed BUTTON plan
+# (D1): the ButtonMessage union (Pressed), the ButtonBinding carriers,
+# update_button / button_bindings / button_order — the plan binds ONLY
+# the enabled buttons' DECLARED activation event (props.event_name; a
+# disabled click no-ops by construction — the native disabled semantics +
+# no subscription). The mount seam fn (mount_button) supplies the
+# check-reference U6 browser-proof surface (mount + structure + the
+# scripted interaction case: click activates, Space/Enter activate (the
+# NATIVE keyboard → click modeled by the host driver), disabled click
+# no-ops, focus restoration across a replace via focus_held).
+#
+# fix:<id> markers applied in this unit:
+#   fix:g5 — NONE: all new identifiers (ButtonMessage/ButtonBinding/
+#     ButtonState/button_state/update_button/pressed/button_binding/
+#     button_bindings/button_order/save_button_props/cancel_button_props/
+#     delete_button_props/button_composition/mount_button) probed
+#     collision-free on in-tree radix 0.80.0 (a free fn may share a class
+#     name — G5's collision is enum-member-specific).
+#   fix:snapshot-name-collision — the new identifiers avoid kernel type
+#     names AND the tela:reference prop-class names (ButtonProps).
+#   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the
+#     TS lane is the proven runtime lane.
+#   fix:g4 — the reference button is consumed through the NORMAL package
+#     interface (no compose-without, no harness-assembly bypass for the
+#     catalog); the app plan's `→ reference.ButtonProps` fns are export-
+#     skipped (WARN014 — imported sibling types in signatures, recorded;
+#     the harnesses read the emitted file directly, the snapshot does not
+#     apply at runtime).
+#   G6 note — the catalog's button "variant" prop semantic is spelled
+#     variant_name (the `variant` en union keyword); the app call sites
+#     pass the variant_name argument.
+#
+# DETERMINISM SUPERSESSION (done_when (d)): the runner output extends with
+# the button-family render — the determinism sha stays SUPERSEDED (U10
+# re-records the official sha; check-determinism is RED between units —
+# the honest flag, unchanged).
 
 import from "tela:tela" public * ut tela
 import from "extensionlib:extension" public * ut ext
@@ -1054,6 +1098,140 @@ fn mount_segmented(string selector) → browser.Mounted ∪ null {
     return browser.mount(scope, segmented_composition(), reference_theme())
 }
 
+# ===========================================================================
+# Stage 5 U6 — the button composition + the app-typed button plan
+# (tela:reference — the first catalog behavior component).
+#
+# The button family composes through NORMAL qualified imports: the
+# enabled save/cancel buttons + the DISABLED delete button (the native
+# disabled attribute — no activation, the state exposed). The app-typed
+# plan (D1) binds ONLY the enabled buttons' DECLARED activation event
+# (props.event_name = the catalog's button_event() = "click"): the
+# ButtonMessage union (Pressed) + the ButtonBinding carriers + the
+# update loop (update_button) + the native keyboard contract (the host
+# driver models Space/Enter on a focused native button as a click — the
+# native semantics). The disabled button carries no subscription — a
+# disabled click is a no-op by construction. Focus restoration across a
+# replace rides focus_held (the driver case).
+# ===========================================================================
+
+# The shared props (the static render + the app-typed plan consume the
+# same carriers — the segment pattern). The delete button declares its
+# accessible name via the aria-label override (the label/aria-label
+# contract) + the disabled state.
+fn save_button_props() → reference.ButtonProps {
+    return reference.button_props("save", "Save", "primary", "enabled", reference.button_event(), "")
+}
+
+fn cancel_button_props() → reference.ButtonProps {
+    return reference.button_props("cancel", "Cancel", "secondary", "enabled", reference.button_event(), "")
+}
+
+fn delete_button_props() → reference.ButtonProps {
+    return reference.button_props("delete", "Delete", "primary", "disabled", reference.button_event(), "Delete permanently")
+}
+
+# The concrete app message type (one variant): Pressed — an activation of
+# a button (the plan's update loop consumes it).
+union ButtonMessage {
+    Pressed { string identity }
+}
+
+# ButtonBinding-shaped binding (the Branch B shape, the U3/U4 pattern):
+# one event subscription keyed to a stable node identity, carrying a typed
+# message-producing closure. The event name is the props' declared
+# activation event (the event surface).
+class ButtonBinding {
+    string identity
+    string event_name
+    (tela.EventName) → ButtonMessage message
+}
+
+# The button model — the app-side activation state (the press count + the
+# last activated identity; the proof's consequence tracker — the button
+# itself is stateless, the consequence is the app's).
+class ButtonState {
+    int presses
+    string last
+}
+
+fn button_state(int presses, string last) → ButtonState {
+    return ButtonState { presses = presses, last = last }
+}
+
+fn pressed(string identity) → ButtonMessage {
+    return variant Pressed { identity = identity }
+}
+
+# The binding for one button: keyed to its ref-button-<name> identity,
+# bound to its DECLARED activation event (props.event_name — the event
+# surface flows from the props into the plan).
+fn button_binding(reference.ButtonProps props) → ButtonBinding {
+    return ButtonBinding {
+        identity = "ref-button-" + props.name,
+        event_name = props.event_name,
+        message = (tela.EventName event_name) → ButtonMessage ∴ pressed(event_name.name)
+    }
+}
+
+# The subscription plan: one activation binding per ENABLED button (the
+# web:dom subscriptions attach by identity — never ambient document
+# shortcuts). The DISABLED delete button is deliberately NOT bound — a
+# disabled click is a no-op by construction (the native disabled
+# semantics + no subscription).
+fn button_bindings() → list<ButtonBinding> {
+    return [
+        button_binding(save_button_props()),
+        button_binding(cancel_button_props())
+    ]
+}
+
+# The enabled-button focus order (the native keyboard contract targets —
+# Space/Enter on a focused native button fire a click; the disabled
+# button is not in the tab sequence, so it carries no keyboard target).
+fn button_order() → list<string> {
+    return ["ref-button-save", "ref-button-cancel"]
+}
+
+# The update function — an ordinary app function over the concrete message
+# type: a Pressed message increments the press count + records the last
+# activated identity.
+fn update_button(ButtonState state, ButtonMessage message) → ButtonState {
+    match message {
+        case Pressed const identity {
+            return button_state(state.presses + 1, identity)
+        }
+    }
+}
+
+# The button composition: the enabled save/cancel buttons + the disabled
+# delete button (native disabled semantics — no activation, the state
+# exposed). The wrapper identity is app-owned data (the canary-*
+# precedent — MF-8).
+fn button_composition() → tela.View {
+    return tela.element_full(
+        tela.new_identity("canary-ref-button"),
+        tela.html_space(),
+        "div",
+        [],
+        [],
+        [
+            reference.button(save_button_props()),
+            reference.button(cancel_button_props()),
+            reference.button(delete_button_props())
+        ]
+    )
+}
+
+# The seam mount for the U6 browser proof: the check-reference driver calls
+# this through the app's own imports (dom.scope + browser.mount, the U7
+# pattern). The button composition mounts with the reference theme (the
+# core baseline + the ref.* tokens) — done_when (c).
+fn mount_button(string selector) → browser.Mounted ∪ null {
+    const dom.Scope scope ← dom.scope(selector)
+    return browser.mount(scope, button_composition(), reference_theme())
+}
+
 main {
     # G4 seam attempt (recorded in the evidence record): ext.bar_meter
     # resolves to WARN014 export-skip; the app composes the meter with tela
@@ -1123,7 +1301,18 @@ main {
         reference.ref_seg_size(),
         reference.ref_seg_padding(),
         reference.ref_seg_border(),
-        reference.ref_seg_selected_border()
+        reference.ref_seg_selected_border(),
+        reference.ref_button_size(),
+        reference.ref_button_padding(),
+        reference.ref_button_radius(),
+        reference.ref_button_border(),
+        reference.ref_button_text(),
+        reference.ref_button_primary_background(),
+        reference.ref_button_primary_text(),
+        reference.ref_button_secondary_background(),
+        reference.ref_button_ghost_background(),
+        reference.ref_button_focus(),
+        reference.ref_button_disabled_opacity()
     ])
     const tela.Theme tenebrae ← tela.theme("tenebrae", [
         tela.token("surface.canvas", "#0f172a"),
@@ -1170,7 +1359,18 @@ main {
         reference.ref_seg_size(),
         reference.ref_seg_padding(),
         reference.ref_seg_border(),
-        reference.ref_seg_selected_border()
+        reference.ref_seg_selected_border(),
+        reference.ref_button_size(),
+        reference.ref_button_padding(),
+        reference.ref_button_radius(),
+        reference.ref_button_border(),
+        reference.ref_button_text(),
+        reference.ref_button_primary_background(),
+        reference.ref_button_primary_text(),
+        reference.ref_button_secondary_background(),
+        reference.ref_button_ghost_background(),
+        reference.ref_button_focus(),
+        reference.ref_button_disabled_opacity()
     ])
 
     # --- App + extension style bundles (identical under both themes) -------
@@ -1208,6 +1408,12 @@ main {
     # accent border, all referencing the --ref-seg-* tokens).
     const tela.Style ref_seg_stilum ← reference.segmented_style()
     const tela.Bundle ref_seg_bundle ← tela.bundle("reference-seg", ref_seg_stilum)
+    # Stage 5 U6: the button bundle (the ref-button-* identities — the
+    # shape + the variant treatments + the visible-focus :focus-visible
+    # rule + the native-disabled dim, referencing the --ref-button-*
+    # tokens).
+    const tela.Style ref_button_stilum ← reference.button_style()
+    const tela.Bundle ref_button_bundle ← tela.bundle("reference-button", ref_button_stilum)
 
     # App style bundle: the panel rule (the segmented-control rule was
     # app-owned in Stage 3; the control's styles now ride the reference
@@ -1235,7 +1441,7 @@ main {
     const tela.Style ∪ null cascade_lumen_result ← tela.assemble(
         lumen,
         null,
-        [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle, ref_table_bundle, ref_seg_bundle],
+        [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle, ref_table_bundle, ref_seg_bundle, ref_button_bundle],
         [ tela.order("extensionlib", []), tela.order("formslib", []) ],
         [ext_bundle, forms_bundle],
         app_bundle
@@ -1243,7 +1449,7 @@ main {
     const tela.Style ∪ null cascade_tenebrae_result ← tela.assemble(
         tenebrae,
         null,
-        [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle, ref_table_bundle, ref_seg_bundle],
+        [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle, ref_table_bundle, ref_seg_bundle, ref_button_bundle],
         [ tela.order("extensionlib", []), tela.order("formslib", []) ],
         [ext_bundle, forms_bundle],
         app_bundle
@@ -1342,6 +1548,29 @@ main {
     assert css_lumen.continet("[data-tela^='ref-seg-'][role='radio']")
     assert css_lumen.continet("var(--ref-seg-gap)")
     assert css_lumen.continet("var(--ref-seg-selected-border)")
+
+    # --- The Stage 5 U6 reference-catalog cascade (done_when (d)) ---------
+    # The :root token layer includes the ref.button.* values — the
+    # color-bearing tokens reference the theme's core tokens (the primary
+    # background = the accent, the primary text = the inverse surface, the
+    # focus = the accent — no hardcoded color).
+    assert css_lumen.continet("--ref-button-size: 0.875rem")
+    assert css_lumen.continet("--ref-button-padding: 0.5rem 1rem")
+    assert css_lumen.continet("--ref-button-border: var(--border-default)")
+    assert css_lumen.continet("--ref-button-primary-background: var(--accent-primary)")
+    assert css_lumen.continet("--ref-button-primary-text: var(--surface-canvas)")
+    assert css_lumen.continet("--ref-button-focus: var(--accent-primary)")
+    assert css_lumen.continet("--ref-button-disabled-opacity: 0.6")
+    # The button bundle rides the cascade: the shape rule (prefix-keyed on
+    # the ref-button-* identities), the variant treatments (the
+    # data-ref-variant attribute), THE VISIBLE FOCUS (:focus-visible — the
+    # campaign §8 visible-focus contract), the disabled dim (:disabled).
+    assert css_lumen.continet("[data-tela^='ref-button-']")
+    assert css_lumen.continet("[data-tela^='ref-button-'][data-ref-variant='primary']")
+    assert css_lumen.continet("[data-tela^='ref-button-']:focus-visible")
+    assert css_lumen.continet("[data-tela^='ref-button-']:disabled")
+    assert css_lumen.continet("var(--ref-button-focus)")
+    assert css_lumen.continet("var(--ref-button-primary-background)")
 
     # --- The Stage 2 fail-closed regressions re-asserted (three-package) ---
     # A cycle in the order map rejects (fail-closed — no partial cascade).
@@ -1762,6 +1991,59 @@ main {
     print html_seg
     print "segmented control family static rendered (ref-seg-* identities; tela-s5-u5)"
     print "reference composition asserted (segmented-control family; tela-s5-u5)"
+
+    # --- Stage 5 U6 — the button static render ----------------------------
+    # The button family composes through NORMAL qualified imports (the
+    # first catalog behavior component); the runner output extends — the
+    # determinism sha stays SUPERSEDED (recorded in the header). The a11y
+    # structure asserts: the NATIVE <button> semantics (no ARIA role — no
+    # duplication), the label/aria-label accessible name, the native
+    # disabled attribute on the delete button (no activation, the state
+    # exposed), the data-ref-variant treatments.
+    const string html_button ← tela.html_visus(button_composition()) coalesce ""
+    assert html_button.continet("<div data-tela='canary-ref-button'>")
+    assert html_button.continet("<button data-ref-variant='primary' data-tela='ref-button-save'>Save</button>")
+    assert html_button.continet("<button data-ref-variant='secondary' data-tela='ref-button-cancel'>Cancel</button>")
+    assert html_button.continet("<button aria-label='Delete permanently' disabled='' data-ref-variant='primary' data-tela='ref-button-delete'>Delete</button>")
+    assert not html_button.continet("role=")
+
+    # --- the app-typed button plan (U6 done_when (a)+(c)) — pure proof ----
+    # The plan is app-typed (D1 recorded, never kernel-generic) and carried
+    # by typed message-producing closures (not erased into strings). The
+    # bindings key to the ref-button-* identities + the DECLARED activation
+    # event (props.event_name = the catalog's button_event() = "click").
+    assert reference.button_event() ≡ "click"
+    const list<ButtonBinding> button_vincula ← button_bindings()
+    assert button_vincula.longitudo() ≡ 2
+    # Only the ENABLED buttons are bound (the disabled delete button
+    # carries no subscription — a disabled click no-ops by construction).
+    assert button_vincula[0].identity ≡ "ref-button-save"
+    assert button_vincula[1].identity ≡ "ref-button-cancel"
+    assert button_vincula[0].event_name ≡ reference.button_event()
+    # Invoke a binding's closure: click on ref-button-save → Pressed.
+    const ButtonMessage press_msg ← button_vincula[0].message(tela.event_name("ref-button-save"))
+    match press_msg {
+        case Pressed const identity {
+            assert identity ≡ "ref-button-save"
+        }
+    }
+    # The update loop: Pressed increments the press count + records the
+    # last activated identity.
+    const ButtonState bstate_init ← button_state(0, "")
+    const ButtonState bstate_post ← update_button(bstate_init, press_msg)
+    assert bstate_post.presses ≡ 1
+    assert bstate_post.last ≡ "ref-button-save"
+    # The declarative effects (the focus-restoration pattern): restore by
+    # identity — the kernel carriers + the key accessor (fix:sem001).
+    const tela.Effect restore_button ← tela.restore("ref-button-save")
+    assert tela.effect_identity(restore_button) ≡ "ref-button-save"
+    # The mount seam is the check-reference U6 browser-proof surface (the
+    # driver calls mount_button through the app's own imports after
+    # installing the host DOM — main{} stays seam-free).
+    assert not (tela.theme_css(reference_theme()) ≡ null)
+    print html_button
+    print "button family static rendered (native semantics + disabled state; tela-s5-u6)"
+    print "reference composition asserted (button family; tela-s5-u6)"
 
     # --- The U7 interactive plan surface (the provider-seam claim) --------
     # The composition mounts through the app's own seam call (dom.scope +

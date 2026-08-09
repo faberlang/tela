@@ -102,6 +102,40 @@
 #     and the live-region policy are documented in the consumer's plan
 #     record. The catalog never carries a generic behavior plan.
 #
+# Stage 5 U6 (tela-s5-u6-button): the catalog EXTENDS with the **button**
+# family — the FIRST catalog behavior component (the behavior/a11y
+# boundary; delivery U6). Typed props (label / variant / state / the
+# declared event surface + the identity name + the optional accessible-
+# name override) → tela.View with the ref-button-<name> identities.
+#
+# THE BUTTON ACCESSIBILITY CONTRACT (campaign §8 keyboard + focus;
+# done_when (a)):
+#   - NATIVE BUTTON SEMANTICS: the element IS a native <button> — no ARIA
+#     role (a role would duplicate the native semantics).
+#   - THE ACCESSIBLE NAME (label/aria-label): the visible label text
+#     (native — a <button>'s accessible name is its content) or the
+#     declared aria-label override (the aria_label prop — an app-supplied
+#     name differing from the label).
+#   - THE KEYBOARD CONTRACT: NATIVE button semantics — Space/Enter on the
+#     focused button fire the activation event (the declared event
+#     surface; button_event() = "click"). The consumer plan binds ONLY the
+#     activation event — the native keyboard → click needs no app key map.
+#   - VISIBLE FOCUS (campaign §8): the button_style bundle's
+#     :focus-visible rule draws the focus indicator from the
+#     ref.button.focus token (the theme's accent) — the focus indicator
+#     is never removed, no hardcoded color.
+#   - THE DISABLED STATE: the native `disabled` attribute when
+#     state = "disabled" — the button leaves the tab sequence, NO
+#     activation fires, and the state is exposed to assistive tech
+#     natively. The plan binds ONLY enabled buttons (a disabled click is
+#     a no-op by construction — the native semantics + no subscription).
+#   - THE D1 APP-TYPED PLAN BOUNDARY (recorded): the button is STATELESS —
+#     it declares no behavior. The concrete message type + the bindings +
+#     the update loop are the CONSUMER's plan (D1 — app-typed), keyed to
+#     the ref-button-* identities; the catalog never carries a generic
+#     behavior plan. The event surface is the props' event_name (the
+#     declared activation event); the plan binds that event name.
+#
 # MODULE SHAPE (U1-locked, stage-5-discovery.md §1): ONE flat module
 # mirroring the kernel (G4-safe), stdlib-only + ONE same-package sibling
 # import (tela:tela); no public signature references a type outside the
@@ -112,8 +146,8 @@
 # PascalCase concatenation (StackProps), fns/fields snake_case, identities
 # kebab-case data (MF-8), tokens dotted lowercase (ref.*).
 #
-# THE SIX FAMILIES (delivery U2/U3/U4 outcomes; campaign §3 component
-# contract):
+# THE SEVEN FAMILIES (delivery U2/U3/U4/U5/U6 outcomes; campaign §3
+# component contract):
 #
 #   LAYOUT — semantic containers for arrangement, no ARIA roles (pure
 #   layout grouping; the a11y structure is the container semantics + the
@@ -173,6 +207,18 @@
 #       selection change, silent on no-op); stateless (D1: the app-typed
 #       plan + the keyboard/live-region semantics stay in the consumer).
 #
+#   BUTTON (U6) — the first behavior component:
+#     button(ButtonProps)                  → ref-button-<name> — NATIVE
+#       <button> semantics (no ARIA role — no duplication), the
+#       accessible name (the label text / the aria-label override), the
+#       NATIVE keyboard contract (Space/Enter activate — the activation
+#       event fires, the declared event surface button_event()="click"),
+#       the visible focus (the bundle's :focus-visible rule, the
+#       ref.button.focus token), the native disabled attribute (no
+#       activation, the state exposed); stateless (D1: the app-typed
+#       plan + the update loop stay in the consumer, keyed to the
+#       ref-button-* identities; the plan binds only enabled buttons).
+#
 # NO COLOR-ONLY COMMUNICATION (campaign §8): no component in U2 carries
 # meaning through color. Emphasis is semantic markup; the scale is
 # decorative sizing; the layout containers are structural. The style
@@ -208,7 +254,9 @@
 #     segmented_control/segmented_props/segmented_option/
 #     segmented_options/segmented_live_region/selected_text/
 #     active_tabindex/segmented_style/SegmentedProps + the ref_seg_*
-#     accessors) probed
+#     accessors; U6:
+#     button/button_props/button_event/button_style/ButtonProps + the
+#     ref_button_* accessors) probed
 #     collision-free on in-tree radix 0.80.0 (a free fn may share a class
 #     name — G5's collision is enum-member-specific).
 #   fix:codegen001 — the Rust emit-across-imports block persists
@@ -217,8 +265,18 @@
 #     names AND the browser/forms carrier names (StackProps/GridProps/
 #     LayoutProseProps/HeadingProps/ProseProps/EmphasisProps/ScaleProps/
 #     PanelProps/BadgeProps/MetricProps/TableRow/TableProps/
-#     SegmentedProps).
+#     SegmentedProps/ButtonProps).
 #   fix:verum-b — en-locale naming: no verum/falsum identifiers.
+#   G6 note (U6, the keyword-collision record): the delivery's button
+#     "variant" prop semantic is spelled **variant_name** — `variant` is
+#     the en-locale UNION-VARIANT-CONSTRUCTION keyword (the `variant
+#     Selected { … }` spelling, main.fab) and is unavailable as an
+#     identifier (PARSE001 — the G6 reserved-keyword rule, probed live on
+#     in-tree radix 0.80.0). The working spelling carries the semantic;
+#     the data-ref-variant ATTRIBUTE keeps the exact "variant" spelling
+#     (attribute names are data). Removal = grep-replace
+#     (`variant_name` → `variant`) only if/when a radix-lane keyword
+#     change lands; never silently renamed after.
 #   LOCALE002 advisory (recorded, non-blocking): the BadgeProps `status`
 #     field is a keyword-like spelling (advisory only — it parses + emits,
 #     per the web-surface-import DELIVERY §5.2 record); no rename needed.
@@ -742,6 +800,75 @@ fn segmented_control(SegmentedProps props) → tela.View {
 }
 
 # ===========================================================================
+# BUTTON family — the first behavior component (ref-button-*; Stage 5 U6).
+# The element is a NATIVE <button> (native semantics — no ARIA role); the
+# accessible name is the label text or the aria-label override; the
+# keyboard contract (Space/Enter) rides the native semantics; the disabled
+# state is the native `disabled` attribute (no activation, the state
+# exposed); the declared event surface rides the props' event_name. The
+# component is STATELESS — the D1 app-typed plan boundary (the message
+# type + bindings + update loop stay in the consumer, keyed to the
+# ref-button-* identities; the a11y contract is documented in the module
+# header).
+# ===========================================================================
+
+class ButtonProps {
+    string name
+    string label
+    string variant_name
+    string state
+    string event_name
+    string aria_label
+}
+
+fn button_props(string name, string label, string variant_name, string state, string event_name, string aria_label) → ButtonProps {
+    return ButtonProps {
+        name = name,
+        label = label,
+        variant_name = variant_name,
+        state = state,
+        event_name = event_name,
+        aria_label = aria_label
+    }
+}
+
+# The declared activation-event spelling (the event surface's documented
+# default — "click"). The consumer plan binds the props' event_name.
+fn button_event() → string {
+    return "click"
+}
+
+# Button: native <button> semantics — no ARIA role (a role would duplicate
+# the native semantics). The accessible name: the label text (native) or
+# the declared aria-label override (the aria_label prop — the
+# "label/aria-label" contract). The keyboard contract (Space/Enter
+# activate) rides the native semantics — the plan binds ONLY the declared
+# activation event. The disabled state: the native `disabled` attribute
+# when state = "disabled" — the button leaves the tab sequence, no
+# activation fires, the state is exposed natively. The variant_name (the
+# visual treatment, token-keyed — never semantic) rides the
+# data-ref-variant attribute. Attribute author order: aria-label (when
+# present) → disabled (when disabled) → data-ref-variant → data-tela.
+fn button(ButtonProps props) → tela.View {
+    var list<tela.Attribute> attributes ← vacua
+    if not (props.aria_label ≡ "") {
+        attributes.appende(tela.Attribute { name = "aria-label", value = props.aria_label })
+    }
+    if props.state ≡ "disabled" {
+        attributes.appende(tela.Attribute { name = "disabled", value = "" })
+    }
+    attributes.appende(tela.Attribute { name = "data-ref-variant", value = props.variant_name })
+    return tela.element_full(
+        tela.new_identity("ref-button-" + props.name),
+        tela.html_space(),
+        "button",
+        attributes,
+        [],
+        [ tela.text_view(props.label) ]
+    )
+}
+
+# ===========================================================================
 # STYLE BUNDLES — rules keyed on the ref-* identities, referencing the
 # ref.* tokens as CSS custom properties (the --ref-* emission form).
 # ===========================================================================
@@ -1023,6 +1150,72 @@ fn segmented_style() → tela.Style {
     }
 }
 
+# The button style bundle: keyed on the ref-button-* identity PREFIX +
+# the variant attribute (the visual treatment — never semantic) + the
+# native state pseudo-classes. The shape rule (display/size/padding/
+# border/radius + the base text color) references the ref.button.*
+# tokens; the variant treatments reference the theme's core tokens (the
+# primary background = the accent, the primary text = the inverse
+# surface, secondary = the panel surface, ghost = the transparent
+# neutral — the button never hardcodes a color). THE VISIBLE FOCUS
+# (campaign §8): the :focus-visible rule draws the focus indicator from
+# the ref.button.focus token (the theme's accent) — the indicator is
+# never removed, no hardcoded color. THE DISABLED STATE: the :disabled
+# rule dims the button (the ref.button.disabled.opacity token) — the
+# SEMANTIC state rides the native disabled attribute (no activation,
+# exposed to AT); the opacity is the visual treatment, never a
+# color-only signal.
+fn button_style() → tela.Style {
+    return tela.Style {
+        rules = [
+            tela.Rule {
+                selector = "[data-tela^='ref-button-']",
+                declarations = [
+                    tela.Declaration { name = "display", value = "inline-block" },
+                    tela.Declaration { name = "font-size", value = "var(--ref-button-size)" },
+                    tela.Declaration { name = "padding", value = "var(--ref-button-padding)" },
+                    tela.Declaration { name = "border", value = "1px solid var(--ref-button-border)" },
+                    tela.Declaration { name = "border-radius", value = "var(--ref-button-radius)" },
+                    tela.Declaration { name = "color", value = "var(--ref-button-text)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela^='ref-button-'][data-ref-variant='primary']",
+                declarations = [
+                    tela.Declaration { name = "background", value = "var(--ref-button-primary-background)" },
+                    tela.Declaration { name = "color", value = "var(--ref-button-primary-text)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela^='ref-button-'][data-ref-variant='secondary']",
+                declarations = [
+                    tela.Declaration { name = "background", value = "var(--ref-button-secondary-background)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela^='ref-button-'][data-ref-variant='ghost']",
+                declarations = [
+                    tela.Declaration { name = "background", value = "var(--ref-button-ghost-background)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela^='ref-button-']:focus-visible",
+                declarations = [
+                    tela.Declaration { name = "outline", value = "2px solid var(--ref-button-focus)" },
+                    tela.Declaration { name = "outline-offset", value = "2px" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela^='ref-button-']:disabled",
+                declarations = [
+                    tela.Declaration { name = "opacity", value = "var(--ref-button-disabled-opacity)" },
+                    tela.Declaration { name = "cursor", value = "not-allowed" }
+                ]
+            }
+        ]
+    }
+}
+
 # ===========================================================================
 # TOKENS — the namespaced ref.* theme tokens (the kernel Token carrier,
 # MF-7): zero-arg accessors returning tela.Token values; consumers collect
@@ -1170,6 +1363,58 @@ fn ref_seg_selected_border() → tela.Token {
     return tela.Token { name = "ref.seg.selected.border", value = "var(--accent-primary)" }
 }
 
+# The ref.button.* tokens (Stage 5 U6) — the button shape + the variant
+# treatments + the visible-focus + the disabled treatment. The
+# color-bearing tokens reference the theme's core tokens (the primary
+# background = the accent, the primary text = the inverse surface, the
+# secondary background = the panel surface, the focus = the accent — no
+# hardcoded color); the ghost background = the borderless neutral
+# ("transparent" is a value, never a semantic color — the button's
+# meaning is never color alone).
+fn ref_button_size() → tela.Token {
+    return tela.Token { name = "ref.button.size", value = "0.875rem" }
+}
+
+fn ref_button_padding() → tela.Token {
+    return tela.Token { name = "ref.button.padding", value = "0.5rem 1rem" }
+}
+
+fn ref_button_radius() → tela.Token {
+    return tela.Token { name = "ref.button.radius", value = "0.25rem" }
+}
+
+fn ref_button_border() → tela.Token {
+    return tela.Token { name = "ref.button.border", value = "var(--border-default)" }
+}
+
+fn ref_button_text() → tela.Token {
+    return tela.Token { name = "ref.button.text", value = "var(--text-primary)" }
+}
+
+fn ref_button_primary_background() → tela.Token {
+    return tela.Token { name = "ref.button.primary.background", value = "var(--accent-primary)" }
+}
+
+fn ref_button_primary_text() → tela.Token {
+    return tela.Token { name = "ref.button.primary.text", value = "var(--surface-canvas)" }
+}
+
+fn ref_button_secondary_background() → tela.Token {
+    return tela.Token { name = "ref.button.secondary.background", value = "var(--surface-panel)" }
+}
+
+fn ref_button_ghost_background() → tela.Token {
+    return tela.Token { name = "ref.button.ghost.background", value = "transparent" }
+}
+
+fn ref_button_focus() → tela.Token {
+    return tela.Token { name = "ref.button.focus", value = "var(--accent-primary)" }
+}
+
+fn ref_button_disabled_opacity() → tela.Token {
+    return tela.Token { name = "ref.button.disabled.opacity", value = "0.6" }
+}
+
 # The catalog's token collection (the self-usable summary — consumers
 # compose their Theme via the individual accessors; this is the package's
 # assembly-input convenience, the formslib precedent).
@@ -1206,6 +1451,17 @@ fn reference_tokens() → list<tela.Token> {
         ref_seg_size(),
         ref_seg_padding(),
         ref_seg_border(),
-        ref_seg_selected_border()
+        ref_seg_selected_border(),
+        ref_button_size(),
+        ref_button_padding(),
+        ref_button_radius(),
+        ref_button_border(),
+        ref_button_text(),
+        ref_button_primary_background(),
+        ref_button_primary_text(),
+        ref_button_secondary_background(),
+        ref_button_ghost_background(),
+        ref_button_focus(),
+        ref_button_disabled_opacity()
     ]
 }
