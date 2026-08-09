@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# tela/scripta/check-reference — the Stage 5 U2/U3/U4/U5/U6/U7 browser-proof
+# tela/scripta/check-reference — the Stage 5 U2/U3/U4/U5/U6/U7/U8 browser-proof
 # gate for the reference catalog (tela:reference — the layout + typography
 # families, U2; the panel + badge + metric families, U3; the table family,
 # U4; the segmented-control family, U5; the button family, U6; the field
-# family, U7).
+# family, U7 + the field BEHAVIOR case, U8).
 #
 # The Stage 4 interactive-seam mechanics (the check-forms-interactive
 # pattern): assembles the canary-app's REAL-IMPORT composition (web:dom
@@ -107,7 +107,7 @@ FORMS_NS="const forms = { field_props, checkbox_props, select_props, field, chec
 # layout + typography families (U2), the panel + badge + metric families
 # (U3), the table family (U4), the segmented-control family (U5), the
 # button family (U6), the bundles, the ref.* token accessors).
-REF_NS="const ref = { layout_stack, layout_grid, layout_prose, stack_props, grid_props, layout_prose_props, typography_heading, typography_prose, typography_emphasis, typography_scale, heading_props, prose_props, emphasis_props, scale_props, clamped_level, layout_style, typography_style, panel, badge, metric, panel_props, badge_props, metric_props, panel_style, badge_style, metric_style, table, table_row, table_props, table_style, segmented_control, segmented_props, segmented_option, segmented_options, segmented_live_region, selected_text, active_tabindex, segmented_style, button, button_props, button_event, button_style, field_input, field_input_props, field_invalid, field_error_region, field_live_region, field_control, field_style, ref_layout_gap, ref_layout_prose_measure, ref_type_scale_xs, ref_type_scale_sm, ref_type_scale_md, ref_type_scale_lg, ref_type_scale_xl, ref_type_heading_weight, ref_type_heading_margin, ref_type_prose_line_height, ref_type_prose_margin, ref_panel_surface, ref_panel_border, ref_panel_radius, ref_panel_padding, ref_badge_size, ref_badge_padding, ref_badge_radius, ref_metric_label_size, ref_metric_label_muted, ref_metric_value_size, ref_metric_value_weight, ref_table_border, ref_table_padding, ref_table_header_weight, ref_table_caption_muted, ref_seg_gap, ref_seg_radius, ref_seg_size, ref_seg_padding, ref_seg_border, ref_seg_selected_border, ref_button_size, ref_button_padding, ref_button_radius, ref_button_border, ref_button_text, ref_button_primary_background, ref_button_primary_text, ref_button_secondary_background, ref_button_ghost_background, ref_button_focus, ref_button_disabled_opacity, field_invalid_token, field_valid_token, field_focus_token, reference_tokens, StackProps, GridProps, LayoutProseProps, HeadingProps, ProseProps, EmphasisProps, ScaleProps, PanelProps, BadgeProps, MetricProps, TableProps, TableRow, SegmentedProps, ButtonProps, FieldInputProps };"
+REF_NS="const ref = { layout_stack, layout_grid, layout_prose, stack_props, grid_props, layout_prose_props, typography_heading, typography_prose, typography_emphasis, typography_scale, heading_props, prose_props, emphasis_props, scale_props, clamped_level, layout_style, typography_style, panel, badge, metric, panel_props, badge_props, metric_props, panel_style, badge_style, metric_style, table, table_row, table_props, table_style, segmented_control, segmented_props, segmented_option, segmented_options, segmented_live_region, selected_text, active_tabindex, segmented_style, button, button_props, button_event, button_style, field_input, field_input_props, field_invalid, field_error_region, field_live_region, field_control, field_style, field_input_event, field_error_for_value, field_announcement, ref_layout_gap, ref_layout_prose_measure, ref_type_scale_xs, ref_type_scale_sm, ref_type_scale_md, ref_type_scale_lg, ref_type_scale_xl, ref_type_heading_weight, ref_type_heading_margin, ref_type_prose_line_height, ref_type_prose_margin, ref_panel_surface, ref_panel_border, ref_panel_radius, ref_panel_padding, ref_badge_size, ref_badge_padding, ref_badge_radius, ref_metric_label_size, ref_metric_label_muted, ref_metric_value_size, ref_metric_value_weight, ref_table_border, ref_table_padding, ref_table_header_weight, ref_table_caption_muted, ref_seg_gap, ref_seg_radius, ref_seg_size, ref_seg_padding, ref_seg_border, ref_seg_selected_border, ref_button_size, ref_button_padding, ref_button_radius, ref_button_border, ref_button_text, ref_button_primary_background, ref_button_primary_text, ref_button_secondary_background, ref_button_ghost_background, ref_button_focus, ref_button_disabled_opacity, field_invalid_token, field_valid_token, field_focus_token, reference_tokens, StackProps, GridProps, LayoutProseProps, HeadingProps, ProseProps, EmphasisProps, ScaleProps, PanelProps, BadgeProps, MetricProps, TableProps, TableRow, SegmentedProps, ButtonProps, FieldInputProps };"
 # Stage 5 U5: the canary-app imports tela:reference under the alias
 # `reference` (the `ref` alias is a reserved en keyword (the `de` keyword's
 # EN spelling) — qualified TYPE references under it fail PARSE001; the
@@ -758,7 +758,138 @@ const fieldLive = byIdentity("form-live");
 assert(fieldLive !== undefined && fieldLive.getAttribute("role") === "status" && fieldLive.getAttribute("aria-live") === "polite", "the declared live region (role=status + aria-live=polite)");
 assert(fieldName!.getAttribute("style") === null, "the field carries no inline style (the surface rides the tokens)");
 
-console.log("reference catalog mount gate green (layout + typography + panel + badge + metric + table + segmented-control + button + field mount + structure/a11y + declared interaction; tela-s5-u2/u3/u4/u5/u6/u7)");
+// --- 12. the field behavior case (U8 — validation + live region + -------
+// focus restoration + dispose). The forms split half 2: the CATALOG owns
+// the PURE behavior surface (field_input_event / field_error_for_value /
+// field_announcement — asserted in the runner); the APP plan owns the
+// message type + bindings + update loop (FieldMessage/FieldBinding/
+// FieldPlanState/update_field_plan/field_plan_announcement/
+// field_plan_composition — emitted in this assembly). Scripted sequence
+// (the Stage 4 sequence shape, re-run against the catalog field): input
+// DISPATCH → message → update → replace; aria-invalid flips true (error
+// written + describedby wired) then false (cleared); the live region
+// announces ONCE per transition, SILENT on the no-op (the §1.5 rule);
+// focus restores across the replace (focus_held — the effects read
+// through tela.effect_identity, fix:sem001); dispose unsubscribes (a
+// post-dispose dispatch no-ops). The input event's VALUE payload is
+// host-read (webDomValue) and folded into the app's field_text message
+// constructor (the Branch B closure shape carries no event payload —
+// recorded boundary). Synchronous-only, fail-closed.
+const fMarkup = tela.html_visus(field_plan_composition(field_plan_state("name", "Name", "", ""))) ?? "";
+plantRegion("#root", fMarkup);
+const fmp = mount_field_plan("#root") as Mounted;
+assert(fmp !== null, "field-plan mount returns a plan");
+assert(fmp.identities.length === 11, "field-plan identities: wrapper + 3 groups + 3 fields + 3 error nodes + live region");
+assert(fmp.bindings.every((l) => l.status === "bind"), "hydration: every field-plan identity binds");
+// The initial plan render: the name field is empty + error-free (the
+// "fresh" state — the first input dispatch fires the transition).
+const fName0 = byIdentity("form-field-name");
+assert(fName0 !== undefined && fName0.getAttribute("aria-invalid") === "false", "initial: aria-invalid=false");
+assert(fName0!.getAttribute("aria-describedby") === null, "initial: no describedby");
+// The app-typed plan (D1) + the scripted sequence.
+let fModel = field_plan_state("name", "Name", "", "");
+let fAnnouncements = 0;
+let fSubs: WebDomSubscription[] = [];
+const fClearSubs = (): void => {
+  for (const s of fSubs) {
+    webDomUnsubscribe(s);
+  }
+  fSubs = [];
+};
+// The host re-render: replace → the region re-renders AND the host
+// re-binds the region's subscriptions by identity (the documented
+// lifecycle — the Stage 3 mount/update loop re-attaches after each
+// replace). The driver models the re-bind: clear the stale-node subs,
+// re-attach to the fresh nodes.
+const fRender = (view: unknown): void => {
+  plantRegion("#root", tela.html_visus(view as any) ?? "");
+  fClearSubs();
+  fBind();
+};
+const fApply = (msg: FieldMessage): void => {
+  const next = update_field_plan(fModel, msg);
+  const announced = field_plan_announcement(fModel, next);
+  fModel = next;
+  const nextVisus = field_plan_composition(fModel);
+  const r = browser.replace(fmp, nextVisus) as Update;
+  fRender(nextVisus);
+  if (announced !== "") {
+    const live = byIdentity("form-live");
+    assert(live !== undefined, "live region present");
+    webDomTextSet(live as unknown as Element, announced);
+    fAnnouncements += 1;
+  }
+};
+const fBind = (): void => {
+  for (const v of field_plan_bindings()) {
+    const node = byIdentity(v.identity);
+    assert(node !== undefined, `field binding target present: ${v.identity}`);
+    const handler = (): void => {
+      fApply(field_text(node!.dataTela, webDomValue(toEl(node!))));
+    };
+    fSubs.push(webDomOn(toEl(node!), v.event_name, handler));
+  }
+};
+fBind();
+
+// 12a. input dispatch (empty value): → invalid transition.
+let fNode = byIdentity("form-field-name")!;
+fNode.value = "";
+fNode.dispatchEvent(new FakeEvent("input"));
+assert(fAnnouncements === 1, "invalid transition announces once");
+let fInv = byIdentity("form-field-name")!;
+assert(fInv.getAttribute("aria-invalid") === "true", "aria-invalid flips true");
+assert(fInv.getAttribute("aria-describedby") === "form-error-name", "describedby wired to the error identity");
+assert(byIdentity("form-error-name")!.textContent === "Required", "error text written");
+assert(byIdentity("form-live")!.textContent === "form-field-name invalid: Required", "live region announces the invalid transition");
+// 12b. input dispatch ("Ada"): → valid → cleared.
+fNode = byIdentity("form-field-name")!;
+fNode.value = "Ada";
+fNode.dispatchEvent(new FakeEvent("input"));
+assert(fAnnouncements === 2, "valid transition announces once");
+const fVal = byIdentity("form-field-name")!;
+assert(fVal.getAttribute("aria-invalid") === "false", "aria-invalid flips false");
+assert(fVal.getAttribute("aria-describedby") === null, "describedby removed");
+assert(byIdentity("form-error-name")!.textContent === "", "error text cleared");
+assert(byIdentity("form-live")!.textContent === "form-field-name valid", "live region announces the valid transition");
+// 12c. input dispatch (same value): → no-op → silent (§1.5).
+fNode = byIdentity("form-field-name")!;
+fNode.value = "Ada";
+fNode.dispatchEvent(new FakeEvent("input"));
+assert(fAnnouncements === 2, "no announcement on the no-op (silent)");
+const fNoop = byIdentity("form-field-name")!;
+assert(fNoop.getAttribute("aria-invalid") === "false", "the no-op keeps the valid state (aria-invalid false)");
+assert(fNoop.getAttribute("aria-describedby") === null, "the no-op keeps describedby removed");
+assert(byIdentity("form-error-name")!.textContent === "", "the no-op keeps the error cleared");
+// 12d. replace across the region: focus restoration by identity.
+const fFocus = browser.focus_held(fmp, "form-field-name");
+const fRestore = browser.replace(fFocus, field_plan_composition(fModel));
+assert(fRestore !== null, "focus-restoration replace returns the update result");
+const fUpdateFocus: Update = fRestore!;
+const fFocusKeys = fUpdateFocus.effects.map((e) => tela.effect_identity(e));
+assert(fFocusKeys.length === 2 && fFocusKeys[0] === "form-field-name" && fFocusKeys[1] === "#root", "effects are restore(form-field-name) + anchor(#root)");
+fRender(fUpdateFocus.view);
+for (const e of fUpdateFocus.effects) {
+  const key = tela.effect_identity(e);
+  const target = byIdentity(key);
+  if (target !== undefined) {
+    doc.focusNode(target);
+  }
+}
+assert(doc.activeElement?.dataTela === "form-field-name", "focus restored to the pre-replacement identity");
+// 12e. dispose: subscriptions live before, gone after.
+let fNodeAfter = byIdentity("form-field-name")!;
+fNodeAfter.value = "";
+fNodeAfter.dispatchEvent(new FakeEvent("input"));
+assert(fAnnouncements === 3, "subscription live before dispose (a dispatch fires)");
+browser.dispose(fmp);
+fClearSubs();
+fNodeAfter = byIdentity("form-field-name")!;
+fNodeAfter.value = "x";
+fNodeAfter.dispatchEvent(new FakeEvent("input"));
+assert(fAnnouncements === 3, "post-dispose dispatch no-ops (unsubscribed)");
+
+console.log("reference catalog mount gate green (layout + typography + panel + badge + metric + table + segmented-control + button + field mount + structure/a11y + field behavior + declared interaction; tela-s5-u2/u3/u4/u5/u6/u7/u8)");
 HOST_DRIVER
 
 {
@@ -788,4 +919,4 @@ tsc --noEmit --strict --target ES2020 --lib ES2020,DOM --module ESNext --moduleR
 echo "check-reference: node — the mount + structure/a11y gate (fail-closed)"
 node "$SCRATCH/assembled.ts"
 
-echo "check-reference: green (real provider seam; layout + typography + panel + badge + metric + table + segmented-control + button + field mount + structure/a11y + declared interaction cases; node exit 0)"
+echo "check-reference: green (real provider seam; layout + typography + panel + badge + metric + table + segmented-control + button + field mount + structure/a11y + field behavior + declared interaction cases; node exit 0)"

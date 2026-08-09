@@ -371,6 +371,22 @@
 #     keyword families — contextual, proven safe as fields/params by the
 #     kernel Token/formslib carriers; none is used as a top-level fn or
 #     type name). NO variant-class collision in this family.
+#   Stage 5 U8 (the field behavior contract surface — the forms split
+#     half 2): the catalog owns the PURE field behavior surface over the
+#     FieldInputProps carriers — `field_input_event` (the declared input
+#     event constant; the formslib `field_event` carrier name is taken in
+#     the shared harness assemblies — fix:snapshot-name-collision),
+#     `field_error_for_value` (the validation rule: empty →
+#     invalid, non-empty → cleared), `field_announcement` (the live-
+#     region policy: announce once on a validation-state change, silent
+#     on a no-op — the §1.5 rule extended to the catalog field). The
+#     D1 app-typed boundary (recorded): the concrete message type + the
+#     bindings + the update/validation loop stay in the CONSUMER (the
+#     canary's field plan); the catalog field is STATELESS — it renders
+#     the props it is given, the consumer owns the transitions. New U8
+#     identifiers (field_input_event/field_error_for_value/
+#     field_announcement) probed collision-free on in-tree radix 0.80.0
+#     (--locale en).
 #   LOCALE002 advisory (recorded, non-blocking): the BadgeProps `status`
 #     field is a keyword-like spelling (advisory only — it parses + emits,
 #     per the web-surface-import DELIVERY §5.2 record); no rename needed.
@@ -1079,6 +1095,50 @@ fn field_control(FieldInputProps props) → tela.View {
         [],
         children
     )
+}
+
+# ===========================================================================
+# FIELD family — the BEHAVIOR contract surface (Stage 5 U8 — the forms
+# split half 2, BEHAVIOR + a11y). The catalog owns the PURE surface; the
+# D1 app-typed boundary (the message type + bindings + update loop) stays
+# in the consumer — recorded in the module header.
+# ===========================================================================
+
+# The declared input event (the event-name constant — the field's input
+# surface). The consumer plan binds the subscription to this spelling
+# (consumable; never a magic string in the app plan). Spelled
+# field_input_event — the formslib `field_event` carrier name is taken in
+# the shared harness assemblies (fix:snapshot-name-collision; the catalog
+# event constant avoids the forms carrier names, the U8 record).
+fn field_input_event() → string {
+    return "input"
+}
+
+# The pure validation rule (the validation semantics): an empty value is
+# invalid (the error text "Required"); a non-empty value is valid ("" —
+# cleared). The consumer's update loop maps an incoming value through
+# this rule; the static mapping (field_invalid) derives aria-invalid
+# from the resulting error. The formslib error_present precedent,
+# re-homed as the catalog's single source of truth.
+fn field_error_for_value(string value) → string {
+    if value ≡ "" then return "Required"
+    return ""
+}
+
+# The live-region policy (the §1.5 pattern, extended to the catalog
+# field): announce once on a validation-state change (the value OR the
+# error flipped between the ante/post props), SILENT on a no-op (both
+# unchanged — ""). The announcement text rides the field identity
+# (form-field-<name> — the identity construction the catalog owns) + the
+# post state (" invalid: <error>" / " valid").
+fn field_announcement(FieldInputProps ante, FieldInputProps post) → string {
+    if ante.value ≡ post.value and ante.error ≡ post.error {
+        return ""
+    }
+    if not (post.error ≡ "") {
+        return "form-field-" + post.name + " invalid: " + post.error
+    }
+    return "form-field-" + post.name + " valid"
 }
 
 # ===========================================================================

@@ -310,9 +310,9 @@
 #     the variant argument.
 #
 # DETERMINISM SUPERSESSION (done_when (d)): the runner output extends with
-# the button-family render — the determinism sha stays SUPERSEDED (U10
-# re-records the official sha; check-determinism is RED between units —
-# the honest flag, unchanged).
+# the button-family render + the field-plan surface (U8) — the determinism
+# sha stays SUPERSEDED (U10 re-records the official sha;
+# check-determinism is RED between units — the honest flag, unchanged).
 #
 # Stage 5 U7 (tela-s5-u7-field-forms-static) — the FORMS SPLIT half 1:
 # the field family joins the runner composition through NORMAL qualified
@@ -1353,6 +1353,147 @@ fn mount_field(string selector) → browser.Mounted ∪ null {
     return browser.mount(scope, field_composition(), reference_theme())
 }
 
+# ===========================================================================
+# Stage 5 U8 — the catalog-field behavior plan (the forms split half 2,
+# BEHAVIOR + a11y): the app-typed plan (D1) over the catalog field.
+#
+# The catalog (tela:reference) owns the PURE field behavior surface —
+# field_input_event (the declared input event), field_error_for_value (the
+# validation rule), field_announcement (the live-region policy) — see
+# the reference.fab module header. The APP owns the concrete message
+# type + the bindings + the update/validation loop:
+#
+#   FieldMessage (FieldInput — an input event's identity + value)
+#   FieldBinding (the subscription surface: identity + event_name)
+#   FieldPlanState (the per-field model: name + label + value + error)
+#   update_field_plan (the incoming value through the CATALOG's rule)
+#   field_plan_announcement (the CATALOG's live-region policy)
+#   field_plan_composition (the update loop's view-render input)
+#
+# The input event's VALUE payload is host-read (webDomValue at dispatch
+# time) and folded into the app's field_text message constructor — the
+# Branch B `(tela.EventName) → Message` closure shape carries no event
+# payload, so the field binding is the subscription surface (identity +
+# event_name) + a separate message constructor (recorded boundary). The
+# DISABLED phone field carries no subscription — no entry, the state
+# exposed (a disabled input event is a no-op by construction).
+# ===========================================================================
+
+# The concrete app message type (one variant): FieldInput — an input
+# event carrying the field identity (form-field-<name>) + the input's
+# value.
+union FieldMessage {
+    FieldInput { string identity, string value }
+}
+
+# The field binding — the subscription surface (the Branch B shape, the
+# U5/U6 pattern): one input subscription keyed to a stable node identity,
+# bound to the catalog's declared input event.
+class FieldBinding {
+    string identity
+    string event_name
+}
+
+# The field model — the app-side validation state for ONE catalog field
+# (name + label + value + error; the error is the validation source —
+# the catalog's static mapping derives aria-invalid from it).
+class FieldPlanState {
+    string name
+    string label
+    string value
+    string error
+}
+
+fn field_plan_state(string name, string label, string value, string error) → FieldPlanState {
+    return FieldPlanState { name = name, label = label, value = value, error = error }
+}
+
+# The message-producing helper (the closure body / the driver's
+# constructor): an input event for a field identity carrying the input's
+# value.
+fn field_text(string identity, string value) → FieldMessage {
+    return variant FieldInput { identity = identity, value = value }
+}
+
+# The state → catalog props mapping (the ARIA/validation semantics
+# round-trip through the catalog's render helpers — the U7 static
+# surface is the source of truth).
+fn field_plan_props(FieldPlanState state) → reference.FieldInputProps {
+    return reference.field_input_props(state.name, state.label, state.value, state.error, "enabled")
+}
+
+# The binding for one enabled field: keyed to its form-field-<name>
+# identity, bound to the catalog's declared input event.
+fn field_plan_binding(FieldPlanState state) → FieldBinding {
+    return FieldBinding {
+        identity = "form-field-" + state.name,
+        event_name = reference.field_input_event()
+    }
+}
+
+# The subscription plan: one input binding per ENABLED field (name +
+# email). The DISABLED phone field is deliberately NOT bound — no entry,
+# the state exposed (a disabled input event is a no-op by construction).
+fn field_plan_bindings() → list<FieldBinding> {
+    return [
+        field_plan_binding(field_plan_state("name", "Name", "", "")),
+        field_plan_binding(field_plan_state("email", "Email", "", "Required"))
+    ]
+}
+
+# The update loop — an ordinary app function over the concrete message
+# type. Validation semantics: the incoming value through the CATALOG's
+# rule (field_error_for_value — empty → "Required", non-empty → "").
+# A message for a DIFFERENT field identity is a no-op (the model keeps
+# its state — the silent no-op rule downstream).
+fn update_field_plan(FieldPlanState state, FieldMessage message) → FieldPlanState {
+    match message {
+        case FieldInput const identity, value {
+            if not (identity ≡ "form-field-" + state.name) {
+                return state
+            }
+            return field_plan_state(state.name, state.label, value, reference.field_error_for_value(value))
+        }
+    }
+}
+
+# The announcement wiring: the CATALOG's live-region policy over the
+# state's props (announce once on a validation-state change, silent on a
+# no-op — the §1.5 rule extended to the catalog field).
+fn field_plan_announcement(FieldPlanState ante, FieldPlanState post) → string {
+    return reference.field_announcement(field_plan_props(ante), field_plan_props(post))
+}
+
+# The field composition re-rendered from the app model — the update
+# loop's view-render input (the driver applies the model via the
+# messages): the name field from the model + the static email (invalid)
+# + phone (disabled) companions + the field-own live region. The
+# wrapper identity is app-owned data (the canary-* precedent — MF-8).
+fn field_plan_composition(FieldPlanState name_state) → tela.View {
+    return tela.element_full(
+        tela.new_identity("canary-ref-field"),
+        tela.html_space(),
+        "div",
+        [],
+        [],
+        [
+            reference.field_control(field_plan_props(name_state)),
+            reference.field_control(email_field_props()),
+            reference.field_control(phone_field_props()),
+            reference.field_live_region()
+        ]
+    )
+}
+
+# The seam mount for the U8 browser proof: the check-reference driver
+# calls this through the app's own imports (dom.scope + browser.mount).
+# The plan composition mounts with the reference theme (the core
+# baseline + the ref.* + the form.* tokens) — done_when (c).
+fn mount_field_plan(string selector) → browser.Mounted ∪ null {
+    const dom.Scope scope ← dom.scope(selector)
+    return browser.mount(scope, field_plan_composition(field_plan_state("name", "Name", "", "")), reference_theme())
+}
+
 main {
     # G4 seam attempt (recorded in the evidence record): ext.bar_meter
     # resolves to WARN014 export-skip; the app composes the meter with tela
@@ -2235,6 +2376,55 @@ main {
     print html_field
     print "field family static rendered (form-field-* identities + ARIA surface; tela-s5-u7)"
     print "reference composition asserted (field family; tela-s5-u7)"
+
+    # --- Stage 5 U8 — the catalog-field behavior surface ------------------
+    # The forms split half 2 (behavior + a11y): the PURE field behavior
+    # contract — the validation semantics (field_error_for_value: empty →
+    # invalid, non-empty → cleared; the static mapping field_invalid
+    # derives aria-invalid from the error), the event-name constant
+    # (field_input_event), the live-region policy (field_announcement: announce
+    # once on a validation-state change, SILENT on a no-op — the §1.5
+    # rule). The D1 app-typed boundary (recorded): the message type +
+    # bindings + update loop (FieldMessage/FieldBinding/FieldPlanState/
+    # update_field_plan/field_plan_announcement) stay APP-side. The
+    # runner output extends — the determinism sha stays SUPERSEDED
+    # (recorded in the header).
+    assert reference.field_input_event() ≡ "input"
+    assert reference.field_error_for_value("") ≡ "Required"
+    assert reference.field_error_for_value("Ada") ≡ ""
+    const reference.FieldInputProps f_ante ← reference.field_input_props("name", "Name", "", "", "enabled")
+    const reference.FieldInputProps f_inv ← reference.field_input_props("name", "Name", "", "Required", "enabled")
+    const reference.FieldInputProps f_val ← reference.field_input_props("name", "Name", "Ada", "", "enabled")
+    assert reference.field_announcement(f_ante, f_inv) ≡ "form-field-name invalid: Required"
+    assert reference.field_announcement(f_ante, f_val) ≡ "form-field-name valid"
+    assert reference.field_announcement(f_val, f_val) ≡ ""
+    # The app-typed update loop: the incoming value through the catalog's
+    # rule; a foreign identity is a state no-op (the silent rule).
+    const FieldPlanState fp0 ← field_plan_state("name", "Name", "", "")
+    const FieldMessage fmsg ← field_text("form-field-name", "Ada")
+    const FieldPlanState fp1 ← update_field_plan(fp0, fmsg)
+    assert fp1.value ≡ "Ada" and fp1.error ≡ ""
+    assert field_plan_announcement(fp0, fp1) ≡ "form-field-name valid"
+    const FieldMessage fmsg2 ← field_text("form-field-name", "")
+    const FieldPlanState fp2 ← update_field_plan(fp1, fmsg2)
+    assert fp2.error ≡ "Required"
+    assert field_plan_announcement(fp1, fp2) ≡ "form-field-name invalid: Required"
+    const FieldMessage fmsg3 ← field_text("form-field-name", "Ada")
+    const FieldPlanState fp3 ← update_field_plan(fp2, fmsg3)
+    assert fp3.error ≡ ""
+    assert field_plan_announcement(fp2, fp3) ≡ "form-field-name valid"
+    const FieldMessage fmsg4 ← field_text("form-field-email", "x")
+    const FieldPlanState fp4 ← update_field_plan(fp3, fmsg4)
+    assert fp4.value ≡ "Ada" and fp4.error ≡ ""
+    # The update loop's view-render input: the model → the composition.
+    const string html_field_plan ← tela.html_visus(field_plan_composition(fp3)) coalesce ""
+    assert html_field_plan.continet("value='Ada'")
+    assert html_field_plan.continet("aria-invalid='false'")
+    # The mount seam is the check-reference U8 browser-proof surface (the
+    # driver calls mount_field_plan through the app's own imports after
+    # installing the host DOM — main{} stays seam-free).
+    print "field plan surface asserted (validation semantics + live-region policy + update loop; tela-s5-u8)"
+    print "reference composition asserted (field plan; tela-s5-u8)"
 
     # --- The U7 interactive plan surface (the provider-seam claim) --------
     # The composition mounts through the app's own seam call (dom.scope +
