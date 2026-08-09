@@ -18,8 +18,8 @@ file is the operating summary; the docs are the contract.
 | Path | Role |
 | --- | --- |
 | `faber.toml` | Package `tela`, provider `tela`, `[paths] source = "src"`, `[build] kind = "lib"`, `targets = ["rust", "ts"]`, `[reader] locale = "en"`, edition 2026, version `0.0.0` (versioning is a Stage 8 decision) |
-| `src/tela.fab` | The kernel — **one flat module** (imported as `tela:tela`), stdlib-only (no `norma`/`triga`/`faber-runtime` dependency); import-free through U1, U3 adds ONE same-package sibling import (`tela:valida`) for the fail-closed glue |
-| `src/valida.fab` | Validation module (imported as `tela:valida`) — flat, import-free, public surface string/bool only |
+| `src/tela.fab` | The kernel — **one flat module** (imported as `tela:tela`), stdlib-only (no `norma`/`triga`/`faber-runtime` dependency); import-free through U1, U3 adds ONE same-package sibling import (`tela:validate`) for the fail-closed glue |
+| `src/validate.fab` | Validation module (imported as `tela:validate`) — flat, import-free, public surface string/bool only |
 | `exempla/` | Exempla-mode tests (`+++` frontmatter, `locale = "en"`); one exempla file per unit surface (e.g. `validation.fab`, `serializer.fab`) |
 | `scripta/` | Validation harnesses (Stage 1 U6: `check-compile`, `check-exempla`, `check-determinism`) |
 | `docs/design/` | Design records (`identity-hydration.md`, `theme-protocol.md`, `browser-lifecycle.md`) |
@@ -41,11 +41,11 @@ by framework-contract weakening.
   (single file)** so every referenced type is local to the module. The kernel
   is therefore **one flat module** (`tela/src/tela.fab`, `tela:tela`) —
   G4-safe and matching the proven spike single-file shape. It is stdlib-only
-  plus ONE same-package sibling import (`tela:valida`, added by U3 for the
-  fail-closed glue); no public signature references a `valida` type, so the
+  plus ONE same-package sibling import (`tela:validate`, added by U3 for the
+  fail-closed glue); no public signature references a `validate` type, so the
   G4-safe shape holds.
 - **Enum-member top-level binding (G5).** Enum members bind as top-level
-  module names — a `fn html()` collides with the `Spatium.html` member
+  module names — a `fn html()` collides with the `Space.html` member
   binding (`SEM005.duplicate_definition`). Prefix helpers that shadow members
   (`html_spatium`, `svg_spatium`). This is why the HTML renderer verb is
   **`html_visus`** (U3 recorded + escalated; the G5 radix-lane fix restores
@@ -58,14 +58,14 @@ by framework-contract weakening.
   with the TS emitter's discriminant (`type U = { tag: "V", tag: string }` →
   TS2300/TS2717). The working spelling is **`nomen_tag`**. (Re-checked clean
   at U1 against in-tree radix 0.80.0; keep the spelling.)
-- **Nullable-identity routing (D3 → `nova_identitas`).** Direct non-null
+- **Nullable-identity routing (D3 → `new_identity`).** Direct non-null
   construction into a nullable union field misses the Rust `Some(...)` wrap
   (cargo E0308). Route non-null identity through the helper
-  `nova_identitas(v) → Identitas ∪ null`; keep the workaround until the radix
+  `new_identity(v) → Identity ∪ null`; keep the workaround until the radix
   D3 delivery lands.
 - **Namespace-helper pattern (G1 → `html_spatium`/`svg_spatium`).** Enum
   member value access through an imported namespace fails
-  (`ext.Spatium.html` → `SEM010`). Expose namespace values as helper functions
+  (`ext.Space.html` → `SEM010`). Expose namespace values as helper functions
   even inside the kernel module.
 - **Imported-union construction (G3 → kernel-owned constructors).** Variant
   construction of an imported union fails and the qualified cast does not
@@ -81,29 +81,55 @@ by framework-contract weakening.
   register a usable type name. Author with the spellings the kernel proves:
   `union`, `enum`, `class`, `fn`.
 
-## Vocabulary policy (policy (b))
+## Vocabulary policy (policy (b) — SUPERSEDED by the English-first convention, U0 2026-08-09)
 
-| Surface | Vocabulary | Examples |
-| --- | --- | --- |
-| Protocol types + fields (`tela:*`) | **Faber-Latin** | `Visus`, `Elementum`, `Textus`, `Fragmentum`, `Spatium`, `Attributum`, `Proprietas`, `Identitas`; fields `nomen`, `valor`, `liberi`, `attributa`, `proprietates`, `identitas`, `spatium`, `nomen_tag` |
-| Renderer / host verbs | **English** | `html_visus` (HTML serializer verb — G5 workaround: exact `html` collides with the `Spatium.html` member binding, `SEM005`; fail-closed `→ string ∪ null`), `css` (verbatim, not reserved), and `mount`, `replace`, `dispose`, `assemble` |
-| Theme tokens | **English web terms** | `surface.canvas`, `text.primary`, `chart.axis.muted`, `form.field.invalid` |
-| Extension-contract verbs | **English** | define, return, publish, declare |
+**English-first, end to end** (operator decision + clarification 2026-08-09;
+`CAMPAIGN.md` posture; the Stage 5 U0 convention). Tela uses the **EN keyword
+locale** (English keyword spellings) AND English identifiers for types,
+methods, fields, and plan types — the whole authoring surface is English.
+Latin is NOT Tela's internal form: Latin is Radix's canonical (unbiased)
+language form and the default surface for the standard library (norma).
+Calling a Latin-named stdlib function from English Tela is a calling detail
+(call sites keep their names). The former policy lock (stage-0-protocol-
+policies.md (b) "Faber-Latin protocol spellings") is **SUPERSEDED**.
 
-`liberi` (not `children`) is locked — the field vocabulary is one consistent
-Faber-Latin scheme; the Stage 7 Speculum migration maps `children` → `liberi`
-at the boundary. Renderer-internal helpers may follow the spike spellings
-(`escapa`, `seri_*`) or English; the public serializer verbs are
-`html_visus`/`css`. The exact `html` verb collided with the `Spatium.html`
-enum-member binding (G5, `SEM005`) and was **escalated rather than silently
-renamed** — `html_visus` preserves the locked English stem (policy (b)), and
-the G5 radix-lane fix restores the exact `html` verb. When a locked verb name
-collides (G5/G6), follow the same rule: escalate, keep the stem.
+Convention locks (Stage 5 U0):
+
+- **One vocabulary per identifier.** A name never mixes Latin and English
+  stems (`error_regionum`-style mixed stems are banned). The identifier
+  vocabulary is English; Latin survives only in Latin-named stdlib call
+  sites (documented exception list).
+- **Casing.** Types (`class`/`union`/`enum`): PascalCase, single token —
+  multi-word types concatenate (`FieldProps`, `ElementNode`); Pascal_snake
+  (`Props_campi`-style) is banned. Functions/fields: snake_case
+  (`html_visus`, `binding_status`, `tag_name`). Theme tokens: dotted
+  lowercase (`chart.axis.muted`). CSS custom properties: `--kebab-case`.
+- **Identity strings are DATA.** kebab-case family-prefix `data-tela`
+  identities (`form-field-<name>`, `tela-seg-N`, `ref-*`) are data —
+  mixed spellings are allowed and never "fixed". One `-live` per family.
+- **The kernel surface (U0-locked names).** `View` (union:
+  `ElementNode`/`TextNode`/`Fragment`), `Space`, `Attribute`, `Property`,
+  `Identity`, `Style`/`Rule`/`Declaration`, `Token` (the ONE token-carrier
+  pattern), `Theme`, `Bundle`, `Order`, `EventName`, `Effect`
+  (`Restore`/`Direct`/`Anchor`), `Update`; browser: `Mounted` (stays
+  English), `RegionRoot`, `EventSubscription`, `Binding`.
+- **`html_visus` is the v1.0 renderer verb (pinned).** The exact `html`
+  verb collides with the `Space.html` enum-member binding (G5, `SEM005`);
+  the v2 restoration is a named rename (`html_visus` → `html`, grep-replace
+  predicate: `grep -rn 'html_visus'`), recorded, NOT done in v1.
+- **`focus_held`/`focus_target`** are the browser focus-model fns (the
+  pre-replacement focused identity / the declared focus-movement target).
+- **Latin-named stdlib call sites keep their names** (the documented
+  exception list): `longitudo()`, `sectio()`, `continet()`, `appende()`,
+  `ordinata()`, `coalesce`, `vacua`, `∪`, `∷`, `∴`, `§`(…). Never rename a
+  stdlib call.
+- **Seam types keep faber-web's spellings** (`dom.Scope`, `dom.Nodus`, …) —
+  consumed, never re-declared; `dom.Nodus.identitas` is the seam field.
 
 ## No raw markup (policy (a))
 
 Tela v1 has no raw-markup `View` variant. The `Visus` union contains exactly
-`Elementum`, `Textus`, `Fragmentum` — no `RawHtml`/`RawCss`-style escape in
+`ElementNode`, `TextNode`, `Fragment` — no `RawHtml`/`RawCss`-style escape in
 the ordinary path. Tag/attribute names are lexically + namespace validated at
 the serializer boundary; text and attribute values are escaped centrally in
 the renderer only. Unknown-but-valid names are **not** rejected for being new
@@ -111,11 +137,11 @@ the renderer only. Unknown-but-valid names are **not** rejected for being new
 
 ## Identity serialization (policy (d))
 
-`Identitas` serializes as the `data-tela` attribute — the only identity
+`Identity` serializes as the `data-tela` attribute — the only identity
 serialization form in v1, documented in
 [`docs/design/identity-hydration.md`](docs/design/identity-hydration.md).
-Non-null `Identitas` only; quote style and escape set follow the spike
-baseline (single quotes). `Proprietas` are carried in the tree but **not**
+Non-null `Identity` only; quote style and escape set follow the spike
+baseline (single quotes). `Property` values are carried in the tree but **not**
 serialized into static HTML in Stage 1 (the `data-prop:` marker is
 superseded).
 
@@ -143,7 +169,7 @@ Rust-lane cargo checks run in **scratch dirs outside the shared workspace**
 ```text
 R=radix/target/debug/radix
 $R check src/tela.fab --locale en                         # kernel check
-$R check src/valida.fab --locale en                       # valida check
+$R check src/validate.fab --locale en                       # validate check
 $R check exempla/*.fab --locale en                        # exempla-mode check
 $R emit -t ts src/tela.fab > <scratch>/x.ts && tsc --noEmit   # TS lane
 $R emit -t rust src/tela.fab > /tmp/x.rs                  # Rust lane:
@@ -156,7 +182,7 @@ git diff --check                                          # hygiene in tela/
 
 ```
 Wave 1:  U1 kernel-contract (package scaffold + Branch B types + constructors)
-Wave 2:  U2 validation (valida.fab)  ∥  U4 docs (identity + authoring notes)
+Wave 2:  U2 validation (validate.fab)  ∥  U4 docs (identity + authoring notes)
 Wave 3:  U3 serializer (escaping + HTML/CSS serializers + identity emission)
 Wave 4:  U5 benchmark-static (two-package composition importing tela:*)
 Wave 5:  U6 package-tests + determinism (harnesses + double-build evidence)
@@ -164,7 +190,7 @@ Wave 5:  U6 package-tests + determinism (harnesses + double-build evidence)
 
 The kernel module `src/tela.fab` is written by U1 (types + constructors),
 then extended by U3 (escaping + serializers) — **strictly sequential**.
-`valida.fab` is written by U2 (U3 imports it). Docs (U4) run parallel to U2,
+`validate.fab` is written by U2 (U3 imports it). Docs (U4) run parallel to U2,
 bound to the policy-locked surface. Benchmark (U5) needs the serializer;
 tests + determinism (U6) need the composition.
 

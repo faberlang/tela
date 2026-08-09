@@ -72,6 +72,18 @@ internal typed surface; clear English web terms for public-facing vocabulary
 that touches CSS, DOM, and renderer/host seams. This resolves Open Q5 and the
 review item 11 consistency call.
 
+> **SUPERSEDED (operator decision + clarification 2026-08-09; Stage 5 U0).**
+> The "Faber-Latin protocol spellings" split is **superseded** by the
+> **English-first, end to end** posture: Tela uses the EN keyword locale AND
+> English naming patterns for types, methods, fields, and plan types — the
+> whole authoring surface is English. Latin's home is Radix canonical form +
+> the Norma default surface; calling a Latin-named stdlib function from
+> English Tela is a calling detail (call sites keep their names). The Stage 5
+> U0 rename wave reworked the whole Tela surface (kernel/lifecycle/forms/
+> canary/extension-lib/modules) to the English names; the convention statement
+> is in `stage-5-delivery.md` §U0 + `AGENTS.md` (Vocabulary policy). The
+> table below is retained as the historical decision record.
+
 | Surface | Vocabulary | Locked examples | Rationale |
 |---|---|---|---|
 | Protocol types + fields (`tela:*`) | **Faber-Latin** | `Visus`, `Elementum`, `Textus`, `Fragmentum`, `Spatium`, `Attributum`, `Proprietas`, `Identitas`, `Eventum`, `Vinculum`, `Nuntius`; fields `nomen`, `valor`, `liberi`, `attributa`, `proprietates`, `vincula`, `eventus` | Matches the project identity (`tela`, Latin), the campaign §2 sketch, and the U3 spike that compiles through both lanes; keeps the typed protocol surface internally consistent and collision-free |

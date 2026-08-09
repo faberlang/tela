@@ -220,7 +220,7 @@ Verified by planner-2 (2026-08-09):
   (the flat kernel — Visus/serializers/Stilum/assemble/Thema/behavior
   carriers); `src/valida.fab`; `src/browser.fab` (the restored seam:
   `dom.Scope` + `dom.snapshot`, exported `mount`/`replace`/`dispose`/
-  `focus_tenet`/`focus_optata`); `exempla/` (validation, serializer, thema,
+  `focus_held`/`focus_target`); `exempla/` (validation, serializer, thema,
   assemble, behavior, browser); `scripta/` (`check-compile`,
   `check-exempla`, `check-mount`, `check-determinism`, `check-forms-proof`,
   `check-forms-interactive`, `dom-shim.ts`); `proof/benchmark/`
@@ -352,7 +352,7 @@ invented — the U1 probe re-verifies the two probed items):
   tela.Visus`-shaped exports are consumable through normal qualified imports
   post-`fix:g4` (re-verified against live radix — never assumed), and the
   module passes check + emit under the container library home. Props are
-  **local carrier classes** (the `Scopulus` pattern — consumers read fields
+  **local carrier classes** (the kernel `Token` carrier pattern (MF-7) — consumers read fields
   on the call result; never a widened kernel record).
 - **Identity scheme**: `ref-`-prefixed stable `data-tela` identities
   (`ref-layout-*`, `ref-panel-*`, `ref-table-*`, `ref-button-*`,
@@ -371,7 +371,7 @@ invented — the U1 probe re-verifies the two probed items):
   (labels/aria-label/caption), keyboard operation matching the role
   (table: sort/keyboard; segmented-control: roving tabindex + arrows/Home/
   End; button: Space/Enter; field: native semantics + the validation/live-
-  region contract), visible focus + `focus_tenet`/`focus_optata` restoration,
+  region contract), visible focus + `focus_held`/`focus_target` restoration,
   semantic state (`aria-selected`/`aria-expanded`/`aria-invalid`),
   live-region policy (announce on state change, silent on no-op — the Stage
   3 §1.5 pattern), table headers + `scope`, reduced-motion/high-contrast
@@ -538,7 +538,7 @@ conversion never weakens a harness gate to pass.
 | `id` | `tela-s5-u0-english-adoption-naming-cleanup` |
 | `outcome` | The whole Tela source surface adopts the operator's English-first policy (EN keyword locale + English identifiers for types/methods; Latin = Radix canonical + Norma default surface; Latin-named stdlib calls are calling detail) AND the head-cto naming-review must-fix items land — so the reference catalog (U2–U8) authors against the locked, reviewed surface. |
 | `convention` (locks) | English-first end to end; one vocabulary per identifier (no mixed stems); PascalCase concatenation for types/classes (kernel precedent — `Props_campi`-style Pascal_snake is banned); kebab-case family-prefix identity strings are DATA (mixed spellings allowed, never "fixed"); Latin grammar bar does not apply to English renames beyond consistency; documented exception list = Latin-named norma/stdlib functions called from Tela (call sites keep names). Supersedes stage-0-protocol-policies.md (b). |
-| `scope` | (1) Lock the convention statement in the delivery + AGENTS.md (vocabulary policy updated; policy lock (b) superseded clause). (2) English rename wave across the whole surface per council-review-2026-08-09-cto-naming.md §1 inventory: kernel protocol types (Visus/Spatium/Attributum/Proprietas/Identitas/Elementum/Textus/Fragmentum/Eventum/Effectus/Renovatio + constructors/helpers), style/theme (Declaratio/Regula/Stilum/Scopulum/Thema/Codicillus/Ordo), lifecycle (Radiculum/Subscriptio/Ligamen → English; **Mounted stays English** per operator), focus fns (focus_tenet/focus_optata → focus_held/focus_target), formslib + canary plan types (casing fix Props_campi→PropsCampi etc. + English names), extension-lib + module names (`tela:reference` stays). (3) EN keyword locale conversion of the whole source surface (unify the current la/en mix via the locale machinery — `faber format --locale en` / radix emit en; verify byte-stable round-trip). (4) MF-5: lock `html_visus` as the v1.0 verb + record the `html` restoration as a named v2 rename with its grep-replace predicate. (5) MF-6: re-verify exempla-mode consumption of `→ tela.Visus` fns live; re-route exempla + the main.fab U3 block to the normal-import route; retire/demote the `*_html` helpers; sha re-recorded with recorded supersession. (6) MF-7: re-verify the snapshot-collision removal predicate live; resolve the Scopulum/Scopulus/Scopula_formae triad (standardize per the decision). (7) MF-8: identity-scheme convention locked (`form-*`/`tela-*`/`ref-*` kebab family prefixes; one `-live` per family; `forma` documented). All `focus_tenet`/`focus_optata` references elsewhere in this delivery resolve to `focus_held`/`focus_target` after U0; all `tela.Visus`/`Scopulum`-surface references read post-U0 names from the live source. |
+| `scope` | (1) Lock the convention statement in the delivery + AGENTS.md (vocabulary policy updated; policy lock (b) superseded clause). (2) English rename wave across the whole surface per council-review-2026-08-09-cto-naming.md §1 inventory: kernel protocol types (Visus/Spatium/Attributum/Proprietas/Identitas/Elementum/Textus/Fragmentum/Eventum/Effectus/Renovatio + constructors/helpers), style/theme (Declaratio/Regula/Stilum/Scopulum/Thema/Codicillus/Ordo), lifecycle (Radiculum/Subscriptio/Ligamen → English; **Mounted stays English** per operator), focus fns (focus_held/focus_target → focus_held/focus_target), formslib + canary plan types (casing fix Props_campi→PropsCampi etc. + English names), extension-lib + module names (`tela:reference` stays). (3) EN keyword locale conversion of the whole source surface (unify the current la/en mix via the locale machinery — `faber format --locale en` / radix emit en; verify byte-stable round-trip). (4) MF-5: lock `html_visus` as the v1.0 verb + record the `html` restoration as a named v2 rename with its grep-replace predicate. (5) MF-6: re-verify exempla-mode consumption of `→ tela.Visus` fns live; re-route exempla + the main.fab U3 block to the normal-import route; retire/demote the `*_html` helpers; sha re-recorded with recorded supersession. (6) MF-7: re-verify the snapshot-collision removal predicate live; resolve the Scopulum/Scopulus/Scopula_formae triad (standardize per the decision). (7) MF-8: identity-scheme convention locked (`form-*`/`tela-*`/`ref-*` kebab family prefixes; one `-live` per family; `forma` documented). All `focus_held`/`focus_target` references elsewhere in this delivery resolve to `focus_held`/`focus_target` after U0; all `tela.Visus`/`Scopulum`-surface references read post-U0 names from the live source. |
 | `done_when` | Convention statement committed; English surface applied (kernel/lifecycle/forms/canary/extension-lib/modules); EN keyword locale unified; `html_visus` pinned; `*_html` surface retired or demoted with the exempla re-routed; triad resolved; identity scheme documented; **all six harness gates green** (check-compile, check-exempla, check-determinism, check-mount, check-forms-proof, check-forms-interactive); determinism sha re-recorded (supersession recorded); `git diff --check` clean. |
 | `validation` | The six tela scripta harnesses (cheap node runs, once); the recorded sha supersession; `git diff --check`. No cargo suites. |
 | `depends_on` | Stage 4 landed baseline. |
@@ -546,6 +546,80 @@ conversion never weakens a harness gate to pass.
 | `risk` | Medium — a wide mechanical rename; mitigation: it serializes into logical commits (convention → kernel/lifecycle → forms/canary → harness/stale-surface → policy/docs), each path-limited with the gate suite green at the boundary; the static-output byte-neutral property (CTO MF-2) keeps the determinism sha stable except where the sha re-record is explicitly required. |
 | `est_work_tokens` | 14–22k (may serialize into 2–3 commits within the one unit). |
 | `test_owner` | Unit Hand; Mind review at C1 (convention locked) before U1/U2 dispatch. |
+
+#### U0 evidence record (2026-08-09, hand-7)
+
+**Convention statement (committed).** English-first end to end; one
+vocabulary per identifier (no mixed stems); PascalCase concatenation for
+types/classes (Pascal_snake banned); identity strings are DATA (kebab-case
+family prefixes, mixed spellings allowed, never "fixed"); one `-live` per
+family; the documented exception list = Latin-named norma/stdlib call sites
+(`longitudo()`, `sectio()`, `continet()`, `appende()`, `ordinata()`,
+`coalesce`, `vacua`, …) + the consumed faber-web seam types
+(`dom.Scope`, `dom.Nodus`, …). Supersedes stage-0-protocol-policies.md (b).
+Committed in `AGENTS.md` (Vocabulary policy) + this delivery + the policy
+record.
+
+**Rename table (old → new; full surface).**
+
+| Surface | Old → New |
+| --- | --- |
+| View protocol types | `Visus`→`View` (variants `Elementum`→`ElementNode`, `Textus`→`TextNode`, `Fragmentum`→`Fragment`), `Spatium`→`Space`, `Attributum`→`Attribute`, `Proprietas`→`Property`, `Identitas`→`Identity` |
+| Behavior carriers | `Eventum`→`EventName`, `Effectus`→`Effect` (`Restitue`→`Restore`, `Dirige`→`Direct`, `Ancora`→`Anchor`), `Renovatio`→`Update` |
+| Style/theme | `Declaratio`→`Declaration`, `Regula`→`Rule`, `Stilum`→`Style`, `Scopulum`→`Token` (the ONE token-carrier pattern — MF-7), `Thema`→`Theme`, `Codicillus`→`Bundle`, `Ordo`→`Order` |
+| Lifecycle | `Radiculum`→`RegionRoot`, `Subscriptio`→`EventSubscription`, `Ligamen`→`Binding`; **`Mounted` stays English**; `focus_tenet`→`focus_held`, `focus_optata`→`focus_target`; status/diagnostic strings → `bind`/`create`, `duplicate:`/`foreign:`/`changed:` |
+| Kernel fields | `nomen`→`name`, `valor`→`value`, `liberi`→`children`, `attributa`→`attributes`, `proprietates`→`properties`, `identitas`→`identity`, `spatium`→`space`, `nomen_tag`→`tag_name`, `regulae`→`rules`, `declarationes`→`declarations`, `scopuli`→`tokens`, `dependet`→`depends`, `visus`→`view`, `effectus`→`effects` |
+| Kernel helpers | `textus_view`→`text_view`, `fragmentum_view`→`fragment_view`, `nova_identitas`→`new_identity`, `html_spatium`→`html_space`, `svg_spatium`→`svg_space`, `elementum_view`→`element_view`, `elementum_omne`→`element_full`, `escapa`→`escape`, `spatium_textus`→`space_name`, `seri_*`→`serialize_*`, `valida_arbor`→`validate_tree`, `thema_css`→`theme_css`, `thema_stilum`→`theme_style`, `scopulum`→`token`, `thema`→`theme`, `scopuli_core`→`core_tokens`, `codicillus`→`bundle`, `ordo`→`order`, `codicilli_dedupata`→`deduplicated_bundles`, `ordine_ordinata`→`topological_order`, `stilum_validum`→`style_valid`, `codicillus_ex`→`bundle_for`, `effectus_identitas`→`effect_identity`, `restitue`→`restore`, `dirige`→`direct`, `ancora`→`anchor`, `renovatio`→`update` |
+| Validation module | `src/valida.fab`→`src/validate.fab` (provider module `tela:valida`→`tela:validate`); `valida_nomen_tag`→`valid_tag_name`, `valida_nomen_attributi`→`valid_attribute_name`, `valida_nomen_in_spatio`→`valid_name_in_space`, `valida_spatium`→`valid_space`, `valida_void_html`→`valid_void_html`, `valida_void_structura`→`valid_void_structure`, `valida_in_gregis`→`in_group` |
+| Browser helpers | `radiculum`→`region_root`, `subscriptio`→`event_subscription`, `ligamen`→`binding`, `nota_identitatis`→`identity_marker`, `parse_identitates`→`parse_identities`, `elementum_tag`→`element_tag`, `nomen_tagi`→`tag_name`, `quotiens`→`count_occurrences`, `identitates_duplicatae`→`duplicate_identities`, `identitates_ex_nodis`→`identities_from_nodes`, `tags_ex_nodis`→`tags_from_nodes`, `ligamen_status`→`binding_status`, `diagnosia_hydrationis`→`hydration_diagnostics`; Mounted fields `scopus`→`scope`, `radix`→`root`, `textus_markup`→`markup`, `textus_css`→`css_text`, `identitates`→`identities`, `diagnosia`→`diagnostics`, `ligamina`→`bindings`, `subscriptiones`→`subscriptions`, `identitas_focus`→`focused_identity`, `identitas_focus_optata`→`target_identity` |
+| formslib | `Props_campi`→`FieldProps`, `Props_boxi`→`CheckboxProps`, `Props_selecti`→`SelectProps`, `campum`→`field`, `boxum`→`checkbox`, `selego`→`select`, `error_regionum`→`error_region`, `regio_viva_forma`→`form_live_region`, `agmen_campi`→`field_group`, `scopulae_formae`→`form_tokens`, `form_stilum`→`form_style`, `eventus_campi`→`field_event`, `eventus_mutationis`→`change_event`, `eventus_submissionis`→`submit_event`, `eventus_click`→`click_event`, `invalid_textus`→`invalid_state`, `error_praesens`→`error_present`; the `*_html` helpers RETIRED (MF-6); `Scopula_formae` DELETED → kernel `Token` |
+| extension-lib | `Scopulus` DELETED → kernel `Token`; `bar_metrum`→`bar_meter`, `chart_stilum`→`chart_style`, `chart_scopuli`→`chart_tokens`, `chart_scopuli_tenebrae`→`chart_tokens_dark`, `*_tenebrae`→`*_dark` |
+| canary-app plan types | `Props_controlli`→`ControlProps`, `Nuntius`→`Message` (`Electum`→`Selected`, `Motus`→`Moved`), `Vinculum`→`EventBinding`, `Nuntius_Formae`→`FormMessage` (`Campi_Textus`→`FieldText`, `Boxum_Toggle`→`CheckboxToggle`, `Selectum_Mutatio`→`SelectChange`, `Submission`→`Submit`), `Vinculum_Formae`→`FormBinding`, `Statu_Campi`→`FieldState`, `segmentatum`→`segmented_control`, `panelum`→`panel`, `metrica_tabula`→`metric_table`, `annuntium`→`announcement`, `montium_formae`→`mount_forms`, `compositio_formae`→`forms_composition`, … |
+
+**MF-5 (`html_visus` pinned).** `html_visus` is locked as the v1.0 renderer
+verb. The `html` restoration is a named **v2 rename** with the grep-replace
+predicate: when cds-u8 lands, `grep -rn 'html_visus'` → replace with `html`
+in the kernel + the harness `TELA_NS` consts + docs. NOT done in U0.
+
+**MF-6 (`*_html` retired, evidence).** The exempla-mode consumption of
+`→ tela.View` fns was re-verified LIVE against in-tree radix 0.80.0
+(post-cds-u6): a scratch exempla importing `formslib:forms` + `tela:tela`
+and calling `tela.html_visus(forms.field(...))` passed `radix check` + TS
+emit + assembly + `tsc --noEmit` + `node` execute. Green → the exempla
+re-route to the direct fns; the `*_html` helpers are deleted; the main.fab
+"Stage 4 U3" block + the validation round-trip sites re-route to the normal
+imports with IDENTICAL rendered bytes. **Determinism sha re-verified
+byte-identical: `8dfcb143…` — NO supersession was needed** (the rename wave
++ the re-route are byte-neutral for static output; the byte-neutral property
+holds as designed).
+
+**MF-7 (triad resolved).** The snapshot-collision removal predicate was
+re-verified LIVE (two scratch providers declaring the same-named `Token`
+class + a consumer importing both — `radix check` clean, no WARN014
+cascade, no export skip). The `Scopulum`/`Scopulus`/`Scopula_formae` triad
+is resolved: the kernel `Token` is the ONE token-carrier pattern; the
+per-package carriers are deleted; the extension + formslib token accessors
+return `tela.Token` values.
+
+**MF-8 (identity scheme locked).** `form-*`/`tela-*`/`ref-*` kebab-case
+family prefixes; one `-live` per family; `-error-<name>`/`-control-<name>`
+associations; identity strings are DATA (the `forma` top-level composition
+identity is documented as app-owned data, NOT renamed; `canary-panelum`
+is documented data). `data-*` attribute names are data (kept).
+
+**EN keyword locale.** The whole surface was verified EN-keyword (all files
+parse with `radix check --locale en`; no la keywords in any tela `.fab`).
+The byte-stable round-trip was verified with `radix emit -t faber --locale
+en`: kernel modules byte-identical; exempla bodies byte-identical
+(frontmatter is the only diff — the emit drops the `+++` block). Tooling
+note: `faber format --reader-locale en` is unavailable on this build (the
+installed faber resolves reader packs from `radix/stdlib/reader/` while the
+packs live under `stdlib/locale/` — a CLI path mismatch, recorded, not a
+tela defect); the `-t faber` emit serves as the locale machinery.
+
+**Live probes (all recorded above).** (1) exempla-mode consumption of
+`→ tela.View` fns — GREEN. (2) snapshot-collision removal predicate —
+GREEN. (3) the `-t faber` round-trip — byte-stable.
 
 ### U1 — `tela-s5-u1-discovery-reference-posture`
 
@@ -571,7 +645,7 @@ conversion never weakens a harness gate to pass.
 | `outcome` | The reference catalog starts: `src/reference.fab` with the **layout** (e.g. stacked rows / two-column grid / prose measures — exact surface the Hand's, probed) and **typography** (headings, prose, emphasis, scale — no color-only communication) families as ordinary component functions over typed props → `tela.Visus` with stable `ref-layout-*`/`ref-typography-*` identities, plus their style bundles + namespaced `ref.*` tokens; static byte-exact + a11y-structure exempla; a browser mounting proof (mount + structure/a11y asserts via `tela:browser`). |
 | `write_scope` | `tela/src/reference.fab` (new — the flat catalog module start: layout + typography families, style bundles, tokens); `tela/exempla/reference.fab` (new — static byte-exact + a11y-structure assertions); `tela/proof/benchmark/canary-app/src/main.fab` (extend — compose the layout/typography reference composition into the runner); `tela/scripta/check-reference` (new — the Stage 4 interactive-seam browser-proof harness: real `web:dom` + `tela:browser` + the host binding; the layout/typography mount + structure cases); `tela/scripta/check-exempla` (extend — the `reference` wiring case); `tela/scripta/check-compile` (extend — the reference module + the extended exempla) |
 | `read_scope` | U1 discovery record (home + naming + probes + identity scheme); `CAMPAIGN.md` §3 (component contract) + §8 (accessibility — accessible names, semantic structure, focus) + §4/§5 (style/theme); the landed kernel surface + the formslib flat pattern; `check-forms-interactive` (the seam assembly the new harness mirrors); `check-exempla` (the wiring-case mechanics); `stage-2-delivery.md`/`docs/design/theme-protocol.md` (assembly + tokens) |
-| `done_when` | (a) `src/reference.fab` passes `radix check --locale en` under the container library home; the layout + typography families are ordinary fns over typed props → `tela.Visus` (no compiler-known kinds, no raw markup). (b) Stable `ref-*` identities + documented a11y structure (headings hierarchy for typography; semantic containers + prose semantics for layout); no color-only communication. (c) Style bundles `→ tela.Stilum` keyed on the identities referencing the `ref.*` tokens; the tokens are local-carrier accessors (the `Scopulus` pattern). (d) The exempla assert the exact static bytes (serializer emission order) + the a11y structure — fail-closed, executed under node. (e) `check-reference` green: each family mounts through `tela.browser.mount` against the host binding; the structure/a11y asserts hold (node exit 0, fail-closed, synchronous-only). (f) The canary-app composes the layout/typography families (normal qualified imports); the runner output extends — the Stage 4 determinism sha is **superseded, recorded** (U10 re-records; `check-determinism` RED between units — the honest flag). (g) The G4 consumability re-verified (the U1 probe holds at real use — a `→ tela.Visus` export resolves). (h) `git diff --check` in `tela/`. |
+| `done_when` | (a) `src/reference.fab` passes `radix check --locale en` under the container library home; the layout + typography families are ordinary fns over typed props → `tela.Visus` (no compiler-known kinds, no raw markup). (b) Stable `ref-*` identities + documented a11y structure (headings hierarchy for typography; semantic containers + prose semantics for layout); no color-only communication. (c) Style bundles `→ tela.Stilum` keyed on the identities referencing the `ref.*` tokens; the tokens are local-carrier accessors (the kernel `Token` carrier pattern (MF-7)). (d) The exempla assert the exact static bytes (serializer emission order) + the a11y structure — fail-closed, executed under node. (e) `check-reference` green: each family mounts through `tela.browser.mount` against the host binding; the structure/a11y asserts hold (node exit 0, fail-closed, synchronous-only). (f) The canary-app composes the layout/typography families (normal qualified imports); the runner output extends — the Stage 4 determinism sha is **superseded, recorded** (U10 re-records; `check-determinism` RED between units — the honest flag). (g) The G4 consumability re-verified (the U1 probe holds at real use — a `→ tela.Visus` export resolves). (h) `git diff --check` in `tela/`. |
 | `validation` | `radix check` on the reference module + the consumer; TS lane emit + assemble + `tsc --noEmit`; node — the exempla assertions + the `check-reference` mount cases execute (fail-closed); `git diff --check`. Narrow — the official full surface is U10 (fire-9 per-boundary rule). |
 | `depends_on` | U1 |
 | `non_goals` | No other families (U3–U8). No behavior interaction beyond mount/structure (U6/U8). No conversion (U9). No `CAMPAIGN.md` edits. No faber-web/radix edits. |
@@ -632,10 +706,10 @@ conversion never weakens a harness gate to pass.
 | Field | Value |
 |---|---|
 | `id` | `tela-s5-u6-button` |
-| `outcome` | The **button** family as a behavior component: typed props (label, variant, state, event surface) → `tela.Visus` with the a11y contract (accessible name, native button semantics or the declared role, keyboard Space/Enter operation, visible focus + `focus_tenet` restoration, disabled state semantics), proven statically AND in the browser (scripted click/keyboard/focus interaction). |
+| `outcome` | The **button** family as a behavior component: typed props (label, variant, state, event surface) → `tela.Visus` with the a11y contract (accessible name, native button semantics or the declared role, keyboard Space/Enter operation, visible focus + `focus_held` restoration, disabled state semantics), proven statically AND in the browser (scripted click/keyboard/focus interaction). |
 | `write_scope` | `tela/src/reference.fab` (extend — the button family + bundle + tokens); `tela/exempla/reference.fab` (extend — byte-exact + structure assertions); `tela/proof/benchmark/canary-app/src/main.fab` (extend — the button joins the runner + the app-typed button plan); `tela/scripta/check-reference` (extend — the button mount + interaction case: click dispatch, Space/Enter keydown select, disabled no-op, focus restoration) |
 | `read_scope` | `CAMPAIGN.md` §8 (keyboard + focus); the Stage 3/4 interaction-driver patterns; the U5 emission |
-| `done_when` | (a) The button family is ordinary fns over typed props → `tela.Visus` with `ref-button-*` identities; accessible name (label/aria-label); the keyboard contract (Space/Enter activate — the native or declared role semantics); visible focus + the `focus_tenet` restoration pattern; disabled state semantics (no activation, the state exposed). (b) Exempla assert the exact bytes + the a11y structure (fail-closed, node). (c) `check-reference` green: the button mounts; the scripted interaction case runs (click activates the message; Space/Enter activate; disabled click no-ops; focus restores across a replace) — fail-closed, synchronous-only. (d) Runner output extends → sha superseded (recorded). (e) `git diff --check` in `tela/`. |
+| `done_when` | (a) The button family is ordinary fns over typed props → `tela.Visus` with `ref-button-*` identities; accessible name (label/aria-label); the keyboard contract (Space/Enter activate — the native or declared role semantics); visible focus + the `focus_held` restoration pattern; disabled state semantics (no activation, the state exposed). (b) Exempla assert the exact bytes + the a11y structure (fail-closed, node). (c) `check-reference` green: the button mounts; the scripted interaction case runs (click activates the message; Space/Enter activate; disabled click no-ops; focus restores across a replace) — fail-closed, synchronous-only. (d) Runner output extends → sha superseded (recorded). (e) `git diff --check` in `tela/`. |
 | `validation` | `radix check`; TS lane + assemble + `tsc --noEmit`; node — exempla + reference cases (fail-closed); `git diff --check`. |
 | `depends_on` | U5 |
 | `non_goals` | No form validation/live-region (U8). No conversion (U9). No `CAMPAIGN.md` edits. |
@@ -667,7 +741,7 @@ conversion never weakens a harness gate to pass.
 | `outcome` | The **field/forms** split, half 2 (behavior + a11y): the validation semantics (invalid → `aria-invalid` true + error text; valid → cleared), the live-region policy (announce on a validation-state change, silent on no-op), the keyboard/native-input contract, and focus restoration — proven in the browser through a scripted interaction sequence (the Stage 4 interactive-gate sequence shape, re-run against the catalog field). |
 | `write_scope` | `tela/src/reference.fab` (extend — the field behavior contract surface: validation-state mapping fns (pure), the event-name constants, the live-region policy — the D1 app-typed boundary recorded); `tela/proof/benchmark/canary-app/src/main.fab` (extend — the app-typed field plan: message type, bindings, update/validation semantics, announcements); `tela/scripta/check-reference` (extend — the field interaction case: input → invalid → valid → no-op → focus restoration → dispose, the Stage 4 sequence shape) |
 | `read_scope` | `stage-4-interactive.md` (the forms interactive sequence + the seam); `stage-4-extension-proof.md` (the U4 behavior contract); `docs/design/identity-hydration.md` §7; the U7 emission; `CAMPAIGN.md` §8 (live region, focus, no-op) |
-| `done_when` | (a) The validation semantics are documented + proven at the pure level (the mapping fns; invalid → `aria-invalid` true + error; valid → cleared; the no-op rule). (b) The live-region policy is the established pattern (announce once on a validation-state change, silent on no-op — the §1.5 rule extended to the catalog field). (c) `check-reference` green: the field interaction case runs against the host binding — input dispatch → message → update → `replace`; `aria-invalid` flips true/false; `aria-describedby` wired/removed; the error text written/cleared; the live region announces once (silent on the no-op); focus restores across the replace (`focus_tenet`); dispose unsubscribes (a post-dispose dispatch no-ops). Fail-closed, synchronous-only. (d) `fix:sem001` held (effects read through `tela.effectus_identitas`). (e) Runner output extends → sha superseded (recorded). (f) `git diff --check` in `tela/`. |
+| `done_when` | (a) The validation semantics are documented + proven at the pure level (the mapping fns; invalid → `aria-invalid` true + error; valid → cleared; the no-op rule). (b) The live-region policy is the established pattern (announce once on a validation-state change, silent on no-op — the §1.5 rule extended to the catalog field). (c) `check-reference` green: the field interaction case runs against the host binding — input dispatch → message → update → `replace`; `aria-invalid` flips true/false; `aria-describedby` wired/removed; the error text written/cleared; the live region announces once (silent on the no-op); focus restores across the replace (`focus_held`); dispose unsubscribes (a post-dispose dispatch no-ops). Fail-closed, synchronous-only. (d) `fix:sem001` held (effects read through `tela.effectus_identitas`). (e) Runner output extends → sha superseded (recorded). (f) `git diff --check` in `tela/`. |
 | `validation` | `radix check`; TS lane + assemble + `tsc --noEmit`; node — the interaction case (fail-closed); `git diff --check`. |
 | `depends_on` | U7 |
 | `non_goals` | No fetch/async claims (the routed gap). No conversion (U9). No `CAMPAIGN.md` edits. No formslib edits. |
