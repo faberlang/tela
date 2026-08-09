@@ -190,6 +190,33 @@
 #   fix:g4 — the reference families are consumed through the NORMAL
 #     package interface (the U1 probe (i) post-cds-u6 surface — no
 #     compose-without, no harness-assembly bypass for the catalog).
+#
+# Stage 5 U4 (tela-s5-u4-table) — the reference catalog composition
+# extends: the table family (the benchmark table grammar — headers + rows
+# + cells + optional caption) joins the runner composition through NORMAL
+# qualified imports; the ref.table.* tokens join both themes (the border +
+# caption color reference the theme's core tokens — theme-surface
+# semantics); the table_style bundle joins the component cascade layer
+# (prefix-keyed on the ref-table-* identities). The mount seam fn
+# (mount_table) supplies the check-reference U4 browser-proof surface:
+# the table mounts + the structure/a11y asserts hold + the DECLARED
+# consumer-plan interaction case (row navigation keyed to the ref-table-*
+# cell identities) runs scripted — the table itself is stateless (the D1
+# app-typed plan boundary, recorded in the reference.fab module header).
+#
+# fix:<id> markers applied in this unit:
+#   fix:g5 — NONE: all new identifiers (table_composition/mount_table)
+#     probed collision-free on in-tree radix 0.80.0 (a free fn may share
+#     a class name — G5's collision is enum-member-specific).
+#   fix:snapshot-name-collision — the new identifiers avoid kernel type
+#     names AND the tela:reference prop-class names (TableProps/TableRow).
+#   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the
+#     TS lane is the proven runtime lane.
+#
+# DETERMINISM SUPERSESSION (done_when (e)): the runner output extends AGAIN
+# with the table family static render — the determinism sha stays
+# SUPERSEDED (U10 re-records the official sha; check-determinism is RED
+# between units — the honest flag, unchanged).
 
 import from "tela:tela" public * ut tela
 import from "extensionlib:extension" public * ut ext
@@ -1002,6 +1029,45 @@ fn mount_metric(string selector) → browser.Mounted ∪ null {
     return browser.mount(scope, metric_composition(), reference_theme())
 }
 
+# ===========================================================================
+# Stage 5 U4 — the table composition (tela:reference).
+# The table family joins the runner composition through NORMAL qualified
+# imports; the mount seam fn supplies the check-reference U4 browser-proof
+# surface.
+# ===========================================================================
+
+# The table composition: the benchmark table grammar — headers + rows +
+# cells + a caption (the accessible name). The a11y structure: the native
+# <table>/<caption>/<thead>/<th scope='col'>/<tbody>/<tr>/<td> markup IS
+# the structure (screen readers expose the grid natively); the header
+# association rides the th[scope]; the table is stateless (the declared
+# interaction stays in the consumer plan — D1). The wrapper identity is
+# app-owned data.
+fn table_composition() → tela.View {
+    return tela.element_full(
+        tela.new_identity("canary-ref-table"),
+        tela.html_space(),
+        "div",
+        [],
+        [],
+        [
+            ref.table(ref.table_props("services", "Services", ["Service", "Status"], [
+                ref.table_row(["gateway", "ok"]),
+                ref.table_row(["database", "ok"]),
+                ref.table_row(["queue", "caution"])
+            ]))
+        ]
+    )
+}
+
+# The seam mount for the U4 browser proof: the check-reference driver calls
+# this through the app's own imports (dom.scope + browser.mount, the U7
+# pattern). The table mounts independently — done_when (d).
+fn mount_table(string selector) → browser.Mounted ∪ null {
+    const dom.Scope scope ← dom.scope(selector)
+    return browser.mount(scope, table_composition(), reference_theme())
+}
+
 main {
     # G4 seam attempt (recorded in the evidence record): ext.bar_meter
     # resolves to WARN014 export-skip; the app composes the meter with tela
@@ -1061,7 +1127,11 @@ main {
         ref.ref_metric_label_size(),
         ref.ref_metric_label_muted(),
         ref.ref_metric_value_size(),
-        ref.ref_metric_value_weight()
+        ref.ref_metric_value_weight(),
+        ref.ref_table_border(),
+        ref.ref_table_padding(),
+        ref.ref_table_header_weight(),
+        ref.ref_table_caption_muted()
     ])
     const tela.Theme tenebrae ← tela.theme("tenebrae", [
         tela.token("surface.canvas", "#0f172a"),
@@ -1098,7 +1168,11 @@ main {
         ref.ref_metric_label_size(),
         ref.ref_metric_label_muted(),
         ref.ref_metric_value_size(),
-        ref.ref_metric_value_weight()
+        ref.ref_metric_value_weight(),
+        ref.ref_table_border(),
+        ref.ref_table_padding(),
+        ref.ref_table_header_weight(),
+        ref.ref_table_caption_muted()
     ])
 
     # --- App + extension style bundles (identical under both themes) -------
@@ -1127,6 +1201,10 @@ main {
     const tela.Bundle ref_badge_bundle ← tela.bundle("reference-badge", ref_badge_stilum)
     const tela.Style ref_metric_stilum ← ref.metric_style()
     const tela.Bundle ref_metric_bundle ← tela.bundle("reference-metric", ref_metric_stilum)
+    # Stage 5 U4: the table bundle (prefix-keyed on the ref-table-*
+    # identities, referencing the --ref-table-* tokens).
+    const tela.Style ref_table_stilum ← ref.table_style()
+    const tela.Bundle ref_table_bundle ← tela.bundle("reference-table", ref_table_stilum)
 
     # App style bundle: the panel rule + the segmented-control rule, both
     # keyed on the data-tela identity (the control's styles are app-owned).
@@ -1161,7 +1239,7 @@ main {
     const tela.Style ∪ null cascade_lumen_result ← tela.assemble(
         lumen,
         null,
-        [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle],
+        [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle, ref_table_bundle],
         [ tela.order("extensionlib", []), tela.order("formslib", []) ],
         [ext_bundle, forms_bundle],
         app_bundle
@@ -1169,7 +1247,7 @@ main {
     const tela.Style ∪ null cascade_tenebrae_result ← tela.assemble(
         tenebrae,
         null,
-        [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle],
+        [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle, ref_table_bundle],
         [ tela.order("extensionlib", []), tela.order("formslib", []) ],
         [ext_bundle, forms_bundle],
         app_bundle
@@ -1239,6 +1317,20 @@ main {
     # the theme's core surface.panel value in the assembled token layer
     # (the core token itself carries the resolved color).
     assert css_lumen.continet("--surface-panel: #f9fafb")
+
+    # --- The Stage 5 U4 reference-catalog cascade (done_when (e)) ---------
+    # The :root token layer includes the ref.table.* values — the border +
+    # caption color reference the theme's core tokens (theme-surface
+    # semantics — no hardcoded color in the token layer).
+    assert css_lumen.continet("--ref-table-border: var(--border-default)")
+    assert css_lumen.continet("--ref-table-padding: 0.5rem 0.75rem")
+    assert css_lumen.continet("--ref-table-header-weight: 600")
+    assert css_lumen.continet("--ref-table-caption-muted: var(--text-muted)")
+    # The table component bundle rides the cascade (prefix-keyed on the
+    # ref-table-* identities, referencing the --ref-table-* tokens).
+    assert css_lumen.continet("[data-tela^='ref-table-']")
+    assert css_lumen.continet("var(--ref-table-border)")
+    assert css_lumen.continet("var(--ref-table-caption-muted)")
 
     # --- The Stage 2 fail-closed regressions re-asserted (three-package) ---
     # A cycle in the order map rejects (fail-closed — no partial cascade).
@@ -1617,6 +1709,25 @@ main {
     print html_metric
     print "metric family static rendered (label/value/delta; tela-s5-u3)"
     print "reference composition asserted (panel + badge + metric families; tela-s5-u3)"
+
+    # --- Stage 5 U4 — the table static render -----------------------------
+    # The table family composes through NORMAL qualified imports; the
+    # runner output extends AGAIN — the determinism sha stays SUPERSEDED
+    # (recorded in the header). The a11y structure asserts: the native
+    # <table>/<caption>/<thead>/<th scope='col'>/<tbody>/<tr>/<td> markup
+    # IS the structure — the header association rides th[scope], the
+    # caption provides the accessible name, the ref-table-* identities
+    # (root + header cells + body cells) are the stable focus targets for
+    # the declared consumer-plan navigation interaction.
+    const string html_table ← tela.html_visus(table_composition()) coalesce ""
+    assert html_table.continet("<div data-tela='canary-ref-table'>")
+    assert html_table.continet("<table data-tela='ref-table-services'><caption>Services</caption>")
+    assert html_table.continet("<thead><tr><th scope='col' data-tela='ref-table-services-header-0'>Service</th><th scope='col' data-tela='ref-table-services-header-1'>Status</th></tr></thead>")
+    assert html_table.continet("<tbody><tr><td data-tela='ref-table-services-cell-0-0'>gateway</td><td data-tela='ref-table-services-cell-0-1'>ok</td></tr>")
+    assert html_table.continet("<td data-tela='ref-table-services-cell-2-1'>caution</td>")
+    print html_table
+    print "table family static rendered (headers/rows/cells/caption; tela-s5-u4)"
+    print "reference composition asserted (table family; tela-s5-u4)"
 
     # --- The U7 interactive plan surface (the provider-seam claim) --------
     # The composition mounts through the app's own seam call (dom.scope +

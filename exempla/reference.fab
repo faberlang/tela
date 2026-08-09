@@ -5,18 +5,21 @@ category = "library"
 locale = "en"
 +++
 
-# tela/exempla/reference.fab — Stage 5 U2/U3 exempla for the reference
+# tela/exempla/reference.fab — Stage 5 U2/U3/U4 exempla for the reference
 # catalog (tela:reference): the layout (stacked rows / two-column grid /
 # prose measures) + typography (headings / prose / emphasis / scale)
-# families (U2) and the panel (theme-surface container) + badge (textual
+# families (U2), the panel (theme-surface container) + badge (textual
 # status — no color-only communication) + metric (label + value + delta,
-# dl/dt/dd) families (U3). Asserts the EXACT static bytes (the serializer
-# emission order: tag, then attributes in author order, then the data-tela
-# identity) + the a11y structure (the heading hierarchy via native h1..h6,
-# prose semantics via p, semantic emphasis via strong/em/code — never
-# color-only communication, the scale as decorative sizing, the panel's
-# region landmark + accessible name, the badge's role=status + aria-label,
-# the metric's definition-list label/value structure), fail-closed,
+# dl/dt/dd) families (U3), and the table (headers + rows + cells + optional
+# caption — the benchmark table grammar) family (U4). Asserts the EXACT
+# static bytes (the serializer emission order: tag, then attributes in
+# author order, then the data-tela identity) + the a11y structure (the
+# heading hierarchy via native h1..h6, prose semantics via p, semantic
+# emphasis via strong/em/code — never color-only communication, the scale
+# as decorative sizing, the panel's region landmark + accessible name, the
+# badge's role=status + aria-label, the metric's definition-list
+# label/value structure, the table's native table/caption/thead/th[scope]/
+# tbody/tr/td semantics — the §8 table accessibility contract), fail-closed,
 # executed under node (check-exempla runtime gate).
 #
 # fix:<id> markers: none applied beyond reference.fab's (fix:g5 — NONE,
@@ -108,7 +111,7 @@ main {
     assert tela.token_name_valid(ref.ref_layout_gap().name)
     assert tela.token_name_valid(ref.ref_type_prose_line_height().name)
     const list<tela.Token> collectio ← ref.reference_tokens()
-    assert collectio.longitudo() ≡ 22
+    assert collectio.longitudo() ≡ 26
 
     # --- determinism: identical input → identical bytes -------------------
     const string stack_b ← tela.html_visus(ref.layout_stack(ref.stack_props([
@@ -178,7 +181,52 @@ main {
     assert tela.token_name_valid(ref.ref_badge_radius().name)
     assert tela.token_name_valid(ref.ref_metric_value_weight().name)
     const list<tela.Token> collectio_u3 ← ref.reference_tokens()
-    assert collectio_u3.longitudo() ≡ 22
+    assert collectio_u3.longitudo() ≡ 26
 
-    print "reference catalog exempla ready (layout + typography + panel + badge + metric; tela-s5-u2/u3)"
+    # =====================================================================
+    # Stage 5 U4 — the table family (the benchmark table grammar).
+    # =====================================================================
+
+    # --- table: the semantic composite with a caption ---------------------
+    # <table> → <caption> (the accessible name) → <thead> (a single <tr> of
+    # <th scope='col'> header cells) → <tbody> (one <tr> per data row, a
+    # <td> per cell). The NATIVE semantics ARE the a11y structure (screen
+    # readers expose the grid natively — no ARIA duplication); the header
+    # association rides th[scope]; the caption provides the accessible
+    # name. The identity scheme: ref-table-<name> root +
+    # ref-table-<name>-header-<i> + ref-table-<name>-cell-<r>-<c> (stable
+    # focus targets for the declared consumer-plan navigation interaction).
+    assert tela.html_visus(ref.table(ref.table_props("scores", "Scores", ["Player", "Score"], [
+        ref.table_row(["Ada", "42"]),
+        ref.table_row(["Lin", "37"])
+    ]))) coalesce "" ≡ "<table data-tela='ref-table-scores'><caption>Scores</caption><thead><tr><th scope='col' data-tela='ref-table-scores-header-0'>Player</th><th scope='col' data-tela='ref-table-scores-header-1'>Score</th></tr></thead><tbody><tr><td data-tela='ref-table-scores-cell-0-0'>Ada</td><td data-tela='ref-table-scores-cell-0-1'>42</td></tr><tr><td data-tela='ref-table-scores-cell-1-0'>Lin</td><td data-tela='ref-table-scores-cell-1-1'>37</td></tr></tbody></table>"
+
+    # --- table: no caption → no <caption> element -------------------------
+    # The accessible-name contract: the component NEVER fabricates a name —
+    # the app supplies the recorded equivalent (an aria-label/off-screen
+    # equivalent is an app choice, documented in the module header).
+    assert tela.html_visus(ref.table(ref.table_props("plain", "", ["A", "B"], [
+        ref.table_row(["1", "2"])
+    ]))) coalesce "" ≡ "<table data-tela='ref-table-plain'><thead><tr><th scope='col' data-tela='ref-table-plain-header-0'>A</th><th scope='col' data-tela='ref-table-plain-header-1'>B</th></tr></thead><tbody><tr><td data-tela='ref-table-plain-cell-0-0'>1</td><td data-tela='ref-table-plain-cell-0-1'>2</td></tr></tbody></table>"
+
+    # --- the table style bundle (prefix-keyed, --ref-* tokens) ------------
+    const string css_table ← tela.css(ref.table_style())
+    assert css_table ≡ "[data-tela^='ref-table-'] { border-collapse: collapse; width: 100%; }\n[data-tela^='ref-table-'] th { border: 1px solid var(--ref-table-border); padding: var(--ref-table-padding); text-align: left; font-weight: var(--ref-table-header-weight); }\n[data-tela^='ref-table-'] td { border: 1px solid var(--ref-table-border); padding: var(--ref-table-padding); text-align: left; }\n[data-tela^='ref-table-'] caption { color: var(--ref-table-caption-muted); text-align: left; }\n"
+
+    # --- the ref.table.* tokens (theme-surface — border + caption color
+    # reference the theme's core tokens, no hardcoded color) ---------------
+    assert ref.ref_table_border().name ≡ "ref.table.border"
+    assert ref.ref_table_border().value ≡ "var(--border-default)"
+    assert ref.ref_table_padding().name ≡ "ref.table.padding"
+    assert ref.ref_table_padding().value ≡ "0.5rem 0.75rem"
+    assert ref.ref_table_header_weight().value ≡ "600"
+    assert ref.ref_table_caption_muted().name ≡ "ref.table.caption.muted"
+    assert ref.ref_table_caption_muted().value ≡ "var(--text-muted)"
+    # Every token name passes the kernel lexical predicate (fail-closed).
+    assert tela.token_name_valid(ref.ref_table_border().name)
+    assert tela.token_name_valid(ref.ref_table_caption_muted().name)
+    const list<tela.Token> collectio_u4 ← ref.reference_tokens()
+    assert collectio_u4.longitudo() ≡ 26
+
+    print "reference catalog exempla ready (layout + typography + panel + badge + metric + table; tela-s5-u2/u3/u4)"
 }

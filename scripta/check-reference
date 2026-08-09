@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# tela/scripta/check-reference — the Stage 5 U2/U3 browser-proof gate for the
-# reference catalog (tela:reference — the layout + typography families, U2;
-# the panel + badge + metric families, U3).
+# tela/scripta/check-reference — the Stage 5 U2/U3/U4 browser-proof gate for
+# the reference catalog (tela:reference — the layout + typography families,
+# U2; the panel + badge + metric families, U3; the table family, U4).
 #
 # The Stage 4 interactive-seam mechanics (the check-forms-interactive
 # pattern): assembles the canary-app's REAL-IMPORT composition (web:dom
@@ -19,10 +19,16 @@
 # Each family mounts through tela.browser.mount (the app's own seam fns
 # mount_layout / mount_typography — dom.scope + browser.mount) against the
 # host binding; the structure/a11y asserts hold (node exit 0, fail-closed,
-# synchronous-only — the routed async-gap boundary). A third case mounts a
-# composition that REUSES the static ref-typography-prose identity and
-# asserts the documented duplicate-identity diagnosis (never a silent bind,
-# identity-hydration.md §6).
+# synchronous-only — the routed async-gap boundary). The U4 table case also
+# executes the DECLARED consumer-plan interaction case: the table is
+# stateless (D1 — a declared keyboard/sort interaction stays in the
+# consumer plan), so the host driver runs the consumer's scripted
+# row-navigation plan (ArrowDown/ArrowUp focus movement across the
+# ref-table-* cell identities + deterministic focus restoration),
+# fail-closed. A third case mounts a composition that REUSES the static
+# ref-typography-prose identity and asserts the documented
+# duplicate-identity diagnosis (never a silent bind, identity-hydration.md
+# §6).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -83,9 +89,12 @@ BROWSER_NS="const browser = { region_root, event_subscription, binding, parse_id
 EXT_NS="const ext = { chart_axis_muted, chart_axis_muted_dark, chart_grid_muted, chart_grid_muted_dark, chart_tokens, chart_tokens_dark, bar_meter, chart_style };"
 FORMS_NS="const forms = { field_props, checkbox_props, select_props, field, checkbox, select, error_region, form_live_region, field_group, form_field_invalid, form_field_valid, form_focus, form_tokens, form_style, field_event, change_event, submit_event, click_event, invalid_state, error_present };"
 # The reference catalog namespace (every tela:reference export — the
-# layout + typography families (U2) + the panel + badge + metric families
-# (U3), the bundles, the ref.* token accessors).
-REF_NS="const ref = { layout_stack, layout_grid, layout_prose, stack_props, grid_props, layout_prose_props, typography_heading, typography_prose, typography_emphasis, typography_scale, heading_props, prose_props, emphasis_props, scale_props, clamped_level, layout_style, typography_style, panel, badge, metric, panel_props, badge_props, metric_props, panel_style, badge_style, metric_style, ref_layout_gap, ref_layout_prose_measure, ref_type_scale_xs, ref_type_scale_sm, ref_type_scale_md, ref_type_scale_lg, ref_type_scale_xl, ref_type_heading_weight, ref_type_heading_margin, ref_type_prose_line_height, ref_type_prose_margin, ref_panel_surface, ref_panel_border, ref_panel_radius, ref_panel_padding, ref_badge_size, ref_badge_padding, ref_badge_radius, ref_metric_label_size, ref_metric_label_muted, ref_metric_value_size, ref_metric_value_weight, reference_tokens, StackProps, GridProps, LayoutProseProps, HeadingProps, ProseProps, EmphasisProps, ScaleProps, PanelProps, BadgeProps, MetricProps };"
+# layout + typography families (U2), the panel + badge + metric families
+# (U3), the table family (U4), the bundles, the ref.* token accessors).
+REF_NS="const ref = { layout_stack, layout_grid, layout_prose, stack_props, grid_props, layout_prose_props, typography_heading, typography_prose, typography_emphasis, typography_scale, heading_props, prose_props, emphasis_props, scale_props, clamped_level, layout_style, typography_style, panel, badge, metric, panel_props, badge_props, metric_props, panel_style, badge_style, metric_style, table, table_row, table_props, table_style, ref_layout_gap, ref_layout_prose_measure, ref_type_scale_xs, ref_type_scale_sm, ref_type_scale_md, ref_type_scale_lg, ref_type_scale_xl, ref_type_heading_weight, ref_type_heading_margin, ref_type_prose_line_height, ref_type_prose_margin, ref_panel_surface, ref_panel_border, ref_panel_radius, ref_panel_padding, ref_badge_size, ref_badge_padding, ref_badge_radius, ref_metric_label_size, ref_metric_label_muted, ref_metric_value_size, ref_metric_value_weight, ref_table_border, ref_table_padding, ref_table_header_weight, ref_table_caption_muted, reference_tokens, StackProps, GridProps, LayoutProseProps, HeadingProps, ProseProps, EmphasisProps, ScaleProps, PanelProps, BadgeProps, MetricProps, TableProps, TableRow };"
+# The table namespace additions: the table family's exported fns
+# (table/table_row/table_props/table_style + the TableProps/TableRow
+# prop classes) and the ref.table.* token accessors.
 # The DOM_NS: the ACTUAL bindings/ts.toml mapping (web:dom.<fn> →
 # webDom<Fn>) over faber-web's runtime/dom.ts implementation. The snapshot
 # binding is widened at the harness boundary (the emitted Scope type carries
@@ -340,7 +349,75 @@ assert(metricRequests !== undefined && metricRequests!.children.length === 3, "m
 assert(metricRequests!.children[2].tagName === "dd" && metricRequests!.children[2].textContent === "+3.1%", "the optional delta row is a dd");
 assert(metricUptime!.getAttribute("style") === null, "metric carries no inline style (the typography rides the tokens)");
 
-console.log("reference catalog mount gate green (layout + typography + panel + badge + metric mount + structure/a11y; tela-s5-u2/u3)");
+// --- 7. the table family mounts + the semantic/a11y structure -----------
+// The native <table>/<caption>/<thead>/<th scope='col'>/<tbody>/<tr>/<td>
+// markup IS the a11y structure (screen readers expose the grid natively —
+// no ARIA duplication); the header association rides th[scope]; the
+// caption provides the accessible name.
+const tableMarkup = tela.html_visus(table_composition()) ?? "";
+plantRegion("#root", tableMarkup);
+const tb = mount_table("#root") as Mounted;
+assert(tb !== null, "table mount returns a plan");
+assert(tb.identities.length === 10, "table identities: wrapper + table + 2 header cells + 6 body cells");
+assert(tb.bindings.every((l) => l.status === "bind"), "hydration: every table identity binds");
+const tableNode = byIdentity("ref-table-services");
+assert(tableNode !== undefined && tableNode!.tagName === "table", "table root is a native table");
+assert(tableNode!.children.length === 3, "table children: caption + thead + tbody");
+assert(tableNode!.children[0].tagName === "caption" && tableNode!.children[0].textContent === "Services", "caption is the first child (the accessible name)");
+const tableHead = tableNode!.children[1];
+assert(tableHead.tagName === "thead", "thead follows the caption");
+const tableHeaderRow = tableHead.children[0];
+assert(tableHeaderRow.tagName === "tr" && tableHeaderRow.children.length === 2, "thead carries a header row of two cells");
+assert(tableHeaderRow.children[0].tagName === "th" && tableHeaderRow.children[0].getAttribute("scope") === "col", "header cell is a th with scope='col' (the column association)");
+assert(tableHeaderRow.children[0].textContent === "Service", "first header cell text");
+assert(tableHeaderRow.children[1].tagName === "th" && tableHeaderRow.children[1].getAttribute("scope") === "col", "second header cell scope");
+const tableBody = tableNode!.children[2];
+assert(tableBody.tagName === "tbody", "tbody follows thead");
+assert(tableBody.children.length === 3, "three body rows");
+assert(tableBody.children[0].tagName === "tr" && tableBody.children[0].children.length === 2, "body row of two td cells");
+assert(tableBody.children[0].children[0].tagName === "td" && tableBody.children[0].children[0].textContent === "gateway", "body cell is a td with the cell text");
+assert(tableNode!.getAttribute("style") === null, "table carries no inline style (the borders ride the tokens)");
+
+// --- 8. the declared table interaction case (the consumer plan, D1) ------
+// The table itself is STATELESS — it declares no behavior (D1 recorded in
+// the reference.fab module header: a declared keyboard/sort interaction
+// stays in the consumer plan). This case executes the CONSUMER's scripted
+// row-navigation plan against the mounted table: ArrowDown/ArrowUp move
+// focus to the next/previous row in the same column (keyed to the
+// ref-table-* cell identities); an unmapped key is a silent no-op; the
+// plan restores focus by identity (deterministic focus restoration,
+// campaign §8). Synchronous-only, fail-closed.
+const cellId = (r: number, c: number): string => `ref-table-services-cell-${r}-${c}`;
+const tableRows = 3;
+const navPlan = (focusedId: string, key: string): string => {
+  const m = /^ref-table-services-cell-(\d+)-(\d+)$/.exec(focusedId);
+  if (!m) return focusedId;
+  const r = parseInt(m[1], 10);
+  const c = parseInt(m[2], 10);
+  if (key === "ArrowDown" && r + 1 < tableRows) return cellId(r + 1, c);
+  if (key === "ArrowUp" && r - 1 >= 0) return cellId(r - 1, c);
+  return focusedId; // off-grid / unmapped keys keep focus (the documented no-op)
+};
+const runPath = (startId: string, keys: string[]): string[] => {
+  const visited: string[] = [startId];
+  let cur = startId;
+  for (const k of keys) { cur = navPlan(cur, k); visited.push(cur); }
+  return visited;
+};
+const headerCell = byIdentity("ref-table-services-header-0");
+assert(headerCell !== undefined && headerCell!.tagName === "th", "the header cell is a th (the navigation structure)");
+const path = runPath(cellId(0, 0), ["ArrowDown", "ArrowDown", "ArrowDown", "ArrowUp", "End"]);
+assert(path[0] === "ref-table-services-cell-0-0" && path[1] === "ref-table-services-cell-1-0" && path[2] === "ref-table-services-cell-2-0", "ArrowDown moves focus to the next row in the same column");
+assert(path[3] === "ref-table-services-cell-2-0", "ArrowDown at the last row keeps focus (the documented boundary)");
+assert(path[4] === "ref-table-services-cell-1-0", "ArrowUp moves focus to the previous row");
+assert(path[5] === "ref-table-services-cell-1-0", "an unmapped key is a silent no-op (focus unchanged)");
+for (const id of path) { assert(byIdentity(id) !== undefined, `navigation target present: ${id}`); }
+// The plan restores focus by identity (the pre-navigation focused cell) —
+// deterministic focus restoration, campaign §8.
+doc.focusNode(byIdentity(path[path.length - 1])!);
+assert(doc.activeElement === byIdentity("ref-table-services-cell-1-0"), "focus restoration targets the declared identity");
+
+console.log("reference catalog mount gate green (layout + typography + panel + badge + metric + table mount + structure/a11y + declared interaction; tela-s5-u2/u3/u4)");
 HOST_DRIVER
 
 {
@@ -369,4 +446,4 @@ tsc --noEmit --strict --target ES2020 --lib ES2020,DOM --module ESNext --moduleR
 echo "check-reference: node — the mount + structure/a11y gate (fail-closed)"
 node "$SCRATCH/assembled.ts"
 
-echo "check-reference: green (real provider seam; layout + typography + panel + badge + metric mount cases; node exit 0)"
+echo "check-reference: green (real provider seam; layout + typography + panel + badge + metric + table mount + structure/a11y + declared interaction cases; node exit 0)"

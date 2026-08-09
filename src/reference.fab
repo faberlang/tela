@@ -23,6 +23,51 @@
 # — the variable-suffix form, the formslib precedent), referencing the
 # namespaced ref.panel.* / ref.badge.* / ref.metric.* tokens.
 #
+# Stage 5 U4 (tela-s5-u4-table): the catalog EXTENDS with the **table**
+# family — the benchmark table grammar as a composite component:
+# headers + rows + cells + an optional caption, with the §8 table
+# accessibility contract. Semantic structure: <table> → optional
+# <caption> → <thead> (one <tr> of <th scope='col'> header cells) →
+# <tbody> (one <tr> per data row, each a <td> per cell). The NATIVE
+# table semantics ARE the a11y structure (screen readers expose the
+# row/column/cell grid natively — no ARIA duplication); the header
+# association rides the th[scope] markup; the caption (or the app's
+# recorded equivalent) provides the accessible name. Identity scheme:
+# ref-table-<name> on the table root, ref-table-<name>-header-<i> on
+# each header cell, ref-table-<name>-cell-<r>-<c> on each body cell
+# (stable focus targets for the declared consumer-plan navigation
+# interaction). The style bundle keys on the identity prefix
+# ([data-tela^='ref-table-'] — the variable-suffix form), referencing
+# the namespaced ref.table.* tokens.
+#
+# THE TABLE ACCESSIBILITY CONTRACT (campaign §8 — table headers +
+# textual equivalents; done_when (a)+(b)):
+#   - SEMANTIC STRUCTURE: the native <table>/<caption>/<thead>/<th>/
+#     <tbody>/<tr>/<td> markup IS the a11y structure — no ARIA roles
+#     for the ordinary static table (ARIA would duplicate the native
+#     semantics); screen readers expose the grid natively.
+#   - HEADERS + SCOPE: every header cell is a <th> carrying
+#     scope='col' — the column association is the native th[scope]
+#     semantics (the §8 "table headers" contract).
+#   - THE ACCESSIBLE NAME: the <caption> when present provides it. No
+#     caption → the app supplies a recorded equivalent (an aria-label
+#     on the table or an off-screen equivalent is an app choice — the
+#     component never fabricates a name); the contract is: the table
+#     ALWAYS has a name source.
+#   - TEXTUAL EQUIVALENTS: headers + cells are text nodes (the §8
+#     "textual equivalents for visual charts" contract — the table
+#     never carries chart-only content).
+#   - KEYBOARD/SORT SEMANTICS + THE D1 APP-TYPED PLAN BOUNDARY
+#     (recorded): the table is STATELESS — it declares no behavior.
+#     Row navigation / cell focus movement / sort interactions are
+#     DECLARED in the consumer plan (D1 — the app-typed plan keyed to
+#     the ref-table-* identities); the check-reference interaction
+#     case proves the declared shape: the host driver executes the
+#     consumer's scripted row-navigation plan, synchronous-only,
+#     fail-closed. A sortable table's sort control is a consumer
+#     component (a th > button + aria-sort + the app's update) —
+#     never kernel/catalog behavior.
+#
 # MODULE SHAPE (U1-locked, stage-5-discovery.md §1): ONE flat module
 # mirroring the kernel (G4-safe), stdlib-only + ONE same-package sibling
 # import (tela:tela); no public signature references a type outside the
@@ -33,7 +78,7 @@
 # PascalCase concatenation (StackProps), fns/fields snake_case, identities
 # kebab-case data (MF-8), tokens dotted lowercase (ref.*).
 #
-# THE FIVE FAMILIES (delivery U2/U3 outcomes; campaign §3 component
+# THE SIX FAMILIES (delivery U2/U3/U4 outcomes; campaign §3 component
 # contract):
 #
 #   LAYOUT — semantic containers for arrangement, no ARIA roles (pure
@@ -66,6 +111,24 @@
 #       is decorative sizing (the size comes from the ref.type.scale.*
 #       tokens), never a semantic state carrier.
 #
+#   PANEL / BADGE / METRIC (U3) — theme-surface container + textual
+#   status + label/value(+delta) pairs: panel(PanelProps) →
+#   ref-panel-<name> (role='region' landmark + aria-label when titled;
+#   the surface comes from the ref.panel.* tokens referencing the theme
+#   core — no hardcoded color), badge(BadgeProps) → ref-badge-<name>
+#   (role='status' + aria-label "<status>: <text>" — meaning never color
+#   alone), metric(MetricProps) → ref-metric-<name> (the benchmark
+#   grammar's dl/dt/dd definition-list pattern — the textual form
+#   preserved).
+#
+#   TABLE (U4) — the benchmark table grammar as a semantic composite:
+#     table(TableProps)                   → ref-table-<name> — headers +
+#       rows + cells + optional caption; the native <table>/<caption>/
+#       <thead>/<th scope='col'>/<tbody>/<tr>/<td> markup IS the a11y
+#       structure (the §8 table contract — headers + scope + accessible
+#       name + textual equivalents); stateless (D1: a declared
+#       keyboard/sort interaction stays in the consumer plan).
+#
 # NO COLOR-ONLY COMMUNICATION (campaign §8): no component in U2 carries
 # meaning through color. Emphasis is semantic markup; the scale is
 # decorative sizing; the layout containers are structural. The style
@@ -95,7 +158,9 @@
 #     layout_style/typography_style/reference_tokens + the token
 #     accessors; U3: panel/badge/metric/panel_props/badge_props/
 #     metric_props/panel_style/badge_style/metric_style + the
-#     ref_panel_*/ref_badge_*/ref_metric_* accessors) probed
+#     ref_panel_*/ref_badge_*/ref_metric_* accessors; U4:
+#     table/table_row/table_props/table_header_cells/table_body_cells/
+#     table_style + the ref_table_* accessors) probed
 #     collision-free on in-tree radix 0.80.0 (a free fn may share a class
 #     name — G5's collision is enum-member-specific).
 #   fix:codegen001 — the Rust emit-across-imports block persists
@@ -103,7 +168,7 @@
 #   fix:snapshot-name-collision — the props classes avoid the kernel type
 #     names AND the browser/forms carrier names (StackProps/GridProps/
 #     LayoutProseProps/HeadingProps/ProseProps/EmphasisProps/ScaleProps/
-#     PanelProps/BadgeProps/MetricProps).
+#     PanelProps/BadgeProps/MetricProps/TableRow/TableProps).
 #   fix:verum-b — en-locale naming: no verum/falsum identifiers.
 #   LOCALE002 advisory (recorded, non-blocking): the BadgeProps `status`
 #     field is a keyword-like spelling (advisory only — it parses + emits,
@@ -410,6 +475,125 @@ fn metric(MetricProps props) → tela.View {
 }
 
 # ===========================================================================
+# TABLE family — the benchmark table grammar, semantic + accessible
+# (ref-table-*; Stage 5 U4).
+# ===========================================================================
+
+class TableRow {
+    list<string> cells
+}
+
+fn table_row(list<string> cells) → TableRow {
+    return TableRow { cells = cells }
+}
+
+class TableProps {
+    string name
+    string caption
+    list<string> headers
+    list<TableRow> rows
+}
+
+fn table_props(string name, string caption, list<string> headers, list<TableRow> rows) → TableProps {
+    return TableProps { name = name, caption = caption, headers = headers, rows = rows }
+}
+
+# The header-row cells: one <th> per header, each carrying the scope='col'
+# attribute — the column association is the native th[scope] semantics
+# (the §8 "table headers" contract). Stable identities
+# ref-table-<name>-header-<i> (the interaction-case focus targets).
+fn table_header_cells(string name, list<string> headers) → list<tela.View> {
+    var list<tela.View> cells ← vacua
+    var int i ← 0
+    while i < headers.longitudo() {
+        cells.appende(tela.element_full(
+            tela.new_identity("ref-table-" + name + "-header-" + "§"(i)),
+            tela.html_space(),
+            "th",
+            [ tela.Attribute { name = "scope", value = "col" } ],
+            [],
+            [ tela.text_view(headers[i]) ]
+        ))
+        i ← i + 1
+    }
+    return cells
+}
+
+# One body row: a <tr> of <td> cells. Stable identities
+# ref-table-<name>-cell-<r>-<c> (the declared consumer-plan row-navigation
+# focus targets).
+fn table_body_cells(string name, int row, list<string> cells) → list<tela.View> {
+    var list<tela.View> tds ← vacua
+    var int i ← 0
+    while i < cells.longitudo() {
+        tds.appende(tela.element_full(
+            tela.new_identity("ref-table-" + name + "-cell-" + "§"(row) + "-" + "§"(i)),
+            tela.html_space(),
+            "td",
+            [],
+            [],
+            [ tela.text_view(cells[i]) ]
+        ))
+        i ← i + 1
+    }
+    return tds
+}
+
+# Table: the benchmark table grammar as a semantic composite — <table> →
+# optional <caption> (the accessible name) → <thead> (one <tr> of
+# <th scope='col'> header cells) → <tbody> (one <tr> per data row, each a
+# <td> per cell). The NATIVE semantics ARE the a11y structure (screen
+# readers expose the grid natively — no ARIA duplication); the header
+# association rides th[scope]; the caption (or the app's recorded
+# equivalent — an aria-label/off-screen equivalent is an app choice, the
+# component never fabricates a name) provides the accessible name. The
+# table is STATELESS — a declared keyboard/sort interaction stays in the
+# consumer plan (the D1 app-typed boundary, recorded in the module header).
+fn table(TableProps props) → tela.View {
+    var list<tela.View> children ← vacua
+    if not (props.caption ≡ "") {
+        children.appende(tela.element_view(
+            tela.html_space(),
+            "caption",
+            [ tela.text_view(props.caption) ]
+        ))
+    }
+    children.appende(tela.element_view(
+        tela.html_space(),
+        "thead",
+        [ tela.element_view(
+            tela.html_space(),
+            "tr",
+            table_header_cells(props.name, props.headers)
+        ) ]
+    ))
+    var list<tela.View> body_rows ← vacua
+    var int r ← 0
+    while r < props.rows.longitudo() {
+        const TableRow row ← props.rows[r]
+        body_rows.appende(tela.element_view(
+            tela.html_space(),
+            "tr",
+            table_body_cells(props.name, r, row.cells)
+        ))
+        r ← r + 1
+    }
+    children.appende(tela.element_view(
+        tela.html_space(),
+        "tbody",
+        body_rows
+    ))
+    return tela.element_full(
+        tela.new_identity("ref-table-" + props.name),
+        tela.html_space(),
+        "table",
+        [],
+        [],
+        children
+    )
+}
+
+# ===========================================================================
 # STYLE BUNDLES — rules keyed on the ref-* identities, referencing the
 # ref.* tokens as CSS custom properties (the --ref-* emission form).
 # ===========================================================================
@@ -611,6 +795,50 @@ fn metric_style() → tela.Style {
     }
 }
 
+# The table style bundle: keyed on the ref-table-* identity PREFIX (the
+# variable-suffix form — the composite's cells carry the
+# ref-table-<name>-header-*/cell-* identities). The border + caption
+# color reference the theme's core tokens (ref.table.border →
+# var(--border-default), ref.table.caption.muted → var(--text-muted)) —
+# the table follows the selected theme's surface, no hardcoded color.
+fn table_style() → tela.Style {
+    return tela.Style {
+        rules = [
+            tela.Rule {
+                selector = "[data-tela^='ref-table-']",
+                declarations = [
+                    tela.Declaration { name = "border-collapse", value = "collapse" },
+                    tela.Declaration { name = "width", value = "100%" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela^='ref-table-'] th",
+                declarations = [
+                    tela.Declaration { name = "border", value = "1px solid var(--ref-table-border)" },
+                    tela.Declaration { name = "padding", value = "var(--ref-table-padding)" },
+                    tela.Declaration { name = "text-align", value = "left" },
+                    tela.Declaration { name = "font-weight", value = "var(--ref-table-header-weight)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela^='ref-table-'] td",
+                declarations = [
+                    tela.Declaration { name = "border", value = "1px solid var(--ref-table-border)" },
+                    tela.Declaration { name = "padding", value = "var(--ref-table-padding)" },
+                    tela.Declaration { name = "text-align", value = "left" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela^='ref-table-'] caption",
+                declarations = [
+                    tela.Declaration { name = "color", value = "var(--ref-table-caption-muted)" },
+                    tela.Declaration { name = "text-align", value = "left" }
+                ]
+            }
+        ]
+    }
+}
+
 # ===========================================================================
 # TOKENS — the namespaced ref.* theme tokens (the kernel Token carrier,
 # MF-7): zero-arg accessors returning tela.Token values; consumers collect
@@ -713,6 +941,24 @@ fn ref_metric_value_weight() → tela.Token {
     return tela.Token { name = "ref.metric.value.weight", value = "600" }
 }
 
+# The ref.table.* tokens — the table borders/typography; the border +
+# caption color reference the theme's core tokens (no hardcoded color).
+fn ref_table_border() → tela.Token {
+    return tela.Token { name = "ref.table.border", value = "var(--border-default)" }
+}
+
+fn ref_table_padding() → tela.Token {
+    return tela.Token { name = "ref.table.padding", value = "0.5rem 0.75rem" }
+}
+
+fn ref_table_header_weight() → tela.Token {
+    return tela.Token { name = "ref.table.header.weight", value = "600" }
+}
+
+fn ref_table_caption_muted() → tela.Token {
+    return tela.Token { name = "ref.table.caption.muted", value = "var(--text-muted)" }
+}
+
 # The catalog's token collection (the self-usable summary — consumers
 # compose their Theme via the individual accessors; this is the package's
 # assembly-input convenience, the formslib precedent).
@@ -739,6 +985,10 @@ fn reference_tokens() → list<tela.Token> {
         ref_metric_label_size(),
         ref_metric_label_muted(),
         ref_metric_value_size(),
-        ref_metric_value_weight()
+        ref_metric_value_weight(),
+        ref_table_border(),
+        ref_table_padding(),
+        ref_table_header_weight(),
+        ref_table_caption_muted()
     ]
 }
