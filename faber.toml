@@ -1,0 +1,17 @@
+[package]
+name = "tela"
+version = "0.0.0"
+edition = "2026"
+
+[library]
+provider = "tela"
+
+[paths]
+source = "src"
+
+[build]
+kind = "lib"
+targets = ["rust", "ts"]
+
+[reader]
+locale = "en"

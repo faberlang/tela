@@ -1,0 +1,146 @@
+# tela/src/tela.fab — the real tela library kernel (Branch B).
+#
+# Stage 1 U1 kernel contract: typed HTML/SVG view values + kernel-owned
+# constructors. One FLAT, IMPORT-FREE module (G4-safe), stdlib-only — no
+# norma/triga/faber-runtime dependency. The shape proven by the Stage 0
+# U3 spike (spike/visus-b.fab) through all three lanes.
+#
+# Branch decision (frozen for Stage 1): Branch B — pure non-generic
+# recursive Visus union + adjacent typed behavior plan. Branch A (generic
+# Visus<Message>) remains the ideal end-state, blocked only by radix defect
+# D1 (generic user-type construction does not instantiate type parameters;
+# stage-0-branch-a-b-evidence.md §2/§4). If D1 lands, the Branch A re-spike
+# is a DECISION POINT for a future stage — never a mid-stage switch.
+#
+# Policy locks applied (stage-0-protocol-policies.md):
+#   (a) no raw-markup View variant — typed elements only, no RawHtml-style
+#       escape in the ordinary path;
+#   (b) Faber-Latin protocol spellings: nomen/valor/liberi/nomen_tag
+#       (nomen_tag avoids the D2 TS discriminant collision);
+#   (d) Identitas is an explicit typed field, never position-derived;
+#       serialization into data-tela is the U3 serializer's job.
+# Validation boundary: constructors stay open (no eager validation);
+# fail-closed lexical/namespace checks land at the U2/U3 serializer edge.
+#
+# D2 re-check (2026-08-09, in-tree radix 0.80.0): TS emit +
+# tsc --noEmit clean (exit 0) — nomen_tag emits with no discriminant
+# collision against the TS `tag` discriminant. Workaround spelling kept.
+# D3 re-check (2026-08-09, in-tree radix 0.80.0): Rust emit + scratch
+# cargo check clean (Finished, exit 0) — nova_identitas routes the
+# non-null identity through Identitas ∪ null and emits Some(...)
+# correctly. Direct non-null construction into the nullable field is
+# STILL the D3 defect; the radix D3 delivery has NOT landed, so the
+# nova_identitas workaround is KEPT for Stage 1 (recorded either way).
+
+# Spatium: namespace enum (html | svg). The open element model keeps the
+# tag itself an ordinary string, so custom elements and future-standard
+# names stay open.
+enum Spatium {
+    html,
+    svg
+}
+
+# Attributum: serialized attribute — an (nomen, valor) pair emitted into
+# the tag.
+class Attributum {
+    string nomen
+    string valor
+}
+
+# Proprietas: DOM property (value, checked, selection), modeled separately
+# from serialized attributes because their semantics differ. Carried in
+# the tree; not serialized into static HTML in Stage 1 (browser lane).
+class Proprietas {
+    string nomen
+    string valor
+}
+
+# Identitas: stable identity. Explicit typed field — never inferred from
+# array position. Serialized in one documented hydration-ready form
+# (data-tela) by the U3 serializer.
+class Identitas {
+    string valor
+}
+
+# Visus: the recursive tagged union at the center of the protocol.
+# Closure-free (Branch B): behavior lives in the adjacent typed plan
+# (Stage 3), not inside view values. No raw-markup variant (policy (a)).
+union Visus {
+    Elementum {
+        Identitas ∪ null identitas,
+        Spatium spatium,
+        string nomen_tag,
+        list<Attributum> attributa,
+        list<Proprietas> proprietates,
+        list<Visus> liberi
+    },
+    Textus { string valor },
+    Fragmentum { list<Visus> liberi }
+}
+
+# ---------------------------------------------------------------------------
+# Kernel-owned constructors — ordinary functions over the same public view
+# values. No compiler-known component kinds; helpers are not privileged
+# syntax (policy: kernel owns constructors; G3 workaround).
+# ---------------------------------------------------------------------------
+
+fn textus_view(string valor) → Visus {
+    return variant Textus { valor = valor } ∷ Visus
+}
+
+fn fragmentum_view(list<Visus> liberi) → Visus {
+    return variant Fragmentum { liberi = liberi } ∷ Visus
+}
+
+# Typed stable identity via the nullable field. Routed through a helper
+# that returns Identitas ∪ null: direct non-null construction into a
+# nullable union field is a known Rust-emission defect (D3 — Some() wrap
+# missing; stage-0-branch-a-b-evidence.md §4). Workaround KEPT until the
+# radix D3 delivery lands.
+fn nova_identitas(string v) → Identitas ∪ null {
+    return Identitas { valor = v }
+}
+
+# Namespace values as plain helpers: enum-member access through an
+# imported namespace does not resolve (gap G1), so the values are exposed
+# as functions even inside the kernel module.
+fn html_spatium() → Spatium {
+    return Spatium.html
+}
+
+fn svg_spatium() → Spatium {
+    return Spatium.svg
+}
+
+# Open-element shorthand: no identity, no attributes.
+fn elementum_view(Spatium spatium, string nomen_tag, list<Visus> liberi) → Visus {
+    return variant Elementum {
+        identitas = null,
+        spatium = spatium,
+        nomen_tag = nomen_tag,
+        attributa = [],
+        proprietates = [],
+        liberi = liberi
+    } ∷ Visus
+}
+
+# Full open-element constructor: identity + serialized attributes + DOM
+# properties. Cross-module variant construction does not resolve (gap G3),
+# so consumers reach the full Elementum through this constructor.
+fn elementum_omne(
+    Identitas ∪ null identitas,
+    Spatium spatium,
+    string nomen_tag,
+    list<Attributum> attributa,
+    list<Proprietas> proprietates,
+    list<Visus> liberi
+) → Visus {
+    return variant Elementum {
+        identitas = identitas,
+        spatium = spatium,
+        nomen_tag = nomen_tag,
+        attributa = attributa,
+        proprietates = proprietates,
+        liberi = liberi
+    } ∷ Visus
+}
