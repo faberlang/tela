@@ -68,6 +68,40 @@
 #     component (a th > button + aria-sort + the app's update) —
 #     never kernel/catalog behavior.
 #
+# Stage 5 U5 (tela-s5-u5-segmented-control-reference): the catalog
+# EXTENDS with the **segmented-control** family — the Stage 3 segmented
+# control RE-HOMED as a tela-owned reference component (the app's
+# control leaves the consumer; the app keeps its D1 behavior plan and
+# COMPOSES the reference control through normal qualified imports).
+# Typed props (name/label/options/selected) → tela.View with the
+# ref-seg-<name> group, the ref-seg-<name>-<i> segments (1-based, the
+# Stage 3 index scheme), and the ref-seg-live declared live region.
+#
+# THE SEGMENTED-CONTROL ACCESSIBILITY CONTRACT (campaign §8 + the Stage 3
+# §1.3/§1.4/§1.5 record; done_when (a)):
+#   - ROLES: the group carries role='radiogroup' + aria-label = the
+#     control's accessible name (the `label` prop); each segment
+#     carries role='radio'.
+#   - ROVING TABINDEX (one tab stop as a whole, §1.3): the selected
+#     segment carries tabindex='0', the others tabindex='-1' — only the
+#     selected segment is in the tab sequence; Tab leaves the control
+#     as a unit. The roving moves with the selection (a replace
+#     re-renders the roving tabindex).
+#   - SELECTED STATE (§1.4): aria-selected='true'/'false' on the
+#     segments.
+#   - THE DECLARED LIVE REGION (§1.5): the control-owned
+#     <div role='status' aria-live='polite' data-tela='ref-seg-live'>
+#     — not an ambient page notification. THE NO-OP RULE: an
+#     announcement fires ONLY when the selection CHANGES; a click or
+#     keypress on the already-selected segment is SILENT.
+#   - THE D1 APP-TYPED PLAN BOUNDARY (recorded): the control is
+#     STATELESS — it declares no behavior. The message type + bindings
+#     + update loop + announcement semantics are the CONSUMER's plan
+#     (D1 — app-typed), keyed to the ref-seg-* identities; the keyboard
+#     semantics (arrows/Home/End/Space/Enter), the focus-only movement,
+#     and the live-region policy are documented in the consumer's plan
+#     record. The catalog never carries a generic behavior plan.
+#
 # MODULE SHAPE (U1-locked, stage-5-discovery.md §1): ONE flat module
 # mirroring the kernel (G4-safe), stdlib-only + ONE same-package sibling
 # import (tela:tela); no public signature references a type outside the
@@ -129,6 +163,16 @@
 #       name + textual equivalents); stateless (D1: a declared
 #       keyboard/sort interaction stays in the consumer plan).
 #
+#   SEGMENTED-CONTROL (U5) — the Stage 3 control re-homed:
+#     segmented_control(SegmentedProps)   → ref-seg-<name> — the group
+#       (role='radiogroup' + the accessible name), the
+#       ref-seg-<name>-<i> segments (role='radio' + aria-selected +
+#       the roving tabindex — ONE tab stop as a whole, §1.3), the
+#       control-owned declared live region ref-seg-live (role='status' +
+#       aria-live='polite', §1.5 — the no-op rule: announce on a
+#       selection change, silent on no-op); stateless (D1: the app-typed
+#       plan + the keyboard/live-region semantics stay in the consumer).
+#
 # NO COLOR-ONLY COMMUNICATION (campaign §8): no component in U2 carries
 # meaning through color. Emphasis is semantic markup; the scale is
 # decorative sizing; the layout containers are structural. The style
@@ -160,7 +204,11 @@
 #     metric_props/panel_style/badge_style/metric_style + the
 #     ref_panel_*/ref_badge_*/ref_metric_* accessors; U4:
 #     table/table_row/table_props/table_header_cells/table_body_cells/
-#     table_style + the ref_table_* accessors) probed
+#     table_style + the ref_table_* accessors; U5:
+#     segmented_control/segmented_props/segmented_option/
+#     segmented_options/segmented_live_region/selected_text/
+#     active_tabindex/segmented_style/SegmentedProps + the ref_seg_*
+#     accessors) probed
 #     collision-free on in-tree radix 0.80.0 (a free fn may share a class
 #     name — G5's collision is enum-member-specific).
 #   fix:codegen001 — the Rust emit-across-imports block persists
@@ -168,7 +216,8 @@
 #   fix:snapshot-name-collision — the props classes avoid the kernel type
 #     names AND the browser/forms carrier names (StackProps/GridProps/
 #     LayoutProseProps/HeadingProps/ProseProps/EmphasisProps/ScaleProps/
-#     PanelProps/BadgeProps/MetricProps/TableRow/TableProps).
+#     PanelProps/BadgeProps/MetricProps/TableRow/TableProps/
+#     SegmentedProps).
 #   fix:verum-b — en-locale naming: no verum/falsum identifiers.
 #   LOCALE002 advisory (recorded, non-blocking): the BadgeProps `status`
 #     field is a keyword-like spelling (advisory only — it parses + emits,
@@ -594,6 +643,105 @@ fn table(TableProps props) → tela.View {
 }
 
 # ===========================================================================
+# SEGMENTED-CONTROL family — the Stage 3 control re-homed (ref-seg-*;
+# Stage 5 U5). The control is STATELESS — the D1 app-typed plan boundary
+# (the message type + bindings + update loop + announcement semantics stay
+# in the consumer, keyed to the ref-seg-* identities; the a11y contract is
+# documented in the module header).
+# ===========================================================================
+
+class SegmentedProps {
+    string name
+    string label
+    list<string> options
+    string selected
+}
+
+fn segmented_props(string name, string label, list<string> options, string selected) → SegmentedProps {
+    return SegmentedProps { name = name, label = label, options = options, selected = selected }
+}
+
+fn selected_text(bool selected) → string {
+    if selected then return "true"
+    return "false"
+}
+
+fn active_tabindex(bool selected) → string {
+    if selected then return "0"
+    return "-1"
+}
+
+# One segment: role=radio + aria-selected + the roving tabindex (the
+# selected segment is the control's one tab stop, §1.3). Stable identity
+# ref-seg-<name>-<i>.
+fn segmented_option(string identity, string option, string tabindex, string selected) → tela.View {
+    return tela.element_full(
+        tela.new_identity(identity),
+        tela.html_space(),
+        "button",
+        [
+            tela.Attribute { name = "role", value = "radio" },
+            tela.Attribute { name = "aria-selected", value = selected },
+            tela.Attribute { name = "tabindex", value = tabindex }
+        ],
+        [],
+        [ tela.text_view(option) ]
+    )
+}
+
+# The control-owned declared live region (§1.5): explicitly marked with a
+# live-region policy (role='status' / aria-live='polite'), owned by the
+# control, not an ambient page notification. THE NO-OP RULE: the consumer's
+# plan writes the announcement ONLY on a selection change — a no-op is
+# SILENT.
+fn segmented_live_region() → tela.View {
+    return tela.element_full(
+        tela.new_identity("ref-seg-live"),
+        tela.html_space(),
+        "div",
+        [
+            tela.Attribute { name = "role", value = "status" },
+            tela.Attribute { name = "aria-live", value = "polite" }
+        ],
+        [],
+        []
+    )
+}
+
+# The segment children in focus order (1-based identities:
+# ref-seg-<name>-1..N), followed by the control's live region.
+fn segmented_options(SegmentedProps props) → list<tela.View> {
+    var list<tela.View> options ← vacua
+    var int i ← 1
+    while i ≤ props.options.longitudo() {
+        const string identity ← "ref-seg-" + props.name + "-" + "§"(i)
+        const string option ← props.options[i - 1]
+        const bool selected ← identity ≡ props.selected
+        options.appende(segmented_option(identity, option, active_tabindex(selected), selected_text(selected)))
+        i ← i + 1
+    }
+    options.appende(segmented_live_region())
+    return options
+}
+
+# The segmented-control component: ordinary Faber over typed props (campaign
+# §3 component contract) → a View keyed to stable data-tela identities.
+# The group is role=radiogroup + the accessible name (aria-label).
+fn segmented_control(SegmentedProps props) → tela.View {
+    return tela.element_full(
+        tela.new_identity("ref-seg-" + props.name),
+        tela.html_space(),
+        "div",
+        [
+            tela.Attribute { name = "role", value = "radiogroup" },
+            tela.Attribute { name = "aria-label", value = props.label }
+        ],
+        [],
+        segmented_options(props)
+    )
+}
+
+# ===========================================================================
 # STYLE BUNDLES — rules keyed on the ref-* identities, referencing the
 # ref.* tokens as CSS custom properties (the --ref-* emission form).
 # ===========================================================================
@@ -839,6 +987,42 @@ fn table_style() → tela.Style {
     }
 }
 
+# The segmented-control style bundle: keyed on the ref-seg-* identity
+# PREFIX plus the role (the group vs the segments — the prefix alone would
+# match both). The group carries the flex layout + gap + radius; the
+# segments carry the type scale + padding + border; the SELECTED segment
+# border color references the theme's accent core token (the selected
+# STATE is communicated by aria-selected — semantic — never by color
+# alone; the accent border is decorative emphasis, campaign §8).
+fn segmented_style() → tela.Style {
+    return tela.Style {
+        rules = [
+            tela.Rule {
+                selector = "[data-tela^='ref-seg-'][role='radiogroup']",
+                declarations = [
+                    tela.Declaration { name = "display", value = "flex" },
+                    tela.Declaration { name = "gap", value = "var(--ref-seg-gap)" },
+                    tela.Declaration { name = "border-radius", value = "var(--ref-seg-radius)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela^='ref-seg-'][role='radio']",
+                declarations = [
+                    tela.Declaration { name = "font-size", value = "var(--ref-seg-size)" },
+                    tela.Declaration { name = "padding", value = "var(--ref-seg-padding)" },
+                    tela.Declaration { name = "border", value = "1px solid var(--ref-seg-border)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela^='ref-seg-'][role='radio'][aria-selected='true']",
+                declarations = [
+                    tela.Declaration { name = "border-color", value = "var(--ref-seg-selected-border)" }
+                ]
+            }
+        ]
+    }
+}
+
 # ===========================================================================
 # TOKENS — the namespaced ref.* theme tokens (the kernel Token carrier,
 # MF-7): zero-arg accessors returning tela.Token values; consumers collect
@@ -959,6 +1143,33 @@ fn ref_table_caption_muted() → tela.Token {
     return tela.Token { name = "ref.table.caption.muted", value = "var(--text-muted)" }
 }
 
+# The ref.seg.* tokens — the segmented-control shaping; the border color
+# references the theme's core tokens (the selected state is SEMANTIC —
+# aria-selected — never color alone; the accent border is decorative).
+fn ref_seg_gap() → tela.Token {
+    return tela.Token { name = "ref.seg.gap", value = "0.25rem" }
+}
+
+fn ref_seg_radius() → tela.Token {
+    return tela.Token { name = "ref.seg.radius", value = "0.375rem" }
+}
+
+fn ref_seg_size() → tela.Token {
+    return tela.Token { name = "ref.seg.size", value = "0.875rem" }
+}
+
+fn ref_seg_padding() → tela.Token {
+    return tela.Token { name = "ref.seg.padding", value = "0.5rem 0.75rem" }
+}
+
+fn ref_seg_border() → tela.Token {
+    return tela.Token { name = "ref.seg.border", value = "var(--border-default)" }
+}
+
+fn ref_seg_selected_border() → tela.Token {
+    return tela.Token { name = "ref.seg.selected.border", value = "var(--accent-primary)" }
+}
+
 # The catalog's token collection (the self-usable summary — consumers
 # compose their Theme via the individual accessors; this is the package's
 # assembly-input convenience, the formslib precedent).
@@ -989,6 +1200,12 @@ fn reference_tokens() → list<tela.Token> {
         ref_table_border(),
         ref_table_padding(),
         ref_table_header_weight(),
-        ref_table_caption_muted()
+        ref_table_caption_muted(),
+        ref_seg_gap(),
+        ref_seg_radius(),
+        ref_seg_size(),
+        ref_seg_padding(),
+        ref_seg_border(),
+        ref_seg_selected_border()
     ]
 }

@@ -217,12 +217,59 @@
 # with the table family static render — the determinism sha stays
 # SUPERSEDED (U10 re-records the official sha; check-determinism is RED
 # between units — the honest flag, unchanged).
+#
+# Stage 5 U5 (tela-s5-u5-segmented-control-reference) — the RE-HOME: the
+# Stage 3 segmented control (the app-local ControlProps/segment_view/
+# live_region/control_segments/segmented_control component section is
+# REMOVED) is now a `tela:reference` component — the app COMPOSES it
+# through the NORMAL qualified import (`reference.segmented_control`), keyed to
+# the ref-seg-* identities (ref-seg-control / ref-seg-control-N /
+# ref-seg-live). The app KEEPS its D1 behavior plan — the Message union
+# (Selected/Moved), the EventBinding carriers, update_control /
+# key_message / announcement / control_bindings / segment_order — and
+# RE-TARGETS it to the ref-seg-* identities (the app-typed plan is the
+# consumer's surface; the catalog control is stateless). The runner tree
+# composes the reference control; the ref.seg.* tokens join both themes;
+# the segmented_style bundle joins the component cascade layer; the mount
+# seam fn (mount_segmented) supplies the check-reference U5 browser-proof
+# surface (mount + structure + the scripted interaction case: pointer,
+# arrows, Home/End, Space/Enter, silent no-op, focus restoration).
+#
+# fix:<id> markers applied in this unit:
+#   fix:g5 — NONE: all new identifiers (segmented_composition/
+#     mount_segmented) probed collision-free on in-tree radix 0.80.0 (a
+#     free fn may share a class name — G5's collision is enum-member-
+#     specific); the moved control identifiers now live in tela:reference
+#     (probed there).
+#   fix:snapshot-name-collision — the new identifiers avoid kernel type
+#     names AND the tela:reference prop-class names (SegmentedProps).
+#   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the
+#     TS lane is the proven runtime lane.
+#   fix:g4 — the reference control is consumed through the NORMAL package
+#     interface (no compose-without, no harness-assembly bypass for the
+#     catalog); the app plan's `→ reference.SegmentedProps` fns are export-
+#     skipped (WARN014 — imported sibling types in signatures, recorded;
+#     the harnesses read the emitted file directly, the snapshot does not
+#     apply at runtime).
+#
+# DETERMINISM SUPERSESSION (done_when (e)): the runner output extends with
+# the segmented-control reference render (the ref-seg-* identities replace
+# the tela-* control identities — the rendered bytes change) — the
+# determinism sha stays SUPERSEDED (U10 re-records the official sha;
+# check-determinism is RED between units — the honest flag, unchanged).
+# The Stage 3 control identities (tela-control/tela-seg-*/tela-live) are
+# RETIRED from the runner; check-mount + check-determinism +
+# check-forms-interactive remain RED on the U2-inherited "Cannot find name
+# 'ref'" wiring (U10 re-wires the harnesses — NOT this unit's scope); the
+# check-mount driver additionally needs the re-home re-target
+# (segmented_control → reference.segmented_control) — part of the same U10
+# re-wire.
 
 import from "tela:tela" public * ut tela
 import from "extensionlib:extension" public * ut ext
 import from "formslib:forms" public * ut forms
 import from "tela:browser" public * ut browser
-import from "tela:reference" public * ut ref
+import from "tela:reference" public * ut reference
 import from "web:dom" public * ut dom
 
 # --- Themed panel: a div with a stable identity + accessible name; the panel
@@ -287,134 +334,32 @@ fn bar_meter_app(string label, string value, int width) → tela.View {
 }
 
 # ===========================================================================
-# Stage 3 U3 — the segmented-control component (behavior-design §1).
+# Stage 5 U5 — the segmented-control RE-HOME (tela:reference).
 #
-# The control is an ordinary component function over typed props (no
-# compiler-known component kind) producing a View with:
-#   - stable data-tela identities on the group + per segment (§1.1);
-#   - role='radiogroup' on the group, role='radio' + aria-selected
-#     true/false on the segments (§1.4);
-#   - the keyboard-contract structure: one tab stop as a whole (§1.3) —
-#     the selected segment carries tabindex='0', the others tabindex='-1'
-#     (only the selected segment is in the tab sequence; Tab leaves the
-#     control as a unit);
-#   - the control-owned declared live region (role='status' +
-#     aria-live='polite', §1.5).
-# The same component function renders statically (through html_visus, below)
-# and mounts interactively (the driver) — shared-source evidence.
+# The Stage 3 U3 app-local component section (ControlProps/selected_text/
+# active_tabindex/segment_view/live_region/control_segments/
+# segmented_control) is REMOVED — the control now lives in the reference
+# catalog (`reference.segmented_control`, tela:reference, Stage 5 U5) and the
+# app COMPOSES it through the NORMAL qualified import. The a11y contract
+# is documented in the reference.fab module header: role='radiogroup' on
+# the group, role='radio' + aria-selected on the segments, the roving
+# tabindex (one tab stop as a whole, §1.3), the control-owned declared
+# live region (role='status' + aria-live='polite', §1.5 — the no-op rule:
+# announce on a selection change, silent on no-op). The app keeps its D1
+# behavior plan (the Message union + EventBinding carriers + the update
+# loop) and RE-TARGETS it to the ref-seg-* identities below.
 # ===========================================================================
 
-class ControlProps {
-    list<string> options
-    string selected
-    string name
+# The default control props (the shared source the static render + the
+# app-typed plan consume) — a reference.SegmentedProps carrier built through the
+# catalog's constructor (normal qualified import).
+fn control_props() → reference.SegmentedProps {
+    return reference.segmented_props("control", "segmented control", ["One", "Two", "Three"], "ref-seg-control-1")
 }
 
-fn selected_text(bool selected) → string {
-    if selected then return "true"
-    return "false"
-}
-
-fn active_tabindex(bool selected) → string {
-    if selected then return "0"
-    return "-1"
-}
-
-# One segment: role=radio + aria-selected + the roving tabindex (§1.3/§1.4).
-fn segment_view(string identity, string optio, string tabindex, string selected) → tela.View {
-    return tela.element_full(
-        tela.new_identity(identity),
-        tela.html_space(),
-        "button",
-        [
-            tela.Attribute { name = "role", value = "radio" },
-            tela.Attribute { name = "aria-selected", value = selected },
-            tela.Attribute { name = "tabindex", value = tabindex }
-        ],
-        [],
-        [ tela.text_view(optio) ]
-    )
-}
-
-# The control-owned declared live region (§1.5): explicitly marked with a
-# live-region policy (role='status' / aria-live='polite'), owned by the
-# control, not an ambient page notification.
-fn live_region() → tela.View {
-    return tela.element_full(
-        tela.new_identity("tela-live"),
-        tela.html_space(),
-        "div",
-        [
-            tela.Attribute { name = "role", value = "status" },
-            tela.Attribute { name = "aria-live", value = "polite" }
-        ],
-        [],
-        []
-    )
-}
-
-# The segment children in focus order (index 1-based identity: tela-seg-N).
-fn control_segments(ControlProps props) → list<tela.View> {
-    var list<tela.View> segmenta ← vacua
-    var int i ← 1
-    while i ≤ props.options.longitudo() {
-        const string identity ← "tela-seg-" + "§"(i)
-        const string optio ← props.options[i - 1]
-        const bool selected ← identity ≡ props.selected
-        segmenta.appende(segment_view(identity, optio, active_tabindex(selected), selected_text(selected)))
-        i ← i + 1
-    }
-    segmenta.appende(live_region())
-    return segmenta
-}
-
-# The segmented-control component: ordinary Faber over typed props (campaign
-# §3 component contract) → a View keyed to stable data-tela identities.
-fn segmented_control(ControlProps props) → tela.View {
-    return tela.element_full(
-        tela.new_identity("tela-control"),
-        tela.html_space(),
-        "div",
-        [
-            tela.Attribute { name = "role", value = "radiogroup" },
-            tela.Attribute { name = "aria-label", value = props.name }
-        ],
-        [],
-        control_segments(props)
-    )
-}
-
-# The default control props (the shared source both renderers consume).
-fn control_props() → ControlProps {
-    return ControlProps {
-        options = ["One", "Two", "Three"],
-        selected = "tela-seg-1",
-        name = "segmented control"
-    }
-}
-
-# Props with a changed selection (the update loop's view render input).
-fn selected_props(ControlProps props, string selected) → ControlProps {
-    return ControlProps {
-        options = props.options,
-        selected = selected,
-        name = props.name
-    }
-}
-
-# The interactive proof's theme (the 8-token core baseline — mount requires
-# theme_css non-null, so the mounted control needs a theme covering the core).
-fn control_theme() → tela.Theme {
-    return tela.theme("controllum", [
-        tela.token("surface.canvas", "#ffffff"),
-        tela.token("surface.panel", "#f9fafb"),
-        tela.token("text.primary", "#111827"),
-        tela.token("text.muted", "#6b7280"),
-        tela.token("border.default", "#e5e7eb"),
-        tela.token("accent.primary", "#2563eb"),
-        tela.token("state.positive", "#16a34a"),
-        tela.token("state.caution", "#d97706")
-    ])
+# Props with a changed selection (the update loop's view-render input).
+fn selected_props(reference.SegmentedProps props, string selected) → reference.SegmentedProps {
+    return reference.segmented_props(props.name, props.label, props.options, selected)
 }
 
 # ===========================================================================
@@ -470,17 +415,20 @@ fn segment_binding(string identity) → EventBinding {
 # The subscription plan: one pointer binding per segment identity (the
 # web:dom subscriptions attach by identity — never ambient document
 # shortcuts; the driver binds the webDom* surface at the harness level).
+# Stage 5 U5: the bindings re-target the reference identities
+# (ref-seg-control-N).
 fn control_bindings() → list<EventBinding> {
     return [
-        segment_binding("tela-seg-1"),
-        segment_binding("tela-seg-2"),
-        segment_binding("tela-seg-3")
+        segment_binding("ref-seg-control-1"),
+        segment_binding("ref-seg-control-2"),
+        segment_binding("ref-seg-control-3")
     ]
 }
 
 # The focus order (one tab stop as a whole; arrows wrap at the ends).
+# Stage 5 U5: re-targeted to the reference identities.
 fn segment_order() → list<string> {
-    return ["tela-seg-1", "tela-seg-2", "tela-seg-3"]
+    return ["ref-seg-control-1", "ref-seg-control-2", "ref-seg-control-3"]
 }
 
 fn identity_index(string identity) → int {
@@ -565,7 +513,7 @@ fn update_control(string selected, Message message) → string {
 # The host writes it into the declared live region ONLY when the selection
 # changes — silent when a click/keypress lands on the already-selected
 # segment or when the update does not change selection.
-fn announcement(ControlProps props, string selected) → string {
+fn announcement(reference.SegmentedProps props, string selected) → string {
     const int index ← identity_index(selected)
     if index < props.options.longitudo() {
         return props.options[index] + " selected"
@@ -840,28 +788,38 @@ fn reference_theme() → tela.Theme {
         tela.token("accent.primary", "#2563eb"),
         tela.token("state.positive", "#16a34a"),
         tela.token("state.caution", "#d97706"),
-        ref.ref_layout_gap(),
-        ref.ref_layout_prose_measure(),
-        ref.ref_type_scale_xs(),
-        ref.ref_type_scale_sm(),
-        ref.ref_type_scale_md(),
-        ref.ref_type_scale_lg(),
-        ref.ref_type_scale_xl(),
-        ref.ref_type_heading_weight(),
-        ref.ref_type_heading_margin(),
-        ref.ref_type_prose_line_height(),
-        ref.ref_type_prose_margin(),
-        ref.ref_panel_surface(),
-        ref.ref_panel_border(),
-        ref.ref_panel_radius(),
-        ref.ref_panel_padding(),
-        ref.ref_badge_size(),
-        ref.ref_badge_padding(),
-        ref.ref_badge_radius(),
-        ref.ref_metric_label_size(),
-        ref.ref_metric_label_muted(),
-        ref.ref_metric_value_size(),
-        ref.ref_metric_value_weight()
+        reference.ref_layout_gap(),
+        reference.ref_layout_prose_measure(),
+        reference.ref_type_scale_xs(),
+        reference.ref_type_scale_sm(),
+        reference.ref_type_scale_md(),
+        reference.ref_type_scale_lg(),
+        reference.ref_type_scale_xl(),
+        reference.ref_type_heading_weight(),
+        reference.ref_type_heading_margin(),
+        reference.ref_type_prose_line_height(),
+        reference.ref_type_prose_margin(),
+        reference.ref_panel_surface(),
+        reference.ref_panel_border(),
+        reference.ref_panel_radius(),
+        reference.ref_panel_padding(),
+        reference.ref_badge_size(),
+        reference.ref_badge_padding(),
+        reference.ref_badge_radius(),
+        reference.ref_metric_label_size(),
+        reference.ref_metric_label_muted(),
+        reference.ref_metric_value_size(),
+        reference.ref_metric_value_weight(),
+        reference.ref_table_border(),
+        reference.ref_table_padding(),
+        reference.ref_table_header_weight(),
+        reference.ref_table_caption_muted(),
+        reference.ref_seg_gap(),
+        reference.ref_seg_radius(),
+        reference.ref_seg_size(),
+        reference.ref_seg_padding(),
+        reference.ref_seg_border(),
+        reference.ref_seg_selected_border()
     ])
 }
 
@@ -880,16 +838,16 @@ fn layout_composition() → tela.View {
         [],
         [],
         [
-            ref.layout_stack(ref.stack_props([
+            reference.layout_stack(reference.stack_props([
                 tela.text_view("row one"),
                 tela.text_view("row two")
             ])),
-            ref.layout_grid(ref.grid_props([
+            reference.layout_grid(reference.grid_props([
                 tela.text_view("column one"),
                 tela.text_view("column two")
             ])),
-            ref.layout_prose(ref.layout_prose_props([
-                ref.typography_prose(ref.prose_props([ tela.text_view("measure prose") ]))
+            reference.layout_prose(reference.layout_prose_props([
+                reference.typography_prose(reference.prose_props([ tela.text_view("measure prose") ]))
             ]))
         ]
     )
@@ -907,8 +865,8 @@ fn duplicate_prose_composition() → tela.View {
         [],
         [],
         [
-            ref.typography_prose(ref.prose_props([ tela.text_view("first") ])),
-            ref.typography_prose(ref.prose_props([ tela.text_view("second") ]))
+            reference.typography_prose(reference.prose_props([ tela.text_view("first") ])),
+            reference.typography_prose(reference.prose_props([ tela.text_view("second") ]))
         ]
     )
 }
@@ -925,15 +883,15 @@ fn typography_composition() → tela.View {
         [],
         [],
         [
-            ref.typography_heading(ref.heading_props(1, "Catalog title")),
-            ref.typography_heading(ref.heading_props(2, "Section")),
-            ref.typography_prose(ref.prose_props([
+            reference.typography_heading(reference.heading_props(1, "Catalog title")),
+            reference.typography_heading(reference.heading_props(2, "Section")),
+            reference.typography_prose(reference.prose_props([
                 tela.text_view("Prose with "),
-                ref.typography_emphasis(ref.emphasis_props("strong", "emphasis")),
+                reference.typography_emphasis(reference.emphasis_props("strong", "emphasis")),
                 tela.text_view(" carried by markup.")
             ])),
-            ref.typography_scale(ref.scale_props("lg", "lead text")),
-            ref.typography_scale(ref.scale_props("xs", "caption text"))
+            reference.typography_scale(reference.scale_props("lg", "lead text")),
+            reference.typography_scale(reference.scale_props("xs", "caption text"))
         ]
     )
 }
@@ -969,8 +927,8 @@ fn panel_composition() → tela.View {
         [],
         [],
         [
-            ref.panel(ref.panel_props("status", "Status panel", [
-                ref.typography_prose(ref.prose_props([ tela.text_view("all systems operational") ]))
+            reference.panel(reference.panel_props("status", "Status panel", [
+                reference.typography_prose(reference.prose_props([ tela.text_view("all systems operational") ]))
             ]))
         ]
     )
@@ -987,8 +945,8 @@ fn badge_composition() → tela.View {
         [],
         [],
         [
-            ref.badge(ref.badge_props("new", "New", "3 messages")),
-            ref.badge(ref.badge_props("ok", "Ok", "all checks passed"))
+            reference.badge(reference.badge_props("new", "New", "3 messages")),
+            reference.badge(reference.badge_props("ok", "Ok", "all checks passed"))
         ]
     )
 }
@@ -1004,9 +962,9 @@ fn metric_composition() → tela.View {
         [],
         [],
         [
-            ref.metric(ref.metric_props("uptime", "uptime", "99.9%", "")),
-            ref.metric(ref.metric_props("requests", "requests", "12 480", "+3.1%")),
-            ref.metric(ref.metric_props("error", "error rate", "0.02%", "-0.01%"))
+            reference.metric(reference.metric_props("uptime", "uptime", "99.9%", "")),
+            reference.metric(reference.metric_props("requests", "requests", "12 480", "+3.1%")),
+            reference.metric(reference.metric_props("error", "error rate", "0.02%", "-0.01%"))
         ]
     )
 }
@@ -1051,10 +1009,10 @@ fn table_composition() → tela.View {
         [],
         [],
         [
-            ref.table(ref.table_props("services", "Services", ["Service", "Status"], [
-                ref.table_row(["gateway", "ok"]),
-                ref.table_row(["database", "ok"]),
-                ref.table_row(["queue", "caution"])
+            reference.table(reference.table_props("services", "Services", ["Service", "Status"], [
+                reference.table_row(["gateway", "ok"]),
+                reference.table_row(["database", "ok"]),
+                reference.table_row(["queue", "caution"])
             ]))
         ]
     )
@@ -1068,6 +1026,34 @@ fn mount_table(string selector) → browser.Mounted ∪ null {
     return browser.mount(scope, table_composition(), reference_theme())
 }
 
+# ===========================================================================
+# Stage 5 U5 — the segmented-control composition + mount seam
+# (tela:reference — the re-homed Stage 3 control).
+# ===========================================================================
+
+# The segmented-control composition: the catalog's control through NORMAL
+# qualified imports (the U5 re-home). The wrapper identity is app-owned
+# data (the canary-* precedent — MF-8).
+fn segmented_composition() → tela.View {
+    return tela.element_full(
+        tela.new_identity("canary-ref-seg"),
+        tela.html_space(),
+        "div",
+        [],
+        [],
+        [ reference.segmented_control(control_props()) ]
+    )
+}
+
+# The seam mount for the U5 browser proof: the check-reference driver calls
+# this through the app's own imports (dom.scope + browser.mount, the U7
+# pattern). The reference control mounts with the reference theme (the
+# core baseline + the ref.* tokens) — done_when (d).
+fn mount_segmented(string selector) → browser.Mounted ∪ null {
+    const dom.Scope scope ← dom.scope(selector)
+    return browser.mount(scope, segmented_composition(), reference_theme())
+}
+
 main {
     # G4 seam attempt (recorded in the evidence record): ext.bar_meter
     # resolves to WARN014 export-skip; the app composes the meter with tela
@@ -1078,8 +1064,8 @@ main {
     # segmented control) — the control renders statically alongside the
     # Stage 1/2 composition (shared source: the same component function
     # that mounts interactively).
-    const ControlProps props ← control_props()
-    const tela.View control ← segmented_control(props)
+    const reference.SegmentedProps props ← control_props()
+    const tela.View control ← reference.segmented_control(props)
     const tela.View tree ← app_panel([
         metric_table(),
         bar,
@@ -1106,32 +1092,38 @@ main {
         tela.token(forms.form_field_invalid().name, forms.form_field_invalid().value),
         tela.token(forms.form_field_valid().name, forms.form_field_valid().value),
         tela.token(forms.form_focus().name, forms.form_focus().value),
-        ref.ref_layout_gap(),
-        ref.ref_layout_prose_measure(),
-        ref.ref_type_scale_xs(),
-        ref.ref_type_scale_sm(),
-        ref.ref_type_scale_md(),
-        ref.ref_type_scale_lg(),
-        ref.ref_type_scale_xl(),
-        ref.ref_type_heading_weight(),
-        ref.ref_type_heading_margin(),
-        ref.ref_type_prose_line_height(),
-        ref.ref_type_prose_margin(),
-        ref.ref_panel_surface(),
-        ref.ref_panel_border(),
-        ref.ref_panel_radius(),
-        ref.ref_panel_padding(),
-        ref.ref_badge_size(),
-        ref.ref_badge_padding(),
-        ref.ref_badge_radius(),
-        ref.ref_metric_label_size(),
-        ref.ref_metric_label_muted(),
-        ref.ref_metric_value_size(),
-        ref.ref_metric_value_weight(),
-        ref.ref_table_border(),
-        ref.ref_table_padding(),
-        ref.ref_table_header_weight(),
-        ref.ref_table_caption_muted()
+        reference.ref_layout_gap(),
+        reference.ref_layout_prose_measure(),
+        reference.ref_type_scale_xs(),
+        reference.ref_type_scale_sm(),
+        reference.ref_type_scale_md(),
+        reference.ref_type_scale_lg(),
+        reference.ref_type_scale_xl(),
+        reference.ref_type_heading_weight(),
+        reference.ref_type_heading_margin(),
+        reference.ref_type_prose_line_height(),
+        reference.ref_type_prose_margin(),
+        reference.ref_panel_surface(),
+        reference.ref_panel_border(),
+        reference.ref_panel_radius(),
+        reference.ref_panel_padding(),
+        reference.ref_badge_size(),
+        reference.ref_badge_padding(),
+        reference.ref_badge_radius(),
+        reference.ref_metric_label_size(),
+        reference.ref_metric_label_muted(),
+        reference.ref_metric_value_size(),
+        reference.ref_metric_value_weight(),
+        reference.ref_table_border(),
+        reference.ref_table_padding(),
+        reference.ref_table_header_weight(),
+        reference.ref_table_caption_muted(),
+        reference.ref_seg_gap(),
+        reference.ref_seg_radius(),
+        reference.ref_seg_size(),
+        reference.ref_seg_padding(),
+        reference.ref_seg_border(),
+        reference.ref_seg_selected_border()
     ])
     const tela.Theme tenebrae ← tela.theme("tenebrae", [
         tela.token("surface.canvas", "#0f172a"),
@@ -1147,32 +1139,38 @@ main {
         tela.token(forms.form_field_invalid().name, forms.form_field_invalid().value),
         tela.token(forms.form_field_valid().name, forms.form_field_valid().value),
         tela.token(forms.form_focus().name, forms.form_focus().value),
-        ref.ref_layout_gap(),
-        ref.ref_layout_prose_measure(),
-        ref.ref_type_scale_xs(),
-        ref.ref_type_scale_sm(),
-        ref.ref_type_scale_md(),
-        ref.ref_type_scale_lg(),
-        ref.ref_type_scale_xl(),
-        ref.ref_type_heading_weight(),
-        ref.ref_type_heading_margin(),
-        ref.ref_type_prose_line_height(),
-        ref.ref_type_prose_margin(),
-        ref.ref_panel_surface(),
-        ref.ref_panel_border(),
-        ref.ref_panel_radius(),
-        ref.ref_panel_padding(),
-        ref.ref_badge_size(),
-        ref.ref_badge_padding(),
-        ref.ref_badge_radius(),
-        ref.ref_metric_label_size(),
-        ref.ref_metric_label_muted(),
-        ref.ref_metric_value_size(),
-        ref.ref_metric_value_weight(),
-        ref.ref_table_border(),
-        ref.ref_table_padding(),
-        ref.ref_table_header_weight(),
-        ref.ref_table_caption_muted()
+        reference.ref_layout_gap(),
+        reference.ref_layout_prose_measure(),
+        reference.ref_type_scale_xs(),
+        reference.ref_type_scale_sm(),
+        reference.ref_type_scale_md(),
+        reference.ref_type_scale_lg(),
+        reference.ref_type_scale_xl(),
+        reference.ref_type_heading_weight(),
+        reference.ref_type_heading_margin(),
+        reference.ref_type_prose_line_height(),
+        reference.ref_type_prose_margin(),
+        reference.ref_panel_surface(),
+        reference.ref_panel_border(),
+        reference.ref_panel_radius(),
+        reference.ref_panel_padding(),
+        reference.ref_badge_size(),
+        reference.ref_badge_padding(),
+        reference.ref_badge_radius(),
+        reference.ref_metric_label_size(),
+        reference.ref_metric_label_muted(),
+        reference.ref_metric_value_size(),
+        reference.ref_metric_value_weight(),
+        reference.ref_table_border(),
+        reference.ref_table_padding(),
+        reference.ref_table_header_weight(),
+        reference.ref_table_caption_muted(),
+        reference.ref_seg_gap(),
+        reference.ref_seg_radius(),
+        reference.ref_seg_size(),
+        reference.ref_seg_padding(),
+        reference.ref_seg_border(),
+        reference.ref_seg_selected_border()
     ])
 
     # --- App + extension style bundles (identical under both themes) -------
@@ -1191,23 +1189,29 @@ main {
     # referencing the --ref-* tokens (the layout + typography bundles, U2;
     # the panel + badge + metric bundles, U3 — prefix-keyed on the
     # variable-suffix identities).
-    const tela.Style ref_layout_stilum ← ref.layout_style()
+    const tela.Style ref_layout_stilum ← reference.layout_style()
     const tela.Bundle ref_layout_bundle ← tela.bundle("reference-layout", ref_layout_stilum)
-    const tela.Style ref_typography_stilum ← ref.typography_style()
+    const tela.Style ref_typography_stilum ← reference.typography_style()
     const tela.Bundle ref_typography_bundle ← tela.bundle("reference-typography", ref_typography_stilum)
-    const tela.Style ref_panel_stilum ← ref.panel_style()
+    const tela.Style ref_panel_stilum ← reference.panel_style()
     const tela.Bundle ref_panel_bundle ← tela.bundle("reference-panel", ref_panel_stilum)
-    const tela.Style ref_badge_stilum ← ref.badge_style()
+    const tela.Style ref_badge_stilum ← reference.badge_style()
     const tela.Bundle ref_badge_bundle ← tela.bundle("reference-badge", ref_badge_stilum)
-    const tela.Style ref_metric_stilum ← ref.metric_style()
+    const tela.Style ref_metric_stilum ← reference.metric_style()
     const tela.Bundle ref_metric_bundle ← tela.bundle("reference-metric", ref_metric_stilum)
     # Stage 5 U4: the table bundle (prefix-keyed on the ref-table-*
     # identities, referencing the --ref-table-* tokens).
-    const tela.Style ref_table_stilum ← ref.table_style()
+    const tela.Style ref_table_stilum ← reference.table_style()
     const tela.Bundle ref_table_bundle ← tela.bundle("reference-table", ref_table_stilum)
+    # Stage 5 U5: the segmented-control bundle (the ref-seg-* identities —
+    # the group's flex layout + the segments' shaping + the selected-state
+    # accent border, all referencing the --ref-seg-* tokens).
+    const tela.Style ref_seg_stilum ← reference.segmented_style()
+    const tela.Bundle ref_seg_bundle ← tela.bundle("reference-seg", ref_seg_stilum)
 
-    # App style bundle: the panel rule + the segmented-control rule, both
-    # keyed on the data-tela identity (the control's styles are app-owned).
+    # App style bundle: the panel rule (the segmented-control rule was
+    # app-owned in Stage 3; the control's styles now ride the reference
+    # segmented bundle — Stage 5 U5 re-home).
     const tela.Style app_stilum ← tela.Style {
         rules = [
             tela.Rule {
@@ -1216,14 +1220,6 @@ main {
                     tela.Declaration { name = "display", value = "grid" },
                     tela.Declaration { name = "gap", value = "1rem" },
                     tela.Declaration { name = "color", value = "var(--chart-axis-muted)" }
-                ]
-            },
-            tela.Rule {
-                selector = "[data-tela='tela-control']",
-                declarations = [
-                    tela.Declaration { name = "display", value = "flex" },
-                    tela.Declaration { name = "gap", value = "0.25rem" },
-                    tela.Declaration { name = "border-radius", value = "0.375rem" }
                 ]
             }
         ]
@@ -1239,7 +1235,7 @@ main {
     const tela.Style ∪ null cascade_lumen_result ← tela.assemble(
         lumen,
         null,
-        [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle, ref_table_bundle],
+        [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle, ref_table_bundle, ref_seg_bundle],
         [ tela.order("extensionlib", []), tela.order("formslib", []) ],
         [ext_bundle, forms_bundle],
         app_bundle
@@ -1247,7 +1243,7 @@ main {
     const tela.Style ∪ null cascade_tenebrae_result ← tela.assemble(
         tenebrae,
         null,
-        [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle, ref_table_bundle],
+        [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle, ref_table_bundle, ref_seg_bundle],
         [ tela.order("extensionlib", []), tela.order("formslib", []) ],
         [ext_bundle, forms_bundle],
         app_bundle
@@ -1331,6 +1327,21 @@ main {
     assert css_lumen.continet("[data-tela^='ref-table-']")
     assert css_lumen.continet("var(--ref-table-border)")
     assert css_lumen.continet("var(--ref-table-caption-muted)")
+
+    # --- The Stage 5 U5 reference-catalog cascade (done_when (e)) ---------
+    # The :root token layer includes the ref.seg.* values — the border color
+    # references the theme's core tokens (the selected state is SEMANTIC —
+    # aria-selected — the accent border is decorative emphasis).
+    assert css_lumen.continet("--ref-seg-gap: 0.25rem")
+    assert css_lumen.continet("--ref-seg-radius: 0.375rem")
+    assert css_lumen.continet("--ref-seg-border: var(--border-default)")
+    assert css_lumen.continet("--ref-seg-selected-border: var(--accent-primary)")
+    # The segmented-control bundle rides the cascade (role-scoped rules on
+    # the ref-seg-* identities, referencing the --ref-seg-* tokens).
+    assert css_lumen.continet("[data-tela^='ref-seg-'][role='radiogroup']")
+    assert css_lumen.continet("[data-tela^='ref-seg-'][role='radio']")
+    assert css_lumen.continet("var(--ref-seg-gap)")
+    assert css_lumen.continet("var(--ref-seg-selected-border)")
 
     # --- The Stage 2 fail-closed regressions re-asserted (three-package) ---
     # A cycle in the order map rejects (fail-closed — no partial cascade).
@@ -1416,36 +1427,38 @@ main {
     # The segmented control renders deterministically through html_visus:
     # exact bytes — role=radiogroup on the group, role=radio + aria-selected
     # + the roving tabindex on the segments (§1.3/§1.4), the control-owned
-    # declared live region (§1.5), stable data-tela identities throughout.
+    # declared live region (§1.5), stable ref-seg-* data-tela identities
+    # throughout (Stage 5 U5 — the reference re-home).
     const string html_controllum ← tela.html_visus(control) coalesce ""
     # Serializer emission order: attributes in author order, then data-tela
     # (the identity attribute) — the U2 exempla precedent.
-    assert html_controllum ≡ "<div role='radiogroup' aria-label='segmented control' data-tela='tela-control'><button role='radio' aria-selected='true' tabindex='0' data-tela='tela-seg-1'>One</button><button role='radio' aria-selected='false' tabindex='-1' data-tela='tela-seg-2'>Two</button><button role='radio' aria-selected='false' tabindex='-1' data-tela='tela-seg-3'>Three</button><div role='status' aria-live='polite' data-tela='tela-live'></div></div>"
+    assert html_controllum ≡ "<div role='radiogroup' aria-label='segmented control' data-tela='ref-seg-control'><button role='radio' aria-selected='true' tabindex='0' data-tela='ref-seg-control-1'>One</button><button role='radio' aria-selected='false' tabindex='-1' data-tela='ref-seg-control-2'>Two</button><button role='radio' aria-selected='false' tabindex='-1' data-tela='ref-seg-control-3'>Three</button><div role='status' aria-live='polite' data-tela='ref-seg-live'></div></div>"
 
     # --- The app-typed behavior plan (U3 done_when (b)) — pure proof -------
     # The plan is app-typed (D1 recorded, never kernel-generic) and carried
-    # by typed message-producing closures (not erased into strings).
+    # by typed message-producing closures (not erased into strings). Stage 5
+    # U5: the plan re-targets the reference identities (ref-seg-control-N).
     const list<EventBinding> vincula ← control_bindings()
     assert vincula.longitudo() ≡ 3
-    # Invoke a binding's closure: click on tela-seg-2 → Selected{tela-seg-2}.
-    const Message click_msg ← vincula[1].message(tela.event_name("tela-seg-2"))
+    # Invoke a binding's closure: click on ref-seg-control-2 → Selected.
+    const Message click_msg ← vincula[1].message(tela.event_name("ref-seg-control-2"))
     match click_msg {
         case Selected const identity {
-            assert identity ≡ "tela-seg-2"
+            assert identity ≡ "ref-seg-control-2"
         }
         case Moved const identity {
             assert false
         }
     }
     # The update loop: Selected changes the selection.
-    const string post ← update_control("tela-seg-1", click_msg)
-    assert post ≡ "tela-seg-2"
+    const string post ← update_control("ref-seg-control-1", click_msg)
+    assert post ≡ "ref-seg-control-2"
     # The keyboard mapping: arrows move focus only (Moved) — the update
     # leaves the selection unchanged (§1.3; live-region-silent per §1.5).
-    const Message arrow_msg ← key_message("tela-seg-2", "ArrowRight")
+    const Message arrow_msg ← key_message("ref-seg-control-2", "ArrowRight")
     match arrow_msg {
         case Moved const identity {
-            assert identity ≡ "tela-seg-3"
+            assert identity ≡ "ref-seg-control-3"
         }
         case Selected const identity {
             assert false
@@ -1454,25 +1467,25 @@ main {
     const string post_arrow ← update_control(post, arrow_msg)
     assert post_arrow ≡ post
     # Home/End move focus to first/last (Moved); Space/Enter select.
-    match key_message("tela-seg-3", "Home") {
+    match key_message("ref-seg-control-3", "Home") {
         case Moved const identity {
-            assert identity ≡ "tela-seg-1"
+            assert identity ≡ "ref-seg-control-1"
         }
         case Selected const identity {
             assert false
         }
     }
-    match key_message("tela-seg-1", "End") {
+    match key_message("ref-seg-control-1", "End") {
         case Moved const identity {
-            assert identity ≡ "tela-seg-3"
+            assert identity ≡ "ref-seg-control-3"
         }
         case Selected const identity {
             assert false
         }
     }
-    match key_message("tela-seg-2", "Space") {
+    match key_message("ref-seg-control-2", "Space") {
         case Selected const identity {
-            assert identity ≡ "tela-seg-2"
+            assert identity ≡ "ref-seg-control-2"
         }
         case Moved const identity {
             assert false
@@ -1480,22 +1493,21 @@ main {
     }
     # A no-op selection change: clicking the already-selected segment keeps
     # the model unchanged — the update returns the same selection (silent).
-    const Message noop_msg ← vincula[1].message(tela.event_name("tela-seg-2"))
+    const Message noop_msg ← vincula[1].message(tela.event_name("ref-seg-control-2"))
     assert update_control(post, noop_msg) ≡ post
     # The declarative effects (behavior-design §3.2) — the kernel carriers
     # + the key accessor (fix:sem001 — the kernel owns the only Effect
     # matcher; the host executes effects by reading the key).
-    const tela.Effect restore ← tela.restore("tela-seg-2")
-    assert tela.effect_identity(restore) ≡ "tela-seg-2"
+    const tela.Effect restore ← tela.restore("ref-seg-control-2")
+    assert tela.effect_identity(restore) ≡ "ref-seg-control-2"
     const tela.Effect anchor ← tela.anchor("#root")
     assert tela.effect_identity(anchor) ≡ "#root"
     # The live-region announcement mapping (§1.5): names the new option.
-    assert announcement(props, "tela-seg-2") ≡ "Two selected"
-    assert announcement(props, "tela-seg-1") ≡ "One selected"
-    # The props carrier + the interactive theme (the driver + update loop
-    # consume these).
-    assert selected_props(props, "tela-seg-3").selected ≡ "tela-seg-3"
-    assert not (tela.theme_css(control_theme()) ≡ null)
+    assert announcement(props, "ref-seg-control-2") ≡ "Two selected"
+    assert announcement(props, "ref-seg-control-1") ≡ "One selected"
+    # The props carrier + the mount theme (the driver + update loop consume
+    # these; the reference mount theme covers the core — asserted below).
+    assert selected_props(props, "ref-seg-control-3").selected ≡ "ref-seg-control-3"
 
     # --- The forms behavior plan (U4 done_when (b)) — pure proof --------
     # The plan is app-typed (D1 recorded, never kernel-generic) and carried
@@ -1648,7 +1660,7 @@ main {
     print css_tenebrae
     print "two-theme static rendered (lumen vs tenebrae; tela-s2-u3)"
     print html_controllum
-    print "segmented control static rendered (initial selection tela-seg-1; tela-s3-u3)"
+    print "segmented control static rendered (reference re-home, initial selection ref-seg-control-1; tela-s5-u5)"
     print forma_composita
     print "forms family static rendered (field/checkbox/select + error/live; tela-s4-u3)"
     print "forms behavior plan asserted (input/toggle/change/submit + validation semantics; tela-s4-u4)"
@@ -1728,6 +1740,28 @@ main {
     print html_table
     print "table family static rendered (headers/rows/cells/caption; tela-s5-u4)"
     print "reference composition asserted (table family; tela-s5-u4)"
+
+    # --- Stage 5 U5 — the segmented-control static render ----------------
+    # The reference control composes through NORMAL qualified imports (the
+    # re-home — the app-typed plan re-targets the ref-seg-* identities,
+    # asserted in the pure-proof section above); the runner output extends —
+    # the determinism sha stays SUPERSEDED (recorded in the header). The
+    # a11y structure asserts: the group's radiogroup + accessible name,
+    # the segments' role=radio + aria-selected + the roving tabindex (one
+    # tab stop as a whole), the control-owned declared live region.
+    const string html_seg ← tela.html_visus(segmented_composition()) coalesce ""
+    assert html_seg.continet("<div data-tela='canary-ref-seg'>")
+    assert html_seg.continet("<div role='radiogroup' aria-label='segmented control' data-tela='ref-seg-control'>")
+    assert html_seg.continet("<button role='radio' aria-selected='true' tabindex='0' data-tela='ref-seg-control-1'>One</button>")
+    assert html_seg.continet("<button role='radio' aria-selected='false' tabindex='-1' data-tela='ref-seg-control-2'>Two</button>")
+    assert html_seg.continet("<div role='status' aria-live='polite' data-tela='ref-seg-live'></div>")
+    # The mount seam is the check-reference U5 browser-proof surface (the
+    # driver calls mount_segmented through the app's own imports after
+    # installing the host DOM — main{} stays seam-free).
+    assert not (tela.theme_css(reference_theme()) ≡ null)
+    print html_seg
+    print "segmented control family static rendered (ref-seg-* identities; tela-s5-u5)"
+    print "reference composition asserted (segmented-control family; tela-s5-u5)"
 
     # --- The U7 interactive plan surface (the provider-seam claim) --------
     # The composition mounts through the app's own seam call (dom.scope +
