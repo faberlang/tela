@@ -2,7 +2,7 @@
 
 **Created**: 2026-07-18
 **Updated**: 2026-07-18 — moved into the initialized Tela repository after review reconciliation
-**Status**: active — Stage 0 accepted (closeout 2026-08-09); Stage 1 delivered + closed out (2026-08-09); Stage 2 delivered + closed out (2026-08-09); Stage 3 selected next
+**Status**: active — Stage 0 accepted, Stage 1 accepted, Stage 2 accepted (step-6 review 2026-08-09); Stage 3 selected next
 **Mode**: repository campaign routing artifact; do not implement directly from this file
 **Target workspace**: `/Users/ianzepp/work/faberlang`
 **Control-plane repo**: `/Users/ianzepp/work/faberlang/tela`
