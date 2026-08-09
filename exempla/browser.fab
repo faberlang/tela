@@ -1,0 +1,256 @@
++++
+term = "browser"
+kind = "concept"
+category = "library"
+locale = "en"
++++
+
+# tela/exempla/browser.fab — Stage 3 U2 exempla for the browser mount
+# lifecycle (tela:browser). Proves, at the PURE level, every U2 done_when
+# (g) case's PLAN half: mount onto an empty scope (markup + identity index
+# + binding plan), hydration onto pre-rendered Tela markup (matching
+# data-tela nodes bind — "ligare", not recreated), mismatch → diagnose +
+# replace (never a silent bind), duplicate-identity diagnosis, replace's
+# declarative effect-key derivation, and the region-bind subscription
+# descriptors dispose carries.
+#
+# The DOM-level half of the proof rides the dom-shim: the assembled runner
+# (scripta/dom-shim.ts + a driver) executes the real mount/replace/dispose
+# functions against the fake DOM and asserts the DOM outcomes (nodes
+# written, identity nodes preserved vs replaced, focus restored/moved,
+# subscriptions disposed, region cleared) — "asserted at the shim level".
+#
+# WHY the split: browser.mount/browser.replace carry imported sibling types
+# (tela.Visus/Thema/Renovatio) in their public signatures, which the radix
+# file-interface snapshot skips (WARN014 — the G4-family export-skip,
+# recorded fix:g4 in browser.fab). The skip does NOT apply at runtime —
+# the driver calls the emitted mount/replace directly. The check-time
+# exempla asserts the G4-safe pure policy (ligamen_status /
+# diagnosia_hydrationis / parse_identitates — string/list signatures stay
+# on the file interface).
+#
+# fix:<id> markers: none applied beyond browser.fab's (fix:web-dom-locale,
+# fix:g4, fix:g5 — NONE, fix:prim-nullable, fix:codegen001).
+
+import from "tela:tela" public * ut tela
+import from "tela:browser" public * ut browser
+
+# A valid theme (the 8-token core baseline — thema_css is fail-closed, so
+# mount requires a theme covering the core).
+fn thema_probe() → tela.Thema {
+    return tela.thema("probe", [
+        tela.scopulum("surface.canvas", "#ffffff"),
+        tela.scopulum("surface.panel", "#f9fafb"),
+        tela.scopulum("text.primary", "#111827"),
+        tela.scopulum("text.muted", "#6b7280"),
+        tela.scopulum("border.default", "#e5e7eb"),
+        tela.scopulum("accent.primary", "#2563eb"),
+        tela.scopulum("state.positive", "#16a34a"),
+        tela.scopulum("state.caution", "#d97706")
+    ])
+}
+
+# A segmented-control-shaped View over the data-tela seam: a group div with
+# two segment buttons. The driver mounts this View onto a scope.
+fn arbor_controlli() → tela.Visus {
+    return tela.elementum_omne(
+        tela.nova_identitas("tela-control"),
+        tela.html_spatium(),
+        "div",
+        [],
+        [],
+        [
+            tela.elementum_omne(
+                tela.nova_identitas("tela-seg-1"),
+                tela.html_spatium(),
+                "button",
+                [ tela.Attributum { nomen = "class", valor = "seg" } ],
+                [],
+                [ tela.textus_view("One") ]
+            ),
+            tela.elementum_omne(
+                tela.nova_identitas("tela-seg-2"),
+                tela.html_spatium(),
+                "button",
+                [ tela.Attributum { nomen = "class", valor = "seg" } ],
+                [],
+                [ tela.textus_view("Two") ]
+            )
+        ]
+    )
+}
+
+# The extended control (adds a third segment — the dirige proof target).
+fn arbor_controlli_extensa() → tela.Visus {
+    return tela.elementum_omne(
+        tela.nova_identitas("tela-control"),
+        tela.html_spatium(),
+        "div",
+        [],
+        [],
+        [
+            tela.elementum_omne(
+                tela.nova_identitas("tela-seg-1"),
+                tela.html_spatium(),
+                "button",
+                [ tela.Attributum { nomen = "class", valor = "seg" } ],
+                [],
+                [ tela.textus_view("One") ]
+            ),
+            tela.elementum_omne(
+                tela.nova_identitas("tela-seg-2"),
+                tela.html_spatium(),
+                "button",
+                [ tela.Attributum { nomen = "class", valor = "seg" } ],
+                [],
+                [ tela.textus_view("Two") ]
+            ),
+            tela.elementum_omne(
+                tela.nova_identitas("tela-seg-3"),
+                tela.html_spatium(),
+                "button",
+                [ tela.Attributum { nomen = "class", valor = "seg" } ],
+                [],
+                [ tela.textus_view("Three") ]
+            )
+        ]
+    )
+}
+
+# The duplicate-identity View (one tela-dup span under a group div).
+fn arbor_duplicata() → tela.Visus {
+    return tela.elementum_omne(
+        tela.nova_identitas("tela-duplicata"),
+        tela.html_spatium(),
+        "div",
+        [],
+        [],
+        [
+            tela.elementum_omne(
+                tela.nova_identitas("tela-dup"),
+                tela.html_spatium(),
+                "span",
+                [],
+                [],
+                [ tela.textus_view("x") ]
+            )
+        ]
+    )
+}
+
+# The exact serialized control markup (the plan's markup + the driver's
+# expected bytes).
+fn textus_arboris() → string {
+    return tela.html_visus(arbor_controlli()) coalesce ""
+}
+
+# The exact serialized extended-control markup.
+fn textus_arboris_extensae() → string {
+    return tela.html_visus(arbor_controlli_extensa()) coalesce ""
+}
+
+# Pre-rendered markup for the hydration scenario: the SAME bytes the View
+# serializes to — matching data-tela nodes must bind, not recreate.
+fn praesens_hydrationis() → string {
+    return textus_arboris()
+}
+
+# Pre-rendered markup for the mismatch scenario: the seg-2 node is OUT OF
+# SHAPE (a different class) — diagnosed + replaced from the View.
+fn praesens_mismatch() → string {
+    return "<div data-tela='tela-control'><button class='seg' data-tela='tela-seg-1'>One</button><button class='altera' data-tela='tela-seg-2'>Two</button></div>"
+}
+
+# Pre-rendered markup for the duplicate-identity scenario: TWO nodes carry
+# the same data-tela value — diagnosed, never a silent bind.
+fn praesens_duplicata() → string {
+    return "<div data-tela='tela-duplicata'><span data-tela='tela-dup'>a</span><span data-tela='tela-dup'>b</span></div>"
+}
+
+# Pre-rendered markup for the extranea scenario: a pre-existing identity
+# absent from the View — the region is replaced from the View.
+fn praesens_extranea() → string {
+    return "<div data-tela='tela-control'><span data-tela='tela-pristina'>old</span></div>"
+}
+
+# The identity index of the control View (document order).
+fn identitates_arboris() → list<string> {
+    return browser.parse_identitates(textus_arboris())
+}
+
+# The identity index of the duplicate pre-rendered markup.
+fn identitates_praesentis_duplicatae() → list<string> {
+    return browser.parse_identitates(praesens_duplicata())
+}
+
+main {
+    # --- the serialized control markup (plan bytes) ----------------------
+    assert textus_arboris() ≡ "<div data-tela='tela-control'><button class='seg' data-tela='tela-seg-1'>One</button><button class='seg' data-tela='tela-seg-2'>Two</button></div>"
+    assert textus_arboris_extensae() ≡ "<div data-tela='tela-control'><button class='seg' data-tela='tela-seg-1'>One</button><button class='seg' data-tela='tela-seg-2'>Two</button><button class='seg' data-tela='tela-seg-3'>Three</button></div>"
+
+    # --- identity extraction (the data-tela seam, document order) --------
+    const list<string> identitates ← identitates_arboris()
+    assert identitates.longitudo() ≡ 3
+    assert identitates[0] ≡ "tela-control"
+    assert identitates[1] ≡ "tela-seg-1"
+    assert identitates[2] ≡ "tela-seg-2"
+
+    # --- mount onto an empty scope: every identity creates ----------------
+    const list<string> vacua_ids ← vacua
+    const string vacua_markup ← ""
+    assert browser.ligamen_status("tela-control", identitates, vacua_ids, textus_arboris(), vacua_markup) ≡ "creare"
+    assert browser.ligamen_status("tela-seg-1", identitates, vacua_ids, textus_arboris(), vacua_markup) ≡ "creare"
+    assert browser.ligamen_status("tela-seg-2", identitates, vacua_ids, textus_arboris(), vacua_markup) ≡ "creare"
+    assert browser.diagnosia_hydrationis(textus_arboris(), vacua_markup, identitates, vacua_ids).longitudo() ≡ 0
+
+    # --- hydration: matching nodes bind (never recreate) ------------------
+    const list<string> praesentes_ids ← browser.parse_identitates(praesens_hydrationis())
+    assert browser.ligamen_status("tela-control", identitates, praesentes_ids, textus_arboris(), praesens_hydrationis()) ≡ "ligare"
+    assert browser.ligamen_status("tela-seg-1", identitates, praesentes_ids, textus_arboris(), praesens_hydrationis()) ≡ "ligare"
+    assert browser.ligamen_status("tela-seg-2", identitates, praesentes_ids, textus_arboris(), praesens_hydrationis()) ≡ "ligare"
+    assert browser.diagnosia_hydrationis(textus_arboris(), praesens_hydrationis(), identitates, praesentes_ids).longitudo() ≡ 0
+
+    # --- mismatch → diagnose + replace (never a silent bind) --------------
+    const list<string> praesentes_mismatch ← browser.parse_identitates(praesens_mismatch())
+    const list<string> diagnosia_mismatch ← browser.diagnosia_hydrationis(textus_arboris(), praesens_mismatch(), identitates, praesentes_mismatch)
+    assert diagnosia_mismatch.longitudo() ≡ 1
+    assert diagnosia_mismatch[0] ≡ "muta:tela-seg-2"
+    assert browser.ligamen_status("tela-control", identitates, praesentes_mismatch, textus_arboris(), praesens_mismatch()) ≡ "ligare"
+    assert browser.ligamen_status("tela-seg-1", identitates, praesentes_mismatch, textus_arboris(), praesens_mismatch()) ≡ "ligare"
+    assert browser.ligamen_status("tela-seg-2", identitates, praesentes_mismatch, textus_arboris(), praesens_mismatch()) ≡ "creare"
+
+    # --- extranea diagnosis (a pre-existing identity absent from the View)
+    const list<string> praesentes_extranea ← browser.parse_identitates(praesens_extranea())
+    const list<string> diagnosia_extranea ← browser.diagnosia_hydrationis(textus_arboris(), praesens_extranea(), identitates, praesentes_extranea)
+    assert diagnosia_extranea.continet("extranea:tela-pristina")
+    assert browser.ligamen_status("tela-control", identitates, praesentes_extranea, textus_arboris(), praesens_extranea()) ≡ "ligare"
+
+    # --- duplicate-identity diagnosis (never a silent bind) ---------------
+    const list<string> identitates_duplicata ← browser.parse_identitates(textus_arboris())
+    const list<string> praesentes_duplicata ← identitates_praesentis_duplicatae()
+    const list<string> diagnosia_duplicata ← browser.diagnosia_hydrationis(textus_arboris(), praesens_duplicata(), identitates_duplicata, praesentes_duplicata)
+    assert praesentes_duplicata.longitudo() ≡ 3
+    assert diagnosia_duplicata.continet("duplicata:tela-dup")
+    assert browser.ligamen_status("tela-dup", identitates_duplicata, praesentes_duplicata, textus_arboris(), praesens_duplicata()) ≡ "creare"
+
+    # --- replace: the declarative effect keys (behavior-design §3.2) ------
+    # Focus restoration by the pre-replacement focused node's identity →
+    # Restitue; declared focus movement → Dirige; scroll-anchor intent for
+    # the region → Ancora. The full derivation rides replace (driver-side);
+    # here the carrier construction + key accessor are proven.
+    const tela.Effectus restitue ← tela.restitue("tela-seg-2")
+    assert tela.effectus_identitas(restitue) ≡ "tela-seg-2"
+    const tela.Effectus dirige ← tela.dirige("tela-seg-3")
+    assert tela.effectus_identitas(dirige) ≡ "tela-seg-3"
+    const tela.Effectus ancora ← tela.ancora("#root")
+    assert tela.effectus_identitas(ancora) ≡ "#root"
+
+    # --- the region-bind subscription descriptors (dispose surface) -------
+    # mount attaches one descriptor per View identity, event "tela:ligamen"
+    # (the U2 dispose proof; the app's event bindings are app-typed in U3).
+    assert browser.subscriptio("tela-seg-1", "tela:ligamen").identitas ≡ "tela-seg-1"
+    assert browser.subscriptio("tela-seg-1", "tela:ligamen").nomen_eventi ≡ "tela:ligamen"
+
+    # --- fail-closed: an invalid View serializes to null ------------------
+    assert tela.html_visus(tela.elementum_view(tela.html_spatium(), "circle", [])) ≡ null
+}
