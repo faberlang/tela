@@ -5,18 +5,23 @@ category = "library"
 locale = "en"
 +++
 
-# tela/exempla/reference.fab — Stage 5 U2 exempla for the reference catalog
-# start (tela:reference): the layout (stacked rows / two-column grid /
+# tela/exempla/reference.fab — Stage 5 U2/U3 exempla for the reference
+# catalog (tela:reference): the layout (stacked rows / two-column grid /
 # prose measures) + typography (headings / prose / emphasis / scale)
-# families. Asserts the EXACT static bytes (the serializer emission order:
-# tag, then attributes in author order, then the data-tela identity) +
-# the a11y structure (the heading hierarchy via native h1..h6, prose
-# semantics via p, semantic emphasis via strong/em/code — never
-# color-only communication, the scale as decorative sizing), fail-closed,
+# families (U2) and the panel (theme-surface container) + badge (textual
+# status — no color-only communication) + metric (label + value + delta,
+# dl/dt/dd) families (U3). Asserts the EXACT static bytes (the serializer
+# emission order: tag, then attributes in author order, then the data-tela
+# identity) + the a11y structure (the heading hierarchy via native h1..h6,
+# prose semantics via p, semantic emphasis via strong/em/code — never
+# color-only communication, the scale as decorative sizing, the panel's
+# region landmark + accessible name, the badge's role=status + aria-label,
+# the metric's definition-list label/value structure), fail-closed,
 # executed under node (check-exempla runtime gate).
 #
 # fix:<id> markers: none applied beyond reference.fab's (fix:g5 — NONE,
-# fix:codegen001, fix:snapshot-name-collision, fix:verum-b).
+# fix:codegen001, fix:snapshot-name-collision, fix:verum-b; the
+# LOCALE002 advisory on the BadgeProps status field — recorded).
 
 import from "tela:tela" private tela
 import from "tela:reference" private ref
@@ -103,7 +108,7 @@ main {
     assert tela.token_name_valid(ref.ref_layout_gap().name)
     assert tela.token_name_valid(ref.ref_type_prose_line_height().name)
     const list<tela.Token> collectio ← ref.reference_tokens()
-    assert collectio.longitudo() ≡ 11
+    assert collectio.longitudo() ≡ 22
 
     # --- determinism: identical input → identical bytes -------------------
     const string stack_b ← tela.html_visus(ref.layout_stack(ref.stack_props([
@@ -113,5 +118,67 @@ main {
     assert stack_b ≡ stack
     assert tela.css(ref.layout_style()) ≡ css_layout
 
-    print "reference catalog exempla ready (layout + typography; tela-s5-u2)"
+    # =====================================================================
+    # Stage 5 U3 — the panel + badge + metric families.
+    # =====================================================================
+
+    # --- panel: theme-surface semantics + the region landmark -------------
+    # The a11y structure: role='region' (a named landmark) + aria-label =
+    # the title when present. The SURFACE comes from the ref.panel.* tokens
+    # (referencing the theme core surface.panel / border.default) — the
+    # component carries no hardcoded color (asserted by the token values).
+    assert tela.html_visus(ref.panel(ref.panel_props("status", "Status panel", [
+        tela.text_view("all systems operational")
+    ]))) coalesce "" ≡ "<div role='region' aria-label='Status panel' data-tela='ref-panel-status'>all systems operational</div>"
+    # No title → no aria-label (the region landmark stays; the accessible
+    # name is then the content).
+    assert tela.html_visus(ref.panel(ref.panel_props("plain", "", [
+        tela.text_view("content")
+    ]))) coalesce "" ≡ "<div role='region' data-tela='ref-panel-plain'>content</div>"
+
+    # --- badge: textual status — meaning never color alone ----------------
+    # role='status' + aria-label = "<status>: <text>" — the status word
+    # rides the accessible name AND the visible label is present; the
+    # meaning is TEXTUAL (no color-only communication, campaign §8).
+    assert tela.html_visus(ref.badge(ref.badge_props("new", "New", "3 messages"))) coalesce "" ≡ "<span role='status' aria-label='New: 3 messages' data-tela='ref-badge-new'>3 messages</span>"
+    assert tela.html_visus(ref.badge(ref.badge_props("ok", "Ok", "all checks passed"))) coalesce "" ≡ "<span role='status' aria-label='Ok: all checks passed' data-tela='ref-badge-ok'>all checks passed</span>"
+
+    # --- metric: label + value (+ optional delta) — the textual form ------
+    # The benchmark grammar's definition-list pattern (dl/dt/dd): dt = the
+    # label, dd = the value, optional second dd = the delta. The textual
+    # form is preserved — label + value (+ delta) are visible text.
+    assert tela.html_visus(ref.metric(ref.metric_props("uptime", "uptime", "99.9%", ""))) coalesce "" ≡ "<dl data-tela='ref-metric-uptime'><dt>uptime</dt><dd>99.9%</dd></dl>"
+    assert tela.html_visus(ref.metric(ref.metric_props("requests", "requests", "12 480", "+3.1%"))) coalesce "" ≡ "<dl data-tela='ref-metric-requests'><dt>requests</dt><dd>12 480</dd><dd>+3.1%</dd></dl>"
+
+    # --- the panel/badge/metric style bundles (prefix-keyed, --ref-* tokens)
+    const string css_panel ← tela.css(ref.panel_style())
+    assert css_panel ≡ "[data-tela^='ref-panel-'] { background: var(--ref-panel-surface); border: 1px solid var(--ref-panel-border); border-radius: var(--ref-panel-radius); padding: var(--ref-panel-padding); }\n"
+    const string css_badge ← tela.css(ref.badge_style())
+    assert css_badge ≡ "[data-tela^='ref-badge-'] { display: inline-block; font-size: var(--ref-badge-size); padding: var(--ref-badge-padding); border-radius: var(--ref-badge-radius); }\n"
+    const string css_metric ← tela.css(ref.metric_style())
+    assert css_metric.continet("[data-tela^='ref-metric-'] { margin: 0; padding: 0; }")
+    assert css_metric.continet("[data-tela^='ref-metric-'] dt { font-size: var(--ref-metric-label-size); color: var(--ref-metric-label-muted); }")
+    assert css_metric.continet("[data-tela^='ref-metric-'] dd { font-size: var(--ref-metric-value-size); font-weight: var(--ref-metric-value-weight); margin: 0; }")
+
+    # --- the ref.panel.* / ref.badge.* / ref.metric.* tokens --------------
+    # The theme-surface semantics (no hardcoded color): the panel surface +
+    # border + the metric label color reference the theme's core tokens.
+    assert ref.ref_panel_surface().name ≡ "ref.panel.surface"
+    assert ref.ref_panel_surface().value ≡ "var(--surface-panel)"
+    assert ref.ref_panel_border().value ≡ "var(--border-default)"
+    assert ref.ref_panel_radius().value ≡ "0.5rem"
+    assert ref.ref_badge_size().name ≡ "ref.badge.size"
+    assert ref.ref_badge_size().value ≡ "0.75rem"
+    assert ref.ref_metric_label_muted().name ≡ "ref.metric.label.muted"
+    assert ref.ref_metric_label_muted().value ≡ "var(--text-muted)"
+    assert ref.ref_metric_value_size().value ≡ "1.5rem"
+    assert ref.ref_metric_value_weight().value ≡ "600"
+    # Every token name passes the kernel lexical predicate (fail-closed).
+    assert tela.token_name_valid(ref.ref_panel_surface().name)
+    assert tela.token_name_valid(ref.ref_badge_radius().name)
+    assert tela.token_name_valid(ref.ref_metric_value_weight().name)
+    const list<tela.Token> collectio_u3 ← ref.reference_tokens()
+    assert collectio_u3.longitudo() ≡ 22
+
+    print "reference catalog exempla ready (layout + typography + panel + badge + metric; tela-s5-u2/u3)"
 }

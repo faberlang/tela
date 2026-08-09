@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# tela/scripta/check-reference — the Stage 5 U2 browser-proof gate for the
-# reference catalog (tela:reference — the layout + typography families).
+# tela/scripta/check-reference — the Stage 5 U2/U3 browser-proof gate for the
+# reference catalog (tela:reference — the layout + typography families, U2;
+# the panel + badge + metric families, U3).
 #
 # The Stage 4 interactive-seam mechanics (the check-forms-interactive
 # pattern): assembles the canary-app's REAL-IMPORT composition (web:dom
@@ -82,8 +83,9 @@ BROWSER_NS="const browser = { region_root, event_subscription, binding, parse_id
 EXT_NS="const ext = { chart_axis_muted, chart_axis_muted_dark, chart_grid_muted, chart_grid_muted_dark, chart_tokens, chart_tokens_dark, bar_meter, chart_style };"
 FORMS_NS="const forms = { field_props, checkbox_props, select_props, field, checkbox, select, error_region, form_live_region, field_group, form_field_invalid, form_field_valid, form_focus, form_tokens, form_style, field_event, change_event, submit_event, click_event, invalid_state, error_present };"
 # The reference catalog namespace (every tela:reference export — the
-# layout + typography families, the bundles, the ref.* token accessors).
-REF_NS="const ref = { layout_stack, layout_grid, layout_prose, stack_props, grid_props, layout_prose_props, typography_heading, typography_prose, typography_emphasis, typography_scale, heading_props, prose_props, emphasis_props, scale_props, clamped_level, layout_style, typography_style, ref_layout_gap, ref_layout_prose_measure, ref_type_scale_xs, ref_type_scale_sm, ref_type_scale_md, ref_type_scale_lg, ref_type_scale_xl, ref_type_heading_weight, ref_type_heading_margin, ref_type_prose_line_height, ref_type_prose_margin, reference_tokens, StackProps, GridProps, LayoutProseProps, HeadingProps, ProseProps, EmphasisProps, ScaleProps };"
+# layout + typography families (U2) + the panel + badge + metric families
+# (U3), the bundles, the ref.* token accessors).
+REF_NS="const ref = { layout_stack, layout_grid, layout_prose, stack_props, grid_props, layout_prose_props, typography_heading, typography_prose, typography_emphasis, typography_scale, heading_props, prose_props, emphasis_props, scale_props, clamped_level, layout_style, typography_style, panel, badge, metric, panel_props, badge_props, metric_props, panel_style, badge_style, metric_style, ref_layout_gap, ref_layout_prose_measure, ref_type_scale_xs, ref_type_scale_sm, ref_type_scale_md, ref_type_scale_lg, ref_type_scale_xl, ref_type_heading_weight, ref_type_heading_margin, ref_type_prose_line_height, ref_type_prose_margin, ref_panel_surface, ref_panel_border, ref_panel_radius, ref_panel_padding, ref_badge_size, ref_badge_padding, ref_badge_radius, ref_metric_label_size, ref_metric_label_muted, ref_metric_value_size, ref_metric_value_weight, reference_tokens, StackProps, GridProps, LayoutProseProps, HeadingProps, ProseProps, EmphasisProps, ScaleProps, PanelProps, BadgeProps, MetricProps };"
 # The DOM_NS: the ACTUAL bindings/ts.toml mapping (web:dom.<fn> →
 # webDom<Fn>) over faber-web's runtime/dom.ts implementation. The snapshot
 # binding is widened at the harness boundary (the emitted Scope type carries
@@ -285,7 +287,60 @@ assert(dm.diagnostics.includes("duplicate:ref-typography-prose"), "reuse of the 
 const dupBinding = dm.bindings.find((b) => b.identity === "ref-typography-prose");
 assert(dupBinding !== undefined && dupBinding.status === "create", "the duplicated identity creates (never silently binds)");
 
-console.log("reference catalog mount gate green (layout + typography mount + structure/a11y; tela-s5-u2)");
+// --- 4. the panel family mounts + the region-landmark structure ----------
+// Theme-surface semantics: the panel is a region landmark with an
+// accessible name (aria-label); the surface color comes from the tokens
+// (never a hardcoded color in the rendered bytes).
+const panelMarkup = tela.html_visus(panel_composition()) ?? "";
+plantRegion("#root", panelMarkup);
+const pm = mount_panel("#root") as Mounted;
+assert(pm !== null, "panel mount returns a plan");
+assert(pm.identities.length === 3, "panel identities: wrapper + panel + prose paragraph");
+assert(pm.bindings.every((l) => l.status === "bind"), "hydration: every panel identity binds");
+const panelNode = byIdentity("ref-panel-status");
+assert(panelNode !== undefined && panelNode.getAttribute("role") === "region", "panel is a region landmark");
+assert(panelNode!.getAttribute("aria-label") === "Status panel", "panel accessible name (aria-label)");
+// No hardcoded color in the panel bytes: the surface is a var() reference
+// to the --ref-panel-surface token (theme-surface semantics).
+assert(panelNode!.getAttribute("style") === null, "panel carries no inline style (the surface rides the tokens)");
+assert(byIdentity("ref-typography-prose")?.textContent === "all systems operational", "panel content (prose) present");
+
+// --- 5. the badge family mounts + the textual-status structure -----------
+// A badge's meaning is TEXTUAL: role=status + aria-label carries the
+// status word + the label; no color-only communication.
+const badgeMarkup = tela.html_visus(badge_composition()) ?? "";
+plantRegion("#root", badgeMarkup);
+const bm = mount_badge("#root") as Mounted;
+assert(bm !== null, "badge mount returns a plan");
+assert(bm.identities.length === 3, "badge identities: wrapper + two badges");
+assert(bm.bindings.every((l) => l.status === "bind"), "hydration: every badge identity binds");
+const badgeNew = byIdentity("ref-badge-new");
+assert(badgeNew !== undefined && badgeNew.getAttribute("role") === "status", "badge carries role=status");
+assert(badgeNew!.getAttribute("aria-label") === "New: 3 messages", "badge accessible name carries the status word + the label (meaning never color alone)");
+assert(badgeNew!.textContent === "3 messages", "badge visible label present");
+const badgeOk = byIdentity("ref-badge-ok");
+assert(badgeOk !== undefined && badgeOk!.getAttribute("aria-label") === "Ok: all checks passed", "second badge accessible name");
+
+// --- 6. the metric family mounts + the definition-list structure ---------
+// The benchmark grammar's dl/dt/dd pattern: label + value (+ optional
+// delta) — the textual form preserved.
+const metricMarkup = tela.html_visus(metric_composition()) ?? "";
+plantRegion("#root", metricMarkup);
+const mm = mount_metric("#root") as Mounted;
+assert(mm !== null, "metric mount returns a plan");
+assert(mm.identities.length === 4, "metric identities: wrapper + three metrics");
+assert(mm.bindings.every((l) => l.status === "bind"), "hydration: every metric identity binds");
+const metricUptime = byIdentity("ref-metric-uptime");
+assert(metricUptime !== undefined && metricUptime!.tagName === "dl", "metric is a dl (the definition-list pattern)");
+assert(metricUptime!.children.length === 2, "metric uptime: label + value rows only (no delta)");
+assert(metricUptime!.children[0].tagName === "dt" && metricUptime!.children[0].textContent === "uptime", "metric dt = the label");
+assert(metricUptime!.children[1].tagName === "dd" && metricUptime!.children[1].textContent === "99.9%", "metric dd = the value");
+const metricRequests = byIdentity("ref-metric-requests");
+assert(metricRequests !== undefined && metricRequests!.children.length === 3, "metric requests: label + value + delta rows");
+assert(metricRequests!.children[2].tagName === "dd" && metricRequests!.children[2].textContent === "+3.1%", "the optional delta row is a dd");
+assert(metricUptime!.getAttribute("style") === null, "metric carries no inline style (the typography rides the tokens)");
+
+console.log("reference catalog mount gate green (layout + typography + panel + badge + metric mount + structure/a11y; tela-s5-u2/u3)");
 HOST_DRIVER
 
 {
@@ -314,4 +369,4 @@ tsc --noEmit --strict --target ES2020 --lib ES2020,DOM --module ESNext --moduleR
 echo "check-reference: node — the mount + structure/a11y gate (fail-closed)"
 node "$SCRATCH/assembled.ts"
 
-echo "check-reference: green (real provider seam; layout + typography mount cases; node exit 0)"
+echo "check-reference: green (real provider seam; layout + typography + panel + badge + metric mount cases; node exit 0)"

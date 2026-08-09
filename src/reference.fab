@@ -9,6 +9,20 @@
 # tokens (the kernel Token carrier pattern, MF-7). U3–U8 extend this one
 # flat module — strictly sequential (delivery Coordination Constraint 3).
 #
+# Stage 5 U3 (tela-s5-u3-panel-badge-metric): the catalog EXTENDS with
+# three families — **panel** (a surface container with theme-surface
+# semantics: the surface/border come from the ref.panel.* tokens, which
+# reference the theme's core surface.panel / border.default — no hardcoded
+# color anywhere in the component), **badge** (a status/label indicator:
+# textual label + role="status" + aria-label carrying the status word — a
+# badge's meaning is never color alone, campaign §8), and **metric**
+# (label + value + optional delta in the benchmark grammar's definition-list
+# pattern — dl/dt/dd, the textual form preserved). Stable
+# ref-panel-<name>/ref-badge-<name>/ref-metric-<name> identities; the
+# style bundles key on the identity prefixes ([data-tela^='ref-panel-']
+# — the variable-suffix form, the formslib precedent), referencing the
+# namespaced ref.panel.* / ref.badge.* / ref.metric.* tokens.
+#
 # MODULE SHAPE (U1-locked, stage-5-discovery.md §1): ONE flat module
 # mirroring the kernel (G4-safe), stdlib-only + ONE same-package sibling
 # import (tela:tela); no public signature references a type outside the
@@ -19,7 +33,8 @@
 # PascalCase concatenation (StackProps), fns/fields snake_case, identities
 # kebab-case data (MF-8), tokens dotted lowercase (ref.*).
 #
-# THE TWO FAMILIES (delivery U2 outcome; campaign §3 component contract):
+# THE FIVE FAMILIES (delivery U2/U3 outcomes; campaign §3 component
+# contract):
 #
 #   LAYOUT — semantic containers for arrangement, no ARIA roles (pure
 #   layout grouping; the a11y structure is the container semantics + the
@@ -78,14 +93,21 @@
 #     typography_scale/stack_props/grid_props/layout_prose_props/
 #     heading_props/prose_props/emphasis_props/scale_props/clamped_level/
 #     layout_style/typography_style/reference_tokens + the token
-#     accessors) probed collision-free on in-tree radix 0.80.0 (a free fn
-#     may share a class name — G5's collision is enum-member-specific).
+#     accessors; U3: panel/badge/metric/panel_props/badge_props/
+#     metric_props/panel_style/badge_style/metric_style + the
+#     ref_panel_*/ref_badge_*/ref_metric_* accessors) probed
+#     collision-free on in-tree radix 0.80.0 (a free fn may share a class
+#     name — G5's collision is enum-member-specific).
 #   fix:codegen001 — the Rust emit-across-imports block persists
 #     (attempted + recorded; the TS lane is the proven runtime lane).
 #   fix:snapshot-name-collision — the props classes avoid the kernel type
 #     names AND the browser/forms carrier names (StackProps/GridProps/
-#     LayoutProseProps/HeadingProps/ProseProps/EmphasisProps/ScaleProps).
+#     LayoutProseProps/HeadingProps/ProseProps/EmphasisProps/ScaleProps/
+#     PanelProps/BadgeProps/MetricProps).
 #   fix:verum-b — en-locale naming: no verum/falsum identifiers.
+#   LOCALE002 advisory (recorded, non-blocking): the BadgeProps `status`
+#     field is a keyword-like spelling (advisory only — it parses + emits,
+#     per the web-surface-import DELIVERY §5.2 record); no rename needed.
 #
 # G4 consumability (done_when (g)): the `→ tela.View` component fns + the
 # `→ tela.Style`/`→ tela.Token` accessors are consumable through NORMAL
@@ -273,6 +295,121 @@ fn typography_scale(ScaleProps props) → tela.View {
 }
 
 # ===========================================================================
+# PANEL family — theme-surface containers (ref-panel-*).
+# ===========================================================================
+
+class PanelProps {
+    string name
+    string title
+    list<tela.View> children
+}
+
+fn panel_props(string name, string title, list<tela.View> children) → PanelProps {
+    return PanelProps { name = name, title = title, children = children }
+}
+
+# Panel: a surface/container. THE THEME-SURFACE SEMANTICS (done_when (a)):
+# the surface background + border come from the ref.panel.surface /
+# ref.panel.border tokens, which reference the theme's core surface.panel /
+# border.default tokens (var(--surface-panel) / var(--border-default)) —
+# the component contains NO hardcoded color; the panel follows the selected
+# theme's surface. The a11y structure: role='region' (a named landmark —
+# the accessible name) + aria-label = the title when present (no title → no
+# aria-label). A visible title is app content (a heading in the children —
+# the heading hierarchy is the app's call).
+fn panel(PanelProps props) → tela.View {
+    var list<tela.Attribute> attributes ← [
+        tela.Attribute { name = "role", value = "region" }
+    ]
+    if not (props.title ≡ "") {
+        attributes.appende(tela.Attribute { name = "aria-label", value = props.title })
+    }
+    return tela.element_full(
+        tela.new_identity("ref-panel-" + props.name),
+        tela.html_space(),
+        "div",
+        attributes,
+        [],
+        props.children
+    )
+}
+
+# ===========================================================================
+# BADGE family — textual status indicators (ref-badge-*).
+# ===========================================================================
+
+class BadgeProps {
+    string name
+    string status
+    string text
+}
+
+fn badge_props(string name, string status, string text) → BadgeProps {
+    return BadgeProps { name = name, status = status, text = text }
+}
+
+# Badge: a small status/label indicator. NO COLOR-ONLY COMMUNICATION
+# (done_when (a), campaign §8): the meaning is textual — the label is the
+# visible text and the status word rides the accessible name, never color
+# alone. The a11y shape: role='status' (the status live-region semantic) +
+# aria-label = "<status>: <text>" (the full textual meaning). The style
+# bundle may shape the badge (size/padding/radius) but colors nothing
+# semantic — a status color is app-side styling over its own selectors.
+fn badge(BadgeProps props) → tela.View {
+    return tela.element_full(
+        tela.new_identity("ref-badge-" + props.name),
+        tela.html_space(),
+        "span",
+        [
+            tela.Attribute { name = "role", value = "status" },
+            tela.Attribute { name = "aria-label", value = props.status + ": " + props.text }
+        ],
+        [],
+        [ tela.text_view(props.text) ]
+    )
+}
+
+# ===========================================================================
+# METRIC family — label + value (+ delta) pairs (ref-metric-*).
+# ===========================================================================
+
+class MetricProps {
+    string name
+    string label
+    string value
+    string delta
+}
+
+fn metric_props(string name, string label, string value, string delta) → MetricProps {
+    return MetricProps { name = name, label = label, value = value, delta = delta }
+}
+
+# Metric: label + value (+ optional delta) in the benchmark grammar's
+# definition-list pattern (dl/dt/dd — the stage-1 metric-table shape; the
+# delivery done_when (a): "the benchmark grammar's metric pattern"). THE
+# TEXTUAL FORM IS PRESERVED: the label + value (+ delta) are visible text —
+# never replaced by a visualization. The a11y structure: the dl carries the
+# ref-metric-<name> identity; dt = the label (the accessible label), dd =
+# the value, an optional second dd = the delta ("" → no delta row).
+fn metric(MetricProps props) → tela.View {
+    var list<tela.View> children ← [
+        tela.element_view(tela.html_space(), "dt", [ tela.text_view(props.label) ]),
+        tela.element_view(tela.html_space(), "dd", [ tela.text_view(props.value) ])
+    ]
+    if not (props.delta ≡ "") {
+        children.appende(tela.element_view(tela.html_space(), "dd", [ tela.text_view(props.delta) ]))
+    }
+    return tela.element_full(
+        tela.new_identity("ref-metric-" + props.name),
+        tela.html_space(),
+        "dl",
+        [],
+        [],
+        children
+    )
+}
+
+# ===========================================================================
 # STYLE BUNDLES — rules keyed on the ref-* identities, referencing the
 # ref.* tokens as CSS custom properties (the --ref-* emission form).
 # ===========================================================================
@@ -402,6 +539,78 @@ fn typography_style() → tela.Style {
     }
 }
 
+# The panel style bundle: keyed on the ref-panel-* identity PREFIX (the
+# variable-suffix form — the formslib precedent). The surface + border
+# reference the ref.panel.* tokens, which resolve to the theme's core
+# surface.panel / border.default (theme-surface semantics — no hardcoded
+# color).
+fn panel_style() → tela.Style {
+    return tela.Style {
+        rules = [
+            tela.Rule {
+                selector = "[data-tela^='ref-panel-']",
+                declarations = [
+                    tela.Declaration { name = "background", value = "var(--ref-panel-surface)" },
+                    tela.Declaration { name = "border", value = "1px solid var(--ref-panel-border)" },
+                    tela.Declaration { name = "border-radius", value = "var(--ref-panel-radius)" },
+                    tela.Declaration { name = "padding", value = "var(--ref-panel-padding)" }
+                ]
+            }
+        ]
+    }
+}
+
+# The badge style bundle: keyed on the ref-badge-* identity prefix. Shapes
+# the badge (size/padding/radius) but colors nothing semantic — a badge's
+# meaning is textual (the status word + label), never color alone.
+fn badge_style() → tela.Style {
+    return tela.Style {
+        rules = [
+            tela.Rule {
+                selector = "[data-tela^='ref-badge-']",
+                declarations = [
+                    tela.Declaration { name = "display", value = "inline-block" },
+                    tela.Declaration { name = "font-size", value = "var(--ref-badge-size)" },
+                    tela.Declaration { name = "padding", value = "var(--ref-badge-padding)" },
+                    tela.Declaration { name = "border-radius", value = "var(--ref-badge-radius)" }
+                ]
+            }
+        ]
+    }
+}
+
+# The metric style bundle: keyed on the ref-metric-* identity prefix. The
+# label/value typography; the label color references the theme's core
+# text.muted (ref.metric.label.muted — no hardcoded color).
+fn metric_style() → tela.Style {
+    return tela.Style {
+        rules = [
+            tela.Rule {
+                selector = "[data-tela^='ref-metric-']",
+                declarations = [
+                    tela.Declaration { name = "margin", value = "0" },
+                    tela.Declaration { name = "padding", value = "0" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela^='ref-metric-'] dt",
+                declarations = [
+                    tela.Declaration { name = "font-size", value = "var(--ref-metric-label-size)" },
+                    tela.Declaration { name = "color", value = "var(--ref-metric-label-muted)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela^='ref-metric-'] dd",
+                declarations = [
+                    tela.Declaration { name = "font-size", value = "var(--ref-metric-value-size)" },
+                    tela.Declaration { name = "font-weight", value = "var(--ref-metric-value-weight)" },
+                    tela.Declaration { name = "margin", value = "0" }
+                ]
+            }
+        ]
+    }
+}
+
 # ===========================================================================
 # TOKENS — the namespaced ref.* theme tokens (the kernel Token carrier,
 # MF-7): zero-arg accessors returning tela.Token values; consumers collect
@@ -452,6 +661,58 @@ fn ref_type_prose_margin() → tela.Token {
     return tela.Token { name = "ref.type.prose.margin", value = "0 0 1rem 0" }
 }
 
+# The ref.panel.* tokens — the THEME-SURFACE semantics (Stage 5 U3): the
+# color-bearing tokens (surface, border) reference the theme's core tokens
+# (var(--surface-panel) / var(--border-default)) — the panel follows the
+# selected theme's surface; radius/padding are neutral spacing values.
+fn ref_panel_surface() → tela.Token {
+    return tela.Token { name = "ref.panel.surface", value = "var(--surface-panel)" }
+}
+
+fn ref_panel_border() → tela.Token {
+    return tela.Token { name = "ref.panel.border", value = "var(--border-default)" }
+}
+
+fn ref_panel_radius() → tela.Token {
+    return tela.Token { name = "ref.panel.radius", value = "0.5rem" }
+}
+
+fn ref_panel_padding() → tela.Token {
+    return tela.Token { name = "ref.panel.padding", value = "1rem" }
+}
+
+# The ref.badge.* tokens — badge shaping (size/padding/radius); nothing
+# semantic rides color.
+fn ref_badge_size() → tela.Token {
+    return tela.Token { name = "ref.badge.size", value = "0.75rem" }
+}
+
+fn ref_badge_padding() → tela.Token {
+    return tela.Token { name = "ref.badge.padding", value = "0.125rem 0.5rem" }
+}
+
+fn ref_badge_radius() → tela.Token {
+    return tela.Token { name = "ref.badge.radius", value = "0.25rem" }
+}
+
+# The ref.metric.* tokens — the label/value typography; the label color
+# references the theme's core text.muted (no hardcoded color).
+fn ref_metric_label_size() → tela.Token {
+    return tela.Token { name = "ref.metric.label.size", value = "0.875rem" }
+}
+
+fn ref_metric_label_muted() → tela.Token {
+    return tela.Token { name = "ref.metric.label.muted", value = "var(--text-muted)" }
+}
+
+fn ref_metric_value_size() → tela.Token {
+    return tela.Token { name = "ref.metric.value.size", value = "1.5rem" }
+}
+
+fn ref_metric_value_weight() → tela.Token {
+    return tela.Token { name = "ref.metric.value.weight", value = "600" }
+}
+
 # The catalog's token collection (the self-usable summary — consumers
 # compose their Theme via the individual accessors; this is the package's
 # assembly-input convenience, the formslib precedent).
@@ -467,6 +728,17 @@ fn reference_tokens() → list<tela.Token> {
         ref_type_heading_weight(),
         ref_type_heading_margin(),
         ref_type_prose_line_height(),
-        ref_type_prose_margin()
+        ref_type_prose_margin(),
+        ref_panel_surface(),
+        ref_panel_border(),
+        ref_panel_radius(),
+        ref_panel_padding(),
+        ref_badge_size(),
+        ref_badge_padding(),
+        ref_badge_radius(),
+        ref_metric_label_size(),
+        ref_metric_label_muted(),
+        ref_metric_value_size(),
+        ref_metric_value_weight()
     ]
 }

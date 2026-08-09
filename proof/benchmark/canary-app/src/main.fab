@@ -165,6 +165,31 @@
 # check-forms-interactive) need the reference namespace wiring — U10
 # re-wires + re-records the official sha (stage-5-delivery.md U2 done_when
 # (f) + U10).
+#
+# Stage 5 U3 (tela-s5-u3-panel-badge-metric) — the reference catalog
+# composition extends: the panel (theme-surface container), badge (textual
+# status — no color-only communication), and metric (label + value +
+# optional delta, the benchmark grammar's dl/dt/dd pattern) families join
+# the runner composition through NORMAL qualified imports; the reference
+# bundles gain panel_style/badge_style/metric_style (the component cascade
+# layer); the ref.panel.* / ref.badge.* / ref.metric.* tokens join both
+# themes (the ref.panel.surface/border + ref.metric.label.muted values
+# reference the theme's core tokens — theme-surface semantics). The mount
+# seam fns (mount_panel / mount_badge / mount_metric) supply the
+# check-reference U3 browser-proof surface.
+#
+# fix:<id> markers applied in this unit:
+#   fix:g5 — NONE: all new identifiers (panel_composition/
+#     badge_composition/metric_composition/mount_panel/mount_badge/
+#     mount_metric) probed collision-free on in-tree radix 0.80.0 (a free
+#     fn may share a class name — G5's collision is enum-member-specific).
+#   fix:snapshot-name-collision — the new identifiers avoid kernel type
+#     names AND the tela:reference prop-class names.
+#   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the
+#     TS lane is the proven runtime lane.
+#   fix:g4 — the reference families are consumed through the NORMAL
+#     package interface (the U1 probe (i) post-cds-u6 surface — no
+#     compose-without, no harness-assembly bypass for the catalog).
 
 import from "tela:tela" public * ut tela
 import from "extensionlib:extension" public * ut ext
@@ -175,8 +200,14 @@ import from "web:dom" public * ut dom
 
 # --- Themed panel: a div with a stable identity + accessible name; the panel
 # rule in main's style bundle keys on the identity (policy (d) seam).
+# Stage 5 U3 rename: `panel` → `app_panel` — the catalog's `ref.panel`
+# component fn (tela:reference, U3) shares the assembled TS file with this
+# app fn in the harness assemblies; the duplicate top-level `panel`
+# declaration broke the tsc lane (TS2393). The app fn is app-owned; the
+# rename keeps the rendered bytes identical (the canary-panelum identity +
+# aria-label are unchanged).
 
-fn panel(list<tela.View> children) → tela.View {
+fn app_panel(list<tela.View> children) → tela.View {
     return tela.element_full(
         tela.new_identity("canary-panelum"),
         tela.html_space(),
@@ -792,7 +823,18 @@ fn reference_theme() → tela.Theme {
         ref.ref_type_heading_weight(),
         ref.ref_type_heading_margin(),
         ref.ref_type_prose_line_height(),
-        ref.ref_type_prose_margin()
+        ref.ref_type_prose_margin(),
+        ref.ref_panel_surface(),
+        ref.ref_panel_border(),
+        ref.ref_panel_radius(),
+        ref.ref_panel_padding(),
+        ref.ref_badge_size(),
+        ref.ref_badge_padding(),
+        ref.ref_badge_radius(),
+        ref.ref_metric_label_size(),
+        ref.ref_metric_label_muted(),
+        ref.ref_metric_value_size(),
+        ref.ref_metric_value_weight()
     ])
 }
 
@@ -882,6 +924,84 @@ fn mount_typography(string selector) → browser.Mounted ∪ null {
     return browser.mount(scope, typography_composition(), reference_theme())
 }
 
+# ===========================================================================
+# Stage 5 U3 — the panel + badge + metric compositions (tela:reference).
+# The three families compose through NORMAL qualified imports; the mount
+# seam fns supply the check-reference U3 browser-proof surface.
+# ===========================================================================
+
+# The panel composition: a themed panel wrapping a prose paragraph. The
+# panel's surface semantics come from the ref.panel.* tokens (referencing
+# the theme core surface.panel / border.default — no hardcoded color).
+# The wrapper identity is app-owned data.
+fn panel_composition() → tela.View {
+    return tela.element_full(
+        tela.new_identity("canary-ref-panel"),
+        tela.html_space(),
+        "div",
+        [],
+        [],
+        [
+            ref.panel(ref.panel_props("status", "Status panel", [
+                ref.typography_prose(ref.prose_props([ tela.text_view("all systems operational") ]))
+            ]))
+        ]
+    )
+}
+
+# The badge composition: two textual status badges — the meaning is
+# textual (label + the status word in the accessible name), never color
+# alone. The wrapper identity is app-owned data.
+fn badge_composition() → tela.View {
+    return tela.element_full(
+        tela.new_identity("canary-ref-badge"),
+        tela.html_space(),
+        "div",
+        [],
+        [],
+        [
+            ref.badge(ref.badge_props("new", "New", "3 messages")),
+            ref.badge(ref.badge_props("ok", "Ok", "all checks passed"))
+        ]
+    )
+}
+
+# The metric composition: three metrics in the benchmark grammar's
+# dl/dt/dd pattern — the textual form preserved (label + value + optional
+# delta rows). The wrapper identity is app-owned data.
+fn metric_composition() → tela.View {
+    return tela.element_full(
+        tela.new_identity("canary-ref-metric"),
+        tela.html_space(),
+        "div",
+        [],
+        [],
+        [
+            ref.metric(ref.metric_props("uptime", "uptime", "99.9%", "")),
+            ref.metric(ref.metric_props("requests", "requests", "12 480", "+3.1%")),
+            ref.metric(ref.metric_props("error", "error rate", "0.02%", "-0.01%"))
+        ]
+    )
+}
+
+# The seam mounts for the U3 browser proof: the check-reference driver
+# calls these through the app's own imports (dom.scope + browser.mount,
+# the U7 pattern). Each family mounts independently — done_when (d).
+fn mount_panel(string selector) → browser.Mounted ∪ null {
+    const dom.Scope scope ← dom.scope(selector)
+    return browser.mount(scope, panel_composition(), reference_theme())
+}
+
+fn mount_badge(string selector) → browser.Mounted ∪ null {
+    const dom.Scope scope ← dom.scope(selector)
+    return browser.mount(scope, badge_composition(), reference_theme())
+}
+
+fn mount_metric(string selector) → browser.Mounted ∪ null {
+    const dom.Scope scope ← dom.scope(selector)
+    return browser.mount(scope, metric_composition(), reference_theme())
+}
+
 main {
     # G4 seam attempt (recorded in the evidence record): ext.bar_meter
     # resolves to WARN014 export-skip; the app composes the meter with tela
@@ -894,7 +1014,7 @@ main {
     # that mounts interactively).
     const ControlProps props ← control_props()
     const tela.View control ← segmented_control(props)
-    const tela.View tree ← panel([
+    const tela.View tree ← app_panel([
         metric_table(),
         bar,
         control
@@ -930,7 +1050,18 @@ main {
         ref.ref_type_heading_weight(),
         ref.ref_type_heading_margin(),
         ref.ref_type_prose_line_height(),
-        ref.ref_type_prose_margin()
+        ref.ref_type_prose_margin(),
+        ref.ref_panel_surface(),
+        ref.ref_panel_border(),
+        ref.ref_panel_radius(),
+        ref.ref_panel_padding(),
+        ref.ref_badge_size(),
+        ref.ref_badge_padding(),
+        ref.ref_badge_radius(),
+        ref.ref_metric_label_size(),
+        ref.ref_metric_label_muted(),
+        ref.ref_metric_value_size(),
+        ref.ref_metric_value_weight()
     ])
     const tela.Theme tenebrae ← tela.theme("tenebrae", [
         tela.token("surface.canvas", "#0f172a"),
@@ -956,7 +1087,18 @@ main {
         ref.ref_type_heading_weight(),
         ref.ref_type_heading_margin(),
         ref.ref_type_prose_line_height(),
-        ref.ref_type_prose_margin()
+        ref.ref_type_prose_margin(),
+        ref.ref_panel_surface(),
+        ref.ref_panel_border(),
+        ref.ref_panel_radius(),
+        ref.ref_panel_padding(),
+        ref.ref_badge_size(),
+        ref.ref_badge_padding(),
+        ref.ref_badge_radius(),
+        ref.ref_metric_label_size(),
+        ref.ref_metric_label_muted(),
+        ref.ref_metric_value_size(),
+        ref.ref_metric_value_weight()
     ])
 
     # --- App + extension style bundles (identical under both themes) -------
@@ -970,13 +1112,21 @@ main {
     const tela.Style forms_stilum ← forms.form_style()
     const tela.Bundle forms_bundle ← tela.bundle("formslib", forms_stilum)
 
-    # --- The reference catalog's component style bundles (Stage 5 U2) -----
+    # --- The reference catalog's component style bundles (Stage 5 U2/U3) --
     # The component layer (input order): rules keyed on the ref-* identities,
-    # referencing the --ref-* tokens (the layout + typography bundles).
+    # referencing the --ref-* tokens (the layout + typography bundles, U2;
+    # the panel + badge + metric bundles, U3 — prefix-keyed on the
+    # variable-suffix identities).
     const tela.Style ref_layout_stilum ← ref.layout_style()
     const tela.Bundle ref_layout_bundle ← tela.bundle("reference-layout", ref_layout_stilum)
     const tela.Style ref_typography_stilum ← ref.typography_style()
     const tela.Bundle ref_typography_bundle ← tela.bundle("reference-typography", ref_typography_stilum)
+    const tela.Style ref_panel_stilum ← ref.panel_style()
+    const tela.Bundle ref_panel_bundle ← tela.bundle("reference-panel", ref_panel_stilum)
+    const tela.Style ref_badge_stilum ← ref.badge_style()
+    const tela.Bundle ref_badge_bundle ← tela.bundle("reference-badge", ref_badge_stilum)
+    const tela.Style ref_metric_stilum ← ref.metric_style()
+    const tela.Bundle ref_metric_bundle ← tela.bundle("reference-metric", ref_metric_stilum)
 
     # App style bundle: the panel rule + the segmented-control rule, both
     # keyed on the data-tela identity (the control's styles are app-owned).
@@ -1011,7 +1161,7 @@ main {
     const tela.Style ∪ null cascade_lumen_result ← tela.assemble(
         lumen,
         null,
-        [ref_layout_bundle, ref_typography_bundle],
+        [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle],
         [ tela.order("extensionlib", []), tela.order("formslib", []) ],
         [ext_bundle, forms_bundle],
         app_bundle
@@ -1019,7 +1169,7 @@ main {
     const tela.Style ∪ null cascade_tenebrae_result ← tela.assemble(
         tenebrae,
         null,
-        [ref_layout_bundle, ref_typography_bundle],
+        [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle],
         [ tela.order("extensionlib", []), tela.order("formslib", []) ],
         [ext_bundle, forms_bundle],
         app_bundle
@@ -1067,6 +1217,28 @@ main {
     assert css_lumen.continet("var(--ref-layout-gap)")
     assert css_lumen.continet("var(--ref-type-scale-xl)")
     assert css_lumen.continet("var(--ref-type-prose-line-height)")
+
+    # --- The Stage 5 U3 reference-catalog cascade (done_when (e)) ---------
+    # The :root token layer includes the ref.panel.* / ref.badge.* /
+    # ref.metric.* values — the panel surface + border and the metric
+    # label color reference the theme's core tokens (theme-surface
+    # semantics — no hardcoded color in the token layer).
+    assert css_lumen.continet("--ref-panel-surface: var(--surface-panel)")
+    assert css_lumen.continet("--ref-panel-border: var(--border-default)")
+    assert css_lumen.continet("--ref-badge-size: 0.75rem")
+    assert css_lumen.continet("--ref-metric-label-muted: var(--text-muted)")
+    assert css_lumen.continet("--ref-metric-value-size: 1.5rem")
+    # The U3 component bundles ride the cascade (prefix-keyed on the
+    # variable-suffix identities, referencing the --ref-* tokens).
+    assert css_lumen.continet("[data-tela^='ref-panel-']")
+    assert css_lumen.continet("[data-tela^='ref-badge-']")
+    assert css_lumen.continet("[data-tela^='ref-metric-']")
+    assert css_lumen.continet("var(--ref-panel-surface)")
+    assert css_lumen.continet("var(--ref-metric-label-muted)")
+    # The theme-surface round trip: the panel's surface token resolves to
+    # the theme's core surface.panel value in the assembled token layer
+    # (the core token itself carries the resolved color).
+    assert css_lumen.continet("--surface-panel: #f9fafb")
 
     # --- The Stage 2 fail-closed regressions re-asserted (three-package) ---
     # A cycle in the order map rejects (fail-closed — no partial cascade).
@@ -1420,6 +1592,31 @@ main {
     print html_typography
     print "typography family static rendered (headings/prose/emphasis/scale; tela-s5-u2)"
     print "reference composition asserted (layout + typography families; tela-s5-u2)"
+
+    # --- Stage 5 U3 — the panel + badge + metric static render -------------
+    # The families compose through NORMAL qualified imports; the runner
+    # output extends — the determinism sha stays SUPERSEDED (recorded).
+    # The a11y structure asserts: the panel's region landmark + accessible
+    # name, the badge's role=status + the textual meaning (the status word
+    # in the accessible name — never color alone), the metric's dl/dt/dd
+    # label/value(+delta) structure (the textual form preserved).
+    const string html_panel ← tela.html_visus(panel_composition()) coalesce ""
+    const string html_badge ← tela.html_visus(badge_composition()) coalesce ""
+    const string html_metric ← tela.html_visus(metric_composition()) coalesce ""
+    assert html_panel.continet("<div role='region' aria-label='Status panel' data-tela='ref-panel-status'>")
+    assert html_panel.continet("<p data-tela='ref-typography-prose'>all systems operational</p>")
+    assert html_badge.continet("<span role='status' aria-label='New: 3 messages' data-tela='ref-badge-new'>3 messages</span>")
+    assert html_badge.continet("<span role='status' aria-label='Ok: all checks passed' data-tela='ref-badge-ok'>all checks passed</span>")
+    assert html_metric.continet("<dl data-tela='ref-metric-uptime'><dt>uptime</dt><dd>99.9%</dd></dl>")
+    assert html_metric.continet("<dl data-tela='ref-metric-requests'><dt>requests</dt><dd>12 480</dd><dd>+3.1%</dd></dl>")
+    assert html_metric.continet("<dl data-tela='ref-metric-error'><dt>error rate</dt><dd>0.02%</dd><dd>-0.01%</dd></dl>")
+    print html_panel
+    print "panel family static rendered (theme-surface container; tela-s5-u3)"
+    print html_badge
+    print "badge family static rendered (textual status; tela-s5-u3)"
+    print html_metric
+    print "metric family static rendered (label/value/delta; tela-s5-u3)"
+    print "reference composition asserted (panel + badge + metric families; tela-s5-u3)"
 
     # --- The U7 interactive plan surface (the provider-seam claim) --------
     # The composition mounts through the app's own seam call (dom.scope +
