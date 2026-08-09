@@ -5,7 +5,7 @@ category = "library"
 locale = "en"
 +++
 
-# tela/exempla/reference.fab — Stage 5 U2/U3/U4/U5/U6 exempla for the
+# tela/exempla/reference.fab — Stage 5 U2/U3/U4/U5/U6/U7 exempla for the
 # reference catalog (tela:reference): the layout (stacked rows / two-column
 # grid / prose measures) + typography (headings / prose / emphasis / scale)
 # families (U2), the panel (theme-surface container) + badge (textual
@@ -16,7 +16,13 @@ locale = "en"
 # roving tabindex + the declared live region) family (U5) + the button
 # (native <button> semantics — the accessible name (label/aria-label), the
 # native keyboard contract (Space/Enter), the visible focus (:focus-visible
-# rule), the native disabled state) family (U6). Asserts the EXACT static
+# rule), the native disabled state) family (U6) + the field (the Stage 4
+# formslib field contract re-homed — the native <input type='text'>
+# semantics (no ARIA role), the label/aria-label accessible name, the
+# aria-invalid true/false surface, the aria-describedby → the error
+# identity when invalid, the error/live-region association structure, the
+# native disabled attribute) family (U7 — the forms split half 1, static).
+# Asserts the EXACT static
 # bytes (the serializer emission order: tag, then attributes in
 # author order, then the data-tela identity) + the a11y structure (the
 # heading hierarchy via native h1..h6, prose semantics via p, semantic
@@ -24,17 +30,20 @@ locale = "en"
 # as decorative sizing, the panel's region landmark + accessible name, the
 # badge's role=status + aria-label, the metric's definition-list
 # label/value structure, the table's native table/caption/thead/th[scope]/
-# tbody/tr/td semantics — the §8 table accessibility contract, and the
+# tbody/tr/td semantics — the §8 table accessibility contract, the
 # segmented control's radiogroup/radio + aria-selected + roving tabindex +
-# live-region structure, and the button's native <button> semantics — no
+# live-region structure, the button's native <button> semantics — no
 # ARIA role, the label/aria-label accessible name, the native disabled
-# attribute), fail-closed,
+# attribute, and the field's native <input> semantics — the
+# aria-invalid/aria-describedby surface + the error/live-region
+# association), fail-closed,
 # executed under node (check-exempla runtime gate).
 #
 # fix:<id> markers: none applied beyond reference.fab's (fix:g5 — NONE,
-# fix:codegen001, fix:snapshot-name-collision, fix:verum-b; the G6 note —
+# fix:codegen001, fix:snapshot-name-collision, fix:verum-b; the G6 notes —
 # the button variant prop spelled variant_name, the `variant` en keyword;
-# the LOCALE002 advisory on the BadgeProps status field — recorded).
+# the U7 field prop names probed against the en pack — no collisions; the
+# LOCALE002 advisory on the BadgeProps status field — recorded).
 
 import from "tela:tela" private tela
 import from "tela:reference" private ref
@@ -121,7 +130,7 @@ main {
     assert tela.token_name_valid(ref.ref_layout_gap().name)
     assert tela.token_name_valid(ref.ref_type_prose_line_height().name)
     const list<tela.Token> collectio ← ref.reference_tokens()
-    assert collectio.longitudo() ≡ 43
+    assert collectio.longitudo() ≡ 46
 
     # --- determinism: identical input → identical bytes -------------------
     const string stack_b ← tela.html_visus(ref.layout_stack(ref.stack_props([
@@ -191,7 +200,7 @@ main {
     assert tela.token_name_valid(ref.ref_badge_radius().name)
     assert tela.token_name_valid(ref.ref_metric_value_weight().name)
     const list<tela.Token> collectio_u3 ← ref.reference_tokens()
-    assert collectio_u3.longitudo() ≡ 43
+    assert collectio_u3.longitudo() ≡ 46
 
     # =====================================================================
     # Stage 5 U4 — the table family (the benchmark table grammar).
@@ -236,7 +245,7 @@ main {
     assert tela.token_name_valid(ref.ref_table_border().name)
     assert tela.token_name_valid(ref.ref_table_caption_muted().name)
     const list<tela.Token> collectio_u4 ← ref.reference_tokens()
-    assert collectio_u4.longitudo() ≡ 43
+    assert collectio_u4.longitudo() ≡ 46
 
     # =====================================================================
     # Stage 5 U5 — the segmented-control family (the Stage 3 control
@@ -282,7 +291,7 @@ main {
     assert tela.token_name_valid(ref.ref_seg_gap().name)
     assert tela.token_name_valid(ref.ref_seg_selected_border().name)
     const list<tela.Token> collectio_u5 ← ref.reference_tokens()
-    assert collectio_u5.longitudo() ≡ 43
+    assert collectio_u5.longitudo() ≡ 46
 
     # =====================================================================
     # Stage 5 U6 — the button family (the first behavior component).
@@ -349,7 +358,73 @@ main {
     assert tela.token_name_valid(ref.ref_button_primary_background().name)
     assert tela.token_name_valid(ref.ref_button_disabled_opacity().name)
     const list<tela.Token> collectio_u6 ← ref.reference_tokens()
-    assert collectio_u6.longitudo() ≡ 43
+    assert collectio_u6.longitudo() ≡ 46
 
-    print "reference catalog exempla ready (layout + typography + panel + badge + metric + table + segmented-control + button; tela-s5-u2/u3/u4/u5/u6)"
+    # =====================================================================
+    # Stage 5 U7 — the field family (the Stage 4 formslib field contract
+    # re-homed — the forms split half 1, STATIC).
+    # =====================================================================
+
+    # --- field: native semantics — the accessible name + the
+    # aria-invalid/aria-describedby surface -------------------------------
+    # The element is a NATIVE <input type='text'> (no ARIA role — a role
+    # would duplicate the native semantics; the native input is natively
+    # focusable — Tab reaches it). The accessible name is aria-label = the
+    # label prop. The aria-invalid surface is DERIVED from the error prop
+    # (non-empty error → "true"). The aria-describedby → the error
+    # identity (form-error-<name>) rides ONLY when invalid. The value
+    # attribute emits when non-empty. Attribute author order: type →
+    # aria-label → aria-invalid → aria-describedby (when invalid) →
+    # value (when non-empty) → disabled (when disabled) → data-tela.
+    assert tela.html_visus(ref.field_input(ref.field_input_props("name", "Name", "Ada", "", "enabled"))) coalesce "" ≡ "<input type='text' aria-label='Name' aria-invalid='false' value='Ada' data-tela='form-field-name'>"
+    # Invalid: aria-invalid='true' + aria-describedby → form-error-name;
+    # the value is empty → no value attribute.
+    assert tela.html_visus(ref.field_input(ref.field_input_props("name", "Name", "", "Required", "enabled"))) coalesce "" ≡ "<input type='text' aria-label='Name' aria-invalid='true' aria-describedby='form-error-name' data-tela='form-field-name'>"
+    # Disabled: the native disabled attribute (removed from the tab
+    # sequence, no entry, the state exposed to AT).
+    assert tela.html_visus(ref.field_input(ref.field_input_props("name", "Name", "Ada", "", "disabled"))) coalesce "" ≡ "<input type='text' aria-label='Name' aria-invalid='false' value='Ada' disabled='' data-tela='form-field-name'>"
+    # No ARIA role duplication: the native input carries no role attribute.
+    assert not (tela.html_visus(ref.field_input(ref.field_input_props("name", "Name", "Ada", "", "enabled"))) coalesce "").continet("role=")
+
+    # --- the error/live-region association structure ----------------------
+    # The error node (role='alert', form-error-<name>) is the identity the
+    # field's aria-describedby references; the error text rides the node
+    # when present (empty error → an empty node — the association is
+    # stable). The declared live region (role='status' + aria-live='polite',
+    # form-live) is field-own; the announcement policy is U8.
+    assert tela.html_visus(ref.field_error_region("name", "Required")) coalesce "" ≡ "<div role='alert' data-tela='form-error-name'>Required</div>"
+    assert tela.html_visus(ref.field_error_region("name", "")) coalesce "" ≡ "<div role='alert' data-tela='form-error-name'></div>"
+    assert tela.html_visus(ref.field_live_region()) coalesce "" ≡ "<div role='status' aria-live='polite' data-tela='form-live'></div>"
+    # The field_control group (form-control-<name>): the association
+    # surface — the field + its error node under one identity.
+    assert tela.html_visus(ref.field_control(ref.field_input_props("name", "Name", "Ada", "Required", "enabled"))) coalesce "" ≡ "<div data-tela='form-control-name'><input type='text' aria-label='Name' aria-invalid='true' aria-describedby='form-error-name' value='Ada' data-tela='form-field-name'><div role='alert' data-tela='form-error-name'>Required</div></div>"
+    # The derived aria-invalid mapping (the formslib error_present
+    # precedent, re-homed).
+    assert ref.field_invalid(ref.field_input_props("name", "Name", "", "Required", "enabled")) ≡ "true"
+    assert ref.field_invalid(ref.field_input_props("name", "Name", "Ada", "", "enabled")) ≡ "false"
+
+    # --- the field style bundle (form-* identities, --form-* tokens) -----
+    # The invalid border-bottom + the focus ring + the error color + the
+    # live-region emphasis come from the form.* tokens; the disabled dim
+    # is the visual treatment — the SEMANTIC state rides the native
+    # attribute (never a color-only signal).
+    const string css_field ← tela.css(ref.field_style())
+    assert css_field ≡ "[data-tela^='form-field-'] { border-bottom: 2px solid var(--form-field-invalid); color: var(--form-field-valid); }\n[data-tela^='form-field-']:focus { outline: 2px solid var(--form-focus); }\n[data-tela^='form-error-'] { color: var(--form-field-invalid); font-size: 0.875rem; }\n[data-tela='form-live'] { font-weight: 600; color: var(--form-field-valid); }\n[data-tela^='form-field-']:disabled { opacity: 0.6; cursor: not-allowed; }\n"
+
+    # --- the form.* tokens (the Stage 4 namespaced-token surface, re-homed
+    # with the identical names + values — the canary themes dedup) --------
+    assert ref.field_invalid_token().name ≡ "form.field.invalid"
+    assert ref.field_invalid_token().value ≡ "#dc2626"
+    assert ref.field_valid_token().name ≡ "form.field.valid"
+    assert ref.field_valid_token().value ≡ "#16a34a"
+    assert ref.field_focus_token().name ≡ "form.focus"
+    assert ref.field_focus_token().value ≡ "#2563eb"
+    # Every token name passes the kernel lexical predicate (fail-closed).
+    assert tela.token_name_valid(ref.field_invalid_token().name)
+    assert tela.token_name_valid(ref.field_valid_token().name)
+    assert tela.token_name_valid(ref.field_focus_token().name)
+    const list<tela.Token> collectio_u7 ← ref.reference_tokens()
+    assert collectio_u7.longitudo() ≡ 46
+
+    print "reference catalog exempla ready (layout + typography + panel + badge + metric + table + segmented-control + button + field; tela-s5-u2/u3/u4/u5/u6/u7)"
 }

@@ -308,6 +308,54 @@
 # the button-family render — the determinism sha stays SUPERSEDED (U10
 # re-records the official sha; check-determinism is RED between units —
 # the honest flag, unchanged).
+#
+# Stage 5 U7 (tela-s5-u7-field-forms-static) — the FORMS SPLIT half 1:
+# the field family joins the runner composition through NORMAL qualified
+# imports — the Stage 4 formslib field contract RE-HOMED as a tela-owned
+# reference component (tela:reference, the catalog's field_input /
+# field_control / field_error_region / field_live_region — formslib-
+# collision-free names). The app composes THREE field controls through
+# the catalog's typed carriers (the shared props the U8 plan will
+# consume): the VALID name field (aria-invalid='false'), the INVALID
+# email field (aria-invalid='true' + aria-describedby → form-error-email
+# + the error text), and the DISABLED phone field (the native disabled
+# attribute — no entry, the state exposed). The form.* tokens
+# (form.field.invalid / form.field.valid / form.focus — the Stage 4
+# namespaced-token surface, identical names + values) join both themes +
+# the reference mount theme (the canary themes dedup by name-identical-
+# content against the formslib tokens); the field_style bundle joins the
+# component cascade layer. The mount seam fn (mount_field) supplies the
+# check-reference U7 browser-proof surface (mount + the STATIC structure/
+# a11y case: the native input semantics, the accessible name, the
+# aria-invalid/aria-describedby surface, the error/live-region
+# association structure, the disabled attribute).
+#
+# THE BEHAVIOR SPLIT (recorded — U7 done_when (e)): the field's
+# validation transitions + live-region announcements + keyboard mapping
+# + the concrete message type + the bindings + the update loop are U8 —
+# NOT this unit. The app-typed field PROPS carriers + the composition +
+# the seam mount are the static half this unit lands.
+#
+# fix:<id> markers applied in this unit:
+#   fix:g5 — NONE: all new identifiers (name_field_props/
+#     email_field_props/phone_field_props/field_composition/mount_field)
+#     probed collision-free on in-tree radix 0.80.0 (a free fn may share
+#     a class name — G5's collision is enum-member-specific).
+#   fix:snapshot-name-collision — the new identifiers avoid kernel type
+#     names AND the tela:reference prop-class names (FieldInputProps).
+#   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the
+#     TS lane is the proven runtime lane.
+#   fix:g4 — the reference field is consumed through the NORMAL package
+#     interface (no compose-without, no harness-assembly bypass for the
+#     catalog); the app plan's `→ reference.FieldInputProps` fns are
+#     export-skipped (WARN014 — imported sibling types in signatures,
+#     recorded; the harnesses read the emitted file directly, the
+#     snapshot does not apply at runtime).
+#
+# DETERMINISM SUPERSESSION (done_when (d)): the runner output extends
+# with the field-family render + the field bundle + the form.* tokens —
+# the determinism sha stays SUPERSEDED (U10 re-records the official sha;
+# check-determinism is RED between units — the honest flag, unchanged).
 
 import from "tela:tela" public * ut tela
 import from "extensionlib:extension" public * ut ext
@@ -822,6 +870,9 @@ fn mount_forms(string selector) → browser.Mounted ∪ null {
 # The reference mount theme: the 8-token core baseline + the namespaced
 # ref.* tokens (the catalog's token surface collected app-side — the
 # compose-without pattern; mount requires a theme covering the core).
+# Stage 5 U7: the field family's form.* tokens join (the Stage 4
+# namespaced-token surface, re-homed — the check-reference field mount
+# covers the field's cascade).
 fn reference_theme() → tela.Theme {
     return tela.theme("referentiale", [
         tela.token("surface.canvas", "#ffffff"),
@@ -863,7 +914,10 @@ fn reference_theme() → tela.Theme {
         reference.ref_seg_size(),
         reference.ref_seg_padding(),
         reference.ref_seg_border(),
-        reference.ref_seg_selected_border()
+        reference.ref_seg_selected_border(),
+        reference.field_invalid_token(),
+        reference.field_valid_token(),
+        reference.field_focus_token()
     ])
 }
 
@@ -1232,6 +1286,68 @@ fn mount_button(string selector) → browser.Mounted ∪ null {
     return browser.mount(scope, button_composition(), reference_theme())
 }
 
+# ===========================================================================
+# Stage 5 U7 — the field composition + the app-typed props carriers
+# (tela:reference — the Stage 4 formslib field contract re-homed; the
+# forms split half 1, STATIC).
+#
+# The app composes the catalog's field family through NORMAL qualified
+# imports. The shared FieldInputProps carriers (the app-typed props
+# surface the U8 behavior plan will consume) cover the STATIC ARIA
+# surface: the valid field (aria-invalid='false'), the invalid field
+# (aria-invalid='true' + aria-describedby → the error identity + the
+# error text), and the disabled field (the native disabled attribute —
+# no entry, the state exposed). The wrapper identity is app-owned data.
+# ===========================================================================
+
+# The shared props carriers — the VALID name field (value present, no
+# error, enabled).
+fn name_field_props() → reference.FieldInputProps {
+    return reference.field_input_props("name", "Name", "Ada", "", "enabled")
+}
+
+# The INVALID email field (empty value + the error text — the
+# aria-invalid/aria-describedby surface is live).
+fn email_field_props() → reference.FieldInputProps {
+    return reference.field_input_props("email", "Email", "", "Required", "enabled")
+}
+
+# The DISABLED phone field (the native disabled attribute — no entry, the
+# state exposed; no subscription in the U8 plan by construction).
+fn phone_field_props() → reference.FieldInputProps {
+    return reference.field_input_props("phone", "Phone", "", "", "disabled")
+}
+
+# The field composition: the three field controls (the field_control
+# association surface — the field + its error node under
+# form-control-<name>) + the field-own declared live region
+# (form-live). The wrapper identity is app-owned data (the canary-*
+# precedent — MF-8).
+fn field_composition() → tela.View {
+    return tela.element_full(
+        tela.new_identity("canary-ref-field"),
+        tela.html_space(),
+        "div",
+        [],
+        [],
+        [
+            reference.field_control(name_field_props()),
+            reference.field_control(email_field_props()),
+            reference.field_control(phone_field_props()),
+            reference.field_live_region()
+        ]
+    )
+}
+
+# The seam mount for the U7 browser proof: the check-reference driver calls
+# this through the app's own imports (dom.scope + browser.mount, the U7
+# pattern). The field composition mounts with the reference theme (the
+# core baseline + the ref.* + the form.* tokens) — done_when (c).
+fn mount_field(string selector) → browser.Mounted ∪ null {
+    const dom.Scope scope ← dom.scope(selector)
+    return browser.mount(scope, field_composition(), reference_theme())
+}
+
 main {
     # G4 seam attempt (recorded in the evidence record): ext.bar_meter
     # resolves to WARN014 export-skip; the app composes the meter with tela
@@ -1255,7 +1371,10 @@ main {
     # extension-local token class name is not a nameable qualified type from
     # the app — fix:snapshot-name-collision, see the extension header).
     # Stage 5 U2: the catalog's namespaced ref.* tokens join both themes
-    # (collected app-side via the zero-arg accessors — MF-7).
+    # (collected app-side via the zero-arg accessors — MF-7). Stage 5 U7:
+    # the field family's form.* tokens join too (identical names + values
+    # to the formslib tokens — the kernel dedups by name-identical-content;
+    # the catalog's field is self-sufficient).
     const tela.Theme lumen ← tela.theme("lumen", [
         tela.token("surface.canvas", "#ffffff"),
         tela.token("surface.panel", "#f9fafb"),
@@ -1312,7 +1431,10 @@ main {
         reference.ref_button_secondary_background(),
         reference.ref_button_ghost_background(),
         reference.ref_button_focus(),
-        reference.ref_button_disabled_opacity()
+        reference.ref_button_disabled_opacity(),
+        reference.field_invalid_token(),
+        reference.field_valid_token(),
+        reference.field_focus_token()
     ])
     const tela.Theme tenebrae ← tela.theme("tenebrae", [
         tela.token("surface.canvas", "#0f172a"),
@@ -1370,7 +1492,10 @@ main {
         reference.ref_button_secondary_background(),
         reference.ref_button_ghost_background(),
         reference.ref_button_focus(),
-        reference.ref_button_disabled_opacity()
+        reference.ref_button_disabled_opacity(),
+        reference.field_invalid_token(),
+        reference.field_valid_token(),
+        reference.field_focus_token()
     ])
 
     # --- App + extension style bundles (identical under both themes) -------
@@ -1414,6 +1539,11 @@ main {
     # tokens).
     const tela.Style ref_button_stilum ← reference.button_style()
     const tela.Bundle ref_button_bundle ← tela.bundle("reference-button", ref_button_stilum)
+    # Stage 5 U7: the field bundle (the form-* identities — the invalid
+    # border + the focus ring + the error/live-region rules + the
+    # native-disabled dim, referencing the --form-* tokens).
+    const tela.Style ref_field_stilum ← reference.field_style()
+    const tela.Bundle ref_field_bundle ← tela.bundle("reference-field", ref_field_stilum)
 
     # App style bundle: the panel rule (the segmented-control rule was
     # app-owned in Stage 3; the control's styles now ride the reference
@@ -1441,7 +1571,7 @@ main {
     const tela.Style ∪ null cascade_lumen_result ← tela.assemble(
         lumen,
         null,
-        [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle, ref_table_bundle, ref_seg_bundle, ref_button_bundle],
+        [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle, ref_table_bundle, ref_seg_bundle, ref_button_bundle, ref_field_bundle],
         [ tela.order("extensionlib", []), tela.order("formslib", []) ],
         [ext_bundle, forms_bundle],
         app_bundle
@@ -1449,7 +1579,7 @@ main {
     const tela.Style ∪ null cascade_tenebrae_result ← tela.assemble(
         tenebrae,
         null,
-        [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle, ref_table_bundle, ref_seg_bundle, ref_button_bundle],
+        [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle, ref_table_bundle, ref_seg_bundle, ref_button_bundle, ref_field_bundle],
         [ tela.order("extensionlib", []), tela.order("formslib", []) ],
         [ext_bundle, forms_bundle],
         app_bundle
@@ -1572,6 +1702,25 @@ main {
     assert css_lumen.continet("var(--ref-button-focus)")
     assert css_lumen.continet("var(--ref-button-primary-background)")
 
+    # --- The Stage 5 U7 reference-catalog cascade (done_when (b)) ---------
+    # The :root token layer includes the form.* values — the Stage 4
+    # namespaced-token surface RE-HOMED (identical names + values; the
+    # catalog's field is self-sufficient — the kernel dedups against the
+    # formslib tokens by name-identical-content).
+    assert css_lumen.continet("--form-field-invalid: #dc2626")
+    assert css_lumen.continet("--form-field-valid: #16a34a")
+    assert css_lumen.continet("--form-focus: #2563eb")
+    # The field bundle rides the cascade: the invalid border + the focus
+    # ring + the error/live-region rules (keyed on the form-* identities,
+    # referencing the --form-* tokens) + the native-disabled dim.
+    assert css_lumen.continet("[data-tela^='form-field-']")
+    assert css_lumen.continet("[data-tela^='form-field-']:focus")
+    assert css_lumen.continet("[data-tela^='form-error-']")
+    assert css_lumen.continet("[data-tela='form-live']")
+    assert css_lumen.continet("[data-tela^='form-field-']:disabled")
+    assert css_lumen.continet("var(--form-field-invalid)")
+    assert css_lumen.continet("var(--form-focus)")
+
     # --- The Stage 2 fail-closed regressions re-asserted (three-package) ---
     # A cycle in the order map rejects (fail-closed — no partial cascade).
     const tela.Style ∪ null cycle_result ← tela.assemble(
@@ -1647,9 +1796,14 @@ main {
         tela.html_visus(forms.form_live_region()) coalesce ""
     assert forma_composita ≡ "<input type='text' aria-label='Name' aria-invalid='false' data-tela='form-field-name'><input type='checkbox' aria-label='Agree' aria-checked='true' aria-invalid='false' data-tela='form-checkbox-agree'><select aria-label='Tone' aria-invalid='false' data-tela='form-select-tone'><option>Light</option><option>Dark</option></select><div role='alert' data-tela='form-error-name'></div><div role='status' aria-live='polite' data-tela='form-live'></div>"
     # The extension bundle resolves before the forms bundle in the cascade
-    # (the topological tie-break orders extensionlib before formslib).
+    # (the topological tie-break orders extensionlib before formslib). The
+    # forms probe is formslib-UNIQUE ([data-tela^='form-checkbox-']): the
+    # catalog's field bundle (Stage 5 U7) legitimately emits the shared
+    # [data-tela^='form-field-'] rule in the COMPONENT layer (which
+    # precedes the library layer in the cascade order) — the library-layer
+    # ordering assert must probe a formslib-only selector.
     const int ext_index ← index_in(css_lumen, "[data-tela='tela-chart-bar']")
-    const int forms_index ← index_in(css_lumen, "[data-tela^='form-field-']")
+    const int forms_index ← index_in(css_lumen, "[data-tela^='form-checkbox-']")
     assert ext_index < forms_index
 
     # --- The Stage 3 static half (U3 done_when (a)) ------------------------
@@ -2044,6 +2198,38 @@ main {
     print html_button
     print "button family static rendered (native semantics + disabled state; tela-s5-u6)"
     print "reference composition asserted (button family; tela-s5-u6)"
+
+    # --- Stage 5 U7 — the field static render ----------------------------
+    # The field family composes through NORMAL qualified imports (the
+    # Stage 4 formslib field contract re-homed — the forms split half 1);
+    # the runner output extends — the determinism sha stays SUPERSEDED
+    # (recorded in the header). The a11y structure asserts: the NATIVE
+    # <input type='text'> semantics (no ARIA role — no duplication), the
+    # aria-label accessible name, the aria-invalid true/false surface,
+    # the aria-describedby → the error identity when invalid, the
+    # error/live-region association structure (the form-control-* group
+    # + the role=alert error node + the declared form-live live region),
+    # the native disabled attribute.
+    const string html_field ← tela.html_visus(field_composition()) coalesce ""
+    assert html_field.continet("<div data-tela='canary-ref-field'>")
+    assert html_field.continet("<div data-tela='form-control-name'>")
+    assert html_field.continet("<input type='text' aria-label='Name' aria-invalid='false' value='Ada' data-tela='form-field-name'>")
+    assert html_field.continet("<div data-tela='form-control-email'><input type='text' aria-label='Email' aria-invalid='true' aria-describedby='form-error-email' data-tela='form-field-email'>")
+    assert html_field.continet("<div role='alert' data-tela='form-error-email'>Required</div>")
+    assert html_field.continet("<input type='text' aria-label='Phone' aria-invalid='false' disabled='' data-tela='form-field-phone'>")
+    assert html_field.continet("<div role='status' aria-live='polite' data-tela='form-live'></div>")
+    assert not html_field.continet("<form")
+    # The shared app-typed carriers (the U8 plan's props surface).
+    assert name_field_props().value ≡ "Ada"
+    assert email_field_props().error ≡ "Required"
+    assert phone_field_props().disabled ≡ "disabled"
+    # The mount seam is the check-reference U7 browser-proof surface (the
+    # driver calls mount_field through the app's own imports after
+    # installing the host DOM — main{} stays seam-free).
+    assert not (tela.theme_css(reference_theme()) ≡ null)
+    print html_field
+    print "field family static rendered (form-field-* identities + ARIA surface; tela-s5-u7)"
+    print "reference composition asserted (field family; tela-s5-u7)"
 
     # --- The U7 interactive plan surface (the provider-seam claim) --------
     # The composition mounts through the app's own seam call (dom.scope +

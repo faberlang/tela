@@ -136,6 +136,59 @@
 #     behavior plan. The event surface is the props' event_name (the
 #     declared activation event); the plan binds that event name.
 #
+# Stage 5 U7 (tela-s5-u7-field-forms-static): the catalog EXTENDS with the
+# **field** family — the Stage 4 formslib field (text input) contract
+# RE-HOMED as a tela-owned reference component (the forms split, half 1:
+# STATIC only — the behavior half — validation transitions, live-region
+# announcements, keyboard — is U8, the D1 app-typed plan boundary,
+# recorded below). Typed props (name/label/value/error/disabled) →
+# tela.View with the stable form-* identities (form-field-<name> /
+# form-error-<name> / form-control-<name> / form-live — the Stage 3/4
+# identity precedent), the aria-invalid/aria-describedby surface, the
+# error/live-region association structure, and labels. formslib STAYS the
+# frozen Stage 4 proof package (the three-package cascade keeps it) — no
+# code duplication; the catalog's field is tela-owned. The catalog
+# family's fn names are formslib-collision-free (field_input /
+# field_control / field_error_region / field_live_region / field_style /
+# FieldInputProps — NOT field/field_group/error_region/form_live_region/
+# FieldProps): formslib's top-level declarations share the assembled
+# harness files (check-exempla/check-reference), so the same-named
+# declarations would break the tsc lane (TS2393 — the U6 `app_panel`
+# precedent).
+#
+# THE FIELD ACCESSIBILITY CONTRACT (campaign §8 + the Stage 4 field
+# contract; done_when (a)):
+#   - NATIVE FIELD SEMANTICS: the element IS a native <input type='text'>
+#     — no ARIA role (a role would duplicate the native semantics); the
+#     native input is natively focusable (Tab reaches it — the §8
+#     keyboard contract; the KEYBOARD MAPPING semantics stay in the
+#     consumer plan, U8).
+#   - THE ACCESSIBLE NAME (label/aria-label): aria-label = the label prop
+#     (the Stage 4 contract). A visible <label> composition is an app
+#     choice — the component never fabricates one.
+#   - THE ARIA-INVALID SURFACE: aria-invalid = "true"/"false" DERIVED
+#     from the error prop (a non-empty error = invalid — the field_invalid
+#     mapping; the formslib error_present precedent, re-homed).
+#   - THE ERROR ASSOCIATION: when invalid, aria-describedby → the error
+#     identity (form-error-<name>); the error node (role='alert',
+#     form-error-<name>) carries the error text; the field_control group
+#     (form-control-<name>) is the association surface (the field + its
+#     error node under one identity).
+#   - THE DECLARED LIVE REGION: the field-own <div role='status'
+#     aria-live='polite' data-tela='form-live'> — not an ambient page
+#     notification. THE ANNOUNCEMENT POLICY (announce on a
+#     validation-state change, silent on no-op — the Stage 3 §1.5 rule
+#     extended to form validation) is U8 (the behavior split, recorded).
+#   - THE DISABLED STATE: the native `disabled` attribute when
+#     disabled = "disabled" — the field leaves the tab sequence, no
+#     entry, and the state is exposed to assistive tech natively.
+#   - THE D1 APP-TYPED PLAN BOUNDARY (recorded): the field is STATELESS —
+#     it declares no behavior. The validation transitions + the
+#     live-region announcements + the keyboard mapping + the concrete
+#     message type + the bindings + the update loop are U8 / the
+#     CONSUMER's plan (D1 — app-typed), keyed to the form-field-*
+#     identities; the catalog never carries a generic behavior plan.
+#
 # MODULE SHAPE (U1-locked, stage-5-discovery.md §1): ONE flat module
 # mirroring the kernel (G4-safe), stdlib-only + ONE same-package sibling
 # import (tela:tela); no public signature references a type outside the
@@ -146,7 +199,7 @@
 # PascalCase concatenation (StackProps), fns/fields snake_case, identities
 # kebab-case data (MF-8), tokens dotted lowercase (ref.*).
 #
-# THE SEVEN FAMILIES (delivery U2/U3/U4/U5/U6 outcomes; campaign §3
+# THE EIGHT FAMILIES (delivery U2/U3/U4/U5/U6/U7 outcomes; campaign §3
 # component contract):
 #
 #   LAYOUT — semantic containers for arrangement, no ARIA roles (pure
@@ -219,6 +272,27 @@
 #       plan + the update loop stay in the consumer, keyed to the
 #       ref-button-* identities; the plan binds only enabled buttons).
 #
+#   FIELD (U7) — the text input, the Stage 4 formslib field contract
+#     re-homed (the forms split, half 1 — STATIC):
+#     field_input(FieldInputProps)      → form-field-<name> — a NATIVE
+#       <input type='text'> (no ARIA role — native semantics), the
+#       accessible name (aria-label = the label prop), the
+#       aria-invalid true/false surface (derived from the error prop),
+#       the aria-describedby → the error identity when invalid, the
+#       native value + disabled attributes.
+#     field_error_region(name, error)   → form-error-<name> — the error
+#       node (role='alert') the field's aria-describedby references.
+#     field_live_region()               → form-live — the declared live
+#       region (role='status' + aria-live='polite'); the announcement
+#       policy is U8 (the D1 app-typed boundary).
+#     field_control(FieldInputProps)    → form-control-<name> — the
+#       association surface: the field + its error node under one
+#       identity.
+#     field_style() → tela.Style — rules keyed on the form-* identities
+#       referencing the form.* tokens (the Stage 4 namespaced-token
+#       surface, re-homed); stateless (D1: validation transitions +
+#       announcements + keyboard are U8, the consumer plan).
+#
 # NO COLOR-ONLY COMMUNICATION (campaign §8): no component in U2 carries
 # meaning through color. Emphasis is semantic markup; the scale is
 # decorative sizing; the layout containers are structural. The style
@@ -256,7 +330,11 @@
 #     active_tabindex/segmented_style/SegmentedProps + the ref_seg_*
 #     accessors; U6:
 #     button/button_props/button_event/button_style/ButtonProps + the
-#     ref_button_* accessors) probed
+#     ref_button_* accessors; U7:
+#     field_input/field_input_props/field_invalid/field_error_region/
+#     field_live_region/field_control/field_style/FieldInputProps + the
+#     field_invalid_token/field_valid_token/field_focus_token accessors)
+#     probed
 #     collision-free on in-tree radix 0.80.0 (a free fn may share a class
 #     name — G5's collision is enum-member-specific).
 #   fix:codegen001 — the Rust emit-across-imports block persists
@@ -265,7 +343,8 @@
 #     names AND the browser/forms carrier names (StackProps/GridProps/
 #     LayoutProseProps/HeadingProps/ProseProps/EmphasisProps/ScaleProps/
 #     PanelProps/BadgeProps/MetricProps/TableRow/TableProps/
-#     SegmentedProps/ButtonProps).
+#     SegmentedProps/ButtonProps; U7: FieldInputProps — NOT FieldProps,
+#     the formslib carrier in the shared harness assemblies).
 #   fix:verum-b — en-locale naming: no verum/falsum identifiers.
 #   G6 note (U6, the keyword-collision record): the delivery's button
 #     "variant" prop semantic is spelled **variant_name** — `variant` is
@@ -277,6 +356,13 @@
 #     (attribute names are data). Removal = grep-replace
 #     (`variant_name` → `variant`) only if/when a radix-lane keyword
 #     change lands; never silently renamed after.
+#   G6 note (U7, the keyword-collision record): the FIELD prop names were
+#     checked against the en keyword pack (radix/stdlib/locale/en/
+#     pack.toml) before authoring — name/label/value/error/disabled are
+#     NOT reserved spellings (name/value appear in the annotation/type
+#     keyword families — contextual, proven safe as fields/params by the
+#     kernel Token/formslib carriers; none is used as a top-level fn or
+#     type name). NO variant-class collision in this family.
 #   LOCALE002 advisory (recorded, non-blocking): the BadgeProps `status`
 #     field is a keyword-like spelling (advisory only — it parses + emits,
 #     per the web-surface-import DELIVERY §5.2 record); no rename needed.
@@ -869,6 +955,125 @@ fn button(ButtonProps props) → tela.View {
 }
 
 # ===========================================================================
+# FIELD family — the text input, RE-HOMED from the Stage 4 formslib field
+# contract (form-* identities; Stage 5 U7 — the forms split half 1, the
+# STATIC surface). The a11y contract is documented in the module header.
+# ===========================================================================
+
+class FieldInputProps {
+    string name
+    string label
+    string value
+    string error
+    string disabled
+}
+
+fn field_input_props(string name, string label, string value, string error, string disabled) → FieldInputProps {
+    return FieldInputProps {
+        name = name,
+        label = label,
+        value = value,
+        error = error,
+        disabled = disabled
+    }
+}
+
+# The aria-invalid mapping (the validation-state surface): a non-empty
+# error = invalid ("true"); otherwise "false". The formslib error_present
+# precedent, re-homed. The U8 validation transitions flip the error prop
+# (the pure mapping stays the static surface's source of truth).
+fn field_invalid(FieldInputProps props) → string {
+    if not (props.error ≡ "") then return "true"
+    return "false"
+}
+
+# The field: a NATIVE <input type='text'> — no ARIA role (native
+# semantics, no duplication), the accessible name (aria-label = the label
+# prop), the aria-invalid true/false surface, the aria-describedby → the
+# error identity (form-error-<name>) when invalid, the value attribute
+# when non-empty, the native disabled attribute when disabled =
+# "disabled". Attribute author order: type → aria-label → aria-invalid →
+# aria-describedby (when invalid) → value (when non-empty) → disabled
+# (when disabled) → data-tela.
+fn field_input(FieldInputProps props) → tela.View {
+    var list<tela.Attribute> attributes ← vacua
+    attributes.appende(tela.Attribute { name = "type", value = "text" })
+    attributes.appende(tela.Attribute { name = "aria-label", value = props.label })
+    attributes.appende(tela.Attribute { name = "aria-invalid", value = field_invalid(props) })
+    if not (props.error ≡ "") {
+        attributes.appende(tela.Attribute { name = "aria-describedby", value = "form-error-" + props.name })
+    }
+    if not (props.value ≡ "") {
+        attributes.appende(tela.Attribute { name = "value", value = props.value })
+    }
+    if props.disabled ≡ "disabled" {
+        attributes.appende(tela.Attribute { name = "disabled", value = "" })
+    }
+    return tela.element_full(
+        tela.new_identity("form-field-" + props.name),
+        tela.html_space(),
+        "input",
+        attributes,
+        [],
+        []
+    )
+}
+
+# The error node for a field: role='alert' + the identity the field's
+# aria-describedby references (form-error-<name>). Empty text = empty node
+# (the association structure is stable — the field_control group always
+# carries it).
+fn field_error_region(string name, string error) → tela.View {
+    var list<tela.View> children ← vacua
+    if not (error ≡ "") {
+        children.appende(tela.text_view(error))
+    }
+    return tela.element_full(
+        tela.new_identity("form-error-" + name),
+        tela.html_space(),
+        "div",
+        [ tela.Attribute { name = "role", value = "alert" } ],
+        [],
+        children
+    )
+}
+
+# The declared live region (the Stage 3 §1.5 pattern, re-homed): the
+# field-own <div role='status' aria-live='polite' data-tela='form-live'>.
+# THE ANNOUNCEMENT POLICY (announce on a validation-state change, silent
+# on no-op) is U8 — the D1 app-typed plan boundary (recorded).
+fn field_live_region() → tela.View {
+    return tela.element_full(
+        tela.new_identity("form-live"),
+        tela.html_space(),
+        "div",
+        [
+            tela.Attribute { name = "role", value = "status" },
+            tela.Attribute { name = "aria-live", value = "polite" }
+        ],
+        [],
+        []
+    )
+}
+
+# The field group — the association surface: the field (aria-describedby →
+# form-error-<name> when invalid) + its error node under
+# form-control-<name>.
+fn field_control(FieldInputProps props) → tela.View {
+    var list<tela.View> children ← vacua
+    children.appende(field_input(props))
+    children.appende(field_error_region(props.name, props.error))
+    return tela.element_full(
+        tela.new_identity("form-control-" + props.name),
+        tela.html_space(),
+        "div",
+        [],
+        [],
+        children
+    )
+}
+
+# ===========================================================================
 # STYLE BUNDLES — rules keyed on the ref-* identities, referencing the
 # ref.* tokens as CSS custom properties (the --ref-* emission form).
 # ===========================================================================
@@ -1216,6 +1421,55 @@ fn button_style() → tela.Style {
     }
 }
 
+# The field style bundle (Stage 5 U7): rules keyed on the form-*
+# identities (the field + error + live-region surface), referencing the
+# --form-* tokens (the Stage 4 namespaced-token surface, re-homed with
+# the identical names + values). The invalid border-bottom + the focus
+# ring + the error color + the live-region emphasis come from the form.*
+# tokens; the disabled dim is the native disabled state's VISUAL
+# treatment (opacity/cursor — never a color-only signal: the SEMANTIC
+# state rides the native disabled attribute, exposed to AT).
+fn field_style() → tela.Style {
+    return tela.Style {
+        rules = [
+            tela.Rule {
+                selector = "[data-tela^='form-field-']",
+                declarations = [
+                    tela.Declaration { name = "border-bottom", value = "2px solid var(--form-field-invalid)" },
+                    tela.Declaration { name = "color", value = "var(--form-field-valid)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela^='form-field-']:focus",
+                declarations = [
+                    tela.Declaration { name = "outline", value = "2px solid var(--form-focus)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela^='form-error-']",
+                declarations = [
+                    tela.Declaration { name = "color", value = "var(--form-field-invalid)" },
+                    tela.Declaration { name = "font-size", value = "0.875rem" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela='form-live']",
+                declarations = [
+                    tela.Declaration { name = "font-weight", value = "600" },
+                    tela.Declaration { name = "color", value = "var(--form-field-valid)" }
+                ]
+            },
+            tela.Rule {
+                selector = "[data-tela^='form-field-']:disabled",
+                declarations = [
+                    tela.Declaration { name = "opacity", value = "0.6" },
+                    tela.Declaration { name = "cursor", value = "not-allowed" }
+                ]
+            }
+        ]
+    }
+}
+
 # ===========================================================================
 # TOKENS — the namespaced ref.* theme tokens (the kernel Token carrier,
 # MF-7): zero-arg accessors returning tela.Token values; consumers collect
@@ -1415,6 +1669,25 @@ fn ref_button_disabled_opacity() → tela.Token {
     return tela.Token { name = "ref.button.disabled.opacity", value = "0.6" }
 }
 
+# The form.* tokens (Stage 5 U7 — the Stage 4 namespaced-token surface,
+# RE-HOMED with the identical names + values): the field invalid/valid
+# colors + the focus ring. The accessor fn names are formslib-collision-
+# free (form_field_invalid/form_field_valid/form_focus are formslib's own
+# top-level names in the shared harness assemblies — TS2393; the token
+# NAMES are identical, so the canary-app themes dedup by
+# name-identical-content).
+fn field_invalid_token() → tela.Token {
+    return tela.Token { name = "form.field.invalid", value = "#dc2626" }
+}
+
+fn field_valid_token() → tela.Token {
+    return tela.Token { name = "form.field.valid", value = "#16a34a" }
+}
+
+fn field_focus_token() → tela.Token {
+    return tela.Token { name = "form.focus", value = "#2563eb" }
+}
+
 # The catalog's token collection (the self-usable summary — consumers
 # compose their Theme via the individual accessors; this is the package's
 # assembly-input convenience, the formslib precedent).
@@ -1462,6 +1735,9 @@ fn reference_tokens() → list<tela.Token> {
         ref_button_secondary_background(),
         ref_button_ghost_background(),
         ref_button_focus(),
-        ref_button_disabled_opacity()
+        ref_button_disabled_opacity(),
+        field_invalid_token(),
+        field_valid_token(),
+        field_focus_token()
     ]
 }
