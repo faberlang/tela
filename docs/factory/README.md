@@ -19,8 +19,8 @@ in [`docs/archived/`](../archived/README.md).
 ## Summary
 
 - goals scanned: 2
-- active: 1
-- planned: 1
+- active: 2
+- planned: 0
 - done: 0
 - unknown: 0
 - archived (moved to `docs/archived/`): 0
@@ -30,12 +30,11 @@ in [`docs/archived/`](../archived/README.md).
 | Goal | Status | Done | goal | campaign | delivery | ledger | council | evidence | other |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | [mvp](mvp/CAMPAIGN.md) | active | — | 0 | 1 | 6 | 0 | 0 | 0 | 20 |
+| [web-surface-import](web-surface-import/GOAL.md) | active | — | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
 
 ## Planned
 
-| Goal | Status | Done | goal | campaign | delivery | ledger | council | evidence | other |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| [web-surface-import](web-surface-import/GOAL.md) | planned | — | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+_none_
 
 ## Archived
 

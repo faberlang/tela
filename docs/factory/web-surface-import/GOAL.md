@@ -1,6 +1,6 @@
 # Goal: web-surface-import — import faber-web's browser surface into tela
 
-**Status**: planning (goal drafted; goal-check + delivery lowering pending)
+**Status**: ready for delivery — goal-check READY (planner-1 2026-08-09); P3 delivery lowered (DELIVERY.md); implementation pending Mind admission + Stage 5 serialization
 **Created**: 2026-08-09
 **Planner**: mind (operator-authored goal)
 **Target repo**: `/Users/ianzepp/work/faberlang/tela`
@@ -334,3 +334,39 @@ small named identifier review, and the conventions (en locale, English
 identifiers, stdlib exception list) are all established in tela's AGENTS.md.
 Lower as a single delivery spec; the four phases sequence naturally (dom → dom
 runtime → browser flip → canvas2d → deprecation).
+
+## Goal-Check Verdict + Delivery Record (2026-08-09, planner-1)
+
+- **Verdict**: **READY** — the delta beyond the landed seam is honestly scoped
+  (ownership + locale normalization + canvas2d breadth + the single-product
+  story; the seam itself is functional today). The la→en conversion was probed
+  LIVE on in-tree radix 0.80.0 (full mechanical conversion of `dom.fab`/
+  `canvas2d.fab`/`web.fab` checks `ok` + emits TS green; zero radix changes
+  needed).
+- **One forced rename found by probe**: `fn value(…)` collides with the en
+  type keyword `value` (`SEM005` — the G6 class in the en surface) →
+  `input_value` (probed green).
+- **Naming resolutions (probed; the § Naming Decision Points table's leans
+  confirmed)**: `Nodus` → `DomNode`, `identitas` → `identity`, `value` →
+  `input_value`, `Canvas2dContext` → `Canvas2DContext`, stub `nota` → `print`
+  (en surface), `sponte` → `optional`, `@ futura` → `@ future`, `⇥` stays
+  (glyph). `web:web` folds to **drop entirely** (`WebController` keeps its two
+  frozen example consumers). Runtime symbols stay `webDom*`/`webCanvas2d*`.
+- **Scope corrections vs the goal text**: (1) the flip is NOT one import line
+  — the emitted TS references `Nodus`/`.identitas` as bare identifiers, so the
+  flip renames ripple into `exempla/browser.fab`, `scripta/dom-shim.ts`, and
+  every harness assembly; (2) the ground-truth claim "NO opener/result typing"
+  is stale — the live `faber-web/bindings/ts.toml` has them on every route
+  (the contract machinery ports); (3) `tela/faber.toml` gains `[target.ts]
+  bindings = "bindings/ts.toml"`.
+- **Serialization**: Stage 5 U2–U8 extend the same `scripta/` + canary-app
+  surface the flip rewires — the flip unit must land after Stage 5 U8 (the
+  default slot; DELIVERY.md §5.4). The dom/canvas2d conversion units are new
+  files and run parallel-safe with Stage 5.
+- **Delivery**: `DELIVERY.md` (same dir) — 6 units (U1 dom source, U2 dom
+  runtime+bindings, U3 canvas2d, U4 flip+harness rewire, U5 faber-web
+  deprecation, U6 evidence); exact validation commands, est_work_tokens, one
+  committing lane per repo (tela serial; faber-web = U5 only), no radix edits.
+- **Status line**: machine-parseable (`ready for delivery — …` → the ACTIVE
+  bucket per `audit-factory-goal-status.py`). The factory README regeneration
+  is the Mind's planning-commit job (this planner does not commit).
