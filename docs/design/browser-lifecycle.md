@@ -32,22 +32,22 @@ seam call shape"; policy (b) renderer/host verbs English; campaign §7) as
 **landed by U2 (`9f23095`)**:
 
 ```text
-mount(Scope, Visus, Thema) → Mounted ∪ null
-replace(Mounted, Visus)    → Renovatio ∪ null
+mount(Scope, View, Theme) → Mounted ∪ null
+replace(Mounted, View)    → Update ∪ null
 dispose(Mounted)           → void
 ```
 
 - The English verbs (`mount`/`replace`/`dispose`), the three-argument shape,
   and the fail-closed nullable returns are unchanged from the spec sketch.
 - **`dom.Scope` → the REAL `dom.Scope`** (restored — Stage 4 U6
-  `tela-s4-u6`): the spec-locked sketch read `mount(dom.Scope, Visus, Thema)`.
+  `tela-s4-u6`): the spec-locked sketch read `mount(dom.Scope, View, Theme)`.
   The en→la `web:dom` import was blocked on in-tree radix 0.80.0
   (PARSE001/SEM002 at any real use), so U2 carried the blocked `dom.Scope`
   type as tela:browser's own opaque `Scope` handle (`{ selector,
   textus_praesens }`). The CTO10-3 gate opened: cds-u5 (cross-package
   locale propagation, radix `e32397630`) + cds-u6 (file-interface exports,
   radix `2103f8a7f`) landed, and U6 flips the seam back to the real
-  `dom.Scope` (`mount(dom.Scope, Visus, Thema)` — the pinned shape). The
+  `dom.Scope` (`mount(dom.Scope, View, Theme)` — the pinned shape). The
   opaque `Scope` carrier and its `textus_praesens` field are REMOVED — the
   pre-existing hydration state is READ from the DOM through the provider's
   typed snapshot (`web:dom.snapshot`, faber-web `0d79f5b`), never carried.
@@ -60,30 +60,30 @@ dispose(Mounted)           → void
 
 ```fab
 class Mounted {
-    dom.Scope scopus               # the scoped host region handle (real seam)
-    Radiculum radix                # the mounted region root handle
-    tela.Visus visus               # current View
-    tela.Thema thema               # active theme
-    string textus_markup           # serialized View (the render plan)
-    string textus_css              # theme cascade CSS (the render plan)
-    list<string> identitates       # data-tela identity index (document order)
-    list<string> diagnosia         # hydration diagnostics (empty list = clean)
-    list<Ligamen> ligamina         # per-identity binding plan ("ligare"/"creare")
-    list<Subscriptio> subscriptiones # region-bind subscription descriptors
-    string identitas_focus         # modeled pre-replacement focused identity
-    string identitas_focus_optata  # modeled declared focus-movement target
+    dom.Scope scope               # the scoped host region handle (real seam)
+    RegionRoot root                # the mounted region root handle
+    tela.View view               # current View
+    tela.Theme theme               # active theme
+    string markup           # serialized View (the render plan)
+    string css_text              # theme cascade CSS (the render plan)
+    list<string> identities       # data-tela identity index (document order)
+    list<string> diagnostics         # hydration diagnostics (empty list = clean)
+    list<Binding> bindings         # per-identity binding plan ("bind"/"create")
+    list<EventSubscription> subscriptions # region-bind subscription descriptors
+    string focused_identity         # modeled pre-replacement focused identity
+    string target_identity  # modeled declared focus-movement target
 }
 ```
 
-  The module-local value carriers are `Radiculum { identitas }`,
-  `Subscriptio { identitas, nomen_eventi }`, `Ligamen { identitas, status }`
-  (kernel-owned constructors `radiculum`, `subscriptio`, `ligamen`); the
+  The module-local value carriers are `RegionRoot { identity }`,
+  `EventSubscription { identity, event_name }`, `Binding { identity, status }`
+  (kernel-owned constructors `region_root`, `event_subscription`, `binding`); the
   scope is constructed by the CALLER through the provider seam
-  (`dom.scope(selector)` — the U6 flip removed the tela-local `scopus`
+  (`dom.scope(selector)` — the U6 flip removed the tela-local `scope`
   constructor). The `textus_praesens` carrier is GONE (U6): the region's
   current markup is read from the DOM via the typed hydration snapshot.
-- **`Renovatio`** — the update result `replace` returns: the next view plus
-  the declarative effects (`{ Visus visus, list<Effectus> effectus }`).
+- **`Update`** — the update result `replace` returns: the next view plus
+  the declarative effects (`{ View view, list<Effect> effects }`).
 - **Fail-closed returns** — a mount/replace that cannot complete returns
   `null` (no partial binding, never a silent wrong tree).
 
@@ -91,14 +91,14 @@ class Mounted {
 
 The campaign's conceptual `mount(Scope, Program, Theme)` (campaign §7)
 **decomposes at the app boundary**. The Program's message-typed parts — the
-`Vinculum`-shaped bindings (eventus + message-producing closures) and the
-`update(message) → next Visus` function — are **app-typed in the benchmark**
+`EventBinding`-shaped bindings (event_name + message-producing closures) and the
+`update(message) → next View` function — are **app-typed in the benchmark**
 (U3), not kernel-generic. Reason, recorded, not fought: radix defect **D1**
 blocks generic user-type construction, so the kernel owns only the
-non-generic carriers it can own (`Eventum`); the concrete message-typed plan
+non-generic carriers it can own (`EventName`); the concrete message-typed plan
 is the application's surface. The app plan attaches through the `data-tela`
-seam (identity-hydration.md §7): `Vinculum.identitas` keys to the
-`Identitas.valor` values the static renderer emits. Branch A re-spike is a
+seam (identity-hydration.md §7): `EventBinding.identity` keys to the
+`Identity.value` values the static renderer emits. Branch A re-spike is a
 campaign option gated on D1 landing — never a mid-stage switch.
 
 ## 2. Behavior carriers (U1 landed emission — `4ca331a`)
@@ -108,13 +108,13 @@ spellings, verified against the landed `src/tela.fab` (the spellings below
 **are** the landed spellings, not the delivery's sketches):
 
 ```fab
-class Eventum { string nomen }                    # constructor: eventum(nomen)
-union Effectus {
-    Restitue { string identitas }                 # constructor: restitue(identitas)
-    Dirige   { string identitas }                 # constructor: dirige(identitas)
-    Ancora   { string identitas }                 # constructor: ancora(identitas)
+class EventName { string name }                    # constructor: event_name(name)
+union Effect {
+    Restore { string identity }                 # constructor: restore(identity)
+    Direct   { string identity }                 # constructor: direct(identity)
+    Anchor   { string identity }                 # constructor: anchor(identity)
 }
-class Renovatio { Visus visus, list<Effectus> effectus }   # constructor: renovatio(visus, effectus)
+class Update { View view, list<Effect> effects }   # constructor: update(view, effects)
 ```
 
 Map to behavior-design §3.2 — each effect keyed by a stable identity (the
@@ -122,13 +122,13 @@ Map to behavior-design §3.2 — each effect keyed by a stable identity (the
 
 | §3.2 effect | Landed variant | Semantics |
 | --- | --- | --- |
-| Focus restoration | `Restitue { identitas }` | restore focus to the node that held it before replacement, by its stable identity |
-| Focus movement | `Dirige { identitas }` | move focus to a declared target identity |
-| Scroll anchoring | `Ancora { identitas }` | scroll-preservation intent for the region |
+| Focus restoration | `Restore { identity }` | restore focus to the node that held it before replacement, by its stable identity |
+| Focus movement | `Direct { identity }` | move focus to a declared target identity |
+| Scroll anchoring | `Anchor { identity }` | scroll-preservation intent for the region |
 
-Kernel-owned ordinary-function constructors (`eventum`, `restitue`,
-`dirige`, `ancora`, `renovatio` — the G3 posture) plus one **total
-accessor** `effectus_identitas(Effectus) → string` that the host reads to
+Kernel-owned ordinary-function constructors (`event_name`, `restore`,
+`direct`, `anchor`, `update` — the G3 posture) plus one **total
+accessor** `effect_identity(Effect) → string` that the host reads to
 execute an effect by its key. The kernel is the only place a
 consumer-imported union's variants can be matched (the G3-family
 imported-union pattern does not bind from a consumer; recorded in the
@@ -137,7 +137,7 @@ kernel header), so consumers read effect keys through the accessor.
 The carriers are **closure-free and `web:dom`-free** — plain values
 (construct, combine, read fields, render; no behavior smuggled in) — so the
 kernel's G4-safe flat stdlib-only shape is preserved. The kernel explicitly
-does **NOT** own `Vinculum`/`Nuntius`/`Program` (D1 + the concrete-message-
+does **NOT** own `EventBinding`/`Message`/`Program` (D1 + the concrete-message-
 type constraint; recorded in the module header). Exempla:
 `exempla/behavior.fab` (event-name construction; every effect variant; an
 update result carrying a view + effects; pure-carrier composition; the
@@ -167,44 +167,44 @@ only — they stay on the exported file interface) that `mount` composes and
 the check-time exempla asserts directly. **Stage 4 U6 (the seam flip)**: the
 pre-existing identity set + per-identity tag names come from the provider's
 TYPED hydration snapshot (`web:dom.snapshot`, faber-web `0d79f5b` — one
-`Nodus { identitas, tag }` per data-tela descendant), so the policy fns'
-praesens input is the **aligned tag-index** (`tags_praesentes`) — the
+`Nodus { identity, tag }` per data-tela descendant), so the policy fns'
+present input is the **aligned tag-index** (`present_tags`) — the
 `textus_praesens` markup string is gone (no textual DOM parse):
 
 ```fab
-parse_identitates(string markup) → list<string>        # VIEW markup: data-tela identities in document order
-elementum_tag(string markup, string identitas) → string ∪ null  # the identity node's open-tag shape (VIEW)
-nomen_tagi(string tag) → string                        # open-tag → tag name ("<button …>" → "button")
-quotiens(list<string> collatio, string nomen) → int    # occurrence count
-identitates_duplicatae(list<string> collatio) → list<string>    # distinct identities appearing > once
-identitates_ex_nodis(list<dom.Nodus> ∪ null) → list<string>     # snapshot → the praesens identity set
-tags_ex_nodis(list<dom.Nodus> ∪ null) → list<string>            # snapshot → the aligned tag names
-tag_at(identitas, identitates_praesentes, tags_praesentes) → string  # the praesens tag for an identity
-ligamen_status(identitas, identitates_view, identitates_praesentes, markup, tags_praesentes) → string  # "ligare" | "creare"
-diagnosia_hydrationis(markup, identitates_view, identitates_praesentes, tags_praesentes) → list<string>
+parse_identities(string markup) → list<string>        # VIEW markup: data-tela identities in document order
+element_tag(string markup, string identity) → string ∪ null  # the identity node's open-tag shape (VIEW)
+tag_name(string tag) → string                        # open-tag → tag name ("<button …>" → "button")
+count_occurrences(list<string> collection, string name) → int    # occurrence count
+duplicate_identities(list<string> collection) → list<string>    # distinct identities appearing > once
+identities_from_nodes(list<dom.Nodus> ∪ null) → list<string>     # snapshot → the present identity set
+tags_from_nodes(list<dom.Nodus> ∪ null) → list<string>            # snapshot → the aligned tag names
+tag_at(identity, present_identities, present_tags) → string  # the present tag for an identity
+binding_status(identity, view_identities, present_identities, markup, present_tags) → string  # "bind" | "create"
+hydration_diagnostics(markup, view_identities, present_identities, present_tags) → list<string>
 ```
 
-- `ligamen_status` returns **`"ligare"`** (bind the existing matching node —
+- `binding_status` returns **`"bind"`** (bind the existing matching node —
   hydration) only when the identity is unique in both markups AND the VIEW
   element's tag name equals the PRAESENS node's typed tag name;
-  **`"creare"`** (create/replace from the View) otherwise — including every
+  **`"create"`** (create/replace from the View) otherwise — including every
   ambiguous/mismatched case.
 - **The tag-name comparison (the U6 quote-normalization resolution)**: both
   sides normalize to TAG NAMES — the view side extracts the tag name from
-  the serializer's open tag (`nomen_tagi`), the praesens side uses the
+  the serializer's open tag (`tag_name`), the present side uses the
   snapshot's typed tag. Tag names carry no quotes, so the serializer's
   single-quote vs the real DOM's double-quote serialization never enters
   the comparison (the U6 discovery's quote-style finding, resolved at the
   comparison level).
-- `diagnosia_hydrationis` emits the deterministic diagnostic prefixes:
-  `duplicata:<id>` (identity appears more than once in either markup),
-  `extranea:<id>` (a pre-existing identity absent from the View), and
-  `muta:<id>` (present in both, unique in both, but the element TAG NAMES
+- `hydration_diagnostics` emits the deterministic diagnostic prefixes:
+  `duplicate:<id>` (identity appears more than once in either markup),
+  `foreign:<id>` (a pre-existing identity absent from the View), and
+  `changed:<id>` (present in both, unique in both, but the element TAG NAMES
   differ). **Fidelity narrowing (recorded honestly)**: the landed
   `web:dom.snapshot` carries identity + tag NAME only (faber-web `0d79f5b`
-  chose `tagName.toLowerCase()`), so `muta` fires on a tag-name mismatch,
+  chose `tagName.toLowerCase()`), so `changed` fires on a tag-name mismatch,
   not on an attribute-level open-tag shape difference. The U2-era
-  attribute-shape `muta` (e.g. a same-tag class change) is superseded; the
+  attribute-shape `changed` (e.g. a same-tag class change) is superseded; the
   mismatch proof fixtures moved to tag-name mismatches. The full open-tag
   shape comparison would require the snapshot to carry attributes — a
   future faber-web host extension if a consumer needs it (overlap rule).
@@ -212,24 +212,24 @@ diagnosia_hydrationis(markup, identitates_view, identitates_praesentes, tags_pra
 ## 4. Update strategy
 
 - **Rerender/replace the explicitly mounted region** (behavior-design
-  §3.1): after a message, the new `Visus` is produced and the update
-  replaces the explicitly mounted region — `replace(Mounted, next Visus)`.
+  §3.1): after a message, the new `View` is produced and the update
+  replaces the explicitly mounted region — `replace(Mounted, next View)`.
   Replacement operates on that region, not the document at large, and never
   performs descendant lookup through ambient global document shortcuts.
 - **Declarative effects on the update result** (§3.2): `replace` returns a
-  `Renovatio` whose `effectus` derive from the before/after state
+  `Update` whose `effects` derive from the before/after state
   (pre-replacement focused identity, declared focus movement, scroll-anchor
   intent); the host executes the declared effects **after** replacement
-  (`Restitue` restore by identity, `Dirige` move to a declared target,
-  `Ancora` scroll anchoring). Never imperative post-update host calls in
+  (`Restore` restore by identity, `Direct` move to a declared target,
+  `Anchor` scroll anchoring). Never imperative post-update host calls in
   user code — the component boundary stays pure.
 - **Modeled focus state (landed — U2 `9f23095`)**: the before/after state
   rides `Mounted` as data, set through two model functions —
-  `focus_tenet(Mounted, identitas) → Mounted` (the pre-replacement focused
-  identity → `Restitue` on replace) and
-  `focus_optata(Mounted, identitas) → Mounted` (a declared focus-movement
-  target → `Dirige` on replace). The harness mirrors the model onto the
-  actual DOM focus at execution time; `replace` always adds `Ancora`
+  `focus_held(Mounted, identity) → Mounted` (the pre-replacement focused
+  identity → `Restore` on replace) and
+  `focus_target(Mounted, identity) → Mounted` (a declared focus-movement
+  target → `Direct` on replace). The harness mirrors the model onto the
+  actual DOM focus at execution time; `replace` always adds `Anchor`
   (scroll-anchor intent) keyed to the region identity.
 - **No keyed reconciliation, signals, hooks, or concurrent rendering**
   (campaign §6 deferral) — deferred until measured application pressure
@@ -250,9 +250,9 @@ silent").
 
 - The control's live region is a control-owned
   `<div role='status' aria-live='polite' data-tela='tela-live'></div>`
-  (the `regio_viva()` component, a direct child of the control group).
+  (the `live_region()` component, a direct child of the control group).
 - The announcement mapping is the app-owned
-  `annuntium(props, electum) → string` — names the newly selected option
+  `announcement(props, selected) → string` — names the newly selected option
   ("One selected", "Two selected", "Three selected"); the driver writes it
   into the live region via `webDomTextSet` **only** when the selection
   changes (the interaction gate asserts the live region reads the new
@@ -334,7 +334,7 @@ facade). **Stage 4 U6**: the shim implements the typed hydration snapshot
 read (`webDomSnapshot`, mirroring faber-web `0d79f5b`) + the bare
 `Scope`/`Nodus` types the emitted module references; mount reads the
 planted pre-existing markup through the snapshot (the real provider route
-shape — the driver plants the praesens DOM, then the scope is constructed
+shape — the driver plants the present DOM, then the scope is constructed
 through the provider seam `webDomScope`, and mount derives the hydration
 state from `dom.snapshot`). Landed driver surface (U4 `check-mount` builds
 on these):
@@ -343,17 +343,17 @@ on these):
   markup shape (elements + single-quoted attributes + `data-tela`
   identities + nested children + void elements).
 - `executeMountPlan(document, selector, mounted, stamp)` — executes a mount
-  plan at node level: `"ligare"` identities bind to the existing matching
-  node (stamped `"original"` when `stamp` is set), `"creare"` identities
+  plan at node level: `"bind"` identities bind to the existing matching
+  node (stamped `"original"` when `stamp` is set), `"create"` identities
   are created/replaced from the View, extra/duplicated identity nodes are
   removed.
 - `bindRegionSubscriptions(document, selector, mounted, handler)` — binds a
-  `webDomOn` subscription per `Mounted.subscriptiones` descriptor.
+  `webDomOn` subscription per `Mounted.subscriptions` descriptor.
 - `executeMountProof(api)` — the full Stage 3 U2 mount proof: drives the
   emitted `mount`/`replace`/`dispose` against the fake DOM and asserts the
   done_when (g) DOM outcomes (empty mount; hydration binds matching nodes —
   not recreated; mismatch diagnose+replace; duplicate collapse; replace
-  effects `Restitue`/`Dirige`/`Ancora`; dispose unsubscribes + clears).
+  effects `Restore`/`Direct`/`Anchor`; dispose unsubscribes + clears).
 
 - **Bounded fidelity**: assertions at the **state level** (selection / ARIA
   / live-region / subscription / focus / scroll intent), not real layout.
@@ -407,20 +407,55 @@ predicates (cds-u5 + cds-u6) are executed — the rows below flip to REMOVED.
 | Defect | Marker | Posture |
 | --- | --- | --- |
 | `web:dom` locale/dialect gap (en→la) | `fix:web-dom-locale` | **REMOVED (Stage 4 U6)** — cds-u5 (cross-package locale propagation, radix `e32397630`) landed; the en→la `web:dom` import re-verified green at real use; `tela:browser` consumes `dom.Scope` directly; the marker has no live site in `tela/src` (grep-verified) |
-| imported-union variant matching from a consumer | `fix:sem001` | **Landed (U1, `4ca331a`; row added at the Stage 3 closeout)**: a consumer-side `match` over an imported union's variants does not bind — the kernel owns the only `Effectus` matcher (`effectus_identitas`, `src/tela.fab:970` + module-header marker `src/tela.fab:913`); consumers read effect keys through the accessor. Removal = grep-replace after the radix fix lands |
+| imported-union variant matching from a consumer | `fix:sem001` | **Landed (U1, `4ca331a`; row added at the Stage 3 closeout)**: a consumer-side `match` over an imported union's variants does not bind — the kernel owns the only `Effect` matcher (`effect_identity`, `src/tela.fab:970` + module-header marker `src/tela.fab:913`); consumers read effect keys through the accessor. Removal = grep-replace after the radix fix lands |
 | G4 — WARN014 snapshot skip on public signatures referencing imported sibling types | `fix:g4` | **REMOVED (Stage 4 U6)** — cds-u6 (file-interface exports, radix `2103f8a7f`) landed; `tela:browser`'s `mount`/`replace` export cleanly (no WARN014 on the tela-side surface; the remaining `dom.*` WARN014s at the import are the la provider's OWN handler-typed exports, not tela's — the seam surface tela consumes resolves). The marker has no live site in `tela/src` (grep-verified) |
-| **primitive nullable bindings in fn bodies (NEW parser observation)** | **`fix:prim-nullable`** | **Extended (Stage 4 U6)**: a `lista<X> ∪ nihil` cannot call methods directly in an en fn body on this radix (the non-null / optional chain Member resolution does not route to list methods). Workaround (landed): bind the `∪ null`, check `is null`, then narrow inside `if nodi not is null { … }` to a non-null copy (the triga `vp_result![k]` precedent extended); method calls run on the copy |
+| **primitive nullable bindings in fn bodies (NEW parser observation)** | **`fix:prim-nullable`** | **Extended (Stage 4 U6)**: a `lista<X> ∪ nihil` cannot call methods directly in an en fn body on this radix (the non-null / optional chain Member resolution does not route to list methods). Workaround (landed): bind the `∪ null`, check `is null`, then narrow inside `if nodes not is null { … }` to a non-null copy (the triga `vp_result![k]` precedent extended); method calls run on the copy |
 | CODEGEN001 — Rust emit-across-imports | `fix:codegen001` | **PARTIAL (Stage 4 U6)**: the provider-module locale-propagation half is fixed (cds-u5); the Rust lane remains blocked on a NEW manifestation (`definition id … could not be resolved during code generation`); `web:dom` is ts-only so Rust emit of a browser module is doubly out; TS lane is the proven lane; R2 sha-equality re-checked on the first post-fix run |
-| G5/G6 — verb/identifier collisions (`mount`/`replace`/`dispose` + new identifiers) | `fix:g5` | Probed collision-free (U2: `scopus`/`radiculum`/`subscriptio`/`ligamen`/`focus_tenet`/`focus_optata`/`parse_identitates`/`elementum_tag` — NONE; U6: `nomen_tagi`/`tag_at`/`identitates_ex_nodis`/`tags_ex_nodis` — NONE); a colliding verb is escalated, never silently renamed |
+| G5/G6 — verb/identifier collisions (`mount`/`replace`/`dispose` + new identifiers) | `fix:g5` | Probed collision-free (U2: `scope`/`region_root`/`subscription`/`binding`/`focus_held`/`focus_target`/`parse_identities`/`element_tag` — NONE; U6: `tag_name`/`tag_at`/`identities_from_nodes`/`tags_from_nodes` — NONE); a colliding verb is escalated, never silently renamed |
 | TS-emitter observations | `fix:ts-emitter` | Workarounds held; fragile against emitter changes |
-| snapshot-nomen-collision | `fix:snapshot-nomen-collision` | Stage 2 workaround held; new identifiers avoid kernel type names (U6: the seam types `Scope`/`Nodus` are imported from web:dom, never re-declared) |
+| snapshot-name-collision | `fix:snapshot-name-collision` | Stage 2 workaround held; new identifiers avoid kernel type names (U6: the seam types `Scope`/`Nodus` are imported from web:dom, never re-declared) |
 
 ## 12. Reconciliation state (U1 + U2 + U3 landed; all reconciled)
 
+- **U0 — English-first rename wave (2026-08-09, Stage 5 pre-admission) —
+  reconciled, the whole surface renamed.** The operator's English-first
+  policy (CAMPAIGN.md) + the head-cto naming review reworked the entire
+  landed surface to EN keywords + English identifiers BEFORE the reference
+  catalog (U2–U8) authors against it. Every section above reads the
+  POST-U0 names unless explicitly marked pre-U0; the full rename table is
+  in `stage-5-delivery.md` §U0. Key reconciliations recorded here:
+  1. **Seam call shape** — unchanged verbs (`mount`/`replace`/`dispose`),
+     types renamed: `mount(dom.Scope, View, Theme) → Mounted ∪ null`,
+     `replace(Mounted, View) → Update ∪ null`, `dispose(Mounted) → void`.
+  2. **`Mounted` fields** — English names (§1 landed block): `scope`,
+     `root` (was `radix`), `view`, `theme`, `markup`, `css_text`,
+     `identities`, `diagnostics`, `bindings`, `subscriptions`,
+     `focused_identity` (was `identitas_focus`), `target_identity` (was
+     `identitas_focus_optata`). `Mounted` itself STAYS English (operator).
+  3. **Value carriers** — `RegionRoot` (was `Radiculum`),
+     `EventSubscription` (was `Subscriptio` — NOT `Subscription`, which
+     collides with the web:dom seam type in the TS assembly),
+     `Binding` (was `Ligamen`); status strings `"bind"`/`"create"` (was
+     `"ligare"`/`"creare"`); diagnostic prefixes `duplicate:`/`foreign:`/
+     `changed:` (was `duplicata:`/`extranea:`/`muta:`); the tela-owned
+     event `tela:binding` (was `tela:ligamen`).
+  4. **Focus model** — `focus_held`/`focus_target` (was
+     `focus_tenet`/`focus_optata`).
+  5. **Hydration fns** — `parse_identities`/`element_tag`/
+     `count_occurrences`/`duplicate_identities`/`binding_status`/
+     `hydration_diagnostics`/`identities_from_nodes`/`tags_from_nodes`/
+     `tag_name` (was `parse_identitates`/`elementum_tag`/`quotiens`/
+     `identitates_duplicatae`/`ligamen_status`/`diagnosia_hydrationis`/
+     `identitates_ex_nodis`/`tags_ex_nodis`/`nomen_tagi`).
+  6. **Kernel carriers** — `EventName`/`Effect`/`Update` (was
+     `Eventum`/`Effectus`/`Renovatio`), effect variants `Restore`/
+     `Direct`/`Anchor`; `effect_identity` (was `effectus_identitas`).
+  7. **`fix:g4` REMOVED** — the exempla-mode consumption of `→ tela.View`
+     fns was re-verified live (green); the `*_html` helpers are retired.
 - **U1 emission (`4ca331a`) — verified, no deviation.** The behavior-carrier
-  spellings in §2 (`Eventum { nomen }`, `union Effectus` with
-  `Restitue`/`Dirige`/`Ancora`, `Renovatio { Visus visus, list<Effectus>
-  effectus }`) are the **landed** spellings from `src/tela.fab`, not the
+  spellings in §2 (`EventName { name }`, `union Effect` with
+  `Restore`/`Direct`/`Anchor`, `Update { View view, list<Effect>
+  effects }`) are the **landed** spellings from `src/tela.fab`, not the
   delivery's sketches. The delivery left "exact variant/field spellings are
   the Hand's" — the landed spelling is authoritative and this record
   documents it.
@@ -428,19 +463,19 @@ predicates (cds-u5 + cds-u6) are executed — the rows below flip to REMOVED.
   is the U5 reconciliation residual (U5 done_when (c)): the record now
   documents the **landed** browser surface. Every spec-locked sketch
   deviation, with the authoritative landed shape:
-  1. **Seam call shape** — landed `mount(Scope, Visus, Thema) →
-     Mounted ∪ null`, `replace(Mounted, Visus) → Renovatio ∪ null`,
+  1. **Seam call shape** — landed `mount(Scope, View, Theme) →
+     Mounted ∪ null`, `replace(Mounted, View) → Update ∪ null`,
      `dispose(Mounted) → void` (§1). The spec sketch's `dom.Scope` is
      carried by tela:browser's own `Scope` handle (the blocked en→la
      `web:dom` import, `fix:web-dom-locale`); `vacuum` is the en `void`
      type (the reader-pack mapping), not `vacua`.
   2. **`Mounted` fields** — landed spellings in §1 (incl. the render-plan
-     fields `textus_markup`/`textus_css`, the identity index, the
+     fields `markup`/`css_text`, the identity index, the
      diagnostics, the binding plan, the subscription list, and the modeled
      focus state).
-  3. **Hydration fn names** — landed `parse_identitates`/`elementum_tag`/
-     `quotiens`/`identitates_duplicatae`/`ligamen_status`/
-     `diagnosia_hydrationis` (§3), exposed as G4-safe exported pure fns.
+  3. **Hydration fn names** — landed `parse_identities`/`element_tag`/
+     `count_occurrences`/`duplicate_identities`/`binding_status`/
+     `hydration_diagnostics` (§3), exposed as G4-safe exported pure fns.
   4. **`fix:<id>` inventory** — gained `fix:prim-nullable` (NEW parser
      observation) and the landed g4/web-dom-locale observations (§11).
   5. **Synchronous-only + shim-boundary statements** — verified unchanged;
@@ -453,7 +488,7 @@ predicates (cds-u5 + cds-u6) are executed — the rows below flip to REMOVED.
   residual path, auditor-4 P2-3):
   1. **The live-region policy (§5)** — the control-owned
      `<div role='status' aria-live='polite' data-tela='tela-live'>`
-     node, the `annuntium(props, electum)` announcement mapping, and the
+     node, the `announcement(props, selected)` announcement mapping, and the
      silent-on-no-op/focus-only behavior — asserted by the interaction
      gate (U4 `check-mount`).
   2. **The interaction-gate statements (§8/§10)** — the scripted sequence
@@ -461,29 +496,29 @@ predicates (cds-u5 + cds-u6) are executed — the rows below flip to REMOVED.
      focus-only / Space-Enter / Home-End / replace + effects / dispose);
      determinism applies to the static/mount-time serialization only
      (`stage-3-mount-determinism.md`, sha `77516916…e5490`).
-  3. **The app-typed plan (D1 boundary)** — `union Nuntius` /
-     `class Vinculum` (eventus + message-producing closures) /
-     `update_controlli` / `nuntius_clavis` / `annuntium` are app-side in
+  3. **The app-typed plan (D1 boundary)** — `union Message` /
+     `class EventBinding` (event_name + message-producing closures) /
+     `update_control` / `key_message` / `announcement` are app-side in
      the benchmark, never kernel-generic — the campaign's conceptual
      `mount(Scope, Program, Theme)` decomposes at the app boundary
      (identity-hydration.md §7 attach point).
   4. **`fix:<id>` inventory (§11)** — gained `fix:sem001` (the kernel owns
-     the only `Effectus` matcher, `effectus_identitas`) at the closeout
+     the only `Effect` matcher, `effect_identity`) at the closeout
      (auditor-4 P2-1).
 - **U6 emission (`tela-s4-u6`) — the seam restoration, reconciled.** The
   CTO10-3 gate opened (cds-u5 `e32397630` + cds-u6 `2103f8a7f` + the
   faber-web snapshot op `0d79f5b`); this record + `browser.fab` reflect the
   flip:
-  1. **Seam call shape restored** — `mount(dom.Scope, Visus, Thema)`, the
+  1. **Seam call shape restored** — `mount(dom.Scope, View, Theme)`, the
      spec-locked shape (§1). The opaque `Scope { selector,
-     textus_praesens }` carrier + the `scopus` constructor are REMOVED; the
+     textus_praesens }` carrier + the `scope` constructor are REMOVED; the
      scope is constructed by the caller through the provider seam.
   2. **Snapshot-based hydration** — `mount` reads the pre-existing identity
      set + per-identity tag names from `dom.snapshot(scope)` (the typed
      read; no textual DOM parse); the policy fns take the aligned tag-index
-     (`tags_praesentes`) instead of the praesens markup string (§3).
+     (`present_tags`) instead of the present markup string (§3).
   3. **Tag-name shape comparison** — both sides normalize to tag names; the
-     `muta` diagnostic fires on a tag-name mismatch (the landed snapshot's
+     `changed` diagnostic fires on a tag-name mismatch (the landed snapshot's
      fidelity — attribute-level open-tag shape comparison superseded,
      recorded honestly in §3).
   4. **Markers flipped (§11)** — the two removal predicates executed

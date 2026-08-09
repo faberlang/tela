@@ -19,7 +19,7 @@ landed (U3, commit `05909f7`); this record is reconciled to that emission
 
 ## 1. The one form
 
-**`Identitas` serializes as the `data-tela` attribute — the only identity
+**`Identity` serializes as the `data-tela` attribute — the only identity
 serialization form in v1 (policy (d)2).**
 
 ```html
@@ -34,45 +34,45 @@ bindings, and matched on hydration.
 
 The serializer's quote style is **single quotes** for attribute values —
 the spike baseline (`spike/visus-b.fab`, `seri_*` helpers emit
-`nomen='valor'`; policy (d)'s locked example uses the same single-quoted
+`name='value'`; policy (d)'s locked example uses the same single-quoted
 spelling). The identity attribute therefore serializes as
-`data-tela='<escaped valor>'`.
+`data-tela='<escaped value>'`.
 
-Policy (d)2's prose spells the form `data-tela="<escaped valor>"` with double
+Policy (d)2's prose spells the form `data-tela="<escaped value>"` with double
 quotes; that is the generic markdown spelling of "an attribute value". The
 canonical emitted form is single-quoted per the spike baseline and the Stage 1
-delivery spec (U3 done_when (b): "`Attributa` serialize as `nomen='valor'`
+delivery spec (U3 done_when (b): "`Attributa` serialize as `name='value'`
 (quote style per the spike baseline — single quotes — and documented)").
 
 Reconciliation (U3 landed, commit `05909f7`): the serializer emits
 attribute values with single quotes exactly as documented here —
-`seri_attributa` emits `nomen='valor'` and `seri_identitas` emits
-`data-tela='<escaped valor>'`. **No quote-style deviation.**
+`serialize_attributes` emits `name='value'` and `serialize_identity` emits
+`data-tela='<escaped value>'`. **No quote-style deviation.**
 
 ## 3. Which elements carry it
 
-Only elements whose `Identitas` is **non-null** serialize identity.
+Only elements whose `Identity` is **non-null** serialize identity.
 
-- The `Elementum` variant carries `Identitas ∪ null identitas` — identity is
+- The `ElementNode` variant carries `Identity ∪ null identity` — identity is
   an optional explicit field on the element.
 - Elements without identity carry `null` and emit **no** `data-tela`
   attribute.
-- `Textus` and `Fragmentum` have no identity field and never emit identity.
+- `TextNode` and `Fragment` have no identity field and never emit identity.
 
-The serializer emits `data-tela='<escaped valor>'` on exactly those elements
-whose `Identitas` is non-null (policy (d)2).
+The serializer emits `data-tela='<escaped value>'` on exactly those elements
+whose `Identity` is non-null (policy (d)2).
 
 ## 4. Identity is a typed field, never position-derived
 
-`Identitas { valor }` is an explicit typed field on the element. Identity is
+`Identity { value }` is an explicit typed field on the element. Identity is
 **never** inferred from array position — no "the third child is this element"
 implicit identity. This is locked by policy (d)1 and the kernel shape
 (`src/tela.fab`, U1): the field exists on the element, and elements without an
 explicit value simply carry `null`.
 
-## 5. Escaping rules for the valor
+## 5. Escaping rules for the value
 
-The identity `valor` is an attribute value and flows through the **same
+The identity `value` is an attribute value and flows through the **same
 central attribute-escape path** as every other attribute value (policy (d)3;
 U3 done_when (a)). There is no separate, weaker escape for identity.
 
@@ -81,12 +81,12 @@ The escape set (locked by U3 done_when (a)):
 | Context | Escaped characters |
 | --- | --- |
 | Text | `&`, `<`, `>` |
-| Attribute values (incl. the `data-tela` valor) | `&`, `<`, `>`, plus `"` and `'` |
+| Attribute values (incl. the `data-tela` value) | `&`, `<`, `>`, plus `"` and `'` |
 
-The landed emission (`escapa`, commit `05909f7`) maps each character through
+The landed emission (`escape`, commit `05909f7`) maps each character through
 one single-pass scan; the concrete spellings are:
 
-| Character | Text | Attribute value (incl. `data-tela` valor) |
+| Character | Text | Attribute value (incl. `data-tela` value) |
 | --- | --- | --- |
 | `&` | `&amp;` | `&amp;` |
 | `<` | `&lt;` | `&lt;` |
@@ -98,14 +98,14 @@ Because each input character is consumed exactly once (single-character scan,
 sequential branches), no emitted entity is re-scanned — an already-escaped
 sequence is never double-escaped.
 
-Because the quote style is single quotes, a single quote inside the valor is
-escaped — a valor cannot break out of its attribute.
+Because the quote style is single quotes, a single quote inside the value is
+escaped — a value cannot break out of its attribute.
 
 ## 6. Uniqueness / duplicates — deferred to Stage 3
 
 Duplicate values and uniqueness expectations are **not** Stage 1 concerns.
 Stage 1 emits identity faithfully; it does not diagnose or reject duplicate
-`Identitas.valor` values.
+`Identity.value` values.
 
 Stage 3 hydration matching owns the behavior (campaign §7):
 
@@ -121,7 +121,7 @@ the wrong tree.
 
 Stage 3's typed behavior plan keys to these values:
 
-- `Vinculum.identitas` keys to `Identitas.valor` values (policy (d)3;
+- `EventBinding.identity` keys to `Identity.value` values (policy (d)3;
   `stage-0-behavior-design.md` §2).
 - The browser mount reads `data-tela` on the rendered markup to attach
   bindings and to match on hydration.
@@ -129,7 +129,7 @@ Stage 3's typed behavior plan keys to these values:
   nothing else in v1 serializes identity.
 
 This record is the Stage 3 input for the seam: Stage 3 binds
-`Vinculum.identitas` to the `data-tela` values emitted here.
+`EventBinding.identity` to the `data-tela` values emitted here.
 
 ## 8. Stage 1 is synchronous; the TS async gap is a Stage 3 input
 
@@ -146,12 +146,12 @@ calls inside `fac`/`cape` blocks — is recorded verbatim in
 
 Nothing in this record implies asynchronous identity matching in Stage 1.
 
-## 9. Proprietas static posture
+## 9. Property static posture
 
-`Proprietas` (DOM properties — value, checked, selection) are typed view-tree
+`Property` (DOM properties — value, checked, selection) are typed view-tree
 fields carried for the browser lane (Stage 3) and are **not** serialized into
 static HTML in Stage 1. The spike's provisional `data-prop:` marker is
-**superseded**. Static output carries `Attributa` + `Identitas` + text +
+**superseded**. Static output carries `Attributa` + `Identity` + text +
 structure only — DOM properties are not HTML attributes, and static HTML stays
 honest. This posture is recorded in the kernel header and here; Stage 3
 defines any static/hydration presence for properties.
@@ -162,22 +162,22 @@ The serializer reconciliation item (U4 done_when (c)) is **DONE**. The U3
 emission (`05909f7`) was verified against this record:
 
 - **Quote style**: single quotes — confirmed, no deviation (§2).
-  `seri_attributa` emits `nomen='valor'`; `seri_identitas` emits
-  `data-tela='<escaped valor>'`.
+  `serialize_attributes` emits `name='value'`; `serialize_identity` emits
+  `data-tela='<escaped value>'`.
 - **Escape set**: text `& < >`; attribute values additionally `" '` —
   confirmed, no deviation (§5). Landed spellings `&amp;` / `&lt;` / `&gt;` /
   `&quot;` / `&#39;`.
 - **data-tela through the same attribute-escape path**: confirmed —
-  `seri_identitas` calls `escapa(identitas?.valor coalesce "", true)`
+  `serialize_identity` calls `escape(identity?.value coalesce "", true)`
   (policy (d)).
 - **Serializer verb**: the HTML renderer verb is **`html_visus`**, not
-  `html` — the exact `html` verb collides with the `Spatium.html`
+  `html` — the exact `html` verb collides with the `Space.html`
   enum-member top-level binding (G5, `SEM005.duplicate_definition`;
   recorded + escalated by U3). The `html_` prefix keeps the locked English
   stem (policy (b)); `css` is verbatim (verified not reserved). See
   `AGENTS.md` vocabulary.
-- **Fail-closed mechanism**: `html_visus(Visus) → string ∪ null` — null when
-  the `valida_arbor` pre-pass rejects; invalid input never emits markup.
+- **Fail-closed mechanism**: `html_visus(View) → string ∪ null` — null when
+  the `validate_tree` pre-pass rejects; invalid input never emits markup.
 
 No deviations required a doc change beyond this reconciliation; the U4
 record's Stage 1 closeout residual for this item is closed.

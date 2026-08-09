@@ -12,8 +12,8 @@ the delivery's layer list and marks the reconciliation (below).
 
 ## Token rendering convention (locked)
 
-A token `nomen` is a **dotted path** (`chart.axis.muted`). The rendered
-CSS custom property is `--` + the nomen with `.` → `-`:
+A token `name` is a **dotted path** (`chart.axis.muted`). The rendered
+CSS custom property is `--` + the name with `.` → `-`:
 
 ```text
 chart.axis.muted  →  --chart-axis-muted
@@ -22,16 +22,16 @@ form.field.invalid → --form-field-invalid
 ```
 
 The conversion is a deterministic single-character scan
-(`nomen_scopuli_proprietas`). `thema_css` emits the resolved tokens at a
-**selected root**: one `Regula { selector = ":root" }` whose
-`Declaratio` values are the resolved tokens, serialized through the
-existing `css(Stilum)` serializer (policy (b) verb). Multi-dot mapping
+(`token_property_name`). `theme_css` emits the resolved tokens at a
+**selected root**: one `Rule { selector = ":root" }` whose
+`Declaration` values are the resolved tokens, serialized through the
+existing `css(Style)` serializer (policy (b) verb). Multi-dot mapping
 edge (`form.field.invalid`) is covered by the U1 exempla.
 
 ## Core token baseline
 
 The **core baseline** is the required token set a theme must cover
-(`scopuli_core()`, pinned in the kernel header):
+(`core_tokens()`, pinned in the kernel header):
 
 ```text
 surface.canvas   surface.panel   text.primary   text.muted
@@ -41,33 +41,33 @@ border.default   accent.primary  state.positive state.caution
 Eight required tokens from the campaign §5 families `surface.*` /
 `text.*` / `border.*` / `accent.*` / `state.*`. It is a **required set,
 NOT a closed enum** (campaign §5, policy (c)): extension libraries add
-namespaced tokens as ordinary `Scopulum` values; the v1 subset
+namespaced tokens as ordinary `Token` values; the v1 subset
 deliberately excludes the `space/radius/type/motion` families (small +
 honest — future subsets add tokens, never widen a closed enum).
 
 ## Theme values
 
-- `Scopulum { nomen, valor }` — one named token (dotted path + resolved
+- `Token { name, value }` — one named token (dotted path + resolved
   CSS value).
-- `Thema { nomen, scopuli }` — a named theme: a token collection over
+- `Theme { name, tokens }` — a named theme: a token collection over
   the core baseline.
 - Constructors are kernel-owned **ordinary functions**
-  (`scopulum(...)`, `thema(...)`). A free function may share a class
+  (`token(...)`, `theme(...)`). A free function may share a class
   name (G5's collision is enum-member-specific — probed on in-tree radix
   0.80.0), so no prefix workaround is applied.
-- **Two materially different themes = two `Thema` values over the same
+- **Two materially different themes = two `Theme` values over the same
   component tree** — the two-theme composition contract (U3's proof seam:
   same tree, different token layers, no component changes, HTML
   byte-identity asserted).
 
-## `thema_css` fail-closed semantics
+## `theme_css` fail-closed semantics
 
-`thema_css(Thema) → string ∪ null` — the public theme renderer verb:
+`theme_css(Theme) → string ∪ null` — the public theme renderer verb:
 
 - **Missing required core token** → `null` (no output): the theme's
   collection is checked against the 8-token baseline before emission.
 - **Invalid token name** (fails the U2 attribute-name lexical predicate —
-  `valida.valida_nomen_attributi`: letters/digits/`-`/`_`/`.`; rejects
+  `valida.valid_attribute_name`: letters/digits/`-`/`_`/`.`; rejects
   whitespace, `=`, quotes, `< > /`, control characters) → `null`.
 - **Deterministic bytes** over author order (fixed iteration; no
   sorting, no RNG).
@@ -84,7 +84,7 @@ policy (c) open custom-property names). The surface is extension-local
 token classes + zero-arg accessors, **collected app-side** — the
 compose-without pattern, G4-independent (no provider-module export that
 would trip `WARN014`). Extension tokens join the emitted `:root` layer as
-ordinary `Declaratio` values once the theme's required baseline is met.
+ordinary `Declaration` values once the theme's required baseline is met.
 
 ## Cascade layer order
 
@@ -98,7 +98,7 @@ reset (opt-in only) → tokens → components → library packages → applicati
 
 - Reset styles are **opt-in only** (no reset by default).
 - `@layer` at-rules are **deferred** (policy (c) growth — the staged
-  `Stilum`/`Regula`/`Declaratio` model gains layer values as it grows;
+  `Style`/`Rule`/`Declaration` model gains layer values as it grows;
   v1 emits the layers in declaration order, not `@layer` syntax).
 
 **Reconciliation mark (U2/U3):** the authoritative cascade/assembly
@@ -110,7 +110,7 @@ deviation is reconciled within U4 scope or routed.
 
 ## Assembly contract (policy (e))
 
-Product assembly (`assemble(...) → Stilum`, English verb — U2's
+Product assembly (`assemble(...) → Style`, English verb — U2's
 implementation) is a **pure function over explicit inputs**: the
 package-order map (`list<`(package identity, dependencies)`>`), the
 collected style bundles with stable identities, the selected theme, and
@@ -128,7 +128,7 @@ an optional reset bundle. Rules:
 ## Determinism posture
 
 The rendered output is **byte-deterministic** over the same inputs:
-fixed iteration, no RNG, no hidden state (the assembly + `thema_css`
+fixed iteration, no RNG, no hidden state (the assembly + `theme_css`
 both hold). The deterministic double-build evidence (byte-identical
 captures + sha256) is U5's harness work (`check-determinism`), not this
 record's.
@@ -140,7 +140,7 @@ Radix-lane workarounds are recorded **at the site** with a
 fix lands**. Markers applied through U1:
 
 - `fix:g5` — **none applied** in the theme surface: the theme verbs
-  (`thema`, `scopulum`, `thema_css`) were probed collision-free on
+  (`theme`, `token`, `theme_css`) were probed collision-free on
   in-tree radix 0.80.0 (G5's collision is enum-member-specific; a free
   fn may share a class name). The G5 rule still holds: a colliding verb
   is escalated, never silently renamed.
