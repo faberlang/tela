@@ -2,7 +2,7 @@
 
 **Created**: 2026-07-18
 **Updated**: 2026-07-18 — moved into the initialized Tela repository after review reconciliation
-**Status**: active — Stage 0 accepted, Stage 1 accepted, Stage 2 accepted (step-6 review 2026-08-09); Stage 3 selected next
+**Status**: active — Stage 0 accepted, Stage 1 accepted, Stage 2 accepted — initial accept record corrected (fire-9 independent audit 2026-08-09 confirmed the closeout evidence; the original accept asserted a prior audit that did not exist); Stage 3 selected next
 **Mode**: repository campaign routing artifact; do not implement directly from this file
 **Target workspace**: `/Users/ianzepp/work/faberlang`
 **Control-plane repo**: `/Users/ianzepp/work/faberlang/tela`
@@ -273,7 +273,7 @@ radix D1; versioning/capability truth → Stage 8. **Stage 2 selected next.**
 
 ### Stage 2 — Style And Theme Protocol
 
-**Status**: delivered — Stage 2 closed out (2026-08-09); Stage 3 selected next
+**Status**: accepted — Stage 2 closed out; acceptance record corrected (fire-9 independent audit 2026-08-09 confirmed the closeout evidence); Stage 3 selected next
 **Source**: Stage 0 style decision
 **Why now**: downstream component libraries need stable visual roles before a
 catalog is authored.

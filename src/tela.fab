@@ -910,6 +910,10 @@ fn assemble(
 #            members do).
 #   fix:codegen001 — Rust emit-across-imports remains blocked (attempted +
 #            recorded); the TS lane is the proven runtime lane.
+#   fix:sem001 — consumer-side match over an imported union's variants does
+#            not bind (SEM001.unknown_variant); the kernel owns the only
+#            matcher (effectus_identitas below) — the G3-family imported-
+#            union matching gap, recorded + escalated to the radix lane.
 # ---------------------------------------------------------------------------
 
 # Eventum: the event value — a typed event-name carrier (policy (b) locked
@@ -963,6 +967,7 @@ fn ancora(string identitas) → Effectus {
 # segmented-interactive proof) — and the kernel is the only place a
 # consumer-imported union's variants can be matched (the G3-family
 # imported-union variant pattern does not bind from a consumer; recorded).
+# fix:sem001 — removal = grep-replace after the radix fix lands.
 # Total over the three variants — never null.
 fn effectus_identitas(Effectus effectus) → string {
     match effectus {
