@@ -39,7 +39,7 @@ every deviation is recorded with the landed shape as authority.
 | P2 | Resolution | Commit/evidence |
 | --- | --- | --- |
 | **P2-1** — `fix:sem001` row absent from browser-lifecycle.md §11 | **Added**: the imported-union-matching row (kernel owns the only `Effectus` matcher, `effectus_identitas`; site `src/tela.fab:970` + header `:913`) | browser-lifecycle.md §11 (this commit) |
-| **P2-2** — factory README stale (the two Stage 3 evidence records added without a regen) | **Regenerated** via `generate-factory-readme.py --factory-root docs/factory`; the `other` document count 12 → 14; `--check` fresh after | `docs/factory/README.md` (this commit) |
+| **P2-2** — factory README stale (the three Stage 3 evidence records added without a regen) | **Regenerated** via `generate-factory-readme.py --factory-root docs/factory`; the `other` document count 12 → 15 (stage-3-segmented-control.md + stage-3-mount-determinism.md + stage-3-closeout.md); `--check` fresh after | `docs/factory/README.md` (this commit) |
 | **P2-3** — U3 reconciliation of browser-lifecycle.md §12/§5 pending | **Completed**: §5 gains the landed live-region emission (the `data-tela='tela-live'` node, `annuntium` mapping, silent-on-no-op) and §12's ledger moves U3 to **reconciled** | browser-lifecycle.md §5/§12 (this commit) |
 
 ## 3. The 4f85d04-echo residual

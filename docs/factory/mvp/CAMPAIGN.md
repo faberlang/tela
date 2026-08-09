@@ -2,7 +2,7 @@
 
 **Created**: 2026-07-18
 **Updated**: 2026-07-18 — moved into the initialized Tela repository after review reconciliation
-**Status**: active — Stage 0 accepted, Stage 1 accepted, Stage 2 accepted — initial accept record corrected (fire-9 independent audit 2026-08-09 confirmed the closeout evidence; the original accept asserted a prior audit that did not exist); Stage 3 selected next
+**Status**: active — Stage 0 accepted, Stage 1 accepted, Stage 2 accepted — initial accept record corrected (fire-9 independent audit 2026-08-09 confirmed the closeout evidence; the original accept asserted a prior audit that did not exist); Stage 3 accepted (step-6 review + independent audit clean_pass 2026-08-09, audit-before-acceptance held); Stage 4 selected next
 **Mode**: repository campaign routing artifact; do not implement directly from this file
 **Target workspace**: `/Users/ianzepp/work/faberlang`
 **Control-plane repo**: `/Users/ianzepp/work/faberlang/tela`
@@ -287,7 +287,7 @@ cycles and ambiguous conflicts reject; output is deterministic.
 
 ### Stage 3 — Browser Mount And Update Lifecycle
 
-**Status**: planned; depends on Stages 1-2
+**Status**: accepted — Stage 3 closeout evidence + independent audit clean_pass (2026-08-09); audit-before-acceptance held; Stage 4 selected next
 **Source**: Stage 0 behavior decision and `faber-web` runtime
 **Why now**: prove the same component source can become an interactive client
 without adding a second authoring model.
@@ -303,7 +303,13 @@ TypeScript async gap before claiming fetch-driven updates.
 
 ### Stage 4 — Independent Extension Package Proof
 
-**Status**: planned; depends on Stage 3
+**Status**: planned — selected next (Stage 4); depends on Stage 3
+**Entry conditions (recorded, not met)**: the Stage 4 interactive-proof gate
+per the Stage 3 closeout (CTO10-3) — `fix:web-dom-locale` (a real en→la
+`web:dom` import) and `fix:g4` (the `tela:browser` lifecycle exported and
+consumable through the normal package interface) must land before the
+interactive Stage 4 proof; the `fix:sem001`/`fix:prim-nullable`/
+`fix:codegen001` markers are NOT Stage-4 blockers.
 **Source**: campaign governing invariant and Stage 0 two-package canary
 **Why now**: the framework is not extensible merely because its own components
 compile; prove the public seam before building the reference catalog.
