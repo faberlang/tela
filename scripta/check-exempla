@@ -1,17 +1,26 @@
 #!/usr/bin/env bash
-# tela/scripta/check-exempla — exempla surface (Stage 1 U6 + Stage 2 U5).
-# radix check every exempla/*.fab, then the TS lane: emit the import-free
-# kernel-side modules + assemble each exempla into ONE self-contained file
-# (single-file emits of the import-bearing exempla are not self-contained —
-# they keep `provider:module` imports and bare type references), then
-# `tsc --noEmit` (strict) AND execute the assembled file under `node`
-# (Stage 2 U5 runtime gate — residual R1 closed: assertions run, so a wrong
-# expected value or a real emitter/source defect fails the check instead of
-# being implementer-claimed). A development-time runtime run in U6 surfaced
-# a U2 defect (valida.fab's html-only name set omitted `img`) — fixed by the
-# Stage 1 closeout repair; the runtime gate now owns this class of defect
-# (the Stage 2 U5 gate caught a real U2 assemble hole: components/library
-# bundles were not rule-shape validated — fixed in the U5 closeout).
+# tela/scripta/check-exempla — exempla surface (Stage 1 U6 + Stage 2 U5 +
+# Stage 3 U4). radix check every exempla/*.fab, then the TS lane: emit the
+# import-free kernel-side modules + assemble each exempla into ONE
+# self-contained file (single-file emits of the import-bearing exempla are
+# not self-contained — they keep `provider:module` imports and bare type
+# references), then `tsc --noEmit` (strict) AND execute the assembled file
+# under `node` (Stage 2 U5 runtime gate — residual R1 closed: assertions
+# run, so a wrong expected value or a real emitter/source defect fails the
+# check instead of being implementer-claimed). A development-time runtime
+# run in U6 surfaced a U2 defect (valida.fab's html-only name set omitted
+# `img`) — fixed by the Stage 1 closeout repair; the runtime gate now owns
+# this class of defect (the Stage 2 U5 gate caught a real U2 assemble hole:
+# components/library bundles were not rule-shape validated — fixed in the
+# U5 closeout).
+#
+# Stage 3 U4: the `behavior` (U1 carriers) + `browser` (U2 mount surface)
+# wiring cases are added — the `*)` default must have NO unknown cases
+# after. The `browser` case binds the dom-shim namespace (export keywords
+# removed) + the U2 mount-proof driver, so the assembled browser exempla
+# executes the full mount proof under `node` (empty mount / hydration /
+# mismatch / duplicate / replace effects / dispose) — the harness-assembly
+# path (fix:g4 — the snapshot does not apply at runtime).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -52,22 +61,52 @@ trap 'rm -rf "$SCRATCH"' EXIT
 strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
 
 VALIDA_NS="const valida = { valida_spatium, valida_nomen_tag, valida_nomen_attributi, valida_nomen_in_spatio, valida_void_html, valida_void_structura };"
-TELA_NS="const tela = { html_visus, css, thema_css, thema_stilum, thema, scopulum, scopuli_core, nomen_scopuli_proprietas, nomen_scopuli_validum, thema_scopuli_core_parati, thema_habet_scopulum, assemble, codicillus, ordo, codicilli_dedupata, ordine_ordinata, stilum_validum, stilum_textus_immundus, codicillus_ex, in_lista, pendeant_parata, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, Attributum, Declaratio, Regula, Stilum, Scopulum, Thema, Codicillus, Ordo };"
+TELA_NS="const tela = { html_visus, css, thema_css, thema_stilum, thema, scopulum, scopuli_core, nomen_scopuli_proprietas, nomen_scopuli_validum, thema_scopuli_core_parati, thema_habet_scopulum, assemble, codicillus, ordo, codicilli_dedupata, ordine_ordinata, stilum_validum, stilum_textus_immundus, codicillus_ex, in_lista, pendeant_parata, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, eventum, restitue, dirige, ancora, renovatio, effectus_identitas, Attributum, Proprietas, Declaratio, Regula, Stilum, Scopulum, Thema, Codicillus, Ordo };"
+BROWSER_NS="const browser = { scopus, radiculum, subscriptio, ligamen, parse_identitates, elementum_tag, quotiens, identitates_duplicatae, ligamen_status, diagnosia_hydrationis, mount, replace, dispose, focus_tenet, focus_optata };"
+
+# The U2 mount-proof driver glue: calls executeMountProof (dom-shim) with
+# the assembled browser exempla's scenario inputs — the runtime gate for
+# the browser exempla's DOM-level assertions.
+BROWSER_DRIVER="
+const domProofApi = {
+  mount: browser.mount,
+  replace: browser.replace,
+  dispose: browser.dispose,
+  focus_tenet: browser.focus_tenet,
+  focus_optata: browser.focus_optata,
+  scopus: browser.scopus,
+  html_visus: tela.html_visus,
+  effectus_identitas: tela.effectus_identitas,
+  arbor: arbor_controlli,
+  arbor_extensa: arbor_controlli_extensa,
+  arbor_duplicata: arbor_duplicata,
+  thema: thema_probe,
+  textus_arboris: textus_arboris,
+  praesens_hydrationis: praesens_hydrationis,
+  praesens_mismatch: praesens_mismatch,
+  praesens_duplicata: praesens_duplicata,
+  praesens_extranea: praesens_extranea
+};
+executeMountProof(domProofApi);
+"
 
 echo "check-exempla: TS lane (emit + assemble + tsc --noEmit + node runtime gate)"
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/valida.fab" -o "$SCRATCH/valida.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/browser.fab" -o "$SCRATCH/browser.ts" >/dev/null
 
 for f in "$ROOT"/exempla/*.fab; do
   name="$(basename "$f" .fab)"
-  "$RADIX_BIN" emit -t ts --locale en "$f" -o "$SCRATCH/${name}.ts" >/dev/null
+  # Emit the exempla to a name-suffixed scratch file: exempla/browser.fab
+  # emits `browser.ts` too, which must not clobber the browser module emit.
+  "$RADIX_BIN" emit -t ts --locale en "$f" -o "$SCRATCH/${name}-exempla.ts" >/dev/null
   case "$name" in
     validation)
       # exempla/validation.fab imports tela:valida
       {
         strip "$SCRATCH/valida.ts"
         echo "$VALIDA_NS"
-        strip "$SCRATCH/validation.ts"
+        strip "$SCRATCH/validation-exempla.ts"
       } > "$SCRATCH/${name}-joined.ts"
       ;;
     serializer)
@@ -77,7 +116,7 @@ for f in "$ROOT"/exempla/*.fab; do
         echo "$VALIDA_NS"
         strip "$SCRATCH/tela.ts"
         echo "$TELA_NS"
-        strip "$SCRATCH/serializer.ts"
+        strip "$SCRATCH/serializer-exempla.ts"
       } > "$SCRATCH/${name}-joined.ts"
       ;;
     thema)
@@ -87,7 +126,7 @@ for f in "$ROOT"/exempla/*.fab; do
         echo "$VALIDA_NS"
         strip "$SCRATCH/tela.ts"
         echo "$TELA_NS"
-        strip "$SCRATCH/thema.ts"
+        strip "$SCRATCH/thema-exempla.ts"
       } > "$SCRATCH/${name}-joined.ts"
       ;;
     assemble)
@@ -97,7 +136,36 @@ for f in "$ROOT"/exempla/*.fab; do
         echo "$VALIDA_NS"
         strip "$SCRATCH/tela.ts"
         echo "$TELA_NS"
-        strip "$SCRATCH/assemble.ts"
+        strip "$SCRATCH/assemble-exempla.ts"
+      } > "$SCRATCH/${name}-joined.ts"
+      ;;
+    behavior)
+      # exempla/behavior.fab imports tela:tela (Stage 3 U1 behavior carriers)
+      {
+        strip "$SCRATCH/valida.ts"
+        echo "$VALIDA_NS"
+        strip "$SCRATCH/tela.ts"
+        echo "$TELA_NS"
+        strip "$SCRATCH/behavior-exempla.ts"
+      } > "$SCRATCH/${name}-joined.ts"
+      ;;
+    browser)
+      # exempla/browser.fab imports tela:tela + tela:browser. The dom-shim
+      # (export keywords removed) + the mount-proof driver are bound so the
+      # assembled exempla executes the FULL U2 mount proof under node (the
+      # harness-assembly path — the WARN014 export-skip does not apply at
+      # runtime, fix:g4).
+      {
+        strip "$SCRATCH/valida.ts"
+        echo "$VALIDA_NS"
+        strip "$SCRATCH/tela.ts"
+        echo "$TELA_NS"
+        strip "$SCRATCH/browser.ts"
+        echo "$BROWSER_NS"
+        strip "$SCRATCH/browser-exempla.ts"
+        echo ""
+        sed 's/^export //' "$ROOT/scripta/dom-shim.ts"
+        echo "$BROWSER_DRIVER"
       } > "$SCRATCH/${name}-joined.ts"
       ;;
     *)

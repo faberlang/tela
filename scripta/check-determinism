@@ -1,13 +1,28 @@
 #!/usr/bin/env bash
-# tela/scripta/check-determinism — determinism gate (Stage 1 U6 + Stage 2 U5).
-# Builds the benchmark composition static output TWICE and byte-compares.
-# A diff FAILS the check (fail-closed); identical builds print sha256 hashes
-# and write build/static-1.txt, build/static-2.txt, build/hashes.txt.
+# tela/scripta/check-determinism — determinism gate (Stage 1 U6 + Stage 2 U5
+# + Stage 3 U4). Builds the benchmark composition static output TWICE and
+# byte-compares. A diff FAILS the check (fail-closed); identical builds
+# print sha256 hashes and write build/static-1.txt, build/static-2.txt,
+# build/hashes.txt.
 #
 # Stage 2 U5: the double-build input is the TWO-THEME composition runner
 # (canary-app, U3 ee2abb0) — the output is the single theme-independent HTML
 # plus the full cascade CSS under both themes (lumen/tenebrae). The gate
 # byte-compares the whole runner output twice.
+#
+# Stage 3 U3/U4: the runner (canary-app main.fab, 27aa181) now ALSO prints
+# the segmented-control static render (initial HTML — role=radiogroup /
+# role=radio / aria-selected / the roving tabindex / the declared live
+# region) and the app-owned control cascade rule. The double-build input is
+# therefore the full Stage 3 static/mount-time serialization; the sha
+# supersedes the Stage 2 record (3d22b9c7…8340a) and the U3 informational
+# sha (d23a62bb…c74c) — see stage-3-mount-determinism.md.
+#
+# Determinism posture: determinism applies to STATIC/MOUNT-TIME
+# serialization ONLY (the segmented control's initial HTML + the full
+# cascade); interactive state is time-variant — recorded, not claimed. The
+# interaction sequence is a scripted deterministic assertion sequence under
+# check-mount, not a racy timing test.
 #
 # Lanes:
 #   Primary (Rust): emit canary-app to Rust -> scratch crate OUTSIDE the
@@ -117,7 +132,7 @@ strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
   strip "$SCRATCH/valida.ts"
   echo "const valida = { valida_spatium, valida_nomen_tag, valida_nomen_attributi, valida_nomen_in_spatio, valida_void_html, valida_void_structura };"
   strip "$SCRATCH/tela.ts"
-  echo "const tela = { html_visus, css, thema_css, thema_stilum, thema, scopulum, scopuli_core, nomen_scopuli_proprietas, nomen_scopuli_validum, thema_scopuli_core_parati, thema_habet_scopulum, assemble, codicillus, ordo, codicilli_dedupata, ordine_ordinata, stilum_validum, stilum_textus_immundus, codicillus_ex, in_lista, pendeant_parata, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, Attributum, Proprietas, Declaratio, Regula, Stilum, Scopulum, Thema, Codicillus, Ordo };"
+  echo "const tela = { html_visus, css, thema_css, thema_stilum, thema, scopulum, scopuli_core, nomen_scopuli_proprietas, nomen_scopuli_validum, thema_scopuli_core_parati, thema_habet_scopulum, assemble, codicillus, ordo, codicilli_dedupata, ordine_ordinata, stilum_validum, stilum_textus_immundus, codicillus_ex, in_lista, pendeant_parata, textus_view, fragmentum_view, nova_identitas, html_spatium, svg_spatium, elementum_view, elementum_omne, eventum, restitue, dirige, ancora, renovatio, effectus_identitas, Attributum, Proprietas, Declaratio, Regula, Stilum, Scopulum, Thema, Codicillus, Ordo };"
   strip "$SCRATCH/extension.ts"
   echo "const ext = { chart_axis_muted, chart_axis_muted_tenebrae, chart_grid_muted, chart_grid_muted_tenebrae, chart_scopuli, chart_scopuli_tenebrae, bar_metrum, chart_stilum, Scopulus };"
   strip "$SCRATCH/main.ts"
