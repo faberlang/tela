@@ -109,14 +109,17 @@ instead of a Faber web ecosystem.
   remain a browser-host surface while Tela is proved, but it must not force a
   second permanent component API.
 - **Minimize TS/JS; dogfood Faber for scripts that do things** (operator
-  preference 2026-08-09). Tela's product source is pure Faber and stays that
-  way. Harness/tooling that "does things" (fake DOM, assertion sequences,
-  orchestration) should be Faber scripts, not TypeScript/Python, using the
-  faberlang.dev generator as the complexity reference — the only unavoidable
-  TS is the emitted web-target output and the `faber-web` browser-host
-  runtime (TS by contract). Scope and sequencing of the conversion are open
-  (Tela-first vs workspace-wide); recorded here so no delivery invents a
-  TS-first harness.
+  preference 2026-08-09; scope decision 2026-08-09: **Tela-first**). Tela's
+  product source is pure Faber and stays that way. Harness/tooling that "does
+  things" (fake DOM, assertion sequences, orchestration) should be Faber
+  scripts, not TypeScript/Python, using the faberlang.dev generator as the
+  complexity reference — the only unavoidable TS is the emitted web-target
+  output and the `faber-web` browser-host runtime (TS by contract). The
+  conversion folds into the **Stage 5 lowering as a named unit** (fake DOM +
+  harness TS → Faber source, gates stay green; executed-orchestration rides
+  the hardening executed lane); a workspace-wide version is a follow-on goal
+  only if the Tela conversion earns it. Recorded here so no delivery invents
+  a TS-first harness.
 
 ## Implementation Workflow
 
