@@ -1,0 +1,92 @@
++++
+term = "validation"
+kind = "keyword"
+category = "library"
+locale = "en"
++++
+
+# tela/exempla/validation.fab — Stage 1 U2 exempla for the fail-closed
+# validation module (src/valida.fab). Covers every case from U2 done_when (e):
+#   valid custom element; valid data-*/aria-* attributes; rejected empty tag,
+#   space-containing tag, markup char in tag, leading-digit tag, quote in
+#   attribute name; void-element-with-children rejection; unknown-but-valid
+#   names accepted (campaign dependency rule 9). The fail-closed contract
+#   itself is documented in the valida.fab module header: invalid lexical
+#   shape, namespace misuse, or impossible void-element structure NEVER emits
+#   markup — the serializer boundary (U3) rejects before emission.
+
+import from "tela:valida" private valida
+
+main {
+    # --- (a) Tag names: valida_nomen_tag --------------------------------
+
+    # Accepted: custom elements, standard names, SVG camelCase, unknown-but-valid.
+    assert valida.valida_nomen_tag("x-metric")
+    assert valida.valida_nomen_tag("article")
+    assert valida.valida_nomen_tag("feGaussianBlur")
+    assert valida.valida_nomen_tag("futuristic-2026")
+
+    # Rejected: empty, whitespace, markup/attr delimiters, leading digit, controls.
+    assert not valida.valida_nomen_tag("")
+    assert not valida.valida_nomen_tag("my tag")
+    assert not valida.valida_nomen_tag("di<v")
+    assert not valida.valida_nomen_tag("di>v")
+    assert not valida.valida_nomen_tag("1div")
+    assert not valida.valida_nomen_tag("di'v")
+    assert not valida.valida_nomen_tag("di/v")
+    assert not valida.valida_nomen_tag("di=v")
+    assert not valida.valida_nomen_tag("di\nv")
+
+    # --- (b) Attribute names: valida_nomen_attributi --------------------
+
+    # Accepted: data-*, aria-*, xlink:*, standard names.
+    assert valida.valida_nomen_attributi("data-index")
+    assert valida.valida_nomen_attributi("aria-label")
+    assert valida.valida_nomen_attributi("xlink:href")
+    assert valida.valida_nomen_attributi("class")
+
+    # Rejected: whitespace, =, quotes, < > /, control chars.
+    assert not valida.valida_nomen_attributi("bad name")
+    assert not valida.valida_nomen_attributi("a=b")
+    assert not valida.valida_nomen_attributi("a\"b")
+    assert not valida.valida_nomen_attributi("a'b")
+    assert not valida.valida_nomen_attributi("a/b")
+    assert not valida.valida_nomen_attributi("<a")
+    assert not valida.valida_nomen_attributi("a\tb")
+
+    # --- (c) HTML void-element set: valida_void_html --------------------
+
+    assert valida.valida_void_html("img")
+    assert valida.valida_void_html("br")
+    assert valida.valida_void_html("wbr")
+    assert valida.valida_void_html("input")
+    assert not valida.valida_void_html("div")
+    assert not valida.valida_void_html("image")
+
+    # --- (d) Void structure: valida_void_structura ----------------------
+
+    assert valida.valida_void_structura("img", false)
+    assert valida.valida_void_structura("div", true)
+    assert not valida.valida_void_structura("img", true)
+
+    # --- (c) Namespace context: valida_nomen_in_spatio ------------------
+
+    assert valida.valida_nomen_in_spatio("div", "html")
+    assert valida.valida_nomen_in_spatio("circle", "svg")
+    assert valida.valida_nomen_in_spatio("x-metric", "html")
+    assert valida.valida_nomen_in_spatio("x-metric", "svg")
+    assert valida.valida_nomen_in_spatio("futuristic-2026", "svg")
+    assert not valida.valida_nomen_in_spatio("circle", "html")
+    assert not valida.valida_nomen_in_spatio("div", "svg")
+    assert not valida.valida_nomen_in_spatio("img", "svg")
+    assert not valida.valida_nomen_in_spatio("my tag", "html")
+    assert not valida.valida_nomen_in_spatio("div", "web")
+
+    # --- (c) Namespace string surface: valida_spatium -------------------
+
+    assert valida.valida_spatium("html")
+    assert valida.valida_spatium("svg")
+    assert not valida.valida_spatium("xml")
+
+    print "validation exempla parata"
+}

@@ -1,0 +1,147 @@
+# tela/src/valida.fab — fail-closed lexical + namespace validation (Stage 1 U2).
+#
+# G4-safe predicate module: the public surface is string/bool ONLY. No tela
+# type (Spatium, Visus, Elementum, …) appears in any public signature — the
+# namespace context rides a string surface ("html" / "svg") that the U3
+# serializer glue maps from the kernel's Spatium enum. The module is flat and
+# import-free (stdlib intrinsics only), matching the kernel module rule (G4).
+#
+# FAIL-CLOSED CONTRACT (stage-1-delivery.md U2 done_when (d)):
+#   These predicates are the serializer-boundary gate. The U3 serializer runs
+#   the lexical, namespace-context, and void-structure checks BEFORE any
+#   emission; when any check fails the element is REJECTED — invalid lexical
+#   shape, namespace misuse, or impossible void-element structure NEVER emits
+#   markup. Constructors stay open (no eager constructor validation — the
+#   kernel's open element model is unchanged); enforcement happens at the
+#   emission boundary only.
+#
+# DEPENDENCY RULE 9 (campaign): unknown-but-valid names are NOT rejected for
+#   being new. The lexical predicates accept any name over the documented
+#   charsets, and the namespace-context predicate rejects only names KNOWN to
+#   belong to the other namespace. The known-name sets below are conservative:
+#   a name absent from both sets is accepted in either context. Custom
+#   elements (x-*), SVG camelCase names, and future-standard names pass.
+#
+# Lexical rules (the HTML-context shape; the SVG lane shares the same base):
+#   - tag names (valida_nomen_tag): first char an ASCII letter; then ASCII
+#     letters/digits/-/_/. only. Rejects empty, whitespace, markup/attribute
+#     delimiters (< > " ' / =), leading digits, and control characters.
+#     Colons are excluded (the open element model marks namespaces via
+#     Spatium, not XML prefixes). Non-ASCII names fail closed in v1 (the
+#     charsets are ASCII; a non-ASCII scalar is never contained).
+#   - attribute names (valida_nomen_attributi): ASCII letters/digits/-/_/./
+#     : only. Rejects whitespace, =, quotes, < > /, and control characters.
+#     Accepts data-*, aria-*, xlink:*, xml:*, and standard names.
+#   Control characters are excluded by construction (absent from the charsets).
+#
+# Namespace-context rules (string surface; fail-closed):
+#   - valida_spatium: accepts exactly "html" / "svg"; any other string is an
+#     unknown context and is rejected.
+#   - valida_nomen_in_spatio: known SVG-only element names under the "html"
+#     context and known HTML-only element names under the "svg" context are
+#     namespace misuse and are rejected; unknown-but-valid names are accepted
+#     in either context (dependency rule 9); an unknown namespace context
+#     fails closed.
+#   - valida_void_html: exact membership in the HTML void-element set
+#     (area base br col embed hr img input link meta param source track wbr).
+#   - valida_void_structura: an HTML void element carrying children is an
+#     impossible structure and is rejected; non-void elements may carry
+#     children freely and void elements without children are valid.
+#
+# NOTE (recorded workaround, radix-lane defect): the charsets are function-
+#   local consts rather than module-level consts because the Rust emitter
+#   emits a module-level string const as `pub const X: String = "…"` without
+#   `.to_string()` (cargo E0308; the acknowledged generated-Rust emitter
+#   regression). Function-local string consts emit correctly. The public
+#   surface and semantics are unchanged — this is an emitter workaround, not
+#   a contract weakening.
+
+# ---------------------------------------------------------------------------
+# Internal helper: whitespace-delimited set membership. The delimiters turn
+# exact-token membership (a full name) into substring containment, so partial
+# matches ("line" inside "polyline", "meta" inside "metadata") cannot pass.
+# ---------------------------------------------------------------------------
+
+fn valida_in_gregis(string nomen, string grex) → bool {
+    const string grex_limitata ← " " + grex + " "
+    const string nomen_limitatum ← " " + nomen + " "
+    return grex_limitata.continet(nomen_limitatum)
+}
+
+# ---------------------------------------------------------------------------
+# (a) Lexical tag-name predicate.
+# ---------------------------------------------------------------------------
+
+fn valida_nomen_tag(string nomen) → bool {
+    const string litterae ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    const string char_tagi ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_."
+    if nomen.longitudo() ≡ 0 then return false
+    if not litterae.continet(nomen.sectio(0, 1)) then return false
+    var int i ← 1
+    while i < nomen.longitudo() {
+        if not char_tagi.continet(nomen.sectio(i, i + 1)) then return false
+        i ← i + 1
+    }
+    return true
+}
+
+# ---------------------------------------------------------------------------
+# (b) Lexical attribute-name predicate.
+# ---------------------------------------------------------------------------
+
+fn valida_nomen_attributi(string nomen) → bool {
+    const string char_attributi ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.:"
+    if nomen.longitudo() ≡ 0 then return false
+    var int i ← 0
+    while i < nomen.longitudo() {
+        if not char_attributi.continet(nomen.sectio(i, i + 1)) then return false
+        i ← i + 1
+    }
+    return true
+}
+
+# ---------------------------------------------------------------------------
+# (c) Namespace-context predicates (string surface).
+# ---------------------------------------------------------------------------
+
+# The serializer glue maps Spatium.html → "html" and Spatium.svg → "svg".
+# Unknown contexts fail closed (never emit).
+fn valida_spatium(string spatium) → bool {
+    return spatium ≡ "html" or spatium ≡ "svg"
+}
+
+# Name-context misuse detection: known SVG-only names under html context and
+# known HTML-only names under svg context are rejected; unknown-but-valid
+# names are accepted in either context (dependency rule 9); an unknown
+# namespace context fails closed.
+fn valida_nomen_in_spatio(string nomen, string spatium) → bool {
+    const string nomen_svg_soli ← "svg g defs symbol use path rect circle ellipse line polyline polygon text tspan textPath foreignObject image linearGradient radialGradient stop clipPath mask pattern marker view switch metadata animate animateTransform animateMotion set mpath"
+    const string nomen_html_soli ← "div span p br hr wbr h1 h2 h3 h4 h5 h6 ul ol li dl dt dd table thead tbody tfoot tr td th caption colgroup form input button select option optgroup textarea label fieldset legend datalist output progress meter section article header footer nav main aside figure figcaption blockquote pre code em strong small sub sup mark time abbr address cite b i u s del ins q kbd samp var iframe video audio canvas template dialog details summary picture source track map area link meta menu"
+    if not valida_nomen_tag(nomen) then return false
+    if spatium ≡ "html" {
+        if valida_in_gregis(nomen, nomen_svg_soli) then return false
+        return true
+    }
+    if spatium ≡ "svg" {
+        if valida_in_gregis(nomen, nomen_html_soli) then return false
+        return true
+    }
+    return false
+}
+
+# HTML void-element set membership (exact HTML spec set).
+fn valida_void_html(string nomen) → bool {
+    const string nomen_voidi_html ← "area base br col embed hr img input link meta param source track wbr"
+    return valida_in_gregis(nomen, nomen_voidi_html)
+}
+
+# ---------------------------------------------------------------------------
+# (d) Void-structure predicate — impossible void-element structure never
+# emits. The serializer glue passes habet_liberi = (liberi list non-empty).
+# ---------------------------------------------------------------------------
+
+fn valida_void_structura(string nomen, bool habet_liberi) → bool {
+    if not valida_nomen_tag(nomen) then return false
+    if valida_void_html(nomen) and habet_liberi then return false
+    return true
+}
