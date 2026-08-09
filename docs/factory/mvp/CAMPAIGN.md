@@ -120,14 +120,18 @@ instead of a Faber web ecosystem.
   the hardening executed lane); a workspace-wide version is a follow-on goal
   only if the Tela conversion earns it. Recorded here so no delivery invents
   a TS-first harness.
-- **English-first public API** (operator decision 2026-08-09). Tela is a
-  public-facing library for a broader audience: the `tela:*` protocol types,
-  lifecycle, component families, and module names are authored in English.
-  Latin remains the internal canonical structure and is appropriate for the
-  standard library (norma). The illustrative Faber-Latin names in the
-  Protocol Design Pass are not the public API; the public surface is reworked
-  to English before the reference catalog (Stage 5) is built on it. Applies
-  to the head-cto naming review and every Stage 5 unit brief.
+- **English-first, end to end** (operator decision + clarification
+  2026-08-09). Tela uses the **EN keyword locale** (English keyword
+  spellings) AND English naming patterns for types and methods — the whole
+  authoring surface is English. Latin is NOT Tela's internal form: Latin is
+  Radix's canonical (unbiased) language form and the default surface for the
+  standard library (norma). Calling a Latin-named stdlib function from
+  English Tela is a calling detail, not a Tela API design question. The
+  current policy lock (stage-0-protocol-policies.md (b) "Faber-Latin protocol
+  spellings") is **SUPERSEDED**: the Tela source surface (kernel, lifecycle,
+  forms, exempla, harnesses) is reworked to EN keywords + English identifiers
+  before the reference catalog (Stage 5) is built on it. Applies to the
+  head-cto naming review and every Stage 5 unit brief.
 
 ## Implementation Workflow
 
@@ -795,15 +799,14 @@ Downstream validation is stage-owned. Expected categories include:
 5. Which public API vocabulary policy should Tela use: Faber-Latin type and
    field names, clear English web terms, or a documented split between project
    identity and protocol vocabulary?
-   **RESOLVED (operator decision 2026-08-09): English-first public API.**
-   Tela's public surface — the `tela:*` protocol types, lifecycle, component
-   families, and module names — is authored in English for the broader
-   audience. Latin remains the internal canonical structure and is appropriate
-   for the standard library (norma). Consequence: the illustrative
-   Faber-Latin names in the Protocol Design Pass are NOT the public API;
-   the public surface is reworked to English before the reference catalog
-   (Stage 5) is built on it, and the head-cto naming review applies this
-   policy.
+   **RESOLVED (operator decision + clarification 2026-08-09): English-first,
+   end to end.** Tela uses the EN keyword locale AND English naming patterns
+   for types and methods. Latin's home is Radix (the canonical/unbiased
+   language form) and Norma's default surface — NOT Tela's internals. Calling
+   a Latin stdlib function from English Tela is a calling detail. The
+   Protocol Design Pass's Faber-Latin names and the current policy lock
+   (stage-0-protocol-policies.md (b)) are superseded; the whole Tela source
+   surface is reworked to EN keywords + English identifiers before Stage 5.
 6. Which independent extension package provides the strongest Stage 4 proof:
    charts, forms, or a documentation-layout library?
 

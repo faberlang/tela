@@ -775,7 +775,14 @@ honestly.
 | # | Question | Default | Who |
 |---|---|---|---|
 | Q1 | Reference-catalog module naming: `tela:reference` (English working name) vs a Latin spelling (`tela:refero`, the `valida` precedent). Vocabulary policy (b) types are Faber-Latin; module names have been Latin (`tela`, `valida`). | `tela:reference` (U1's identity freeze may Latinize) | Mind (confirm) |
-   **RESOLVED (operator decision 2026-08-09): English-first public API — `tela:reference` is the name.** Latin stays internal-canonical + stdlib; the public surface (protocol types, lifecycle, component families, module names) is English. U1 freezes the catalog home as `tela:reference` and the naming review applies English-first. |
+   **RESOLVED (operator decision + clarification 2026-08-09): `tela:reference`
+   is the name; English-first end to end.** Tela uses the EN keyword locale +
+   English identifiers (types/methods); Latin's home is Radix canonical form +
+   Norma default surface; calling Latin stdlib fns is a calling detail.
+   Supersedes policy lock stage-0-protocol-policies.md (b). U1 freezes
+   `tela:reference`; the rename wave reworks the whole Tela surface
+   (kernel/lifecycle/forms/exempla/harnesses) to EN keywords + English names
+   before U2–U8. |
 | Q2 | Consumer scope: extend the existing canary-app with the reference families (one app, all packages — the ecosystem story; the runner grows; the sha supersedes per unit) vs a new `proof/reference-app/` consumer (cleaner separation from the Stage 4 proof; a second assembly surface + a second libhome consumer). | Extend the canary-app (the U3/U4 precedent; one runner; the sha churn is recorded) | Mind (confirm) |
 | Q3 | DOGFOODING home: `scripta/harness_dom.fab` (self-contained, colocated with the harnesses — probed in U1) vs a `proof/harness-dom/` package (own `faber.toml`, the provider-module pattern's exact home). | `scripta/harness_dom.fab` if the standalone check/emit probe passes; else the package fallback | Mind (confirm if the probe fails) |
 | Q4 | The executed-lane follow-on: after U9 proves the fake DOM in Faber, the assertion/orchestration drivers → executed Faber scripts rides the hardening executed lane (a dedicated hardening goal, not Stage 5). Confirm the hardening lane is a Stage 8/separate-goal input (the posture: "a workspace-wide version is a follow-on goal only if the Tela conversion earns it"). | Hardening lane = a follow-on goal (recorded in the U9 evidence + the stage residuals) | Mind (confirm) |
