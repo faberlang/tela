@@ -1,0 +1,28 @@
++++
+term = "defect-d2"
+kind = "keyword"
+category = "type"
+locale = "en"
++++
+
+# tela/spike/defects/d2-ts-tag-discriminant.fab
+# MINIMIZED REPRO — D2 (TypeScript lane): a union variant field named `tag`
+# collides with the emitted discriminant property.
+#
+# radix check: ok. radix emit -t ts produces:
+#   type U = { tag: "V", tag: string } | { tag: "W", valor: string };
+# which fails tsc --noEmit with TS2300 duplicate identifier / TS2717.
+#
+# Consequence: the campaign sketch's `textus tag` field name (Elementum.tag)
+# cannot be carried through the TS lane as-is. Stage 1 must either rename the
+# field (spike uses nomen_tag) or fix the emitter's discriminant naming.
+# See stage-0-branch-a-b-evidence.md.
+
+union U {
+    V { string tag },
+    W { string valor }
+}
+
+fn f() → U {
+    return variant V { tag = "div" } ∷ U
+}

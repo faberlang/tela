@@ -1,0 +1,35 @@
++++
+term = "defect-d1"
+kind = "keyword"
+category = "type"
+locale = "en"
++++
+
+# tela/spike/defects/d1-generic-construction.fab
+# MINIMIZED REPRO — D1: generic user-type construction does not instantiate
+# type parameters (shared semantic layer; all targets).
+#
+# Expected: constructing a variant whose field references the union's type
+# parameter should work (here the field is `T res`, the union Cista<int>).
+# Actual: SEM010 expression_type_mismatch / argument_type_mismatch — the
+# constructor never substitutes the type argument, so `1` (int) cannot unify
+# with the unbound `T`.
+#
+# Same failure for:
+#   - generic class construction (`class C<T> { T value }` + `(C { ... }) ∷ C<int>`);
+#   - any ascription spelling (`variant X {...} ∷ Cista<int>` does not parse —
+#     the finge cast accepts only a bare type name; general `(expr) ∷ T<Args>`
+#     parses but still leaves fields uninstantiated).
+#
+# Branch A consequence: the campaign's generic `Visus<Message>` view values and
+# `Vinculum<Message>` closure-bearing bindings cannot be CONSTRUCTED in current
+# ordinary Faber. Branch B (non-generic View + adjacent typed plan) avoids the
+# defect; see stage-0-branch-a-b-evidence.md.
+
+union Cista<T> {
+    Plena { T res }
+}
+
+fn facere() → Cista<int> {
+    return variant Plena { res = 1 } ∷ Cista
+}

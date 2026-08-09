@@ -1,0 +1,35 @@
++++
+term = "defect-d3"
+kind = "keyword"
+category = "type"
+locale = "en"
++++
+
+# tela/spike/defects/d3-rust-option-wrap.fab
+# MINIMIZED REPRO — D3 (Rust lane): a NON-null value assigned to a nullable
+# union field (T ∪ null) is emitted without the Some(...) wrap.
+#
+# radix check: ok. radix emit -t rust produces, for the nullable field:
+#   identitas: Identitas { valor: "x".to_string() }
+# where the field type is Option<Identitas> — cargo check fails with E0308
+# (expected Option<Identitas>, found Identitas).
+#
+# Null assignments (identitas = null) emit None correctly; values already of
+# the nullable type (e.g. a helper returning T ∪ null) emit correctly. Only a
+# direct non-null constructor expression into the nullable field is broken.
+#
+# Spike workaround: nova_identitas() returns Identitas ∪ null and the spike
+# routes non-null identity through it. See stage-0-branch-a-b-evidence.md.
+
+class Identitas {
+    string valor
+}
+
+union U {
+    V { Identitas ∪ null identitas, string tag },
+    W { string valor }
+}
+
+fn f() → U {
+    return variant V { identitas = Identitas { valor = "x" }, tag = "div" } ∷ U
+}

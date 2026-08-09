@@ -1,0 +1,292 @@
++++
+term = "visus-b"
+kind = "keyword"
+category = "type"
+locale = "en"
++++
+
+# tela/spike/visus-b.fab
+# Stage 0 U3 protocol spike — Branch B working candidate.
+# Branch B = pure (closure-free) non-generic View tree + an adjacent typed
+# behavior plan keyed to stable node identities (campaign §6).
+#
+# Why Branch B: the Branch A candidate (generic Visus<Message> with
+# message-bearing Vinculum<Message> closures) cannot be CONSTRUCTED in current
+# ordinary Faber — generic user-type construction does not instantiate type
+# parameters (shared semantic-layer defect; minimized repro in
+# stage-0-branch-a-b-evidence.md §4). Campaign §2 fallback: keep the pure
+# non-generic View tree and place behavior in an adjacent typed plan.
+#
+# Properties preserved per campaign §2:
+#   - open element model: any syntactically valid tag string, explicit namespace;
+#   - typed Identitas (stable identity, explicit field, hydration-ready);
+#   - Proprietas modeled separately from serialized Attributa;
+#   - behavior carried by typed message-producing closures — in an ADJACENT
+#     plan (Vinculum { eventus, (Eventum) → AppNuntius }) keyed to stable
+#     node identities, not erased into unvalidated strings;
+#   - recursive tagged union Visus;
+#   - Fragmentum is structural (emits no wrapper);
+#   - no raw-markup View variant.
+
+# Spatium: namespace enum (html | svg). Open element model — the tag itself is
+# an ordinary string, so custom elements and future-standard names stay open.
+enum Spatium {
+    html,
+    svg
+}
+
+# Attributum: serialized attribute — an (nomen, valor) pair emitted into the tag.
+class Attributum {
+    string nomen
+    string valor
+}
+
+# Proprietas: DOM property (value, checked, selection), modeled separately from
+# serialized attributes because their semantics differ.
+class Proprietas {
+    string nomen
+    string valor
+}
+
+# Identitas: stable identity. Explicit typed field — never inferred from array
+# position. Serialized in one documented hydration-ready form (data-tela).
+class Identitas {
+    string valor
+}
+
+# Eventum: event descriptor (e.g. "click", "input").
+class Eventum {
+    string nomen
+}
+
+# Visus: the recursive tagged union at the center of the protocol. Closure-free
+# (Branch B): behavior lives in the adjacent plan, not inside view values.
+union Visus {
+    Elementum {
+        Identitas ∪ null identitas,
+        Spatium spatium,
+        string nomen_tag,
+        list<Attributum> attributa,
+        list<Proprietas> proprietates,
+        list<Visus> liberi
+    },
+    Textus { string valor },
+    Fragmentum { list<Visus> liberi }
+}
+
+# Application message type (concrete; the generic Message parameter is dropped
+# from the view protocol under Branch B — campaign §2 fallback).
+union AppNuntius {
+    Incrementum { int gradus },
+    Redintegratio
+}
+
+# Adjacent behavior plan: an event binding carrying a message-producing closure,
+# keyed to a stable node identity (Identitas.valor) for the hydration plan.
+class Vinculum {
+    string identitas
+    string eventus
+    (Eventum) → AppNuntius nuntius
+}
+
+# ---------------------------------------------------------------------------
+# Standard constructors — ordinary functions over the same public view values.
+# No compiler-known component kinds; helpers are not privileged syntax.
+# ---------------------------------------------------------------------------
+
+fn textus_view(string valor) → Visus {
+    return variant Textus { valor = valor } ∷ Visus
+}
+
+fn fragmentum_view(list<Visus> liberi) → Visus {
+    return variant Fragmentum { liberi = liberi } ∷ Visus
+}
+
+# Open element model constructor: namespace + tag name + children.
+fn elementum_view(Spatium spatium, string nomen_tag, list<Visus> liberi) → Visus {
+    return variant Elementum {
+        identitas = null,
+        spatium = spatium,
+        nomen_tag = nomen_tag,
+        attributa = [],
+        proprietates = [],
+        liberi = liberi
+    } ∷ Visus
+}
+
+# ---------------------------------------------------------------------------
+# Branch B component: pure view values + an adjacent behavior plan.
+# Component contract (campaign §3): (Model) → View; behavior is separate.
+# ---------------------------------------------------------------------------
+
+# A message-producing closure value: (Eventum) → AppNuntius.
+fn incrementum_binding() → Vinculum {
+    return Vinculum {
+        identitas = "contator-app",
+        eventus = "click",
+        nuntius = (Eventum e) → AppNuntius ∴ variant Incrementum { gradus = 1 } ∷ AppNuntius
+    }
+}
+
+# The component's view: ordinary Faber function composing child views.
+fn contator_app(int model) → Visus {
+    let attributa ← [ Attributum { nomen = "aria-label", valor = "contator" } ]
+    let proprietates ← [ Proprietas { nomen = "aria-valuenow", valor = "§"(model) } ]
+    return variant Elementum {
+        identitas = nova_identitas("contator-app"),
+        spatium = Spatium.html,
+        nomen_tag = "div",
+        attributa = attributa,
+        proprietates = proprietates,
+        liberi = [
+            textus_view("contator: "),
+            textus_view("§"(model)),
+            elementum_view(Spatium.html, "x-metric", [ textus_view("§"(model)) ]),
+            fragmentum_view([ textus_view("a"), textus_view("b") ])
+        ]
+    } ∷ Visus
+}
+
+# Typed stable identity via the nullable field. Routed through a helper that
+# returns Identitas ∪ null: direct non-null construction into a nullable union
+# field is a known Rust-emission defect (Some() wrap missing — minimized repro
+# in stage-0-branch-a-b-evidence.md §4).
+fn nova_identitas(string v) → Identitas ∪ null {
+    return Identitas { valor = v }
+}
+
+# The adjacent behavior plan: message-bearing closures keyed to stable node
+# identities. The static renderer ignores it; the browser mount binds to it.
+fn contator_program() → list<Vinculum> {
+    return [ incrementum_binding() ]
+}
+
+# ---------------------------------------------------------------------------
+# Spike-quality static HTML/CSS serialization — representability proof only.
+# Not Stage 1's serializer: placeholder escaping, no determinism gate.
+# Shows: open tags, serialized Attributa, separate Proprietas, typed Identitas,
+# structural fragments. Behavior markers are static (data-event) because the
+# plan is adjacent — the browser mount owns binding.
+# ---------------------------------------------------------------------------
+
+fn escapa(string s) → string {
+    # Central escaping is renderer-owned (Stage 1). Spike placeholder only.
+    return s
+}
+
+fn seri_attributa(list<Attributum> attributa) → string {
+    var string accum ← ""
+    for from attributa const attr {
+        accum ← accum + " " + attr.nomen + "='" + escapa(attr.valor) + "'"
+    }
+    return accum
+}
+
+fn seri_proprietates(list<Proprietas> proprietates) → string {
+    var string accum ← ""
+    for from proprietates const prop {
+        accum ← accum + " data-prop:" + prop.nomen + "='" + escapa(prop.valor) + "'"
+    }
+    return accum
+}
+
+fn seri_identitas(Identitas ∪ null identitas) → string {
+    match identitas {
+        case null {
+            return ""
+        }
+        default {
+            return " data-tela='" + escapa(identitas?.valor coalesce "") + "'"
+        }
+    }
+}
+
+fn seri_ns(Spatium spatium) → string {
+    match spatium {
+        case Spatium.html {
+            return ""
+        }
+        case Spatium.svg {
+            return " xmlns='http://www.w3.org/2000/svg'"
+        }
+    }
+}
+
+fn seri_visus(Visus v) → string {
+    match v {
+        case Textus const valor {
+            return escapa(valor)
+        }
+        case Fragmentum const liberi {
+            var string accum ← ""
+            for from liberi const liber {
+                accum ← accum + seri_visus(liber)
+            }
+            return accum
+        }
+        case Elementum const identitas, spatium, nomen_tag, attributa, proprietates, liberi {
+            var string accum ← "<" + nomen_tag + seri_ns(spatium)
+            accum ← accum + seri_attributa(attributa)
+            accum ← accum + seri_proprietates(proprietates)
+            accum ← accum + seri_identitas(identitas)
+            var string inner ← ""
+            for from liberi const liber {
+                inner ← inner + seri_visus(liber)
+            }
+            return accum + ">" + inner + "</" + nomen_tag + ">"
+        }
+    }
+}
+
+# Spike-quality structured CSS: selector + declarations; typed constructors.
+class Declaratio {
+    string nomen
+    string valor
+}
+
+class Regula {
+    string selector
+    list<Declaratio> declarationes
+}
+
+class Stilum {
+    list<Regula> regulae
+}
+
+fn seri_css(Stilum stilum) → string {
+    var string accum ← ""
+    for from stilum.regulae const regula {
+        accum ← accum + regula.selector + " { "
+        for from regula.declarationes const decl {
+            accum ← accum + decl.nomen + ": " + decl.valor + "; "
+        }
+        accum ← accum + "}\n"
+    }
+    return accum
+}
+
+# Sample tree assembled by the application; statically serialized by the
+# spike functions above. Structural proof only — not run in closeout.
+fn app_arbor() → Visus {
+    return contator_app(7)
+}
+
+main {
+    # Structural assertion: the sample tree serializes to a plausible static
+    # HTML fragment with open tags, attributes, identity; the behavior plan
+    # stays adjacent and typed (contator_program is typechecked).
+    const _ html_out ← seri_visus(app_arbor())
+    const _ program ← contator_program()
+    const _ css_out ← seri_css(Stilum {
+        regulae = [
+            Regula {
+                selector = "[data-tela='contator-app']",
+                declarationes = [
+                    Declaratio { nomen = "display", valor = "grid" },
+                    Declaratio { nomen = "gap", valor = "0.5rem" }
+                ]
+            }
+        ]
+    })
+    print "spike arbor parata"
+}
