@@ -42,12 +42,15 @@
 #     is fixed (cds-u5); browser.fab remains ts-only because web:dom is
 #     ts-only (Rust emit of a web:dom-importing module is doubly out) —
 #     recorded, never the gate.
-#   fix:prim-nullable — extended observation: a `lista<X> ∪ nihil` cannot
-#     call methods directly in an en fn body on this radix (the non-null /
-#     optional chain Member resolution does not route to list methods).
-#     Workaround (landed): bind the ∪ null, check `is null`, then narrow
-#     inside `if nodes not is null { … }` to a non-null copy (the triga
-#     `vp_result![k]` precedent extended); method calls run on the copy.
+#   fix:prim-nullable — RESOLVED for the narrowed-list case (nn-u3b,
+#     radix 255c4c8cf): `if nodes not is null { … }` flow-narrows the
+#     union binding, so `nodes.longitudo()` / `nodes[i].identitas` call
+#     directly on the narrowed receiver — the `certain` non-null copy
+#     carrier is REMOVED (nn-revert-2). Remaining surface: a primitive
+#     `T ∪ null` const/var annotation and a `!` unwrap of a primitive
+#     nullable still do not parse in named fn bodies (PARSE030/PARSE001);
+#     workaround kept at the mount sites (`coalesce ""` on the null-checked
+#     calls).
 #   fix:g5 — NONE: mount/replace/dispose/region_root/event_subscription/binding/
 #     focus_held/focus_target/parse_identities/element_tag/tag_name/
 #     tag_at/identities_from_nodes/tags_from_nodes probed collision-free on
@@ -319,29 +322,25 @@ fn duplicate_identities(list<string> collection) → list<string> {
 # ---------------------------------------------------------------------------
 
 fn identities_from_nodes(list<dom.Nodus> ∪ null nodes) → list<string> {
-    var list<dom.Nodus> certain ← vacua
-    if nodes not is null {
-        certain ← nodes
-    }
     var list<string> result ← vacua
-    var int i ← 0
-    while i < certain.longitudo() {
-        result.appende(certain[i].identitas)
-        i ← i + 1
+    if nodes not is null {
+        var int i ← 0
+        while i < nodes.longitudo() {
+            result.appende(nodes[i].identitas)
+            i ← i + 1
+        }
     }
     return result
 }
 
 fn tags_from_nodes(list<dom.Nodus> ∪ null nodes) → list<string> {
-    var list<dom.Nodus> certain ← vacua
-    if nodes not is null {
-        certain ← nodes
-    }
     var list<string> result ← vacua
-    var int i ← 0
-    while i < certain.longitudo() {
-        result.appende(certain[i].tag)
-        i ← i + 1
+    if nodes not is null {
+        var int i ← 0
+        while i < nodes.longitudo() {
+            result.appende(nodes[i].tag)
+            i ← i + 1
+        }
     }
     return result
 }
