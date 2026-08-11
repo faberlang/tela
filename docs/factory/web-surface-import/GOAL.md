@@ -1,6 +1,6 @@
 # Goal: web-surface-import — import faber-web's browser surface into tela
 
-**Status**: ready for delivery — goal-check READY (planner-1 2026-08-09); P3 delivery lowered (DELIVERY.md); implementation pending Mind admission + Stage 5 serialization
+**Status**: closed — completed (U1–U6 delivered 2026-08-11); seven-gate green once + two ported tests green; determinism 6927187ec0 re-recorded stable (no supersession); evidence EVIDENCE.md
 **Created**: 2026-08-09
 **Planner**: mind (operator-authored goal)
 **Target repo**: `/Users/ianzepp/work/faberlang/tela`

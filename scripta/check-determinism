@@ -50,6 +50,15 @@
 # expected (DELIVERY §5.4 point 7); if the output differs, the diff is
 # recorded + flagged honestly.
 #
+# Web-surface-import U6 (web-import-u6-evidence — the OFFICIAL WSI evidence
+# boundary, hand-5 2026-08-11): re-records the sha at the post-flip full-
+# surface boundary (seven harnesses + the two ported tests). The double-
+# build input is UNCHANGED from Stage 5 U9 / WSI-U4 — the official sha
+# 6927187ec0… STANDS (no supersession; U6 authored no product code —
+# EVIDENCE.md + this header + goal Status only). See
+# docs/factory/web-surface-import/EVIDENCE.md. Rust primary path ATTEMPTED
+# first; fix:codegen001 re-recorded; R2 sha-equality note restated.
+#
 # Determinism posture: determinism applies to STATIC/MOUNT-TIME
 # serialization ONLY (the segmented control's initial HTML + the forms
 # static render + the full cascade); interactive state is time-variant —
