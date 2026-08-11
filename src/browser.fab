@@ -1,22 +1,23 @@
 # tela/src/browser.fab — tela:browser — the browser mount/update/dispose lifecycle.
 #
-# Stage 3 U2 (browser-mount) + Stage 4 U6 (seam restoration). The host seam
-# is web:dom (faber-web — la locale, ts-only). The CTO10-3 gate is OPEN:
-# cds-u5 (cross-package locale propagation, radix e32397630) + cds-u6
-# (file-interface-exports, radix 2103f8a7f) landed, and the hydration
-# snapshot op landed in faber-web (0d79f5b — web:dom.snapshot →
-# webDomSnapshot). This module now consumes web:dom DIRECTLY through the
-# documented host seam — the spec-locked shape
-# `mount(dom.Scope, View, Theme)` per browser-lifecycle.md §1. The en→la
-# import + the WARN014 export-skip removal predicates are re-verified live
-# (never assumed); the opaque fallback carriers + the harness-level webDom*
-# binding posture are REMOVED — the marker records flip to removed in
-# browser-lifecycle.md §11 (grep-verified: no live marker site in tela/src).
+# Stage 3 U2 (browser-mount) + Stage 4 U6 (seam restoration) +
+# web-surface-import U4 (browser-flip-harness-rewire, the tela:dom flip).
+# The host seam is tela:dom (tela-owned — the en conversion of the faber-web
+# DOM contract, web-import-u1; the la `web:dom` provider dependency leaves
+# tela/src at this boundary). The flip renames the seam type references:
+# `dom.Nodus` → `dom.DomNode`, `.identitas` → `.identity` (DELIVERY §5.2).
+# This module consumes tela:dom DIRECTLY through the documented host seam —
+# the spec-locked shape `mount(dom.Scope, View, Theme)` per
+# browser-lifecycle.md §1. The WARN014 export-skip predicates are
+# re-verified live (never assumed); the opaque fallback carriers + the
+# harness-level webDom* binding posture are REMOVED — the marker records
+# flip to removed in browser-lifecycle.md §11 (grep-verified: no live
+# marker site in tela/src).
 #
 # MODULE SHAPE (locked):
-#   - FLAT: public signatures reference tela:tela types + the web:dom seam
-#     types (dom.Scope/dom.Nodus) — the cross-package export skip no longer
-#     applies (cds-u6: imported-sibling signatures export).
+#   - FLAT: public signatures reference tela:tela types + the tela:dom seam
+#     types (dom.Scope/dom.DomNode) — the cross-package export skip no
+#     longer applies (cds-u6: imported-sibling signatures export).
 #   - PURE: mount/replace/dispose are PURE PLANNERS over the host seam —
 #     they compute the render plan (serialized markup, theme cascade,
 #     identity index, hydration diagnostics, binding plan, effect list);
@@ -34,17 +35,17 @@
 #     discovery's quote-style finding resolved at the comparison level).
 #
 # fix:<id> markers:
-#   (the web:dom locale-gap workaround — REMOVED by cds-u5; the WARN014
-#   export-skip workaround — REMOVED by cds-u6; both marker rows flip to
-#   removed in browser-lifecycle.md §11 — grep-verified: no live marker
-#   site remains in tela/src).
+#   (the web:dom locale-gap workaround — REMOVED by cds-u5 + the U4 flip;
+#   the WARN014 export-skip workaround — REMOVED by cds-u6; both marker rows
+#   flip to removed in browser-lifecycle.md §11 — grep-verified: no live
+#   marker site remains in tela/src).
 #   fix:codegen001 — PARTIAL: the provider-module locale-propagation half
-#     is fixed (cds-u5); browser.fab remains ts-only because web:dom is
-#     ts-only (Rust emit of a web:dom-importing module is doubly out) —
+#     is fixed (cds-u5); browser.fab remains ts-only because tela:dom is
+#     ts-only (Rust emit of a tela:dom-importing module is doubly out) —
 #     recorded, never the gate.
 #   fix:prim-nullable — RESOLVED for the narrowed-list case (nn-u3b,
 #     radix 255c4c8cf): `if nodes not is null { … }` flow-narrows the
-#     union binding, so `nodes.longitudo()` / `nodes[i].identitas` call
+#     union binding, so `nodes.longitudo()` / `nodes[i].identity` call
 #     directly on the narrowed receiver — the `certain` non-null copy
 #     carrier is REMOVED (nn-revert-2). Remaining surface: a primitive
 #     `T ∪ null` const/var annotation and a `!` unwrap of a primitive
@@ -57,12 +58,12 @@
 #     in-tree radix 0.80.0 (a free fn may share a class name — G5's
 #     collision is enum-member-specific).
 #   fix:snapshot-name-collision — the carrier names avoid kernel type
-#     names (EventName/Effect/Update/View/…) AND the web:dom genus
-#     names (Scope/Element/Nodus/DomEvent/… — the seam types are imported,
-#     never re-declared).
+#     names (EventName/Effect/Update/View/…) AND the tela:dom genus
+#     names (Scope/Element/DomNode/DomEvent/… — the seam types are
+#     imported, never re-declared).
 
 import from "tela:tela" public * ut tela
-import from "web:dom" public * ut dom
+import from "tela:dom" public * ut dom
 
 # ---------------------------------------------------------------------------
 # Mounted-region carriers (the locked Mounted state shape — plain value
@@ -76,7 +77,7 @@ class RegionRoot {
 }
 
 # A live subscription handle; the host maps identity → the bound
-# web:dom subscription on the node (data-tela='identity').
+# tela:dom subscription on the node (data-tela='identity').
 class EventSubscription {
     string identity
     string event_name
@@ -313,7 +314,7 @@ fn duplicate_identities(list<string> collection) → list<string> {
 
 # ---------------------------------------------------------------------------
 # The G4-safe tag-index adapters (the U6 discovery's item 4): consume the
-# provider's TYPED hydration snapshot (web:dom.snapshot → lista<Nodus> ∪
+# provider's TYPED hydration snapshot (dom.snapshot → lista<DomNode> ∪
 # nihil — identity + tag name per data-tela descendant) and produce the two
 # parallel string lists the pure policy fns take — the pre-existing
 # identity set + the aligned per-identity tag names. No textual DOM parse:
@@ -321,19 +322,19 @@ fn duplicate_identities(list<string> collection) → list<string> {
 # (the runtime returns null only for a null scope) narrows to empty.
 # ---------------------------------------------------------------------------
 
-fn identities_from_nodes(list<dom.Nodus> ∪ null nodes) → list<string> {
+fn identities_from_nodes(list<dom.DomNode> ∪ null nodes) → list<string> {
     var list<string> result ← vacua
     if nodes not is null {
         var int i ← 0
         while i < nodes.longitudo() {
-            result.appende(nodes[i].identitas)
+            result.appende(nodes[i].identity)
             i ← i + 1
         }
     }
     return result
 }
 
-fn tags_from_nodes(list<dom.Nodus> ∪ null nodes) → list<string> {
+fn tags_from_nodes(list<dom.DomNode> ∪ null nodes) → list<string> {
     var list<string> result ← vacua
     if nodes not is null {
         var int i ← 0
@@ -400,7 +401,7 @@ fn binding_status(
 #   changed:<id> — the identity is present in both, unique in both, but the
 #     element TAG NAMES differ (out-of-shape node → replaced from the View;
 #     the fidelity is the snapshot's tag-name surface — the landed
-#     web:dom.snapshot carries identity + tag name, recorded in
+#     dom.snapshot carries identity + tag name, recorded in
 #     browser-lifecycle.md).
 fn hydration_diagnostics(
     string markup,
@@ -472,7 +473,7 @@ fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ null
     # provider's snapshot per data-tela descendant → the parallel string
     # lists the policy fns consume. The Scope.textus_praesens carrier is
     # GONE — the pre-existing state is READ from the DOM, never carried.
-    const list<dom.Nodus> ∪ null nodes ← dom.snapshot(scope)
+    const list<dom.DomNode> ∪ null nodes ← dom.snapshot(scope)
     if nodes is null then return null
     const list<string> present_identities ← identities_from_nodes(nodes)
     const list<string> present_tags ← tags_from_nodes(nodes)
@@ -492,7 +493,7 @@ fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ null
 
     # Region-bind subscriptions: one per View identity (the U2 dispose
     # proof surface; the app's event bindings are app-typed in U3). The
-    # host binds a web:dom on(node, "tela:binding") per descriptor.
+    # host binds a tela:dom on(node, "tela:binding") per descriptor.
     var list<EventSubscription> subscriptions ← vacua
     var int sub ← 0
     while sub < view_identities.longitudo() {
@@ -542,7 +543,7 @@ fn replace(Mounted m, tela.View view) → tela.Update ∪ null {
 
 # The dispose lifecycle. Unsubscribes every active subscription and clears
 # the region. Pure marker here (the host executes the unsubscribe plan —
-# the web:dom surface binds through the documented provider seam).
+# the tela:dom surface binds through the documented provider seam).
 fn dispose(Mounted m) → void {
 }
 

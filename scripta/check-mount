@@ -28,10 +28,12 @@
 # unchanged (the segmented-control driver consumes no forms surface).
 #
 # Stage 4 U6 (tela-s4-u6): the seam flip — browser.fab consumes the REAL
-# web:dom seam. The assembly binds the DOM_NS const over the authored fake
-# DOM (the bare Scope type comes from the driver boundary — the emitted
-# provider module's `class Element` would collide with the DOM lib);
-# the driver constructs scopes through the provider seam
+# seam. Web-surface-import U4: that seam is now tela:dom (the en surface —
+# the la `web:dom` provider dependency leaves tela/src at this boundary).
+# The assembly binds the DOM_NS const over the authored fake
+# DOM (the bare Scope/DomNode types come from the driver boundary — the
+# emitted provider module's `class Element` would collide with the DOM
+# lib); the driver constructs scopes through the provider seam
 # (web_dom_scope(doc, ...)). fix:g4 and fix:web-dom-locale are REMOVED
 # (the cds-u5/u6 predicates landed).
 #
@@ -124,7 +126,9 @@ cat > "$SCRATCH/driver.ts" <<'DRIVER'
 // stays at the driver boundary; the bare Scope type (the emitted provider
 // module's type shape) is declared here, not re-assembled.
 class Scope { selector!: string; }
-class Nodus { identitas!: string; tag!: string; }
+// Web-surface-import U4: the tela:dom seam type (the en rename from
+// `class Nodus { identitas!: string; … }`).
+class DomNode { identity!: string; tag!: string; }
 
 const installFakeDom = (): FakeDocument => {
   const doc = fake_document();
@@ -137,7 +141,7 @@ const installFakeDom = (): FakeDocument => {
 };
 const doc = installFakeDom();
 resolve_region(doc, "#root");
-// The web:dom namespace binds the authored fake-DOM surface (the emitted
+// The tela:dom namespace binds the authored fake-DOM surface (the emitted
 // module — the U9 conversion). The `scope` binding is widened to the
 // one-arg seam shape the emitted mount fns call; `snapshot` is widened at
 // the harness boundary (the emitted Scope type carries only `selector`).
@@ -232,7 +236,7 @@ const moveFocus = (identity: string): void => {
   doc_focus_node(doc, target!);
 };
 
-// ---- subscriptions (web:dom attaches by identity, never ambient) --------
+// ---- subscriptions (tela:dom attaches by identity, never ambient) ------
 let subs: FakeSubscription[] = [];
 const clearSubs = (): void => {
   for (const s of subs) {

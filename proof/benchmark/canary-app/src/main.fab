@@ -52,8 +52,10 @@
 #            the app-local plan types (Message/EventBinding/ControlProps) do
 #            NOT collide with kernel type names (EventName/Effect/Update/
 #            View/…); probed.
-#   fix:web-dom-locale — the webDom* surface binds at the HARNESS level
-#            (dom-shim + driver); the app never re-authors a web:dom copy.
+#   fix:web-dom-locale — REMOVED by the web-surface-import U4 flip: the
+#            app now imports the tela-owned seam (tela:dom) directly; the
+#            webDom* runtime symbols still bind at the HARNESS level
+#            (the authored fake-DOM surface + driver).
 #   fix:g4 — mount/replace consumed via the harness-assembly path (the
 #            WARN014 export-skip does not apply at runtime).
 #   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the TS
@@ -122,14 +124,16 @@
 #     TS lane is the proven runtime lane.
 #
 # Stage 4 U7 (interactive-provider-seam) — the CTO10-3 interactive claim.
-# This module now imports the REAL seam — web:dom (en→la, cds-u5) +
+# This module imports the REAL seam — tela:dom (web-surface-import U4: the
+# flip from faber-web's web:dom to the tela-owned en surface; the
+# dom.Scope/dom.scope reference spellings are unchanged by the flip) +
 # tela:browser (exported, consumable, cds-u6) — and composes the forms
 # components through NORMAL qualified imports (the → tela.View component
 # fns are consumable: no compose-without, no *_html helper route, no
 # harness-assembly bypass, no tela-side shim). The seam call goes through
 # the app's OWN imports (mount_forms: dom.scope + browser.mount). The
-# scripted interaction sequence executes against the DOCUMENTED faber-web
-# host binding (bindings/ts.toml → runtime/dom.ts) under
+# scripted interaction sequence executes against the DOCUMENTED tela host
+# binding (bindings/ts.toml → runtime/dom.ts) under
 # check-forms-interactive; this module supplies the plan surface (the
 # composition + the app-typed update loop + the seam mount).
 #
@@ -367,7 +371,7 @@ import from "extensionlib:extension" public * ut ext
 import from "formslib:forms" public * ut forms
 import from "tela:browser" public * ut browser
 import from "tela:reference" public * ut reference
-import from "web:dom" public * ut dom
+import from "tela:dom" public * ut dom
 
 # --- Themed panel: a div with a stable identity + accessible name; the panel
 # rule in main's style bundle keys on the identity (policy (d) seam).
@@ -510,7 +514,7 @@ fn segment_binding(string identity) → EventBinding {
 }
 
 # The subscription plan: one pointer binding per segment identity (the
-# web:dom subscriptions attach by identity — never ambient document
+# tela:dom subscriptions attach by identity — never ambient document
 # shortcuts; the driver binds the webDom* surface at the harness level).
 # Stage 5 U5: the bindings re-target the reference identities
 # (ref-seg-control-N).
@@ -857,8 +861,9 @@ fn forms_composition_from_state(FieldState state, bool agree, string tone) → t
     )
 }
 
-# The seam call through the app's OWN imports: a real web:dom scope +
-# tela.browser.mount (the cds-u5/u6 conditions at the app boundary). The
+# The seam call through the app's OWN imports: a real tela:dom scope +
+# tela.browser.mount (the web-surface-import U4 flip — the seam is
+# tela-owned; the cds-u5/u6 conditions at the app boundary). The
 # driver (the node host) calls this; the pre-existing hydration state is
 # read via dom.snapshot inside mount.
 fn mount_forms(string selector) → browser.Mounted ∪ null {
@@ -1234,7 +1239,7 @@ fn button_binding(reference.ButtonProps props) → ButtonBinding {
 }
 
 # The subscription plan: one activation binding per ENABLED button (the
-# web:dom subscriptions attach by identity — never ambient document
+# tela:dom subscriptions attach by identity — never ambient document
 # shortcuts). The DISABLED delete button is deliberately NOT bound — a
 # disabled click is a no-op by construction (the native disabled
 # semantics + no subscription).

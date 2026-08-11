@@ -31,8 +31,9 @@
 # Stage 5 U10 (tela-s5-u10-tests-determinism-evidence — the OFFICIAL Stage
 # 5 evidence boundary): the double-build input is the FINAL composition —
 # tela kernel (valida + tela) + reference + formslib + extension-lib +
-# canary-app (the U9 composition, incl. the emitted web:dom seam + the
-# tela:browser binding). The official sha re-records here — the U9 record's
+# canary-app (the U9 composition, incl. the emitted tela:dom seam — the
+# web-surface-import U4 flip — + the tela:browser binding). The official
+# sha re-records here — the U9 record's
 # sha (6927187ec0…) STANDS as the official Stage 5 sha (U10 authored no
 # product code; the supersession chain 8dfcb143 → 6927187ec0 holds) — see
 # stage-5-evidence.md. The Rust primary path is ATTEMPTED first; the
@@ -40,6 +41,14 @@
 # Rust path lands, its capture must equal the TS-lane capture — sha
 # equality — and the Rust primary path activates automatically, no harness
 # change).
+#
+# Web-surface-import U4 (the browser flip): the dom emit source flips from
+# faber-web's la web:dom module to tela's en tela:dom module (the en
+# surface — DomNode/identity/input_value). The runner's STATIC output is
+# UNCHANGED by the flip (the same Views render the same bytes; only the
+# emitted module sources + assembly change) — no sha supersession is
+# expected (DELIVERY §5.4 point 7); if the output differs, the diff is
+# recorded + flagged honestly.
 #
 # Determinism posture: determinism applies to STATIC/MOUNT-TIME
 # serialization ONLY (the segmented control's initial HTML + the forms
@@ -141,8 +150,9 @@ echo "TS lane: emitting valida / tela / extension / forms / browser / dom / main
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/extension-lib/src/extension.fab" -o "$SCRATCH/extension.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms.ts" >/dev/null
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab" -o "$SCRATCH/main.ts" >/dev/null
-# Stage 4 U7: the canary-app imports tela:browser + web:dom (the real seam).
-# The composition assembly binds the browser module + the emitted web:dom
+# Stage 4 U7: the canary-app imports tela:browser + tela:dom (the real
+# seam — web-surface-import U4 re-points it from faber-web's web:dom).
+# The composition assembly binds the browser module + the emitted tela:dom
 # provider module (types + inert stubs — the main IIFE never calls the seam
 # at load here).
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/browser.fab" -o "$SCRATCH/browser.ts" >/dev/null
@@ -150,7 +160,7 @@ echo "TS lane: emitting valida / tela / extension / forms / browser / dom / main
 # references tela:reference — the pre-existing staleness that left this
 # gate RED since U5 is repaired at this boundary).
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/reference.fab" -o "$SCRATCH/reference.ts" >/dev/null
-"$RADIX_BIN" emit -t ts --locale la "$ROOT/../faber-web/src/dom.fab" -o "$SCRATCH/dom.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/dom.fab" -o "$SCRATCH/dom.ts" >/dev/null
 
 echo "TS lane: double-emit byte-identity (kernel + forms package)"
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela-b.ts" >/dev/null
@@ -168,7 +178,7 @@ fi
 # imports): drop the radix header (2 lines) and import lines, bind the
 # imported namespaces as const objects.
 strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
-# The emitted web:dom provider module's preamble + `Element` genus are
+# The emitted tela:dom provider module's preamble + `Element` genus are
 # renamed so they do not collide with the tela module's own preamble / the
 # DOM lib's `Element`.
 strip_dom() { sed '1,2d' "$1" | grep -v '^import .* from "' | sed -e 's/\bFaberResult\b/FaberResultDom/g' -e 's/\bFaberDisplayHint\b/FaberDisplayHintDom/g' -e 's/\b__faberDisplayFractus\b/__faberDisplayDomFractus/g' -e 's/\b__faberDisplayList\b/__faberDisplayDomList/g' -e 's/\b__faberDisplayTensor\b/__faberDisplayDomTensor/g' -e 's/\b__faberDisplaySparsa\b/__faberDisplayDomSparsa/g' -e 's/\b__faberDisplayMap\b/__faberDisplayDomMap/g' -e 's/\b__faberDisplayValor\b/__faberDisplayDomValor/g' -e 's/\b__faberDisplayTaggedValor\b/__faberDisplayDomTaggedValor/g' -e 's/\b__faberDisplay\b/__faberDisplayDom/g' -e 's/\bElement\b/DomElement/g'; }
@@ -178,7 +188,11 @@ strip_dom() { sed '1,2d' "$1" | grep -v '^import .* from "' | sed -e 's/\bFaberR
   strip "$SCRATCH/tela.ts"
   echo "const tela = { html_visus, css, theme_css, theme_style, theme, token, core_tokens, token_property_name, token_name_valid, theme_has_core_tokens, theme_has_token, assemble, bundle, order, deduplicated_bundles, topological_order, style_valid, unclean_style_text, bundle_for, in_list, dependencies_met, text_view, fragment_view, new_identity, html_space, svg_space, element_view, element_full, event_name, restore, direct, anchor, update, effect_identity, Attribute, Property, Identity, Declaration, Rule, Style, Token, Theme, Bundle, Order, EventName, Update };"
   strip_dom "$SCRATCH/dom.ts"
-  echo "const dom = { scope, query, require, all, snapshot, text_set, attr_set, attr_remove, class_add, class_remove, class_toggle, on, unsubscribe, value, value_set, on_input, on_submit, on_frame, on_resize, on_keyboard, on_pointer, on_focus, pointer_lock_state, request_pointer_lock, exit_pointer_lock, on_pointer_lock, prevent_default, fetch_text };"
+  # The tela:dom stub surface: the en module renames the value READ fn to
+  # `input_value` (fix:sem005-renamed — the en type keyword `value`), so
+  # the DOM_NS const binds the en spelling (the `value` route key is gone
+  # with the la module; the emitted main never calls it at load).
+  echo "const dom = { scope, query, require, all, snapshot, text_set, attr_set, attr_remove, class_add, class_remove, class_toggle, on, unsubscribe, input_value, value_set, on_input, on_submit, on_frame, on_resize, on_keyboard, on_pointer, on_focus, pointer_lock_state, request_pointer_lock, exit_pointer_lock, on_pointer_lock, prevent_default, fetch_text };"
   strip "$SCRATCH/browser.ts"
   echo "const browser = { region_root, event_subscription, binding, parse_identities, element_tag, count_occurrences, duplicate_identities, tag_name, tag_at, identities_from_nodes, tags_from_nodes, binding_status, hydration_diagnostics, mount, replace, dispose, focus_held, focus_target };"
   strip "$SCRATCH/extension.ts"

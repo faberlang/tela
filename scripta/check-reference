@@ -6,17 +6,19 @@
 # family, U7 + the field BEHAVIOR case, U8).
 #
 # The Stage 4 interactive-seam mechanics (the check-forms-interactive
-# pattern): assembles the canary-app's REAL-IMPORT composition (web:dom
-# en→la + tela:browser + tela:reference + formslib + extensionlib — all
+# pattern): assembles the canary-app's REAL-IMPORT composition (tela:dom
+# + tela:browser + tela:reference + formslib + extensionlib — all
 # through the NORMAL package interface) and executes the mount +
-# structure/a11y proof against the DOCUMENTED faber-web host binding — the
-# ACTUAL route:
+# structure/a11y proof against the DOCUMENTED tela host binding
+# (web-surface-import U4: the seam flips from faber-web's web:dom to
+# tela's own tela:dom) — the ACTUAL route:
 #
-#   web:dom import → the generated provider reference (the emitted faber-web
-#   web:dom module — the bare Scope/Nodus types) → the bindings/ts.toml
-#   mapping (web:dom.snapshot → webDomSnapshot, …) → the runtime/dom.ts
-#   implementation (faber-web's ACTUAL runtime source, included verbatim,
-#   export keywords stripped).
+#   tela:dom import → the generated provider reference (the emitted tela:dom
+#   module — the bare Scope/DomNode types) → the bindings/ts.toml
+#   mapping (tela:dom.snapshot → webDomSnapshot, …) → the runtime/dom.ts
+#   implementation (tela's ACTUAL runtime source — the faber-web copy
+#   adapted to the en `identity` field — included verbatim, export
+#   keywords stripped).
 #
 # Each family mounts through tela.browser.mount (the app's own seam fns
 # mount_layout / mount_typography — dom.scope + browser.mount) against the
@@ -84,21 +86,22 @@ echo "check-reference: TS emit valida / tela / dom / browser / extension / forms
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab" -o "$SCRATCH/main.ts" >/dev/null
 # Stage 5 U9: the AUTHORED fake DOM (Faber source -> the emitted module).
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/scripta/harness_dom.fab" -o "$SCRATCH/harness_dom.ts" >/dev/null
-# The generated provider reference: the emitted web:dom module (the bare
-# Scope/Nodus/… type declarations — the la locale emit is the package's own
-# reader).
-"$RADIX_BIN" emit -t ts --locale la "$ROOT/../faber-web/src/dom.fab" -o "$SCRATCH/dom.ts" >/dev/null
+# The generated provider reference: the emitted tela:dom module (the bare
+# Scope/DomNode/… type declarations — the en locale emit is the package's
+# own reader; web-surface-import U4 re-points the emit source from
+# faber-web's la web:dom module to tela's en tela:dom module).
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/dom.fab" -o "$SCRATCH/dom.ts" >/dev/null
 
 strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
 # The emitted harness_dom module is self-contained (no imports) and emits
 # NO FaberDisplay preamble (the authored surface uses no display helpers);
 # plain header strip is the whole strip.
 strip_hdom() { sed '1,2d' "$1"; }
-# The emitted web:dom provider module's preamble (FaberDisplayHint + the
+# The emitted tela:dom provider module's preamble (FaberDisplayHint + the
 # __faberDisplay helpers) and its `Element` genus are renamed so they do not
 # collide with the tela module's own preamble / the DOM lib's `Element`.
 strip_dom() { sed '1,2d' "$1" | grep -v '^import .* from "' | sed -e 's/\bFaberResult\b/FaberResultDom/g' -e 's/\bFaberDisplayHint\b/FaberDisplayHintDom/g' -e 's/\b__faberDisplayFractus\b/__faberDisplayDomFractus/g' -e 's/\b__faberDisplayList\b/__faberDisplayDomList/g' -e 's/\b__faberDisplayTensor\b/__faberDisplayDomTensor/g' -e 's/\b__faberDisplaySparsa\b/__faberDisplayDomSparsa/g' -e 's/\b__faberDisplayMap\b/__faberDisplayDomMap/g' -e 's/\b__faberDisplayValor\b/__faberDisplayDomValor/g' -e 's/\b__faberDisplayTaggedValor\b/__faberDisplayDomTaggedValor/g' -e 's/\b__faberDisplay\b/__faberDisplayDom/g' -e 's/\bElement\b/DomElement/g'; }
-# The host runtime: faber-web's ACTUAL runtime/dom.ts implementation,
+# The host runtime: tela's ACTUAL runtime/dom.ts implementation,
 # included verbatim (export keywords stripped). tsc type-checks it here
 # against the DOM lib (its own source typing); node runs it against the
 # installed fake DOM.
@@ -123,18 +126,18 @@ REF_ALIAS="const reference = ref;"
 # The table namespace additions: the table family's exported fns
 # (table/table_row/table_props/table_style + the TableProps/TableRow
 # prop classes) and the ref.table.* token accessors.
-# The DOM_NS: the ACTUAL bindings/ts.toml mapping (web:dom.<fn> →
-# webDom<Fn>) over faber-web's runtime/dom.ts implementation. The snapshot
+# The DOM_NS: the ACTUAL bindings/ts.toml mapping (tela:dom.<fn> →
+# webDom<Fn>) over tela/runtime/dom.ts implementation. The snapshot
 # binding is widened at the harness boundary (the emitted Scope type carries
 # only `selector`; the runtime scope also carries `root`).
-DOM_NS="const dom = { scope: webDomScope, query: webDomQuery, require: webDomRequire, all: webDomAll, snapshot: ((scope: any): Array<Nodus> | null => webDomSnapshot(scope)), text_set: webDomTextSet, attr_set: webDomAttrSet, attr_remove: webDomAttrRemove, class_add: webDomClassAdd, class_remove: webDomClassRemove, class_toggle: webDomClassToggle, on: webDomOn, unsubscribe: webDomUnsubscribe, value: webDomValue, value_set: webDomValueSet, on_input: webDomOnInput, on_submit: webDomOnSubmit, on_frame: webDomOnFrame, on_resize: webDomOnResize, on_keyboard: webDomOnKeyboard, on_pointer: webDomOnPointer, on_focus: webDomOnFocus, pointer_lock_state: webDomPointerLockState, request_pointer_lock: webDomRequestPointerLock, exit_pointer_lock: webDomExitPointerLock, on_pointer_lock: webDomOnPointerLock, prevent_default: webDomPreventDefault, fetch_text: webDomFetchText };"
+DOM_NS="const dom = { scope: webDomScope, query: webDomQuery, require: webDomRequire, all: webDomAll, snapshot: ((scope: any): Array<DomNode> | null => webDomSnapshot(scope)), text_set: webDomTextSet, attr_set: webDomAttrSet, attr_remove: webDomAttrRemove, class_add: webDomClassAdd, class_remove: webDomClassRemove, class_toggle: webDomClassToggle, on: webDomOn, unsubscribe: webDomUnsubscribe, value: webDomValue, value_set: webDomValueSet, on_input: webDomOnInput, on_submit: webDomOnSubmit, on_frame: webDomOnFrame, on_resize: webDomOnResize, on_keyboard: webDomOnKeyboard, on_pointer: webDomOnPointer, on_focus: webDomOnFocus, pointer_lock_state: webDomPointerLockState, request_pointer_lock: webDomRequestPointerLock, exit_pointer_lock: webDomExitPointerLock, on_pointer_lock: webDomOnPointerLock, prevent_default: webDomPreventDefault, fetch_text: webDomFetchText };"
 
 cat > "$SCRATCH/host-driver.ts" <<'HOST_DRIVER'
 // ---- node host environment (Stage 5 U9: the AUTHORED fake DOM) ---------
 // The fake DOM is Faber source (scripta/harness_dom.fab emitted to TS) —
 // the embedded fake-DOM classes are REMOVED at U9. The driver rides the
 // emitted function surface (web_dom_*, element_*, doc_*, fake_event_*,
-// execute_mount_plan). The faber-web runtime/dom.ts (assembled verbatim
+// execute_mount_plan). The tela runtime/dom.ts (assembled verbatim
 // above, TS by contract) calls the METHOD bridge on the fake nodes — the
 // authored genus methods (querySelector/querySelectorAll/getAttribute) +
 // the tagName field satisfy it. The global installation stays at the
@@ -800,7 +803,7 @@ HOST_DRIVER
   strip "$SCRATCH/tela.ts"
   echo "$TELA_NS"
   strip_dom "$SCRATCH/dom.ts"
-  strip_runtime "$ROOT/../faber-web/runtime/dom.ts"
+  strip_runtime "$ROOT/runtime/dom.ts"
   echo "$DOM_NS"
   # Stage 5 U9: the AUTHORED fake DOM (Faber source -> the emitted module;
   # the embedded fake DOM in the host-driver is removed).
@@ -818,7 +821,7 @@ HOST_DRIVER
   cat "$SCRATCH/host-driver.ts"
 } > "$SCRATCH/assembled.ts"
 
-echo "check-reference: tsc --noEmit (strict; the DOM lib hosts the faber-web runtime typing)"
+echo "check-reference: tsc --noEmit (strict; the DOM lib hosts the tela runtime typing)"
 tsc --noEmit --strict --target ES2020 --lib ES2020,DOM --module ESNext --moduleResolution bundler --skipLibCheck "$SCRATCH/assembled.ts"
 
 echo "check-reference: node — the mount + structure/a11y gate (fail-closed)"

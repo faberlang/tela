@@ -159,9 +159,10 @@ class FakeSubscription {
 }
 
 # The typed hydration snapshot node (identity + tag name per data-tela
-# descendant) — the dom.Nodus equivalent.
+# descendant) — the dom.DomNode equivalent (web-surface-import U4: the
+# en surface field spelling, renamed from identitas).
 class FakeNodus {
-    string identitas
+    string identity
     string tag
 }
 
@@ -854,7 +855,7 @@ fn web_dom_snapshot(FakeScope ∪ null scope) → list<FakeNodus> ∪ null {
     var list<FakeNodus> out ← vacua
     var int i ← 0
     while i < nodes.longitudo() {
-        out.appende(FakeNodus { identitas = nodes[i].data_tela, tag = nodes[i].tagName.minuscula() })
+        out.appende(FakeNodus { identity = nodes[i].data_tela, tag = nodes[i].tagName.minuscula() })
         i ← i + 1
     }
     return out

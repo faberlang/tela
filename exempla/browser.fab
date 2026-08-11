@@ -14,11 +14,12 @@ locale = "en"
 # declarative effect-key derivation, and the region-bind subscription
 # descriptors dispose carries.
 #
-# The DOM-level half of the proof rides the dom-shim: the assembled runner
-# (scripta/dom-shim.ts + a driver) executes the real mount/replace/dispose
-# functions against the fake DOM and asserts the DOM outcomes (nodes
-# written, identity nodes preserved vs replaced, focus restored/moved,
-# subscriptions disposed, region cleared) — "asserted at the shim level".
+# The DOM-level half of the proof rides the harness fake DOM: the
+# assembled runner (scripta/harness_dom.fab emitted to TS + a driver)
+# executes the real mount/replace/dispose functions against the fake DOM
+# and asserts the DOM outcomes (nodes written, identity nodes preserved vs
+# replaced, focus restored/moved, subscriptions disposed, region cleared) —
+# "asserted at the harness level".
 #
 # WHY the split: browser.mount/browser.replace carry imported sibling types
 # (tela.View/Theme/Update) in their public signatures. The radix
@@ -28,22 +29,25 @@ locale = "en"
 # hydration_diagnostics / parse_identities / tag_name — string/list
 # signatures stay on the file interface).
 #
-# Stage 4 U6 (seam restoration): browser.mount now consumes the REAL
-# web:dom seam (dom.Scope + dom.snapshot — the typed hydration read, no
-# textual DOM parse). The pure policy fns take the TYPED tag index
-# (present_tags — the aligned per-identity tag names from the snapshot)
-# instead of the present markup string. The changed diagnostic fires on a
-# TAG-NAME mismatch (the snapshot's fidelity — identity + tag name; the
-# attribute-level open-tag shape comparison is superseded, recorded in
-# browser-lifecycle.md). The mismatch fixture below is therefore a
-# tag-name mismatch (seg-2 is a span, not a button).
+# Stage 4 U6 (seam restoration) + web-surface-import U4 (the tela:dom
+# flip): browser.mount now consumes the REAL tela:dom seam (dom.Scope +
+# dom.snapshot — the typed hydration read, no textual DOM parse). The
+# pure policy fns take the TYPED tag index (present_tags — the aligned
+# per-identity tag names from the snapshot) instead of the present markup
+# string. The changed diagnostic fires on a TAG-NAME mismatch (the
+# snapshot's fidelity — identity + tag name; the attribute-level open-tag
+# shape comparison is superseded, recorded in browser-lifecycle.md). The
+# mismatch fixture below is therefore a tag-name mismatch (seg-2 is a span,
+# not a button). The snapshot fixtures construct the en surface names
+# (dom.DomNode { identity = … } — the U4 rename from dom.Nodus {
+# identitas = … }).
 #
 # fix:<id> markers: none applied beyond browser.fab's (fix:codegen001,
 # fix:prim-nullable, fix:g5 — NONE, fix:snapshot-name-collision).
 
 import from "tela:tela" public * ut tela
 import from "tela:browser" public * ut browser
-import from "web:dom" public * ut dom
+import from "tela:dom" public * ut dom
 
 # A valid theme (the 8-token core baseline — theme_css is fail-closed, so
 # mount requires a theme covering the core).
@@ -250,12 +254,13 @@ main {
     assert browser.tag_name("") ≡ ""
 
     # --- the typed tag-index adapters (the snapshot surface) --------------
-    # dom.Nodus construction (cds-u6: imported classes construct) + the
-    # G4-safe adapter: the parallel string lists the policy fns consume.
-    const dom.Nodus control_node ← dom.Nodus { identitas = "tela-control", tag = "div" }
-    const dom.Nodus seg1_node ← dom.Nodus { identitas = "tela-seg-1", tag = "button" }
-    const dom.Nodus seg2_node ← dom.Nodus { identitas = "tela-seg-2", tag = "button" }
-    const list<dom.Nodus> ∪ null hydration_nodes ← [control_node, seg1_node, seg2_node]
+    # dom.DomNode construction (cds-u6: imported classes construct — the
+    # U4 en rename) + the G4-safe adapter: the parallel string lists the
+    # policy fns consume.
+    const dom.DomNode control_node ← dom.DomNode { identity = "tela-control", tag = "div" }
+    const dom.DomNode seg1_node ← dom.DomNode { identity = "tela-seg-1", tag = "button" }
+    const dom.DomNode seg2_node ← dom.DomNode { identity = "tela-seg-2", tag = "button" }
+    const list<dom.DomNode> ∪ null hydration_nodes ← [control_node, seg1_node, seg2_node]
     const list<string> ids_from_nodes ← browser.identities_from_nodes(hydration_nodes)
     const list<string> tags_from_nodes ← browser.tags_from_nodes(hydration_nodes)
     assert ids_from_nodes.longitudo() ≡ 3

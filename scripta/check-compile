@@ -30,10 +30,12 @@ fi
 # `--locale-pack` spelling; the current radix 0.80.0 binary resolves the
 # reader pack from `--locale en` — noted in stage-1-determinism.md.)
 
-echo "check-compile: kernel + validation + reference modules (container library home)"
+echo "check-compile: kernel + validation + reference + dom + canvas2d modules (container library home)"
 export FABER_LIBRARY_HOME="${FABER_LIBRARY_HOME:-$ROOT/..}"
 # Stage 5 U2: the reference catalog module joins the compile surface.
-for mod in tela validate reference; do
+# Web-surface-import U4: the tela:dom + tela:canvas2d modules join (the
+# browser flip's imported seam — U1/U3 landed the sources).
+for mod in tela validate reference dom canvas2d; do
   echo "check-compile: parsing src/${mod}.fab"
   "$RADIX_BIN" check --locale en "$ROOT/src/${mod}.fab"
 done
