@@ -132,7 +132,7 @@ fn binding(string identity, string status) → Binding {
 # ---------------------------------------------------------------------------
 
 fn identity_marker() → string {
-    return " data-tela=" + "§"('"')
+    return " data-tela=§"('"')
 }
 
 # ---------------------------------------------------------------------------
