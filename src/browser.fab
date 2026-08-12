@@ -62,8 +62,8 @@
 #     names (Scope/Element/DomNode/DomEvent/… — the seam types are
 #     imported, never re-declared).
 
-import from "tela:tela" public * ut tela
-import from "tela:dom" public * ut dom
+import from "tela:tela" public * as tela
+import from "tela:dom" public * as dom
 
 # ---------------------------------------------------------------------------
 # Mounted-region carriers (the locked Mounted state shape — plain value
