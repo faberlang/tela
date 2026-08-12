@@ -27,7 +27,8 @@ file is the operating summary; the docs are the contract.
 | `src/canvas2d.fab` | Tela-owned Canvas2D drawing-surface contract (imported as `tela:canvas2d`) — English-first conversion of faber-web `canvas2d.fab`; standalone imperative draw surface, `webCanvas2d*` symbols kept |
 | `src/web.fab` | WebController annotation module (imported as `tela:web`) — the browser-app packaging entry contract; only the `WebController` annotation, import-free |
 | `exempla/` | Exempla-mode tests (`+++` frontmatter, `locale = "en"`); one exempla file per unit surface (e.g. `validation.fab`, `serializer.fab`) |
-| `scripta/` | Validation harnesses (Stage 1 U6: `check-compile`, `check-exempla`, `check-determinism`) |
+| `scripta/` | Validation harnesses (Stage 1 U6: `check-compile`, `check-exempla`, `check-determinism`; `check-locale-la` for `locale/la/pack.toml`) |
+| `proof/locale-la/` | Latin-consumer proof of `locale/la/pack.toml` (owned here; Radix has no Tela fixture) |
 | `docs/design/` | Design records (`identity-hydration.md`, `theme-protocol.md`, `browser-lifecycle.md`) |
 | `docs/factory/mvp/` | Campaign + delivery + policy docs (machine-managed; do not hand-edit `README.md` if present — regenerate) |
 | `spike/` | **Frozen Stage 0 evidence — no unit writes here** |

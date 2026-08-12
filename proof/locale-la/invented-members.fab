@@ -1,0 +1,17 @@
++++
+locale = "la"
++++
+
+# Negative: invented Latin names are not in locale/la/pack.toml.
+# Expected: SEM002.qualified_type_not_exported (or SEM004).
+
+importa ex "tela:tela" privata * ut tela
+
+functio probe() → textus {
+    fixum tela.Visum visus ← tela.textus_ping("salve")
+    redde tela.html_visus(visus) vel ""
+}
+
+incipit {
+    nota probe()
+}

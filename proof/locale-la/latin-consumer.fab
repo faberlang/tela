@@ -1,0 +1,17 @@
++++
+locale = "la"
++++
+
+# Latin consumer of this library. Keywords are Latin.
+# Public members come from locale/la/pack.toml.
+
+importa ex "tela:tela" privata * ut tela
+
+functio probe() → textus {
+    fixum tela.Visus visus ← tela.textus_visus("salve")
+    redde tela.html_visus(visus) vel ""
+}
+
+incipit {
+    nota probe()
+}

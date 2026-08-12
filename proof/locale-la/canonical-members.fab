@@ -1,0 +1,16 @@
++++
+locale = "la"
++++
+
+# Canonical English names remain accepted (missing-row fallback).
+
+importa ex "tela:tela" privata * ut tela
+
+functio probe() → textus {
+    fixum tela.View visus ← tela.text_view("salve")
+    redde tela.html_visus(visus) vel ""
+}
+
+incipit {
+    nota probe()
+}
