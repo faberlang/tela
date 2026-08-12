@@ -396,7 +396,7 @@
 # qualified imports (the U1 probe (i) + cds-u6; re-verified at real use by
 # the canary-app + check-reference — never assumed).
 
-import from "tela:tela" public * ut tela
+import from "tela:tela" public * as tela
 
 # ===========================================================================
 # LAYOUT family — semantic containers (ref-layout-*).

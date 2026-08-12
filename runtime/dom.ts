@@ -81,9 +81,9 @@ export type WebDomPointerHandler = (state: WebDomPointerState) => void;
 export type WebDomFocusHandler = (state: WebDomFocusState) => void;
 export type WebDomPointerLockHandler = (state: WebDomPointerLockState) => void;
 
-export type WebDomSubmitOptions = {
+export class WebDomSubmitOptions {
   readonly prevent_default?: boolean;
-};
+}
 
 export type WebDomFetchRequest = {
   readonly url: string;

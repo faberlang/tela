@@ -270,6 +270,23 @@ function parseRuntime(source: string): RuntimeFile {
       typeDecls.set(name, rhs);
       continue;
     }
+    // emit-surface value exports: an `export class` genus carrier (e.g.
+    // `WebDomSubmitOptions` — the value export the browser-app construction
+    // needs) is parsed like a type declaration so the field-coverage check
+    // (d) keeps working over its body.
+    const classMatch = /^export class (\w+)\s*\{$/.exec(lines[i]);
+    if (classMatch !== null) {
+      const name = classMatch[1];
+      let rhs = "{";
+      i += 1;
+      while (i < lines.length && !/^\}\s*;?\s*$/.test(lines[i])) {
+        rhs += " " + lines[i].trim();
+        i += 1;
+      }
+      rhs += " }";
+      typeDecls.set(name, rhs);
+      continue;
+    }
     i += 1;
   }
   return { exportedFunctions, typeDecls };
