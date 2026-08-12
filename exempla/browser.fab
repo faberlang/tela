@@ -174,19 +174,19 @@ fn hydration_present() → string {
 # from the View. (The snapshot's fidelity is identity + tag name, so the
 # changed diagnostic fires on a tag-name mismatch — the U6 reconciliation.)
 fn mismatch_present() → string {
-    return "<div data-tela='tela-control'><button class='seg' data-tela='tela-seg-1'>One</button><span class='altera' data-tela='tela-seg-2'>Two</span></div>"
+    return «<div data-tela="tela-control"><button class="seg" data-tela="tela-seg-1">One</button><span class="altera" data-tela="tela-seg-2">Two</span></div>»
 }
 
 # Pre-rendered markup for the duplicate-identity scenario: TWO nodes carry
 # the same data-tela value — diagnosed, never a silent bind.
 fn duplicate_present() → string {
-    return "<div data-tela='tela-duplicata'><span data-tela='tela-dup'>a</span><span data-tela='tela-dup'>b</span></div>"
+    return «<div data-tela="tela-duplicata"><span data-tela="tela-dup">a</span><span data-tela="tela-dup">b</span></div>»
 }
 
 # Pre-rendered markup for the foreign scenario: a pre-existing identity
 # absent from the View — the region is replaced from the View.
 fn foreign_present() → string {
-    return "<div data-tela='tela-control'><span data-tela='tela-pristina'>old</span></div>"
+    return «<div data-tela="tela-control"><span data-tela="tela-pristina">old</span></div>»
 }
 
 # The identity index of the control View (document order).
@@ -219,8 +219,8 @@ fn duplicate_tags() → list<string> {
 
 main {
     # --- the serialized control markup (plan bytes) ----------------------
-    assert tree_markup() ≡ "<div data-tela='tela-control'><button class='seg' data-tela='tela-seg-1'>One</button><button class='seg' data-tela='tela-seg-2'>Two</button></div>"
-    assert extended_tree_markup() ≡ "<div data-tela='tela-control'><button class='seg' data-tela='tela-seg-1'>One</button><button class='seg' data-tela='tela-seg-2'>Two</button><button class='seg' data-tela='tela-seg-3'>Three</button></div>"
+    assert tree_markup() ≡ «<div data-tela="tela-control"><button class="seg" data-tela="tela-seg-1">One</button><button class="seg" data-tela="tela-seg-2">Two</button></div>»
+    assert extended_tree_markup() ≡ «<div data-tela="tela-control"><button class="seg" data-tela="tela-seg-1">One</button><button class="seg" data-tela="tela-seg-2">Two</button><button class="seg" data-tela="tela-seg-3">Three</button></div>»
 
     # --- identity extraction (the data-tela seam, document order) --------
     const list<string> identities ← tree_identities()
@@ -249,8 +249,8 @@ main {
     # from the serializer's open tag; the present side uses the typed tag
     # name. Tag names carry no quotes — the DOM's double-quote serialization
     # never enters the comparison.
-    assert browser.tag_name("<button class='seg' data-tela='tela-seg-1'>") ≡ "button"
-    assert browser.tag_name("<div data-tela='tela-control'>") ≡ "div"
+    assert browser.tag_name(«<button class="seg" data-tela="tela-seg-1">») ≡ "button"
+    assert browser.tag_name(«<div data-tela="tela-control">») ≡ "div"
     assert browser.tag_name("") ≡ ""
 
     # --- the typed tag-index adapters (the snapshot surface) --------------

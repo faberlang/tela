@@ -148,8 +148,8 @@ the renderer only. Unknown-but-valid names are **not** rejected for being new
 `Identity` serializes as the `data-tela` attribute — the only identity
 serialization form in v1, documented in
 [`docs/design/identity-hydration.md`](docs/design/identity-hydration.md).
-Non-null `Identity` only; quote style and escape set follow the spike
-baseline (single quotes). `Property` values are carried in the tree but **not**
+Non-null `Identity` only; attributes use double quotes (`name="value"`).
+`Property` values are carried in the tree but **not**
 serialized into static HTML in Stage 1 (the `data-prop:` marker is
 superseded).
 
