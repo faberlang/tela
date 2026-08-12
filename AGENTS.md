@@ -20,6 +20,11 @@ file is the operating summary; the docs are the contract.
 | `faber.toml` | Package `tela`, provider `tela`, `[paths] source = "src"`, `[build] kind = "lib"`, `targets = ["rust", "ts"]`, `[reader] locale = "en"`, edition 2026, version `0.0.0` (versioning is a Stage 8 decision) |
 | `src/tela.fab` | The kernel — **one flat module** (imported as `tela:tela`), stdlib-only (no `norma`/`triga`/`faber-runtime` dependency); import-free through U1, U3 adds ONE same-package sibling import (`tela:validate`) for the fail-closed glue |
 | `src/validate.fab` | Validation module (imported as `tela:validate`) — flat, import-free, public surface string/bool only |
+| `src/browser.fab` | Browser module (imported as `tela:browser`) — mount/update/dispose lifecycle + hydration over the `tela:dom` host seam; pure planners `mount(Scope, View, Theme) → Mounted ∪ null`, `replace`, `dispose` |
+| `src/reference.fab` | Reference catalog module (imported as `tela:reference`) — layout/typography + panel/badge/metric component families over typed props → `tela:View`, stable `ref-*` data-tela identities + namespaced `ref.*` tokens |
+| `src/dom.fab` | Tela-owned browser DOM contracts + runtime binding surface (imported as `tela:dom`) — English-first conversion of faber-web `dom.fab`; import-free, `webDom*` symbols kept |
+| `src/canvas2d.fab` | Tela-owned Canvas2D drawing-surface contract (imported as `tela:canvas2d`) — English-first conversion of faber-web `canvas2d.fab`; standalone imperative draw surface, `webCanvas2d*` symbols kept |
+| `src/web.fab` | WebController annotation module (imported as `tela:web`) — the browser-app packaging entry contract; only the `WebController` annotation, import-free |
 | `exempla/` | Exempla-mode tests (`+++` frontmatter, `locale = "en"`); one exempla file per unit surface (e.g. `validation.fab`, `serializer.fab`) |
 | `scripta/` | Validation harnesses (Stage 1 U6: `check-compile`, `check-exempla`, `check-determinism`) |
 | `docs/design/` | Design records (`identity-hydration.md`, `theme-protocol.md`, `browser-lifecycle.md`) |
