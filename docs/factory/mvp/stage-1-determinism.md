@@ -50,7 +50,7 @@ What it does, in order:
 
 1. **Rust path (primary, attempted):** `radix emit -t rust --locale en
    proof/benchmark/canary-app/src/main.fab` → scratch crate (Cargo.toml with
-   `faber = { package = "faber-runtime", path = "../faber-runtime" }`) →
+   `faber = { package = "faber-runtime", path = "../faber/runtime/rust" }`) →
    `cargo run` twice → capture HTML/CSS to `build/static-1.txt` /
    `build/static-2.txt`.
    **BLOCKED** (recorded radix-lane defect): the emit fails
