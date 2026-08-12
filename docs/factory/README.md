@@ -18,12 +18,12 @@ in [`docs/archived/`](../archived/README.md).
 
 ## Summary
 
-- goals scanned: 3
+- goals scanned: 2
 - active: 1
 - planned: 1
-- done: 1
+- done: 0
 - unknown: 0
-- archived (moved to `docs/archived/`): 0
+- archived (moved to `docs/archived/`): 1
 
 ## Open and in progress
 
@@ -39,9 +39,7 @@ in [`docs/archived/`](../archived/README.md).
 
 ## Archived
 
-| Goal | Status | Done | goal | campaign | delivery | ledger | council | evidence | other |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| [web-surface-import](web-surface-import/GOAL.md) | done | 100% | 1 | 0 | 1 | 0 | 0 | 0 | 1 |
+_none_
 
 ## Unknown
 
