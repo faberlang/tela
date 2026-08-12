@@ -59,6 +59,18 @@
 # docs/factory/web-surface-import/EVIDENCE.md. Rust primary path ATTEMPTED
 # first; fix:codegen001 re-recorded; R2 sha-equality note restated.
 #
+# Stage 6 admission condition 3 (the post-WSI re-run, test-1 2026-08-11 —
+# the admission-condition evidence boundary): FRESH re-record of the sha at
+# the post-WSI boundary (the seven Stage 5 gates + the two ported tests run
+# green once in the test-lane packet at tela main 4d95bf9). The double-
+# build input is UNCHANGED from Stage 5 U9 / WSI-U4/U6 — the re-recorded
+# sha 6927187ec0… STANDS (no supersession; the post-WSI composition
+# produces identical bytes — the honest flag, as at U10/WSI-U6). The
+# re-record is the fresh determinism baseline for Stage 6. See
+# docs/factory/mvp/stage-6-admission-condition-3-evidence.md. Rust primary
+# path ATTEMPTED first; fix:codegen001 re-recorded; R2 sha-equality note
+# restated.
+#
 # Determinism posture: determinism applies to STATIC/MOUNT-TIME
 # serialization ONLY (the segmented control's initial HTML + the forms
 # static render + the full cascade); interactive state is time-variant —
