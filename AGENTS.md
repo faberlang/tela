@@ -18,6 +18,7 @@ file is the operating summary; the docs are the contract.
 | Path | Role |
 | --- | --- |
 | `faber.toml` | Package `tela`, provider `tela`, `[paths] source = "src"`, `[build] kind = "lib"`, `targets = ["rust", "ts"]`, `[reader] locale = "en"`, edition 2026, version `0.0.0` (versioning is a Stage 8 decision) |
+| `locale/<id>/pack.toml` | Library-owned member fragments (not reader keyword packs). `en` is identity; `la` projects public `tela:tela` names. Radix merges `locale/<consumer-locale>/pack.toml` into the consumer reader pack. Missing row = canonical source name. |
 | `src/tela.fab` | The kernel — **one flat module** (imported as `tela:tela`), stdlib-only (no `norma`/`triga`/`faber-runtime` dependency); import-free through U1, U3 adds ONE same-package sibling import (`tela:validate`) for the fail-closed glue |
 | `src/validate.fab` | Validation module (imported as `tela:validate`) — flat, import-free, public surface string/bool only |
 | `src/browser.fab` | Browser module (imported as `tela:browser`) — mount/update/dispose lifecycle + hydration over the `tela:dom` host seam; pure planners `mount(Scope, View, Theme) → Mounted ∪ null`, `replace`, `dispose` |

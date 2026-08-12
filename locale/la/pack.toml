@@ -1,0 +1,147 @@
+# Library-owned member fragment for the Latin reader surface.
+# Not a reader keyword pack — only [pack] + [[library_members]].
+# Canonical names stay the English source spellings in src/tela.fab.
+
+[pack]
+id = "la"
+schema_version = 1
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "View"
+surface = "Visus"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Space"
+surface = "Spatium"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Attribute"
+surface = "Attributum"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Property"
+surface = "Proprietas"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Identity"
+surface = "Identitas"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Style"
+surface = "Stylus"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Theme"
+surface = "Thema"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Token"
+surface = "Tessera"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "text_view"
+surface = "textus_visus"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "fragment_view"
+surface = "fragmentum_visus"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "element_view"
+surface = "elementum_visus"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "element_full"
+surface = "elementum_omne"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "html_space"
+surface = "html_spatium"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "svg_space"
+surface = "svg_spatium"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "html_visus"
+surface = "html_visus"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "new_identity"
+surface = "nova_identitas"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "css"
+surface = "stylus"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "token"
+surface = "tessera"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "theme"
+surface = "thema"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "theme_css"
+surface = "thema_stylus"
