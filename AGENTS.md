@@ -123,8 +123,8 @@ Convention locks (Stage 5 U0):
   exception list): `longitudo()`, `sectio()`, `continet()`, `appende()`,
   `ordinata()`, `coalesce`, `vacua`, `∪`, `∷`, `∴`, `§`(…). Never rename a
   stdlib call.
-- **Seam types keep faber-web's spellings** (`dom.Scope`, `dom.Nodus`, …) —
-  consumed, never re-declared; `dom.Nodus.identitas` is the seam field.
+- **Seam types keep faber-web's spellings** (`dom.Scope`, `dom.DomNode`, …) —
+  consumed, never re-declared; `dom.DomNode.identity` is the seam field.
 
 ## No raw markup (policy (a))
 

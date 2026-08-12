@@ -1,0 +1,21 @@
+# tela/src/web.fab — tela:web — the WebController annotation contract
+# (English-first).
+#
+# SOURCE: faber-web/src/web.fab (la) converted to the English-first surface
+# (web-to-tela-consumer-migration U1, web-mig-u1-tela-web-annotation;
+# DELIVERY.md §U1). This is the browser-app packaging entry contract:
+# faber product packaging discovers + verifies controller fns through the
+# `WebController` annotation (controllers.rs `discover_controllers`). Only
+# the annotation is carried here — `Mount`/`mount`/`selector_of` are
+# superseded by the `tela:browser.mount` lifecycle (DELIVERY §4; no
+# consumer uses them). The `@ annotatio { target = fn }` keyword surface is
+# the en-probed form (`radix check --locale en`; `annotatio` is a hard
+# parser keyword — not locale-mapped — `functio → fn` is the en mapping).
+# Import-free (the G4-safe flat shape).
+#
+# Keyword surface (en): genus→class, textus→string, functio→fn.
+
+@ annotatio { target = fn }
+class WebController {
+    string selector
+}
