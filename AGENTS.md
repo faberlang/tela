@@ -29,6 +29,7 @@ file is the operating summary; the docs are the contract.
 | `exempla/` | Exempla-mode tests (`+++` frontmatter, `locale = "en"`); one exempla file per unit surface (e.g. `validation.fab`, `serializer.fab`) |
 | `scripta/` | Validation harnesses (Stage 1 U6: `check-compile`, `check-exempla`, `check-determinism`; `check-locale-la` for `locale/la/pack.toml`) |
 | `proof/locale-la/` | Latin-consumer proof of `locale/la/pack.toml` (owned here; Radix has no Tela fixture) |
+| Speculum island | Consumer proof lives in `faberlang.dev/generator/src/tela_island.fab` — Latin Speculum imports `tela:tela`; `document_ir` stays the site serializer |
 | `docs/design/` | Design records (`identity-hydration.md`, `theme-protocol.md`, `browser-lifecycle.md`) |
 | `docs/factory/mvp/` | Campaign + delivery + policy docs (machine-managed; do not hand-edit `README.md` if present — regenerate) |
 | `spike/` | **Frozen Stage 0 evidence — no unit writes here** |
