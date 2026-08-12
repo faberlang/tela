@@ -65,7 +65,7 @@
 fn in_group(string name, string grex) → bool {
     const string grex_limitata ← " " + grex + " "
     const string nomen_limitatum ← " " + name + " "
-    return grex_limitata.continet(nomen_limitatum)
+    return grex_limitata.contains(nomen_limitatum)
 }
 
 # ---------------------------------------------------------------------------
@@ -75,11 +75,11 @@ fn in_group(string name, string grex) → bool {
 fn valid_tag_name(string name) → bool {
     const string litterae ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     const string char_tagi ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_."
-    if name.longitudo() ≡ 0 then return false
-    if not litterae.continet(name.sectio(0, 1)) then return false
+    if name.length() ≡ 0 then return false
+    if not litterae.contains(name.slice(0, 1)) then return false
     var int i ← 1
-    while i < name.longitudo() {
-        if not char_tagi.continet(name.sectio(i, i + 1)) then return false
+    while i < name.length() {
+        if not char_tagi.contains(name.slice(i, i + 1)) then return false
         i ← i + 1
     }
     return true
@@ -91,10 +91,10 @@ fn valid_tag_name(string name) → bool {
 
 fn valid_attribute_name(string name) → bool {
     const string char_attributi ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.:"
-    if name.longitudo() ≡ 0 then return false
+    if name.length() ≡ 0 then return false
     var int i ← 0
-    while i < name.longitudo() {
-        if not char_attributi.continet(name.sectio(i, i + 1)) then return false
+    while i < name.length() {
+        if not char_attributi.contains(name.slice(i, i + 1)) then return false
         i ← i + 1
     }
     return true

@@ -234,8 +234,8 @@ fn element_full(
 fn escape(string s, bool in_attributo) → string {
     var string accum ← ""
     var int i ← 0
-    while i < s.longitudo() {
-        const string c ← s.sectio(i, i + 1)
+    while i < s.length() {
+        const string c ← s.slice(i, i + 1)
         # Sequential independent ifs (NOT an elif chain): the TS emitter
         # compiles elif chains whose bodies are single-statement assignments
         # into a returned conditional expression (undefined at runtime — a
@@ -317,7 +317,7 @@ fn validate_tree(View v) → bool {
             for from attributes const attr {
                 if not validate.valid_attribute_name(attr.name) then return false
             }
-            const bool has_children ← children.longitudo() > 0
+            const bool has_children ← children.length() > 0
             if not validate.valid_void_structure(tag_name, has_children) then return false
             for from children const child {
                 if not validate_tree(child) then return false
@@ -503,8 +503,8 @@ fn core_tokens() → list<string> {
 fn token_property_name(string name) → string {
     var string accum ← "--"
     var int i ← 0
-    while i < name.longitudo() {
-        const string c ← name.sectio(i, i + 1)
+    while i < name.length() {
+        const string c ← name.slice(i, i + 1)
         if c ≡ "." then accum ← accum + "-"
         if c ≠ "." then accum ← accum + c
         i ← i + 1
@@ -525,7 +525,7 @@ fn token_name_valid(string name) → bool {
 fn theme_has_core_tokens(Theme theme) → bool {
     const list<string> core ← core_tokens()
     var int i ← 0
-    while i < core.longitudo() {
+    while i < core.length() {
         if not theme_has_token(theme, core[i]) then return false
         i ← i + 1
     }
@@ -560,7 +560,7 @@ fn theme_style(Theme theme) → Style ∪ null {
     if not theme_has_core_tokens(theme) then return null
     var list<Declaration> declarations ← vacua
     var int i ← 0
-    while i < theme.tokens.longitudo() {
+    while i < theme.tokens.length() {
         const Token token ← theme.tokens[i]
         if not token_name_valid(token.name) then return null
         var bool duplicate ← false
@@ -574,7 +574,7 @@ fn theme_style(Theme theme) → Style ∪ null {
             j ← j + 1
         }
         if not duplicate {
-            declarations.appende(Declaration {
+            declarations.append(Declaration {
                 name = token_property_name(token.name),
                 value = token.value
             })
@@ -666,7 +666,7 @@ fn order(string identity, list<string> depends) → Order {
 fn deduplicated_bundles(list<Bundle> codicilli) → list<Bundle> ∪ null {
     var list<Bundle> unique ← vacua
     var int i ← 0
-    while i < codicilli.longitudo() {
+    while i < codicilli.length() {
         const Bundle bundle ← codicilli[i]
         var bool duplicate ← false
         var int j ← 0
@@ -678,7 +678,7 @@ fn deduplicated_bundles(list<Bundle> codicilli) → list<Bundle> ∪ null {
             }
             j ← j + 1
         }
-        if not duplicate then unique.appende(bundle)
+        if not duplicate then unique.append(bundle)
         i ← i + 1
     }
     return unique
@@ -697,11 +697,11 @@ fn in_list(list<string> collection, string name) → bool {
 # are unknowable) — the topo fails closed.
 fn dependencies_met(list<Order> ordines, string identity, list<string> placed) → bool {
     var int i ← 0
-    while i < ordines.longitudo() {
+    while i < ordines.length() {
         const Order order ← ordines[i]
         if order.identity ≡ identity {
             var int j ← 0
-            while j < order.depends.longitudo() {
+            while j < order.depends.length() {
                 if not in_list(placed, order.depends[j]) then return false
                 j ← j + 1
             }
@@ -720,21 +720,21 @@ fn dependencies_met(list<Order> ordines, string identity, list<string> placed) �
 fn topological_order(list<Order> ordines, list<string> identities) → list<string> ∪ null {
     var list<string> ordinata ← vacua
     var list<string> remaining ← identities
-    while remaining.longitudo() > 0 {
+    while remaining.length() > 0 {
         var list<string> ready ← vacua
         var int i ← 0
-        while i < remaining.longitudo() {
-            if dependencies_met(ordines, remaining[i], ordinata) then ready.appende(remaining[i])
+        while i < remaining.length() {
+            if dependencies_met(ordines, remaining[i], ordinata) then ready.append(remaining[i])
             i ← i + 1
         }
-        if ready.longitudo() ≡ 0 then return null
-        ready ← ready.ordinata()
+        if ready.length() ≡ 0 then return null
+        ready ← ready.sorted()
         const string chosen ← ready[0]
-        ordinata.appende(chosen)
+        ordinata.append(chosen)
         var list<string> next ← vacua
         var int j ← 0
-        while j < remaining.longitudo() {
-            if remaining[j] ≠ chosen then next.appende(remaining[j])
+        while j < remaining.length() {
+            if remaining[j] ≠ chosen then next.append(remaining[j])
             j ← j + 1
         }
         remaining ← next
@@ -746,8 +746,8 @@ fn topological_order(list<Order> ordines, list<string> identities) → list<stri
 # the emitted rule invalid — fail-closed before emission.
 fn unclean_style_text(string text) → bool {
     var int i ← 0
-    while i < text.longitudo() {
-        const string c ← text.sectio(i, i + 1)
+    while i < text.length() {
+        const string c ← text.slice(i, i + 1)
         if c ≡ "{" then return true
         if c ≡ "}" then return true
         if c ≡ ";" then return true
@@ -761,11 +761,11 @@ fn unclean_style_text(string text) → bool {
 # and no CSS-structure-breaking characters.
 fn style_valid(Style style) → bool {
     for from style.rules const regula {
-        if regula.selector.longitudo() ≡ 0 then return false
+        if regula.selector.length() ≡ 0 then return false
         if unclean_style_text(regula.selector) then return false
         for from regula.declarations const decl {
-            if decl.name.longitudo() ≡ 0 then return false
-            if decl.value.longitudo() ≡ 0 then return false
+            if decl.name.length() ≡ 0 then return false
+            if decl.value.length() ≡ 0 then return false
             if unclean_style_text(decl.name) then return false
             if unclean_style_text(decl.value) then return false
         }
@@ -810,7 +810,7 @@ fn assemble(
     const list<Bundle> componente_vacua ← vacua
     const list<Bundle> componentes_finales ← componentes_unici coalesce componente_vacua
     var int ci ← 0
-    while ci < componentes_finales.longitudo() {
+    while ci < componentes_finales.length() {
         if not style_valid(componentes_finales[ci].style) then return null
         ci ← ci + 1
     }
@@ -822,14 +822,14 @@ fn assemble(
     const list<Bundle> codicilli_vacui ← vacua
     const list<Bundle> codicilli_finales ← codicilli_unici coalesce codicilli_vacui
     var int li ← 0
-    while li < codicilli_finales.longitudo() {
+    while li < codicilli_finales.length() {
         if not style_valid(codicilli_finales[li].style) then return null
         li ← li + 1
     }
     var list<string> identities ← vacua
     var int m ← 0
-    while m < codicilli_finales.longitudo() {
-        identities.appende(codicilli_finales[m].identity)
+    while m < codicilli_finales.length() {
+        identities.append(codicilli_finales[m].identity)
         m ← m + 1
     }
     const list<string> ∪ null librariae_result ← topological_order(ordines, identities)
@@ -846,31 +846,31 @@ fn assemble(
     var list<Rule> rules ← vacua
     if reset not is null {
         for from reset!.rules const regula {
-            rules.appende(regula)
+            rules.append(regula)
         }
     }
     for from tokens.rules const regula {
-        rules.appende(regula)
+        rules.append(regula)
     }
     var int idx ← 0
-    while idx < componentes_finales.longitudo() {
+    while idx < componentes_finales.length() {
         for from componentes_finales[idx].style.rules const regula {
-            rules.appende(regula)
+            rules.append(regula)
         }
         idx ← idx + 1
     }
     var int ord ← 0
-    while ord < librariae.longitudo() {
+    while ord < librariae.length() {
         const Style ∪ null style ← bundle_for(librariae[ord], codicilli_finales)
         if style is null then return null
         for from style!.rules const regula {
-            rules.appende(regula)
+            rules.append(regula)
         }
         ord ← ord + 1
     }
     if applicatio not is null {
         for from applicatio!.style.rules const regula {
-            rules.appende(regula)
+            rules.append(regula)
         }
     }
     return Style { rules = rules }
