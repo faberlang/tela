@@ -45,7 +45,7 @@
 #     recorded, never the gate.
 #   fix:prim-nullable — RESOLVED for the narrowed-list case (nn-u3b,
 #     radix 255c4c8cf): `if nodes not is null { … }` flow-narrows the
-#     union binding, so `nodes.longitudo()` / `nodes[i].identity` call
+#     union binding, so `nodes.length()` / `nodes[i].identity` call
 #     directly on the narrowed receiver — the `certain` non-null copy
 #     carrier is REMOVED (nn-revert-2). Remaining surface: a primitive
 #     `T ∪ null` const/var annotation and a `!` unwrap of a primitive
@@ -146,26 +146,26 @@ fn identity_marker() → string {
 fn unescape(string text) → string {
     var string accum ← ""
     var int i ← 0
-    while i < text.longitudo() {
-        var string fragment ← text.sectio(i, i + 1)
+    while i < text.length() {
+        var string fragment ← text.slice(i, i + 1)
         var int step ← 1
-        if not (i + 5 > text.longitudo()) and text.sectio(i, i + 5) ≡ "&quot;" {
+        if not (i + 5 > text.length()) and text.slice(i, i + 5) ≡ "&quot;" {
             fragment ← "§"('"')
             step ← 5
         }
-        if not (i + 5 > text.longitudo()) and text.sectio(i, i + 5) ≡ "&#39;" {
+        if not (i + 5 > text.length()) and text.slice(i, i + 5) ≡ "&#39;" {
             fragment ← "'"
             step ← 5
         }
-        if not (i + 4 > text.longitudo()) and text.sectio(i, i + 4) ≡ "&amp;" {
+        if not (i + 4 > text.length()) and text.slice(i, i + 4) ≡ "&amp;" {
             fragment ← "&"
             step ← 4
         }
-        if not (i + 4 > text.longitudo()) and text.sectio(i, i + 4) ≡ "&lt;" {
+        if not (i + 4 > text.length()) and text.slice(i, i + 4) ≡ "&lt;" {
             fragment ← "<"
             step ← 4
         }
-        if not (i + 4 > text.longitudo()) and text.sectio(i, i + 4) ≡ "&gt;" {
+        if not (i + 4 > text.length()) and text.slice(i, i + 4) ≡ "&gt;" {
             fragment ← ">"
             step ← 4
         }
@@ -178,13 +178,13 @@ fn unescape(string text) → string {
 fn parse_identities(string text) → list<string> {
     var list<string> identities ← vacua
     var int i ← 0
-    while i < text.longitudo() {
-        if not (i + 12 > text.longitudo()) and text.sectio(i, i + 12) ≡ identity_marker() {
+    while i < text.length() {
+        if not (i + 12 > text.length()) and text.slice(i, i + 12) ≡ identity_marker() {
             var string raw ← ""
             var int j ← i + 12
             var bool terminated ← false
-            while j < text.longitudo() and not terminated {
-                const string ch ← text.sectio(j, j + 1)
+            while j < text.length() and not terminated {
+                const string ch ← text.slice(j, j + 1)
                 if ch ≡ "'" {
                     terminated ← true
                 }
@@ -194,7 +194,7 @@ fn parse_identities(string text) → list<string> {
                 j ← j + 1
             }
             if terminated {
-                identities.appende(unescape(raw))
+                identities.append(unescape(raw))
                 i ← j
             }
             if not terminated {
@@ -212,13 +212,13 @@ fn parse_identities(string text) → list<string> {
 # identity is absent or the element is malformed.
 fn element_tag(string text, string identity) → string ∪ null {
     var int i ← 0
-    while i < text.longitudo() {
-        if not (i + 12 > text.longitudo()) and text.sectio(i, i + 12) ≡ identity_marker() {
+    while i < text.length() {
+        if not (i + 12 > text.length()) and text.slice(i, i + 12) ≡ identity_marker() {
             var string raw ← ""
             var int j ← i + 12
             var bool terminated ← false
-            while j < text.longitudo() and not terminated {
-                const string ch ← text.sectio(j, j + 1)
+            while j < text.length() and not terminated {
+                const string ch ← text.slice(j, j + 1)
                 if ch ≡ "'" {
                     terminated ← true
                 }
@@ -231,7 +231,7 @@ fn element_tag(string text, string identity) → string ∪ null {
                 var int a ← i
                 var bool found ← false
                 while a > 0 and not found {
-                    const string ch ← text.sectio(a - 1, a)
+                    const string ch ← text.slice(a - 1, a)
                     if ch ≡ "<" {
                         found ← true
                     }
@@ -241,8 +241,8 @@ fn element_tag(string text, string identity) → string ∪ null {
                 }
                 var int b ← j
                 var bool closed ← false
-                while b < text.longitudo() and not closed {
-                    const string ch ← text.sectio(b, b + 1)
+                while b < text.length() and not closed {
+                    const string ch ← text.slice(b, b + 1)
                     if ch ≡ ">" {
                         closed ← true
                     }
@@ -250,7 +250,7 @@ fn element_tag(string text, string identity) → string ∪ null {
                         b ← b + 1
                     }
                 }
-                if found and closed then return text.sectio(a - 1, b + 1)
+                if found and closed then return text.slice(a - 1, b + 1)
                 return null
             }
             i ← j
@@ -272,8 +272,8 @@ fn tag_name(string tag) → string {
     var string result ← ""
     var int i ← 1
     var bool finished ← false
-    while i < tag.longitudo() and not finished {
-        const string ch ← tag.sectio(i, i + 1)
+    while i < tag.length() and not finished {
+        const string ch ← tag.slice(i, i + 1)
         if ch ≡ " " or ch ≡ ">" {
             finished ← true
         }
@@ -289,7 +289,7 @@ fn tag_name(string tag) → string {
 fn count_occurrences(list<string> collection, string name) → int {
     var int count_occurrences ← 0
     var int i ← 0
-    while i < collection.longitudo() {
+    while i < collection.length() {
         if collection[i] ≡ name {
             count_occurrences ← count_occurrences + 1
         }
@@ -302,10 +302,10 @@ fn count_occurrences(list<string> collection, string name) → int {
 fn duplicate_identities(list<string> collection) → list<string> {
     var list<string> duplicates ← vacua
     var int i ← 0
-    while i < collection.longitudo() {
+    while i < collection.length() {
         const string identity ← collection[i]
-        if count_occurrences(collection, identity) > 1 and not duplicates.continet(identity) {
-            duplicates.appende(identity)
+        if count_occurrences(collection, identity) > 1 and not duplicates.contains(identity) {
+            duplicates.append(identity)
         }
         i ← i + 1
     }
@@ -326,8 +326,8 @@ fn identities_from_nodes(list<dom.DomNode> ∪ null nodes) → list<string> {
     var list<string> result ← vacua
     if nodes not is null {
         var int i ← 0
-        while i < nodes.longitudo() {
-            result.appende(nodes[i].identity)
+        while i < nodes.length() {
+            result.append(nodes[i].identity)
             i ← i + 1
         }
     }
@@ -338,8 +338,8 @@ fn tags_from_nodes(list<dom.DomNode> ∪ null nodes) → list<string> {
     var list<string> result ← vacua
     if nodes not is null {
         var int i ← 0
-        while i < nodes.longitudo() {
-            result.appende(nodes[i].tag)
+        while i < nodes.length() {
+            result.append(nodes[i].tag)
             i ← i + 1
         }
     }
@@ -350,7 +350,7 @@ fn tags_from_nodes(list<dom.DomNode> ∪ null nodes) → list<string> {
 # ("" when the identity is absent from the present set).
 fn tag_at(string identity, list<string> identities, list<string> tags) → string {
     var int i ← 0
-    while i < identities.longitudo() {
+    while i < identities.length() {
         if identities[i] ≡ identity {
             return tags[i]
         }
@@ -412,32 +412,32 @@ fn hydration_diagnostics(
     var list<string> diagnostics ← vacua
     const list<string> duplicatae_view ← duplicate_identities(view_identities)
     var int di ← 0
-    while di < duplicatae_view.longitudo() {
-        diagnostics.appende("duplicate:" + duplicatae_view[di])
+    while di < duplicatae_view.length() {
+        diagnostics.append("duplicate:" + duplicatae_view[di])
         di ← di + 1
     }
     const list<string> duplicatae_praesentes ← duplicate_identities(present_identities)
     var int dj ← 0
-    while dj < duplicatae_praesentes.longitudo() {
-        diagnostics.appende("duplicate:" + duplicatae_praesentes[dj])
+    while dj < duplicatae_praesentes.length() {
+        diagnostics.append("duplicate:" + duplicatae_praesentes[dj])
         dj ← dj + 1
     }
     var int ek ← 0
-    while ek < present_identities.longitudo() {
+    while ek < present_identities.length() {
         const string identity ← present_identities[ek]
-        if not view_identities.continet(identity) {
-            diagnostics.appende("foreign:" + identity)
+        if not view_identities.contains(identity) {
+            diagnostics.append("foreign:" + identity)
         }
         ek ← ek + 1
     }
     var int mi ← 0
-    while mi < view_identities.longitudo() {
+    while mi < view_identities.length() {
         const string identity ← view_identities[mi]
         if count_occurrences(present_identities, identity) ≡ 1 and count_occurrences(view_identities, identity) ≡ 1 {
             const string tag_view ← tag_name(element_tag(markup, identity) coalesce "")
             const string tag_praesens ← tag_at(identity, present_identities, present_tags)
             if not (tag_view ≡ "") and not (tag_praesens ≡ "") and tag_view ≠ tag_praesens {
-                diagnostics.appende("changed:" + identity)
+                diagnostics.append("changed:" + identity)
             }
         }
         mi ← mi + 1
@@ -485,9 +485,9 @@ fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ null
     # Binding plan: per View identity in order (binding_status decides).
     var list<Binding> bindings ← vacua
     var int li ← 0
-    while li < view_identities.longitudo() {
+    while li < view_identities.length() {
         const string status ← binding_status(view_identities[li], view_identities, present_identities, markup, present_tags)
-        bindings.appende(binding(view_identities[li], status))
+        bindings.append(binding(view_identities[li], status))
         li ← li + 1
     }
 
@@ -496,8 +496,8 @@ fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ null
     # host binds a tela:dom on(node, "tela:binding") per descriptor.
     var list<EventSubscription> subscriptions ← vacua
     var int sub ← 0
-    while sub < view_identities.longitudo() {
-        subscriptions.appende(event_subscription(view_identities[sub], "tela:binding"))
+    while sub < view_identities.length() {
+        subscriptions.append(event_subscription(view_identities[sub], "tela:binding"))
         sub ← sub + 1
     }
 
@@ -532,12 +532,12 @@ fn replace(Mounted m, tela.View view) → tela.Update ∪ null {
     if tela.html_visus(view) is null then return null
     var list<tela.Effect> effects ← vacua
     if not (m.focused_identity ≡ "") {
-        effects.appende(tela.restore(m.focused_identity))
+        effects.append(tela.restore(m.focused_identity))
     }
     if not (m.target_identity ≡ "") {
-        effects.appende(tela.direct(m.target_identity))
+        effects.append(tela.direct(m.target_identity))
     }
-    effects.appende(tela.anchor(m.root.identity))
+    effects.append(tela.anchor(m.root.identity))
     return tela.update(view, effects)
 }
 

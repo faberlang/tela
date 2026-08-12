@@ -604,7 +604,7 @@ fn panel(PanelProps props) → tela.View {
         tela.Attribute { name = "role", value = "region" }
     ]
     if not (props.title ≡ "") {
-        attributes.appende(tela.Attribute { name = "aria-label", value = props.title })
+        attributes.append(tela.Attribute { name = "aria-label", value = props.title })
     }
     return tela.element_full(
         tela.new_identity("ref-panel-" + props.name),
@@ -679,7 +679,7 @@ fn metric(MetricProps props) → tela.View {
         tela.element_view(tela.html_space(), "dd", [ tela.text_view(props.value) ])
     ]
     if not (props.delta ≡ "") {
-        children.appende(tela.element_view(tela.html_space(), "dd", [ tela.text_view(props.delta) ]))
+        children.append(tela.element_view(tela.html_space(), "dd", [ tela.text_view(props.delta) ]))
     }
     return tela.element_full(
         tela.new_identity("ref-metric-" + props.name),
@@ -722,8 +722,8 @@ fn table_props(string name, string caption, list<string> headers, list<TableRow>
 fn table_header_cells(string name, list<string> headers) → list<tela.View> {
     var list<tela.View> cells ← vacua
     var int i ← 0
-    while i < headers.longitudo() {
-        cells.appende(tela.element_full(
+    while i < headers.length() {
+        cells.append(tela.element_full(
             tela.new_identity("ref-table-" + name + "-header-" + "§"(i)),
             tela.html_space(),
             "th",
@@ -742,8 +742,8 @@ fn table_header_cells(string name, list<string> headers) → list<tela.View> {
 fn table_body_cells(string name, int row, list<string> cells) → list<tela.View> {
     var list<tela.View> tds ← vacua
     var int i ← 0
-    while i < cells.longitudo() {
-        tds.appende(tela.element_full(
+    while i < cells.length() {
+        tds.append(tela.element_full(
             tela.new_identity("ref-table-" + name + "-cell-" + "§"(row) + "-" + "§"(i)),
             tela.html_space(),
             "td",
@@ -769,13 +769,13 @@ fn table_body_cells(string name, int row, list<string> cells) → list<tela.View
 fn table(TableProps props) → tela.View {
     var list<tela.View> children ← vacua
     if not (props.caption ≡ "") {
-        children.appende(tela.element_view(
+        children.append(tela.element_view(
             tela.html_space(),
             "caption",
             [ tela.text_view(props.caption) ]
         ))
     }
-    children.appende(tela.element_view(
+    children.append(tela.element_view(
         tela.html_space(),
         "thead",
         [ tela.element_view(
@@ -786,16 +786,16 @@ fn table(TableProps props) → tela.View {
     ))
     var list<tela.View> body_rows ← vacua
     var int r ← 0
-    while r < props.rows.longitudo() {
+    while r < props.rows.length() {
         const TableRow row ← props.rows[r]
-        body_rows.appende(tela.element_view(
+        body_rows.append(tela.element_view(
             tela.html_space(),
             "tr",
             table_body_cells(props.name, r, row.cells)
         ))
         r ← r + 1
     }
-    children.appende(tela.element_view(
+    children.append(tela.element_view(
         tela.html_space(),
         "tbody",
         body_rows
@@ -881,14 +881,14 @@ fn segmented_live_region() → tela.View {
 fn segmented_options(SegmentedProps props) → list<tela.View> {
     var list<tela.View> options ← vacua
     var int i ← 1
-    while i ≤ props.options.longitudo() {
+    while i ≤ props.options.length() {
         const string identity ← "ref-seg-" + props.name + "-" + "§"(i)
         const string option ← props.options[i - 1]
         const bool selected ← identity ≡ props.selected
-        options.appende(segmented_option(identity, option, active_tabindex(selected), selected_text(selected)))
+        options.append(segmented_option(identity, option, active_tabindex(selected), selected_text(selected)))
         i ← i + 1
     }
-    options.appende(segmented_live_region())
+    options.append(segmented_live_region())
     return options
 }
 
@@ -962,12 +962,12 @@ fn button_event() → string {
 fn button(ButtonProps props) → tela.View {
     var list<tela.Attribute> attributes ← vacua
     if not (props.aria_label ≡ "") {
-        attributes.appende(tela.Attribute { name = "aria-label", value = props.aria_label })
+        attributes.append(tela.Attribute { name = "aria-label", value = props.aria_label })
     }
     if props.state ≡ "disabled" {
-        attributes.appende(tela.Attribute { name = "disabled", value = "" })
+        attributes.append(tela.Attribute { name = "disabled", value = "" })
     }
-    attributes.appende(tela.Attribute { name = "data-ref-variant", value = props.variant })
+    attributes.append(tela.Attribute { name = "data-ref-variant", value = props.variant })
     return tela.element_full(
         tela.new_identity("ref-button-" + props.name),
         tela.html_space(),
@@ -1021,17 +1021,17 @@ fn field_invalid(FieldInputProps props) → string {
 # (when disabled) → data-tela.
 fn field_input(FieldInputProps props) → tela.View {
     var list<tela.Attribute> attributes ← vacua
-    attributes.appende(tela.Attribute { name = "type", value = "text" })
-    attributes.appende(tela.Attribute { name = "aria-label", value = props.label })
-    attributes.appende(tela.Attribute { name = "aria-invalid", value = field_invalid(props) })
+    attributes.append(tela.Attribute { name = "type", value = "text" })
+    attributes.append(tela.Attribute { name = "aria-label", value = props.label })
+    attributes.append(tela.Attribute { name = "aria-invalid", value = field_invalid(props) })
     if not (props.error ≡ "") {
-        attributes.appende(tela.Attribute { name = "aria-describedby", value = "form-error-" + props.name })
+        attributes.append(tela.Attribute { name = "aria-describedby", value = "form-error-" + props.name })
     }
     if not (props.value ≡ "") {
-        attributes.appende(tela.Attribute { name = "value", value = props.value })
+        attributes.append(tela.Attribute { name = "value", value = props.value })
     }
     if props.disabled ≡ "disabled" {
-        attributes.appende(tela.Attribute { name = "disabled", value = "" })
+        attributes.append(tela.Attribute { name = "disabled", value = "" })
     }
     return tela.element_full(
         tela.new_identity("form-field-" + props.name),
@@ -1050,7 +1050,7 @@ fn field_input(FieldInputProps props) → tela.View {
 fn field_error_region(string name, string error) → tela.View {
     var list<tela.View> children ← vacua
     if not (error ≡ "") {
-        children.appende(tela.text_view(error))
+        children.append(tela.text_view(error))
     }
     return tela.element_full(
         tela.new_identity("form-error-" + name),
@@ -1085,8 +1085,8 @@ fn field_live_region() → tela.View {
 # form-control-<name>.
 fn field_control(FieldInputProps props) → tela.View {
     var list<tela.View> children ← vacua
-    children.appende(field_input(props))
-    children.appende(field_error_region(props.name, props.error))
+    children.append(field_input(props))
+    children.append(field_error_region(props.name, props.error))
     return tela.element_full(
         tela.new_identity("form-control-" + props.name),
         tela.html_space(),
