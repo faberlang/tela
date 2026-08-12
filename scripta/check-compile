@@ -37,7 +37,7 @@ export FABER_LIBRARY_HOME="${FABER_LIBRARY_HOME:-$ROOT/..}"
 # browser flip's imported seam — U1/U3 landed the sources).
 # Web-to-tela-consumer-migration U1: the tela:web annotation module joins
 # (the WebController packaging entry contract).
-for mod in tela validate reference dom canvas2d web; do
+for mod in tela validate reference dom canvas2d web browser; do
   echo "check-compile: parsing src/${mod}.fab"
   "$RADIX_BIN" check --locale en "$ROOT/src/${mod}.fab"
 done
