@@ -19,7 +19,7 @@ file is the operating summary; the docs are the contract.
 | --- | --- |
 | `faber.toml` | Package `tela`, provider `tela`, `[paths] source = "src"`, `[build] kind = "lib"`, `targets = ["rust", "ts"]`, `[reader] locale = "en"`, edition 2026, version `0.0.0` (versioning is a Stage 8 decision) |
 | `locale/<id>/pack.toml` | Library-owned member fragments (not reader keyword packs). `en` is identity; `la` projects public `tela:tela` names. Radix merges `locale/<consumer-locale>/pack.toml` into the consumer reader pack. Missing row = canonical source name. |
-| `src/tela.fab` | The kernel — **one flat module** (imported as `tela:tela`), stdlib-only (no `norma`/`triga`/`faber-runtime` dependency); import-free through U1, U3 adds ONE same-package sibling import (`tela:validate`) for the fail-closed glue |
+| `src/tela.fab` | The kernel — **one flat module** (imported as `tela:tela`), stdlib-only (no `norma`/`triga`/generated-Rust carrier dependency); import-free through U1, U3 adds ONE same-package sibling import (`tela:validate`) for the fail-closed glue |
 | `src/validate.fab` | Validation module (imported as `tela:validate`) — flat, import-free, public surface string/bool only |
 | `src/browser.fab` | Browser module (imported as `tela:browser`) — mount/update/dispose lifecycle + hydration over the `tela:dom` host seam; pure planners `mount(Scope, View, Theme) → Mounted ∪ null`, `replace`, `dispose` |
 | `src/reference.fab` | Reference catalog module (imported as `tela:reference`) — layout/typography + panel/badge/metric component families over typed props → `tela:View`, stable `ref-*` data-tela identities + namespaced `ref.*` tokens |
@@ -65,7 +65,8 @@ by framework-contract weakening.
 - **Field-name constraint (D2 → `nomen_tag`).** A field named `tag` collides
   with the TS emitter's discriminant (`type U = { tag: "V", tag: string }` →
   TS2300/TS2717). The working spelling is **`nomen_tag`**. (Re-checked clean
-  at U1 against in-tree radix 0.80.0; keep the spelling.)
+  during U1; keep the spelling until a current packet-local Radix probe proves
+  the emitter collision is gone.)
 - **Nullable-identity routing (D3 → `new_identity`).** Direct non-null
   construction into a nullable union field misses the Rust `Some(...)` wrap
   (cargo E0308). Route non-null identity through the helper
@@ -84,10 +85,10 @@ by framework-contract weakening.
 - **Named type imports (G2 → wildcard + qualified).** `importa ex "m" publica
   Visus` then bare `Visus` does not bind (`SEM002.unknown_type`). Use wildcard
   imports (`* ut ns`) + qualified references.
-- **Dialect note (spike evidence §6).** Latin keywords (`discretio`, `finge`,
-  `ordo`) partially diverge in the 0.80.0 in-tree build — `discretio` did not
-  register a usable type name. Author with the spellings the kernel proves:
-  `union`, `enum`, `class`, `fn`.
+- **Dialect note (spike evidence §6).** The Stage 0 build did not register
+  `discretio` as a usable type name. Author with the spellings the current
+  kernel proves (`union`, `enum`, `class`, `fn`) until a packet-local Radix
+  probe closes the recorded gap.
 
 ## Vocabulary policy (policy (b) — SUPERSEDED by the English-first convention, U0 2026-08-09)
 
@@ -168,8 +169,9 @@ superseded).
 
 ## Validation (three lanes)
 
-Use the **in-tree** radix binary `radix/target/debug/radix` (0.80.0) — the
-installed `~/.cargo/bin/radix` (0.78.0) predates corpus exempla-mode sugar.
+Use the **packet-local sibling** Radix binary at
+`radix/target/debug/radix`. An installed `~/.cargo/bin/radix` may lag the
+workspace and is not validation authority.
 Rust-lane cargo checks run in **scratch dirs outside the shared workspace**
 (`/tmp/…`). No workspace cargo suites (Cargo discipline, operator rule
 2026-08-07); full radix ladder stages 4–6 / `--e2e` are auditor-owned.
@@ -220,7 +222,7 @@ exempla: `exempla/thema.fab`.
   the 8-token core baseline is pinned in the kernel header (U1) — a theme
   must cover it or `thema_css` returns `null` (fail-closed). The theme
   verbs (`thema`, `scopulum`, `thema_css`) are collision-free (probed on
-  in-tree radix 0.80.0). Renderer verbs stay English (policy (b));
+  the Stage 1 Radix build). Renderer verbs stay English (policy (b));
   protocol types stay Faber-Latin. Extension tokens use namespaced paths
   (`chart.axis.muted`) and are collected app-side (the compose-without /
   G4-independent pattern — never a provider export that trips
@@ -257,7 +259,7 @@ runtime gate, and the segmented-control interaction proof.
   null`, `replace(Mounted, Visus) → Renovatio ∪ null`, `dispose(Mounted) →
   void`. The spec sketch's `dom.Scope` is carried by tela:browser's own
   `Scope { selector, textus_praesens }` handle: the en→la `web:dom` import
-  is **blocked** on in-tree radix 0.80.0 (PARSE001/SEM002 —
+  was **blocked** in the recorded Radix probe (PARSE001/SEM002 —
   `fix:web-dom-locale`), so the module does **not** import `web:dom` and
   the DOM surface binds at the **harness level** (the dom-shim binds the
   `webDom*` surface). `void` is the en void type (the reader pack maps
@@ -287,8 +289,8 @@ runtime gate, and the segmented-control interaction proof.
   exempla, and the harness-assembly workaround binds the `webDom*` surface
   directly, so the snapshot does not apply at runtime. `fix:web-dom-locale`
   — en→la provider-module locale/dialect propagation at `radix check`
-  (PARSE001-family, the CODEGEN001 mechanism): **attempted and failed** on
-  in-tree radix 0.80.0; the landed fallback is the harness-level DOM
+  (PARSE001-family, the CODEGEN001 mechanism): **attempted and failed** in the
+  recorded probe; the landed fallback is the harness-level DOM
   binding (dom-shim binds the `webDom*` surface); **never re-author a
   `web:dom` copy inside tela**. `fix:prim-nullable` (NEW) — a primitive
   `∪ null` const/var annotation and a `!` unwrap of a primitive nullable do
