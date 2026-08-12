@@ -1,0 +1,39 @@
++++
+term = "defect-d0"
+kind = "keyword"
+category = "type"
+locale = "en"
++++
+
+# tela/spike/defects/d0-generic-alias-params.fab
+# MINIMIZED REPRO — D0: a generic type alias does not bind its own type
+# parameters (shared semantic layer; all targets).
+#
+# Before the fix: `type X<T> = T` fails with SEM008 unknown_type_name at the
+# body `T`. The resolve pass lowers each alias body via `lower_type_expr`
+# AFTER `resolve_stmt` has entered and exited the alias's module scope, so the
+# alias's own SymbolKind::TypeParam symbols are out of scope during body
+# lowering. AliasEntry carried only { def_id, ty, span }; the fix adds
+# `type_params` and scopes them around the body lower (mirroring the HIR path
+# hir/lower/decl.rs::lower_typus, which already push_type_params).
+#
+# Expected (all green, no SEM008):
+#   - declaration `type X<T> = T`;
+#   - usage `fn f(int x) → X<int> { return x }` typechecks with substitution
+#     at use (Type::Applied(Alias, args) → substitute_type_params);
+#   - the campaign sketch shape `type Nuntius<Message> = (Eventum) → Message`
+#     checks green at declaration (en spelling; `typus` does not parse in the
+#     en pack — recorded dialect divergence, not this unit).
+#
+# Removal predicate: the spike's inline function-type field
+# `(Eventum) → Message` can revert to the alias form `Nuntius<Message>`.
+
+type X<T> = T
+
+class Eventum { }
+
+type Nuntius<Message> = (Eventum) → Message
+
+fn f(int x) → X<int> {
+    return x
+}
