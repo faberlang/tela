@@ -18,10 +18,10 @@ in [`docs/archived/`](../archived/README.md).
 
 ## Summary
 
-- goals scanned: 2
-- active: 2
-- planned: 0
-- done: 0
+- goals scanned: 3
+- active: 1
+- planned: 1
+- done: 1
 - unknown: 0
 - archived (moved to `docs/archived/`): 0
 
@@ -29,16 +29,19 @@ in [`docs/archived/`](../archived/README.md).
 
 | Goal | Status | Done | goal | campaign | delivery | ledger | council | evidence | other |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| [mvp](mvp/CAMPAIGN.md) | active | — | 0 | 1 | 6 | 0 | 0 | 0 | 20 |
-| [web-surface-import](web-surface-import/GOAL.md) | active | — | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
+| [mvp](mvp/CAMPAIGN.md) | active | — | 0 | 1 | 6 | 0 | 0 | 0 | 23 |
 
 ## Planned
 
-_none_
+| Goal | Status | Done | goal | campaign | delivery | ledger | council | evidence | other |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| [web-to-tela-consumer-migration](web-to-tela-consumer-migration/goal.md) | planned | — | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
 
 ## Archived
 
-_none_
+| Goal | Status | Done | goal | campaign | delivery | ledger | council | evidence | other |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| [web-surface-import](web-surface-import/GOAL.md) | done | 100% | 1 | 0 | 1 | 0 | 0 | 0 | 1 |
 
 ## Unknown
 
