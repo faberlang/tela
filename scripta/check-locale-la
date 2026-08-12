@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+# Prove locale/la/pack.toml: a Latin file imports tela:tela by Latin
+# member names. Canonical English names remain accepted. Invented names
+# and missing exports fail closed. Emit is advisory except when radix
+# emit itself errors.
+#
+# Usage: ./scripta/check-locale-la
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROOF="$ROOT/proof/locale-la"
+
+if [[ -n "${RADIX_BIN:-}" && -x "${RADIX_BIN}" ]]; then
+    :
+elif [[ -n "${RADIX:-}" && -x "${RADIX}" ]]; then
+    RADIX_BIN="$RADIX"
+elif [[ -n "${RADIX_ROOT:-}" && -x "${RADIX_ROOT}/target/debug/radix" ]]; then
+    RADIX_BIN="$RADIX_ROOT/target/debug/radix"
+elif [[ -x "$ROOT/../radix/target/debug/radix" ]]; then
+    RADIX_BIN="$ROOT/../radix/target/debug/radix"
+elif [[ -x "$ROOT/../../../radix/target/debug/radix" ]]; then
+    RADIX_BIN="$ROOT/../../../radix/target/debug/radix"
+else
+    RADIX_BIN="$(command -v radix || true)"
+fi
+
+if [[ -z "${RADIX_BIN}" || ! -x "${RADIX_BIN}" ]]; then
+    echo "check-locale-la: no radix binary (set RADIX_BIN, or build -p radix --bin radix)" >&2
+    exit 1
+fi
+
+export FABER_LIBRARY_HOME="${FABER_LIBRARY_HOME:-$ROOT/..}"
+if [[ ! -f "$ROOT/src/tela.fab" ]]; then
+    echo "check-locale-la: missing $ROOT/src/tela.fab" >&2
+    exit 1
+fi
+
+echo "check-locale-la: radix=$RADIX_BIN"
+echo "check-locale-la: FABER_LIBRARY_HOME=$FABER_LIBRARY_HOME"
+
+expect_ok() {
+    local file="$1"
+    local out
+    if ! out="$("$RADIX_BIN" check --locale la "$file" 2>&1)"; then
+        echo "$out" >&2
+        echo "check-locale-la: expected ok on $file" >&2
+        exit 1
+    fi
+    if ! grep -q "^ok:" <<<"$out"; then
+        echo "$out" >&2
+        echo "check-locale-la: missing ok: line on $file" >&2
+        exit 1
+    fi
+    echo "$out"
+}
+
+expect_codes() {
+    local file="$1"
+    shift
+    local out rc
+    set +e
+    out="$("$RADIX_BIN" check --locale la "$file" 2>&1)"
+    rc=$?
+    set -e
+    if [[ "$rc" -eq 0 ]]; then
+        echo "$out" >&2
+        echo "check-locale-la: expected failure on $file" >&2
+        exit 1
+    fi
+    local code
+    for code in "$@"; do
+        if ! grep -q "$code" <<<"$out"; then
+            echo "$out" >&2
+            echo "check-locale-la: $file missing $code" >&2
+            exit 1
+        fi
+    done
+    echo "check-locale-la: $file failed as expected ($(
+        printf '%s ' "$@"
+    ))"
+}
+
+echo "check-locale-la: positive Latin consumer"
+expect_ok "$PROOF/latin-consumer.fab"
+
+echo "check-locale-la: positive canonical English fallback"
+expect_ok "$PROOF/canonical-members.fab"
+
+echo "check-locale-la: negative invented Latin members"
+expect_codes "$PROOF/invented-members.fab" "SEM002.qualified_type_not_exported"
+
+echo "check-locale-la: negative missing English export"
+expect_codes "$PROOF/absent-member.fab" "SEM004.namespace_missing_export"
+
+echo "check-locale-la: emit rust"
+if ! rust_out="$("$RADIX_BIN" emit -t rust --locale la "$PROOF/latin-consumer.fab" 2>&1)"; then
+    echo "$rust_out" >&2
+    echo "check-locale-la: rust emit failed" >&2
+    exit 1
+fi
+if ! grep -q "html_visus" <<<"$rust_out"; then
+    echo "$rust_out" >&2
+    echo "check-locale-la: rust emit missing html_visus" >&2
+    exit 1
+fi
+echo "check-locale-la: rust emit contains html_visus"
+
+echo "check-locale-la: emit ts"
+if ! ts_out="$("$RADIX_BIN" emit -t ts --locale la "$PROOF/latin-consumer.fab" 2>&1)"; then
+    echo "$ts_out" >&2
+    echo "check-locale-la: ts emit failed" >&2
+    exit 1
+fi
+if ! grep -q "html_visus" <<<"$ts_out"; then
+    echo "$ts_out" >&2
+    echo "check-locale-la: ts emit missing html_visus" >&2
+    exit 1
+fi
+echo "check-locale-la: ts emit contains html_visus"
+
+echo "check-locale-la: GREEN"

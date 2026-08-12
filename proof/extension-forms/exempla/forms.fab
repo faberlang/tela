@@ -32,49 +32,49 @@ main {
     # --- field (text input) — form-field-<name> -------------------------
     # Valid: type + aria-label + aria-invalid, then data-tela (author order).
     const string campo_html ← tela.html_visus(forms.field(forms.field_props("name", "Name", "", "false", ""))) coalesce ""
-    assert campo_html ≡ "<input type='text' aria-label='Name' aria-invalid='false' data-tela='form-field-name'>"
+    assert campo_html ≡ «<input type="text" aria-label="Name" aria-invalid="false" data-tela="form-field-name">»
     # Invalid + a value: aria-describedby → the error identity; value attr.
     const string campo_invalid_html ← tela.html_visus(forms.field(forms.field_props("name", "Name", "Ada", "true", "Required"))) coalesce ""
-    assert campo_invalid_html ≡ "<input type='text' aria-label='Name' aria-invalid='true' aria-describedby='form-error-name' value='Ada' data-tela='form-field-name'>"
+    assert campo_invalid_html ≡ «<input type="text" aria-label="Name" aria-invalid="true" aria-describedby="form-error-name" value="Ada" data-tela="form-field-name">»
     # The ARIA structure (inside the bytes): the invalid surface + the
     # describedby association.
-    assert campo_invalid_html.continet("aria-invalid='true'")
-    assert campo_invalid_html.continet("aria-describedby='form-error-name'")
+    assert campo_invalid_html.continet(«aria-invalid="true"»)
+    assert campo_invalid_html.continet(«aria-describedby="form-error-name"»)
     assert not campo_html.continet("aria-describedby")
 
     # --- checkbox — form-checkbox-<name> (aria-checked) -----------------
     const string boxum_selectum_html ← tela.html_visus(forms.checkbox(forms.checkbox_props("agree", "Agree", "true", "false"))) coalesce ""
-    assert boxum_selectum_html ≡ "<input type='checkbox' aria-label='Agree' aria-checked='true' aria-invalid='false' data-tela='form-checkbox-agree'>"
+    assert boxum_selectum_html ≡ «<input type="checkbox" aria-label="Agree" aria-checked="true" aria-invalid="false" data-tela="form-checkbox-agree">»
     const string boxum_invalid_html ← tela.html_visus(forms.checkbox(forms.checkbox_props("agree", "Agree", "false", "true"))) coalesce ""
-    assert boxum_invalid_html ≡ "<input type='checkbox' aria-label='Agree' aria-checked='false' aria-invalid='true' aria-describedby='form-error-agree' data-tela='form-checkbox-agree'>"
+    assert boxum_invalid_html ≡ «<input type="checkbox" aria-label="Agree" aria-checked="false" aria-invalid="true" aria-describedby="form-error-agree" data-tela="form-checkbox-agree">»
 
     # --- select — form-select-<name> (native option children) -----------
     const string selectum_html ← tela.html_visus(forms.select(forms.select_props("tone", "Tone", ["Light", "Dark"], "false"))) coalesce ""
-    assert selectum_html ≡ "<select aria-label='Tone' aria-invalid='false' data-tela='form-select-tone'><option>Light</option><option>Dark</option></select>"
+    assert selectum_html ≡ «<select aria-label="Tone" aria-invalid="false" data-tela="form-select-tone"><option>Light</option><option>Dark</option></select>»
 
     # --- error / live-region association --------------------------------
     # The error node (role=alert + the identity the field references).
     const string error_html ← tela.html_visus(forms.error_region("name", "Required")) coalesce ""
-    assert error_html ≡ "<div role='alert' data-tela='form-error-name'>Required</div>"
+    assert error_html ≡ «<div role="alert" data-tela="form-error-name">Required</div>»
     # Empty error text = empty node (the association structure is stable).
     const string error_vacua_html ← tela.html_visus(forms.error_region("name", "")) coalesce ""
-    assert error_vacua_html ≡ "<div role='alert' data-tela='form-error-name'></div>"
+    assert error_vacua_html ≡ «<div role="alert" data-tela="form-error-name"></div>»
     # The form-level live region (role=status + aria-live=polite, form-live).
     const string regio_viva_html ← tela.html_visus(forms.form_live_region()) coalesce ""
-    assert regio_viva_html ≡ "<div role='status' aria-live='polite' data-tela='form-live'></div>"
+    assert regio_viva_html ≡ «<div role="status" aria-live="polite" data-tela="form-live"></div>»
     # The field group (the association surface): the field + its error node
     # under form-control-<name>; the describedby wires the field to the
     # error identity when invalid.
     const string grex_html ← tela.html_visus(forms.field_group(forms.field_props("name", "Name", "", "false", ""))) coalesce ""
-    assert grex_html ≡ "<div data-tela='form-control-name'><input type='text' aria-label='Name' aria-invalid='false' data-tela='form-field-name'><div role='alert' data-tela='form-error-name'></div></div>"
+    assert grex_html ≡ «<div data-tela="form-control-name"><input type="text" aria-label="Name" aria-invalid="false" data-tela="form-field-name"><div role="alert" data-tela="form-error-name"></div></div>»
     const string grex_invalid_html ← tela.html_visus(forms.field_group(forms.field_props("name", "Name", "", "true", "Required"))) coalesce ""
-    assert grex_invalid_html ≡ "<div data-tela='form-control-name'><input type='text' aria-label='Name' aria-invalid='true' aria-describedby='form-error-name' data-tela='form-field-name'><div role='alert' data-tela='form-error-name'>Required</div></div>"
+    assert grex_invalid_html ≡ «<div data-tela="form-control-name"><input type="text" aria-label="Name" aria-invalid="true" aria-describedby="form-error-name" data-tela="form-field-name"><div role="alert" data-tela="form-error-name">Required</div></div>»
 
     # --- deterministic identity scheme (data-tela values) ----------------
-    assert campo_html.continet("data-tela='form-field-name'")
-    assert boxum_selectum_html.continet("data-tela='form-checkbox-agree'")
-    assert selectum_html.continet("data-tela='form-select-tone'")
-    assert error_html.continet("data-tela='form-error-name'")
-    assert regio_viva_html.continet("data-tela='form-live'")
-    assert grex_html.continet("data-tela='form-control-name'")
+    assert campo_html.continet(«data-tela="form-field-name"»)
+    assert boxum_selectum_html.continet(«data-tela="form-checkbox-agree"»)
+    assert selectum_html.continet(«data-tela="form-select-tone"»)
+    assert error_html.continet(«data-tela="form-error-name"»)
+    assert regio_viva_html.continet(«data-tela="form-live"»)
+    assert grex_html.continet(«data-tela="form-control-name"»)
 }

@@ -42,9 +42,9 @@
 #
 # Central escaping (policy (a)2): escape is the ONE escape path used by both
 # text and attribute-value serialization. Escape sets: & < > for text;
-# additionally " ' for attribute values (single-quote style per the Stage 0
-# spike baseline). No serializer path concatenates an unescaped value; the
-# identity value flows through the same attribute-escape path (policy (d)).
+# additionally " for attribute values (double-quote delimiters). No
+# serializer path concatenates an unescaped value; the identity value
+# flows through the same attribute-escape path (policy (d)).
 #
 # Fail-closed boundary (policy (a)2; U2 done_when (d)): before ANY emission
 # the serializer runs the U2 lexical/namespace/void checks over the whole
@@ -226,9 +226,10 @@ fn element_full(
 # ---------------------------------------------------------------------------
 # Central escaping (policy (a)2) — ONE escape path for text AND attribute
 # values. in_attributo selects the attribute escape set: & < > for text,
-# additionally " ' for attribute values (single-quote style per the Stage 0
-# spike baseline). The identity value flows through the same attribute-escape
-# path (policy (d)). No serializer path concatenates an unescaped value.
+# additionally " for attribute values (double-quote delimiters — HTML
+# convention and Faber string syntax). The identity value flows through
+# the same attribute-escape path (policy (d)). No serializer path
+# concatenates an unescaped value.
 # ---------------------------------------------------------------------------
 
 fn escape(string s, bool in_attributo) → string {
@@ -258,7 +259,6 @@ fn escape(string s, bool in_attributo) → string {
         # matches at runtime (NEW emitter observation, escalated to the radix
         # lane; probe escape on in-tree radix 0.80.0, 2026-08-09).
         if in_attributo and c ≡ "§"('"') then fragment ← "&quot;"
-        if in_attributo and c ≡ "'" then fragment ← "&#39;"
         accum ← accum + fragment
         i ← i + 1
     }
@@ -290,7 +290,8 @@ fn serialize_ns(Space space) → string {
             return ""
         }
         case Space.svg {
-            return " xmlns='http://www.w3.org/2000/svg'"
+            const string q ← "§"('"')
+            return " xmlns=" + q + "http://www.w3.org/2000/svg" + q
         }
     }
 }
@@ -333,17 +334,18 @@ fn validate_tree(View v) → bool {
 # timestamps. Identical input → identical bytes (empirically proven by U6).
 # ---------------------------------------------------------------------------
 
-# Attributes serialize as name='value' — single quotes per the spike
-# baseline; the value is escaped through the attribute escape set.
+# Attributes serialize as name="value" — double quotes (HTML convention
+# and Faber string syntax). The value is escaped through the attribute set.
 fn serialize_attributes(list<Attribute> attributes) → string {
+    const string q ← "§"('"')
     var string accum ← ""
     for from attributes const attr {
-        accum ← accum + " " + attr.name + "='" + escape(attr.value, true) + "'"
+        accum ← accum + " " + attr.name + "=" + q + escape(attr.value, true) + q
     }
     return accum
 }
 
-# Identity: non-null Identity emits data-tela='<escaped value>' — the ONE
+# Identity: non-null Identity emits data-tela="<escaped value>" — the ONE
 # documented hydration-ready serialization form (policy (d)); elements
 # without identity emit nothing.
 fn serialize_identity(Identity ∪ null identity) → string {
@@ -352,7 +354,8 @@ fn serialize_identity(Identity ∪ null identity) → string {
             return ""
         }
         default {
-            return " data-tela='" + escape(identity?.value coalesce "", true) + "'"
+            const string q ← "§"('"')
+            return " data-tela=" + q + escape(identity?.value coalesce "", true) + q
         }
     }
 }

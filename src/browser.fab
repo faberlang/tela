@@ -127,12 +127,12 @@ fn binding(string identity, string status) → Binding {
 
 # ---------------------------------------------------------------------------
 # The serializer's identity marker (policy (d) emission form). The kernel
-# always emits " data-tela='<escaped value>'" — the leading space makes the
+# always emits ` data-tela="<escaped value>"` — the leading space makes the
 # marker distinguishable from the string appearing mid-text.
 # ---------------------------------------------------------------------------
 
 fn identity_marker() → string {
-    return " data-tela='"
+    return " data-tela=§"('"')
 }
 
 # ---------------------------------------------------------------------------
@@ -185,10 +185,10 @@ fn parse_identities(string text) → list<string> {
             var bool terminated ← false
             while j < text.length() and not terminated {
                 const string ch ← text.slice(j, j + 1)
-                if ch ≡ "'" {
+                if ch ≡ "§"('"') {
                     terminated ← true
                 }
-                if not (ch ≡ "'") {
+                if not (ch ≡ "§"('"')) {
                     raw ← raw + ch
                 }
                 j ← j + 1
@@ -219,10 +219,10 @@ fn element_tag(string text, string identity) → string ∪ null {
             var bool terminated ← false
             while j < text.length() and not terminated {
                 const string ch ← text.slice(j, j + 1)
-                if ch ≡ "'" {
+                if ch ≡ "§"('"') {
                     terminated ← true
                 }
-                if not (ch ≡ "'") {
+                if not (ch ≡ "§"('"')) {
                     raw ← raw + ch
                 }
                 j ← j + 1

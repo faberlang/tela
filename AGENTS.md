@@ -18,6 +18,7 @@ file is the operating summary; the docs are the contract.
 | Path | Role |
 | --- | --- |
 | `faber.toml` | Package `tela`, provider `tela`, `[paths] source = "src"`, `[build] kind = "lib"`, `targets = ["rust", "ts"]`, `[reader] locale = "en"`, edition 2026, version `0.0.0` (versioning is a Stage 8 decision) |
+| `locale/<id>/pack.toml` | Library-owned member fragments (not reader keyword packs). `en` is identity; `la` projects public `tela:tela` names. Radix merges `locale/<consumer-locale>/pack.toml` into the consumer reader pack. Missing row = canonical source name. |
 | `src/tela.fab` | The kernel — **one flat module** (imported as `tela:tela`), stdlib-only (no `norma`/`triga`/`faber-runtime` dependency); import-free through U1, U3 adds ONE same-package sibling import (`tela:validate`) for the fail-closed glue |
 | `src/validate.fab` | Validation module (imported as `tela:validate`) — flat, import-free, public surface string/bool only |
 | `src/browser.fab` | Browser module (imported as `tela:browser`) — mount/update/dispose lifecycle + hydration over the `tela:dom` host seam; pure planners `mount(Scope, View, Theme) → Mounted ∪ null`, `replace`, `dispose` |
@@ -26,7 +27,9 @@ file is the operating summary; the docs are the contract.
 | `src/canvas2d.fab` | Tela-owned Canvas2D drawing-surface contract (imported as `tela:canvas2d`) — English-first conversion of faber-web `canvas2d.fab`; standalone imperative draw surface, `webCanvas2d*` symbols kept |
 | `src/web.fab` | WebController annotation module (imported as `tela:web`) — the browser-app packaging entry contract; only the `WebController` annotation, import-free |
 | `exempla/` | Exempla-mode tests (`+++` frontmatter, `locale = "en"`); one exempla file per unit surface (e.g. `validation.fab`, `serializer.fab`) |
-| `scripta/` | Validation harnesses (Stage 1 U6: `check-compile`, `check-exempla`, `check-determinism`) |
+| `scripta/` | Validation harnesses (Stage 1 U6: `check-compile`, `check-exempla`, `check-determinism`; `check-locale-la` for `locale/la/pack.toml`) |
+| `proof/locale-la/` | Latin-consumer proof of `locale/la/pack.toml` (owned here; Radix has no Tela fixture) |
+| Speculum island | Consumer proof lives in `faberlang.dev/generator/src/tela_island.fab` — Latin Speculum imports `tela:tela`; `document_ir` stays the site serializer |
 | `docs/design/` | Design records (`identity-hydration.md`, `theme-protocol.md`, `browser-lifecycle.md`) |
 | `docs/factory/mvp/` | Campaign + delivery + policy docs (machine-managed; do not hand-edit `README.md` if present — regenerate) |
 | `spike/` | **Frozen Stage 0 evidence — no unit writes here** |
@@ -145,8 +148,8 @@ the renderer only. Unknown-but-valid names are **not** rejected for being new
 `Identity` serializes as the `data-tela` attribute — the only identity
 serialization form in v1, documented in
 [`docs/design/identity-hydration.md`](docs/design/identity-hydration.md).
-Non-null `Identity` only; quote style and escape set follow the spike
-baseline (single quotes). `Property` values are carried in the tree but **not**
+Non-null `Identity` only; attributes use double quotes (`name="value"`).
+`Property` values are carried in the tree but **not**
 serialized into static HTML in Stage 1 (the `data-prop:` marker is
 superseded).
 

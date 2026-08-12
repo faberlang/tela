@@ -20,34 +20,32 @@ import from "tela:tela" private tela
 
 main {
     # --- (g) text escaping: & < > escaped; quotes pass through (text set) --
-    # The bare double-quote is spelled via ascii-literal interpolation
-    # ("§"('"')) rather than the \" escape — the TS emitter double-escapes a
-    # `\"` payload (see the escape note in tela.fab), and this spelling keeps
-    # the exempla runtime-correct in both lanes.
-    const string text_esc ← tela.html_visus(tela.text_view("a&b<c>d" + "§"('"') + "e'f")) coalesce ""
-    assert text_esc ≡ "a&amp;b&lt;c&gt;d" + "§"('"') + "e'f"
+    # Double-quote via ascii `'"'` in a § hole — do not write \" (TS emit
+    # double-escapes that payload; see tela.fab escape notes).
+    const string text_esc ← tela.html_visus(tela.text_view("a&b<c>d§e'f"('"'))) coalesce ""
+    assert text_esc ≡ "a&amp;b&lt;c&gt;d§e'f"('"')
 
-    # --- (g) attribute escaping: & < > " ' all escaped (attribute set) ----
+    # --- (g) attribute escaping: & < > " escaped; ' is literal (double-quote delimiters) ----
     const string attr_esc ← tela.html_visus(tela.element_full(
         null,
         tela.html_space(),
         "div",
-        [ tela.Attribute { name = "title", value = "a&b<c>d" + "§"('"') + "e'f" } ],
+        [ tela.Attribute { name = "title", value = "a&b<c>d§e'f"('"') } ],
         [],
         []
     )) coalesce ""
-    assert attr_esc ≡ "<div title='a&amp;b&lt;c&gt;d&quot;e&#39;f'></div>"
+    assert attr_esc ≡ «<div title="a&amp;b&lt;c&gt;d&quot;e'f"></div>»
 
     # --- (g) identity escaping: value flows through the SAME attr escape ----
     const string id_esc ← tela.html_visus(tela.element_full(
-        tela.new_identity("a'b" + "§"('"') + "c&"),
+        tela.new_identity("a'b§c&"('"')),
         tela.html_space(),
         "div",
         [],
         [],
         []
     )) coalesce ""
-    assert id_esc ≡ "<div data-tela='a&#39;b&quot;c&amp;'></div>"
+    assert id_esc ≡ «<div data-tela="a'b&quot;c&amp;"></div>»
 
     # --- (b) data-tela emission per policy (d) — the spike baseline form ---
     const string id_plain ← tela.html_visus(tela.element_full(
@@ -58,7 +56,7 @@ main {
         [],
         [ tela.text_view("contator") ]
     )) coalesce ""
-    assert id_plain ≡ "<div data-tela='contator-app'>contator</div>"
+    assert id_plain ≡ «<div data-tela="contator-app">contator</div>»
 
     # --- (b) HTML void emission: no closing tag (void set from valida) ----
     const string br_out ← tela.html_visus(tela.element_view(tela.html_space(), "br", [])) coalesce ""
@@ -72,7 +70,7 @@ main {
     const string svg_out ← tela.html_visus(tela.element_view(tela.svg_space(), "svg", [
         tela.element_view(tela.svg_space(), "circle", [])
     ])) coalesce ""
-    assert svg_out ≡ "<svg xmlns='http://www.w3.org/2000/svg'><circle xmlns='http://www.w3.org/2000/svg'></circle></svg>"
+    assert svg_out ≡ «<svg xmlns="http://www.w3.org/2000/svg"><circle xmlns="http://www.w3.org/2000/svg"></circle></svg>»
 
     # --- (b) Fragment emits no wrapper (campaign §2) ---------------------
     const string frag_out ← tela.html_visus(tela.fragment_view([

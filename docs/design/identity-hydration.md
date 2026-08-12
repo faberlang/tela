@@ -23,7 +23,7 @@ landed (U3, commit `05909f7`); this record is reconciled to that emission
 serialization form in v1 (policy (d)2).**
 
 ```html
-<div data-tela='contator-app'>…</div>
+<div data-tela="contator-app">…</div>
 ```
 
 The `data-tela` attribute is a documented host seam Tela owns. It is emitted
@@ -32,22 +32,12 @@ bindings, and matched on hydration.
 
 ## 2. Quote style
 
-The serializer's quote style is **single quotes** for attribute values —
-the spike baseline (`spike/visus-b.fab`, `seri_*` helpers emit
-`name='value'`; policy (d)'s locked example uses the same single-quoted
-spelling). The identity attribute therefore serializes as
-`data-tela='<escaped value>'`.
+The serializer's quote style is **double quotes** for attribute values —
+HTML convention and Faber's `textus` string delimiter. The identity
+attribute therefore serializes as `data-tela="<escaped value>"`.
 
-Policy (d)2's prose spells the form `data-tela="<escaped value>"` with double
-quotes; that is the generic markdown spelling of "an attribute value". The
-canonical emitted form is single-quoted per the spike baseline and the Stage 1
-delivery spec (U3 done_when (b): "`Attributa` serialize as `name='value'`
-(quote style per the spike baseline — single quotes — and documented)").
-
-Reconciliation (U3 landed, commit `05909f7`): the serializer emits
-attribute values with single quotes exactly as documented here —
-`serialize_attributes` emits `name='value'` and `serialize_identity` emits
-`data-tela='<escaped value>'`. **No quote-style deviation.**
+`serialize_attributes` emits `name="value"` and `serialize_identity` emits
+`data-tela="<escaped value>"`. **No quote-style deviation.**
 
 ## 3. Which elements carry it
 
@@ -59,7 +49,7 @@ Only elements whose `Identity` is **non-null** serialize identity.
   attribute.
 - `TextNode` and `Fragment` have no identity field and never emit identity.
 
-The serializer emits `data-tela='<escaped value>'` on exactly those elements
+The serializer emits `data-tela="<escaped value>"` on exactly those elements
 whose `Identity` is non-null (policy (d)2).
 
 ## 4. Identity is a typed field, never position-derived
@@ -81,7 +71,7 @@ The escape set (locked by U3 done_when (a)):
 | Context | Escaped characters |
 | --- | --- |
 | Text | `&`, `<`, `>` |
-| Attribute values (incl. the `data-tela` value) | `&`, `<`, `>`, plus `"` and `'` |
+| Attribute values (incl. the `data-tela` value) | `&`, `<`, `>`, plus `"` |
 
 The landed emission (`escape`, commit `05909f7`) maps each character through
 one single-pass scan; the concrete spellings are:
@@ -92,13 +82,13 @@ one single-pass scan; the concrete spellings are:
 | `<` | `&lt;` | `&lt;` |
 | `>` | `&gt;` | `&gt;` |
 | `"` | — | `&quot;` |
-| `'` | — | `&#39;` |
+| `'` | — | — |
 
 Because each input character is consumed exactly once (single-character scan,
 sequential branches), no emitted entity is re-scanned — an already-escaped
 sequence is never double-escaped.
 
-Because the quote style is single quotes, a single quote inside the value is
+Because the quote style is double quotes, a double quote inside the value is
 escaped — a value cannot break out of its attribute.
 
 ## 6. Uniqueness / duplicates — deferred to Stage 3
@@ -161,12 +151,12 @@ defines any static/hydration presence for properties.
 The serializer reconciliation item (U4 done_when (c)) is **DONE**. The U3
 emission (`05909f7`) was verified against this record:
 
-- **Quote style**: single quotes — confirmed, no deviation (§2).
-  `serialize_attributes` emits `name='value'`; `serialize_identity` emits
-  `data-tela='<escaped value>'`.
-- **Escape set**: text `& < >`; attribute values additionally `" '` —
+- **Quote style**: double quotes — HTML convention and Faber `textus`.
+  `serialize_attributes` emits `name="value"`; `serialize_identity` emits
+  `data-tela="<escaped value>"`.
+- **Escape set**: text `& < >`; attribute values additionally `"` —
   confirmed, no deviation (§5). Landed spellings `&amp;` / `&lt;` / `&gt;` /
-  `&quot;` / `&#39;`.
+  `&quot;`. `'` is literal in attributes.
 - **data-tela through the same attribute-escape path**: confirmed —
   `serialize_identity` calls `escape(identity?.value coalesce "", true)`
   (policy (d)).
