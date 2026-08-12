@@ -145,7 +145,7 @@ version = "0.0.0"
 edition = "2021"
 
 [dependencies]
-faber = { package = "faber-runtime", path = "$ROOT/../faber-runtime" }
+faber = { package = "faber-runtime", path = "$ROOT/../faber/runtime/rust" }
 
 [workspace]
 EOF
