@@ -2,7 +2,8 @@
 # Prove locale/la/pack.toml: a Latin file imports tela:tela by Latin
 # member names. Canonical English names remain accepted. Invented names
 # and missing exports fail closed. Emit is advisory except when radix
-# emit itself errors.
+# emit itself errors. When FABER_BIN is present, also prove the faber
+# product path projects the same Latin members (provider=package identity).
 #
 # Usage: ./scripta/check-locale-la
 set -euo pipefail
@@ -118,4 +119,30 @@ if ! grep -q "html_visus" <<<"$ts_out"; then
 fi
 echo "check-locale-la: ts emit contains html_visus"
 
+if [[ -n "${FABER_BIN:-}" && -x "${FABER_BIN}" ]]; then
+    :
+elif [[ -n "${FABER:-}" && -x "${FABER}" ]]; then
+    FABER_BIN="$FABER"
+elif [[ -x "$ROOT/../radix/target/debug/faber" ]]; then
+    FABER_BIN="$ROOT/../radix/target/debug/faber"
+elif [[ -x "$ROOT/../../../radix/target/debug/faber" ]]; then
+    FABER_BIN="$ROOT/../../../radix/target/debug/faber"
+else
+    FABER_BIN="$(command -v faber || true)"
+fi
+
+if [[ -z "${FABER_BIN}" || ! -x "${FABER_BIN}" ]]; then
+    echo "check-locale-la: no faber binary (set FABER_BIN); skipping product-path proof" >&2
+    echo "check-locale-la: GREEN"
+    exit 0
+fi
+
+echo "check-locale-la: faber=$FABER_BIN"
+echo "check-locale-la: faber check Latin consumer (package identity)"
+if ! faber_out="$("$FABER_BIN" check --locale la "$PROOF" 2>&1)"; then
+    echo "$faber_out" >&2
+    echo "check-locale-la: faber check failed on $PROOF" >&2
+    exit 1
+fi
+echo "$faber_out"
 echo "check-locale-la: GREEN"
