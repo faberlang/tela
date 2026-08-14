@@ -155,12 +155,12 @@ fn duplicate_tree() → tela.View {
 # The exact serialized control markup (the plan's markup + the driver's
 # expected bytes).
 fn tree_markup() → string {
-    return tela.html_visus(control_tree()) coalesce ""
+    return tela.html_view(control_tree()) coalesce ""
 }
 
 # The exact serialized extended-control markup.
 fn extended_tree_markup() → string {
-    return tela.html_visus(extended_control_tree()) coalesce ""
+    return tela.html_view(extended_control_tree()) coalesce ""
 }
 
 # Pre-rendered markup for the hydration scenario: the SAME bytes the View
@@ -313,5 +313,5 @@ main {
     assert browser.event_subscription("tela-seg-1", "tela:binding").event_name ≡ "tela:binding"
 
     # --- fail-closed: an invalid View serializes to null ------------------
-    assert tela.html_visus(tela.element_view(tela.html_space(), "circle", [])) ≡ null
+    assert tela.html_view(tela.element_view(tela.html_space(), "circle", [])) ≡ null
 }

@@ -10,7 +10,7 @@
 #      libraries add namespaced tokens; Tela does not widen a closed Theme)
 #      plus the component style bundle chart_style referencing it;
 #   3. the U6 static-render input: the app imports tela:tela + extensionlib:extension
-#      and renders the composition through tela.html_visus / tela.css.
+#      and renders the composition through tela.html_view / tela.css.
 #
 # Seam posture (recorded G/D workarounds, applied not fought):
 #   - G2: wildcard import + qualified references (bare type binds do not work);

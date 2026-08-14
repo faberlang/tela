@@ -56,21 +56,21 @@ main {
     # --- layout: the stack — stacked rows --------------------------------
     # No attributes, no ARIA (pure layout grouping): the identity emits
     # after the tag; text children concatenate without a wrapper.
-    const string stack ← tela.html_visus(ref.layout_stack(ref.stack_props([
+    const string stack ← tela.html_view(ref.layout_stack(ref.stack_props([
         tela.text_view("row one"),
         tela.text_view("row two")
     ]))) coalesce ""
     assert stack ≡ «<div data-tela="ref-layout-stack">row onerow two</div>»
 
     # --- layout: the two-column grid --------------------------------------
-    const string grid ← tela.html_visus(ref.layout_grid(ref.grid_props([
+    const string grid ← tela.html_view(ref.layout_grid(ref.grid_props([
         tela.text_view("column one"),
         tela.text_view("column two")
     ]))) coalesce ""
     assert grid ≡ «<div data-tela="ref-layout-grid">column onecolumn two</div>»
 
     # --- layout: the prose measure container (wraps the typography prose)
-    const string prose_layout ← tela.html_visus(ref.layout_prose(ref.layout_prose_props([
+    const string prose_layout ← tela.html_view(ref.layout_prose(ref.layout_prose_props([
         ref.typography_prose(ref.prose_props([ tela.text_view("prose text") ]))
     ]))) coalesce ""
     assert prose_layout ≡ «<div data-tela="ref-layout-prose"><p data-tela="ref-typography-prose">prose text</p></div>»
@@ -78,18 +78,18 @@ main {
     # --- typography: the heading hierarchy (native h1..h6) ----------------
     # The heading RANK is carried in the native tag (screen readers expose
     # the hierarchy) — never in styling alone (no color-only communication).
-    assert tela.html_visus(ref.typography_heading(ref.heading_props(1, "Title"))) coalesce "" ≡ «<h1 data-tela="ref-typography-heading-1">Title</h1>»
-    assert tela.html_visus(ref.typography_heading(ref.heading_props(3, "Section"))) coalesce "" ≡ «<h3 data-tela="ref-typography-heading-3">Section</h3>»
-    assert tela.html_visus(ref.typography_heading(ref.heading_props(6, "Footnote"))) coalesce "" ≡ «<h6 data-tela="ref-typography-heading-6">Footnote</h6>»
+    assert tela.html_view(ref.typography_heading(ref.heading_props(1, "Title"))) coalesce "" ≡ «<h1 data-tela="ref-typography-heading-1">Title</h1>»
+    assert tela.html_view(ref.typography_heading(ref.heading_props(3, "Section"))) coalesce "" ≡ «<h3 data-tela="ref-typography-heading-3">Section</h3>»
+    assert tela.html_view(ref.typography_heading(ref.heading_props(6, "Footnote"))) coalesce "" ≡ «<h6 data-tela="ref-typography-heading-6">Footnote</h6>»
     # The range contract 1..6 is clamped fail-safe at the edges — h0/h7
     # never emit (asserted, not silent).
-    assert tela.html_visus(ref.typography_heading(ref.heading_props(0, "zero"))) coalesce "" ≡ «<h1 data-tela="ref-typography-heading-1">zero</h1>»
-    assert tela.html_visus(ref.typography_heading(ref.heading_props(9, "nine"))) coalesce "" ≡ «<h6 data-tela="ref-typography-heading-6">nine</h6>»
+    assert tela.html_view(ref.typography_heading(ref.heading_props(0, "zero"))) coalesce "" ≡ «<h1 data-tela="ref-typography-heading-1">zero</h1>»
+    assert tela.html_view(ref.typography_heading(ref.heading_props(9, "nine"))) coalesce "" ≡ «<h6 data-tela="ref-typography-heading-6">nine</h6>»
 
     # --- typography: the prose paragraph (prose semantics) ----------------
     # Mixed content: text + semantic emphasis compose inline within the p.
-    assert tela.html_visus(ref.typography_prose(ref.prose_props([ tela.text_view("A paragraph.") ]))) coalesce "" ≡ «<p data-tela="ref-typography-prose">A paragraph.</p>»
-    assert tela.html_visus(ref.typography_prose(ref.prose_props([
+    assert tela.html_view(ref.typography_prose(ref.prose_props([ tela.text_view("A paragraph.") ]))) coalesce "" ≡ «<p data-tela="ref-typography-prose">A paragraph.</p>»
+    assert tela.html_view(ref.typography_prose(ref.prose_props([
         tela.text_view("Read the "),
         ref.typography_emphasis(ref.emphasis_props("strong", "docs"))
     ]))) coalesce "" ≡ «<p data-tela="ref-typography-prose">Read the <strong data-tela="ref-typography-emphasis-strong">docs</strong></p>»
@@ -97,16 +97,16 @@ main {
     # --- typography: semantic emphasis — strong / em / code ---------------
     # The meaning rides the SEMANTIC TAG (strong/em/code), never color or
     # size alone (campaign §8 no-color-only-communication).
-    assert tela.html_visus(ref.typography_emphasis(ref.emphasis_props("strong", "bold"))) coalesce "" ≡ «<strong data-tela="ref-typography-emphasis-strong">bold</strong>»
-    assert tela.html_visus(ref.typography_emphasis(ref.emphasis_props("em", "italic"))) coalesce "" ≡ «<em data-tela="ref-typography-emphasis-em">italic</em>»
-    assert tela.html_visus(ref.typography_emphasis(ref.emphasis_props("code", "x"))) coalesce "" ≡ «<code data-tela="ref-typography-emphasis-code">x</code>»
+    assert tela.html_view(ref.typography_emphasis(ref.emphasis_props("strong", "bold"))) coalesce "" ≡ «<strong data-tela="ref-typography-emphasis-strong">bold</strong>»
+    assert tela.html_view(ref.typography_emphasis(ref.emphasis_props("em", "italic"))) coalesce "" ≡ «<em data-tela="ref-typography-emphasis-em">italic</em>»
+    assert tela.html_view(ref.typography_emphasis(ref.emphasis_props("code", "x"))) coalesce "" ≡ «<code data-tela="ref-typography-emphasis-code">x</code>»
 
     # --- typography: the type scale (decorative sizing, never state) ------
     # The scale is a span at a documented step; the size comes from the
     # ref.type.scale.* tokens via the typography bundle — the scale never
     # carries semantic state and never communicates by color.
-    assert tela.html_visus(ref.typography_scale(ref.scale_props("lg", "lead"))) coalesce "" ≡ «<span data-tela="ref-typography-scale-lg">lead</span>»
-    assert tela.html_visus(ref.typography_scale(ref.scale_props("xs", "caption"))) coalesce "" ≡ «<span data-tela="ref-typography-scale-xs">caption</span>»
+    assert tela.html_view(ref.typography_scale(ref.scale_props("lg", "lead"))) coalesce "" ≡ «<span data-tela="ref-typography-scale-lg">lead</span>»
+    assert tela.html_view(ref.typography_scale(ref.scale_props("xs", "caption"))) coalesce "" ≡ «<span data-tela="ref-typography-scale-xs">caption</span>»
 
     # --- the layout style bundle (keyed on the identities, --ref-* tokens)
     const string css_layout ← tela.css(ref.layout_style())
@@ -137,7 +137,7 @@ main {
     assert collectio.longitudo() ≡ 46
 
     # --- determinism: identical input → identical bytes -------------------
-    const string stack_b ← tela.html_visus(ref.layout_stack(ref.stack_props([
+    const string stack_b ← tela.html_view(ref.layout_stack(ref.stack_props([
         tela.text_view("row one"),
         tela.text_view("row two")
     ]))) coalesce ""
@@ -153,12 +153,12 @@ main {
     # the title when present. The SURFACE comes from the ref.panel.* tokens
     # (referencing the theme core surface.panel / border.default) — the
     # component carries no hardcoded color (asserted by the token values).
-    assert tela.html_visus(ref.panel(ref.panel_props("status", "Status panel", [
+    assert tela.html_view(ref.panel(ref.panel_props("status", "Status panel", [
         tela.text_view("all systems operational")
     ]))) coalesce "" ≡ «<div role="region" aria-label="Status panel" data-tela="ref-panel-status">all systems operational</div>»
     # No title → no aria-label (the region landmark stays; the accessible
     # name is then the content).
-    assert tela.html_visus(ref.panel(ref.panel_props("plain", "", [
+    assert tela.html_view(ref.panel(ref.panel_props("plain", "", [
         tela.text_view("content")
     ]))) coalesce "" ≡ «<div role="region" data-tela="ref-panel-plain">content</div>»
 
@@ -166,15 +166,15 @@ main {
     # role="status" + aria-label = "<status>: <text>" — the status word
     # rides the accessible name AND the visible label is present; the
     # meaning is TEXTUAL (no color-only communication, campaign §8).
-    assert tela.html_visus(ref.badge(ref.badge_props("new", "New", "3 messages"))) coalesce "" ≡ «<span role="status" aria-label="New: 3 messages" data-tela="ref-badge-new">3 messages</span>»
-    assert tela.html_visus(ref.badge(ref.badge_props("ok", "Ok", "all checks passed"))) coalesce "" ≡ «<span role="status" aria-label="Ok: all checks passed" data-tela="ref-badge-ok">all checks passed</span>»
+    assert tela.html_view(ref.badge(ref.badge_props("new", "New", "3 messages"))) coalesce "" ≡ «<span role="status" aria-label="New: 3 messages" data-tela="ref-badge-new">3 messages</span>»
+    assert tela.html_view(ref.badge(ref.badge_props("ok", "Ok", "all checks passed"))) coalesce "" ≡ «<span role="status" aria-label="Ok: all checks passed" data-tela="ref-badge-ok">all checks passed</span>»
 
     # --- metric: label + value (+ optional delta) — the textual form ------
     # The benchmark grammar's definition-list pattern (dl/dt/dd): dt = the
     # label, dd = the value, optional second dd = the delta. The textual
     # form is preserved — label + value (+ delta) are visible text.
-    assert tela.html_visus(ref.metric(ref.metric_props("uptime", "uptime", "99.9%", ""))) coalesce "" ≡ «<dl data-tela="ref-metric-uptime"><dt>uptime</dt><dd>99.9%</dd></dl>»
-    assert tela.html_visus(ref.metric(ref.metric_props("requests", "requests", "12 480", "+3.1%"))) coalesce "" ≡ «<dl data-tela="ref-metric-requests"><dt>requests</dt><dd>12 480</dd><dd>+3.1%</dd></dl>»
+    assert tela.html_view(ref.metric(ref.metric_props("uptime", "uptime", "99.9%", ""))) coalesce "" ≡ «<dl data-tela="ref-metric-uptime"><dt>uptime</dt><dd>99.9%</dd></dl>»
+    assert tela.html_view(ref.metric(ref.metric_props("requests", "requests", "12 480", "+3.1%"))) coalesce "" ≡ «<dl data-tela="ref-metric-requests"><dt>requests</dt><dd>12 480</dd><dd>+3.1%</dd></dl>»
 
     # --- the panel/badge/metric style bundles (prefix-keyed, --ref-* tokens)
     const string css_panel ← tela.css(ref.panel_style())
@@ -219,7 +219,7 @@ main {
     # name. The identity scheme: ref-table-<name> root +
     # ref-table-<name>-header-<i> + ref-table-<name>-cell-<r>-<c> (stable
     # focus targets for the declared consumer-plan navigation interaction).
-    assert tela.html_visus(ref.table(ref.table_props("scores", "Scores", ["Player", "Score"], [
+    assert tela.html_view(ref.table(ref.table_props("scores", "Scores", ["Player", "Score"], [
         ref.table_row(["Ada", "42"]),
         ref.table_row(["Lin", "37"])
     ]))) coalesce "" ≡ «<table data-tela="ref-table-scores"><caption>Scores</caption><thead><tr><th scope="col" data-tela="ref-table-scores-header-0">Player</th><th scope="col" data-tela="ref-table-scores-header-1">Score</th></tr></thead><tbody><tr><td data-tela="ref-table-scores-cell-0-0">Ada</td><td data-tela="ref-table-scores-cell-0-1">42</td></tr><tr><td data-tela="ref-table-scores-cell-1-0">Lin</td><td data-tela="ref-table-scores-cell-1-1">37</td></tr></tbody></table>»
@@ -228,7 +228,7 @@ main {
     # The accessible-name contract: the component NEVER fabricates a name —
     # the app supplies the recorded equivalent (an aria-label/off-screen
     # equivalent is an app choice, documented in the module header).
-    assert tela.html_visus(ref.table(ref.table_props("plain", "", ["A", "B"], [
+    assert tela.html_view(ref.table(ref.table_props("plain", "", ["A", "B"], [
         ref.table_row(["1", "2"])
     ]))) coalesce "" ≡ «<table data-tela="ref-table-plain"><thead><tr><th scope="col" data-tela="ref-table-plain-header-0">A</th><th scope="col" data-tela="ref-table-plain-header-1">B</th></tr></thead><tbody><tr><td data-tela="ref-table-plain-cell-0-0">1</td><td data-tela="ref-table-plain-cell-0-1">2</td></tr></tbody></table>»
 
@@ -264,15 +264,15 @@ main {
     # data-tela="ref-seg-<name>-<i>". The control-owned declared live
     # region (role="status" + aria-live="polite", data-tela="ref-seg-live",
     # §1.5 — the no-op rule lives in the consumer plan).
-    assert tela.html_visus(ref.segmented_control(ref.segmented_props("control", "segmented control", ["One", "Two", "Three"], "ref-seg-control-1"))) coalesce "" ≡ «<div role="radiogroup" aria-label="segmented control" data-tela="ref-seg-control"><button role="radio" aria-selected="true" tabindex="0" data-tela="ref-seg-control-1">One</button><button role="radio" aria-selected="false" tabindex="-1" data-tela="ref-seg-control-2">Two</button><button role="radio" aria-selected="false" tabindex="-1" data-tela="ref-seg-control-3">Three</button><div role="status" aria-live="polite" data-tela="ref-seg-live"></div></div>»
+    assert tela.html_view(ref.segmented_control(ref.segmented_props("control", "segmented control", ["One", "Two", "Three"], "ref-seg-control-1"))) coalesce "" ≡ «<div role="radiogroup" aria-label="segmented control" data-tela="ref-seg-control"><button role="radio" aria-selected="true" tabindex="0" data-tela="ref-seg-control-1">One</button><button role="radio" aria-selected="false" tabindex="-1" data-tela="ref-seg-control-2">Two</button><button role="radio" aria-selected="false" tabindex="-1" data-tela="ref-seg-control-3">Three</button><div role="status" aria-live="polite" data-tela="ref-seg-live"></div></div>»
     # The selected state + the roving tabindex follow the selection: the
     # second segment selected → its aria-selected flips true + it becomes
     # the tab stop; the first segment flips false + leaves the tab
     # sequence. The live region identity is stable.
-    assert tela.html_visus(ref.segmented_control(ref.segmented_props("control", "segmented control", ["One", "Two", "Three"], "ref-seg-control-2"))) coalesce "" ≡ «<div role="radiogroup" aria-label="segmented control" data-tela="ref-seg-control"><button role="radio" aria-selected="false" tabindex="-1" data-tela="ref-seg-control-1">One</button><button role="radio" aria-selected="true" tabindex="0" data-tela="ref-seg-control-2">Two</button><button role="radio" aria-selected="false" tabindex="-1" data-tela="ref-seg-control-3">Three</button><div role="status" aria-live="polite" data-tela="ref-seg-live"></div></div>»
+    assert tela.html_view(ref.segmented_control(ref.segmented_props("control", "segmented control", ["One", "Two", "Three"], "ref-seg-control-2"))) coalesce "" ≡ «<div role="radiogroup" aria-label="segmented control" data-tela="ref-seg-control"><button role="radio" aria-selected="false" tabindex="-1" data-tela="ref-seg-control-1">One</button><button role="radio" aria-selected="true" tabindex="0" data-tela="ref-seg-control-2">Two</button><button role="radio" aria-selected="false" tabindex="-1" data-tela="ref-seg-control-3">Three</button><div role="status" aria-live="polite" data-tela="ref-seg-live"></div></div>»
     # The identity scheme is per-control-name (ref-seg-<name>): a second
     # control with a different name keys distinct identities.
-    assert tela.html_visus(ref.segmented_control(ref.segmented_props("sort", "sort", ["A", "B"], "ref-seg-sort-1"))) coalesce "" ≡ «<div role="radiogroup" aria-label="sort" data-tela="ref-seg-sort"><button role="radio" aria-selected="true" tabindex="0" data-tela="ref-seg-sort-1">A</button><button role="radio" aria-selected="false" tabindex="-1" data-tela="ref-seg-sort-2">B</button><div role="status" aria-live="polite" data-tela="ref-seg-live"></div></div>»
+    assert tela.html_view(ref.segmented_control(ref.segmented_props("sort", "sort", ["A", "B"], "ref-seg-sort-1"))) coalesce "" ≡ «<div role="radiogroup" aria-label="sort" data-tela="ref-seg-sort"><button role="radio" aria-selected="true" tabindex="0" data-tela="ref-seg-sort-1">A</button><button role="radio" aria-selected="false" tabindex="-1" data-tela="ref-seg-sort-2">B</button><div role="status" aria-live="polite" data-tela="ref-seg-live"></div></div>»
 
     # --- the segmented-control style bundle (role-scoped, --ref-* tokens)
     const string css_seg ← tela.css(ref.segmented_style())
@@ -312,20 +312,20 @@ main {
     # — never semantic) rides the data-ref-variant attribute.
     # Attribute author order: aria-label (when present) → disabled (when
     # disabled) → data-ref-variant → data-tela.
-    assert tela.html_visus(ref.button(ref.button_props("save", "Save", "primary", "enabled", "click", ""))) coalesce "" ≡ «<button data-ref-variant="primary" data-tela="ref-button-save">Save</button>»
+    assert tela.html_view(ref.button(ref.button_props("save", "Save", "primary", "enabled", "click", ""))) coalesce "" ≡ «<button data-ref-variant="primary" data-tela="ref-button-save">Save</button>»
     # The aria-label override (the declared accessible name — the visible
     # label can differ) + the disabled attribute (the native disabled
     # state: removed from the tab sequence, no activation, the state
     # exposed to AT).
-    assert tela.html_visus(ref.button(ref.button_props("delete", "Delete", "primary", "disabled", "click", "Delete permanently"))) coalesce "" ≡ «<button aria-label="Delete permanently" disabled="" data-ref-variant="primary" data-tela="ref-button-delete">Delete</button>»
+    assert tela.html_view(ref.button(ref.button_props("delete", "Delete", "primary", "disabled", "click", "Delete permanently"))) coalesce "" ≡ «<button aria-label="Delete permanently" disabled="" data-ref-variant="primary" data-tela="ref-button-delete">Delete</button>»
     # The variant treatments: secondary + ghost emit their
     # data-ref-variant (the visual treatment rides the attribute, never
     # the semantic).
-    assert tela.html_visus(ref.button(ref.button_props("cancel", "Cancel", "secondary", "enabled", "click", ""))) coalesce "" ≡ «<button data-ref-variant="secondary" data-tela="ref-button-cancel">Cancel</button>»
-    assert tela.html_visus(ref.button(ref.button_props("link", "Ghost", "ghost", "enabled", "click", ""))) coalesce "" ≡ «<button data-ref-variant="ghost" data-tela="ref-button-link">Ghost</button>»
+    assert tela.html_view(ref.button(ref.button_props("cancel", "Cancel", "secondary", "enabled", "click", ""))) coalesce "" ≡ «<button data-ref-variant="secondary" data-tela="ref-button-cancel">Cancel</button>»
+    assert tela.html_view(ref.button(ref.button_props("link", "Ghost", "ghost", "enabled", "click", ""))) coalesce "" ≡ «<button data-ref-variant="ghost" data-tela="ref-button-link">Ghost</button>»
     # No ARIA role duplication: the native <button> carries no role
     # attribute (the native semantics ARE the role).
-    assert not (tela.html_visus(ref.button(ref.button_props("save", "Save", "primary", "enabled", "click", ""))) coalesce "").continet("role=")
+    assert not (tela.html_view(ref.button(ref.button_props("save", "Save", "primary", "enabled", "click", ""))) coalesce "").continet("role=")
     # The declared event surface (the activation event the plan binds).
     assert ref.button_event() ≡ "click"
 
@@ -380,15 +380,15 @@ main {
     # attribute emits when non-empty. Attribute author order: type →
     # aria-label → aria-invalid → aria-describedby (when invalid) →
     # value (when non-empty) → disabled (when disabled) → data-tela.
-    assert tela.html_visus(ref.field_input(ref.field_input_props("name", "Name", "Ada", "", "enabled"))) coalesce "" ≡ «<input type="text" aria-label="Name" aria-invalid="false" value="Ada" data-tela="form-field-name">»
+    assert tela.html_view(ref.field_input(ref.field_input_props("name", "Name", "Ada", "", "enabled"))) coalesce "" ≡ «<input type="text" aria-label="Name" aria-invalid="false" value="Ada" data-tela="form-field-name">»
     # Invalid: aria-invalid="true" + aria-describedby → form-error-name;
     # the value is empty → no value attribute.
-    assert tela.html_visus(ref.field_input(ref.field_input_props("name", "Name", "", "Required", "enabled"))) coalesce "" ≡ «<input type="text" aria-label="Name" aria-invalid="true" aria-describedby="form-error-name" data-tela="form-field-name">»
+    assert tela.html_view(ref.field_input(ref.field_input_props("name", "Name", "", "Required", "enabled"))) coalesce "" ≡ «<input type="text" aria-label="Name" aria-invalid="true" aria-describedby="form-error-name" data-tela="form-field-name">»
     # Disabled: the native disabled attribute (removed from the tab
     # sequence, no entry, the state exposed to AT).
-    assert tela.html_visus(ref.field_input(ref.field_input_props("name", "Name", "Ada", "", "disabled"))) coalesce "" ≡ «<input type="text" aria-label="Name" aria-invalid="false" value="Ada" disabled="" data-tela="form-field-name">»
+    assert tela.html_view(ref.field_input(ref.field_input_props("name", "Name", "Ada", "", "disabled"))) coalesce "" ≡ «<input type="text" aria-label="Name" aria-invalid="false" value="Ada" disabled="" data-tela="form-field-name">»
     # No ARIA role duplication: the native input carries no role attribute.
-    assert not (tela.html_visus(ref.field_input(ref.field_input_props("name", "Name", "Ada", "", "enabled"))) coalesce "").continet("role=")
+    assert not (tela.html_view(ref.field_input(ref.field_input_props("name", "Name", "Ada", "", "enabled"))) coalesce "").continet("role=")
 
     # --- the error/live-region association structure ----------------------
     # The error node (role="alert", form-error-<name>) is the identity the
@@ -396,12 +396,12 @@ main {
     # when present (empty error → an empty node — the association is
     # stable). The declared live region (role="status" + aria-live="polite",
     # form-live) is field-own; the announcement policy is U8.
-    assert tela.html_visus(ref.field_error_region("name", "Required")) coalesce "" ≡ «<div role="alert" data-tela="form-error-name">Required</div>»
-    assert tela.html_visus(ref.field_error_region("name", "")) coalesce "" ≡ «<div role="alert" data-tela="form-error-name"></div>»
-    assert tela.html_visus(ref.field_live_region()) coalesce "" ≡ «<div role="status" aria-live="polite" data-tela="form-live"></div>»
+    assert tela.html_view(ref.field_error_region("name", "Required")) coalesce "" ≡ «<div role="alert" data-tela="form-error-name">Required</div>»
+    assert tela.html_view(ref.field_error_region("name", "")) coalesce "" ≡ «<div role="alert" data-tela="form-error-name"></div>»
+    assert tela.html_view(ref.field_live_region()) coalesce "" ≡ «<div role="status" aria-live="polite" data-tela="form-live"></div>»
     # The field_control group (form-control-<name>): the association
     # surface — the field + its error node under one identity.
-    assert tela.html_visus(ref.field_control(ref.field_input_props("name", "Name", "Ada", "Required", "enabled"))) coalesce "" ≡ «<div data-tela="form-control-name"><input type="text" aria-label="Name" aria-invalid="true" aria-describedby="form-error-name" value="Ada" data-tela="form-field-name"><div role="alert" data-tela="form-error-name">Required</div></div>»
+    assert tela.html_view(ref.field_control(ref.field_input_props("name", "Name", "Ada", "Required", "enabled"))) coalesce "" ≡ «<div data-tela="form-control-name"><input type="text" aria-label="Name" aria-invalid="true" aria-describedby="form-error-name" value="Ada" data-tela="form-field-name"><div role="alert" data-tela="form-error-name">Required</div></div>»
     # The derived aria-invalid mapping (the formslib error_present
     # precedent, re-homed).
     assert ref.field_invalid(ref.field_input_props("name", "Name", "", "Required", "enabled")) ≡ "true"

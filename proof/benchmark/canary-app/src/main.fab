@@ -10,7 +10,7 @@
 # for U6: it prints the full HTML + CSS bytes.
 #
 # Spec-vs-live reconciliation (from the U3 escalation): the U5 spec's
-# `tela.html(tree)` is spelled `tela.html_visus(tree)` here — the exact
+# `tela.html(tree)` is spelled `tela.html_view(tree)` here — the exact
 # `html` verb collides with the Space.html enum-member top-level binding
 # (G5, SEM005.duplicate_definition; stage-0-canary.md §5; recorded in the
 # tela.fab header). css is verbatim. U6 determinism consumes this runner.
@@ -1743,8 +1743,8 @@ main {
     # --- The Stage 2 campaign gate proof (bullets 1 + 2) -------------------
     # HTML is theme-independent: the same tree renders byte-identically
     # (themes supply values, not markup).
-    const string html_a ← tela.html_visus(tree) coalesce ""
-    const string html_b ← tela.html_visus(tree) coalesce ""
+    const string html_a ← tela.html_view(tree) coalesce ""
+    const string html_b ← tela.html_view(tree) coalesce ""
     assert html_a ≡ html_b
     # The two theme token layers differ materially.
     assert css_lumen ≠ css_tenebrae
@@ -1937,14 +1937,14 @@ main {
     # exempla-mode consumption re-verified live against in-tree radix
     # 0.80.0 — post-cds-u6, green). The `*_html` helpers are RETIRED. The
     # rendered bytes are IDENTICAL to the pre-route output (the helpers
-    # were exactly `tela.html_visus(fn(...))`), so the determinism sha is
+    # were exactly `tela.html_view(fn(...))`), so the determinism sha is
     # unaffected by the re-route.
     const string forma_composita ←
-        tela.html_visus(forms.field(forms.field_props("name", "Name", "", "false", ""))) coalesce "" +
-        tela.html_visus(forms.checkbox(forms.checkbox_props("agree", "Agree", "true", "false"))) coalesce "" +
-        tela.html_visus(forms.select(forms.select_props("tone", "Tone", ["Light", "Dark"], "false"))) coalesce "" +
-        tela.html_visus(forms.error_region("name", "")) coalesce "" +
-        tela.html_visus(forms.form_live_region()) coalesce ""
+        tela.html_view(forms.field(forms.field_props("name", "Name", "", "false", ""))) coalesce "" +
+        tela.html_view(forms.checkbox(forms.checkbox_props("agree", "Agree", "true", "false"))) coalesce "" +
+        tela.html_view(forms.select(forms.select_props("tone", "Tone", ["Light", "Dark"], "false"))) coalesce "" +
+        tela.html_view(forms.error_region("name", "")) coalesce "" +
+        tela.html_view(forms.form_live_region()) coalesce ""
     assert forma_composita ≡ «<input type="text" aria-label="Name" aria-invalid="false" data-tela="form-field-name"><input type="checkbox" aria-label="Agree" aria-checked="true" aria-invalid="false" data-tela="form-checkbox-agree"><select aria-label="Tone" aria-invalid="false" data-tela="form-select-tone"><option>Light</option><option>Dark</option></select><div role="alert" data-tela="form-error-name"></div><div role="status" aria-live="polite" data-tela="form-live"></div>»
     # The extension bundle resolves before the forms bundle in the cascade
     # (the topological tie-break orders extensionlib before formslib). The
@@ -1963,7 +1963,7 @@ main {
     # + the roving tabindex on the segments (§1.3/§1.4), the control-owned
     # declared live region (§1.5), stable ref-seg-* data-tela identities
     # throughout (Stage 5 U5 — the reference re-home).
-    const string html_controllum ← tela.html_visus(control) coalesce ""
+    const string html_controllum ← tela.html_view(control) coalesce ""
     # Serializer emission order: attributes in author order, then data-tela
     # (the identity attribute) — the U2 exempla precedent.
     assert html_controllum ≡ «<div role="radiogroup" aria-label="segmented control" data-tela="ref-seg-control"><button role="radio" aria-selected="true" tabindex="0" data-tela="ref-seg-control-1">One</button><button role="radio" aria-selected="false" tabindex="-1" data-tela="ref-seg-control-2">Two</button><button role="radio" aria-selected="false" tabindex="-1" data-tela="ref-seg-control-3">Three</button><div role="status" aria-live="polite" data-tela="ref-seg-live"></div></div>»
@@ -2141,7 +2141,7 @@ main {
     # The round trip through the package's render helper: invalid → the
     # bytes carry aria-invalid="true" + aria-describedby → the error
     # identity + the error text (the field_group association, U2).
-    const string grex_invalidum ← tela.html_visus(forms.field_group(props_from_state("name", "Name", statu_invalidum))) coalesce ""
+    const string grex_invalidum ← tela.html_view(forms.field_group(props_from_state("name", "Name", statu_invalidum))) coalesce ""
     assert grex_invalidum.continet(«aria-invalid="true"»)
     assert grex_invalidum.continet(«aria-describedby="form-error-name"»)
     assert grex_invalidum.continet(">Required</div>")
@@ -2149,7 +2149,7 @@ main {
     # flips "false", no describedby).
     const FieldState statu_validum ← update_field(statu_invalidum, field_text_message("form-field-name", "Ada"))
     assert statu_validum.error ≡ ""
-    const string grex_validum ← tela.html_visus(forms.field_group(props_from_state("name", "Name", statu_validum))) coalesce ""
+    const string grex_validum ← tela.html_view(forms.field_group(props_from_state("name", "Name", statu_validum))) coalesce ""
     assert not grex_validum.continet(«aria-invalid="true"»)
     assert not grex_validum.continet("aria-describedby")
     # The live-region policy (§1.5 extended to form validation): the
@@ -2207,8 +2207,8 @@ main {
     # hierarchy (native h1..h6), the prose semantics (p), the semantic
     # emphasis (strong/em/code), the scale steps — the wrapper identities
     # are app-owned data (canary-*).
-    const string html_layout ← tela.html_visus(layout_composition()) coalesce ""
-    const string html_typography ← tela.html_visus(typography_composition()) coalesce ""
+    const string html_layout ← tela.html_view(layout_composition()) coalesce ""
+    const string html_typography ← tela.html_view(typography_composition()) coalesce ""
     assert html_layout.continet(«<div data-tela="ref-layout-stack">»)
     assert html_layout.continet(«<div data-tela="ref-layout-grid">»)
     assert html_layout.continet(«<div data-tela="ref-layout-prose">»)
@@ -2238,9 +2238,9 @@ main {
     # name, the badge's role=status + the textual meaning (the status word
     # in the accessible name — never color alone), the metric's dl/dt/dd
     # label/value(+delta) structure (the textual form preserved).
-    const string html_panel ← tela.html_visus(panel_composition()) coalesce ""
-    const string html_badge ← tela.html_visus(badge_composition()) coalesce ""
-    const string html_metric ← tela.html_visus(metric_composition()) coalesce ""
+    const string html_panel ← tela.html_view(panel_composition()) coalesce ""
+    const string html_badge ← tela.html_view(badge_composition()) coalesce ""
+    const string html_metric ← tela.html_view(metric_composition()) coalesce ""
     assert html_panel.continet(«<div role="region" aria-label="Status panel" data-tela="ref-panel-status">»)
     assert html_panel.continet(«<p data-tela="ref-typography-prose">all systems operational</p>»)
     assert html_badge.continet(«<span role="status" aria-label="New: 3 messages" data-tela="ref-badge-new">3 messages</span>»)
@@ -2265,7 +2265,7 @@ main {
     # caption provides the accessible name, the ref-table-* identities
     # (root + header cells + body cells) are the stable focus targets for
     # the declared consumer-plan navigation interaction.
-    const string html_table ← tela.html_visus(table_composition()) coalesce ""
+    const string html_table ← tela.html_view(table_composition()) coalesce ""
     assert html_table.continet(«<div data-tela="canary-ref-table">»)
     assert html_table.continet(«<table data-tela="ref-table-services"><caption>Services</caption>»)
     assert html_table.continet(«<thead><tr><th scope="col" data-tela="ref-table-services-header-0">Service</th><th scope="col" data-tela="ref-table-services-header-1">Status</th></tr></thead>»)
@@ -2283,7 +2283,7 @@ main {
     # a11y structure asserts: the group's radiogroup + accessible name,
     # the segments' role=radio + aria-selected + the roving tabindex (one
     # tab stop as a whole), the control-owned declared live region.
-    const string html_seg ← tela.html_visus(segmented_composition()) coalesce ""
+    const string html_seg ← tela.html_view(segmented_composition()) coalesce ""
     assert html_seg.continet(«<div data-tela="canary-ref-seg">»)
     assert html_seg.continet(«<div role="radiogroup" aria-label="segmented control" data-tela="ref-seg-control">»)
     assert html_seg.continet(«<button role="radio" aria-selected="true" tabindex="0" data-tela="ref-seg-control-1">One</button>»)
@@ -2305,7 +2305,7 @@ main {
     # duplication), the label/aria-label accessible name, the native
     # disabled attribute on the delete button (no activation, the state
     # exposed), the data-ref-variant treatments.
-    const string html_button ← tela.html_visus(button_composition()) coalesce ""
+    const string html_button ← tela.html_view(button_composition()) coalesce ""
     assert html_button.continet(«<div data-tela="canary-ref-button">»)
     assert html_button.continet(«<button data-ref-variant="primary" data-tela="ref-button-save">Save</button>»)
     assert html_button.continet(«<button data-ref-variant="secondary" data-tela="ref-button-cancel">Cancel</button>»)
@@ -2361,7 +2361,7 @@ main {
     # error/live-region association structure (the form-control-* group
     # + the role=alert error node + the declared form-live live region),
     # the native disabled attribute.
-    const string html_field ← tela.html_visus(field_composition()) coalesce ""
+    const string html_field ← tela.html_view(field_composition()) coalesce ""
     assert html_field.continet(«<div data-tela="canary-ref-field">»)
     assert html_field.continet(«<div data-tela="form-control-name">»)
     assert html_field.continet(«<input type="text" aria-label="Name" aria-invalid="false" value="Ada" data-tela="form-field-name">»)
@@ -2422,7 +2422,7 @@ main {
     const FieldPlanState fp4 ← update_field_plan(fp3, fmsg4)
     assert fp4.value ≡ «Ada" and fp4.error ≡ "»
     # The update loop's view-render input: the model → the composition.
-    const string html_field_plan ← tela.html_visus(field_plan_composition(fp3)) coalesce ""
+    const string html_field_plan ← tela.html_view(field_plan_composition(fp3)) coalesce ""
     assert html_field_plan.continet(«value="Ada"»)
     assert html_field_plan.continet(«aria-invalid="false"»)
     # The mount seam is the check-reference U8 browser-proof surface (the
@@ -2437,12 +2437,12 @@ main {
     # sequence executes under check-forms-interactive (the documented
     # faber-web host binding).
     const tela.View compositio ← forms_composition()
-    assert tela.html_visus(compositio) not is null
-    assert tela.html_visus(compositio) coalesce "" ≡ «<div data-tela="forma"><div data-tela="form-control-name"><input type="text" aria-label="Name" aria-invalid="false" data-tela="form-field-name"><div role="alert" data-tela="form-error-name"></div></div><input type="checkbox" aria-label="Agree" aria-checked="false" aria-invalid="false" data-tela="form-checkbox-agree"><select aria-label="Tone" aria-invalid="false" data-tela="form-select-tone"><option>Light</option><option>Dark</option></select><div role="status" aria-live="polite" data-tela="form-live"></div></div>»
+    assert tela.html_view(compositio) not is null
+    assert tela.html_view(compositio) coalesce "" ≡ «<div data-tela="forma"><div data-tela="form-control-name"><input type="text" aria-label="Name" aria-invalid="false" data-tela="form-field-name"><div role="alert" data-tela="form-error-name"></div></div><input type="checkbox" aria-label="Agree" aria-checked="false" aria-invalid="false" data-tela="form-checkbox-agree"><select aria-label="Tone" aria-invalid="false" data-tela="form-select-tone"><option>Light</option><option>Dark</option></select><div role="status" aria-live="polite" data-tela="form-live"></div></div>»
     assert bool_text(true) ≡ "true"
     assert bool_text(false) ≡ "false"
     const FieldState state_invalid ← field_state("form-field-name", "", "Required")
-    const string compositio_invalida ← tela.html_visus(forms_composition_from_state(state_invalid, false, "Light")) coalesce ""
+    const string compositio_invalida ← tela.html_view(forms_composition_from_state(state_invalid, false, "Light")) coalesce ""
     assert compositio_invalida.continet(«aria-invalid="true"»)
     assert compositio_invalida.continet(«aria-describedby="form-error-name"»)
     assert compositio_invalida.continet(">Required</div>")

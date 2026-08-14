@@ -55,7 +55,7 @@ main {
     )
     const tela.Update update ← tela.update(tree, [restore, move, anchor])
     assert update.effects.longitudo() ≡ 3
-    const string rendered ← tela.html_visus(update.view) coalesce ""
+    const string rendered ← tela.html_view(update.view) coalesce ""
     assert rendered ≡ "<div>segment</div>"
 
     # --- pure-carrier composition: combine effects into an update result ---
@@ -67,6 +67,6 @@ main {
     # value (no function/closure field exists anywhere in the three shapes).
     const tela.EventName another ← tela.event_name("pointer-down")
     assert another.name ≠ event.name
-    const string rendered_combined ← tela.html_visus(combined.view) coalesce ""
+    const string rendered_combined ← tela.html_view(combined.view) coalesce ""
     assert rendered_combined ≡ "<div>segment</div>"
 }

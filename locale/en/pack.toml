@@ -112,8 +112,8 @@ surface = "svg_space"
 provider = "tela"
 module_path = ["tela"]
 kind = "function"
-canonical = "html_visus"
-surface = "html_visus"
+canonical = "html_view"
+surface = "html_view"
 
 [[library_members]]
 provider = "tela"
@@ -267,8 +267,8 @@ provider = "package"
 package = "tela"
 module_path = ["tela"]
 kind = "function"
-canonical = "html_visus"
-surface = "html_visus"
+canonical = "html_view"
+surface = "html_view"
 
 [[library_members]]
 provider = "package"

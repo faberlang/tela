@@ -369,7 +369,7 @@ fn tag_at(string identity, list<string> identities, list<string> tags) → strin
 
 # The binding-status decision for one View identity: "bind" (bind the
 # existing matching node — hydration) only when the identity is unique in
-# both markups AND the VIEW element's tag name equals the PRAESENS node's
+# both markups AND the VIEW element's tag name equals the PRESENT node's
 # typed tag name (from the hydration snapshot); "create" (create/replace
 # the node from the View) otherwise — including every ambiguous/mismatched
 # case (duplicated identity, out-of-shape tag, missing node).
@@ -383,8 +383,8 @@ fn binding_status(
     var bool bind ← false
     if count_occurrences(present_identities, identity) ≡ 1 and count_occurrences(view_identities, identity) ≡ 1 {
         const string tag_view ← tag_name(element_tag(markup, identity) coalesce "")
-        const string tag_praesens ← tag_at(identity, present_identities, present_tags)
-        if not (tag_view ≡ "") and not (tag_praesens ≡ "") and tag_view ≡ tag_praesens {
+        const string present_tag ← tag_at(identity, present_identities, present_tags)
+        if not (tag_view ≡ "") and not (present_tag ≡ "") and tag_view ≡ present_tag {
             bind ← true
         }
     }
@@ -410,16 +410,16 @@ fn hydration_diagnostics(
     list<string> present_tags
 ) → list<string> {
     var list<string> diagnostics ← vacua
-    const list<string> duplicatae_view ← duplicate_identities(view_identities)
+    const list<string> duplicate_view ← duplicate_identities(view_identities)
     var int di ← 0
-    while di < duplicatae_view.length() {
-        diagnostics.append("duplicate:" + duplicatae_view[di])
+    while di < duplicate_view.length() {
+        diagnostics.append("duplicate:" + duplicate_view[di])
         di ← di + 1
     }
-    const list<string> duplicatae_praesentes ← duplicate_identities(present_identities)
+    const list<string> duplicate_present ← duplicate_identities(present_identities)
     var int dj ← 0
-    while dj < duplicatae_praesentes.length() {
-        diagnostics.append("duplicate:" + duplicatae_praesentes[dj])
+    while dj < duplicate_present.length() {
+        diagnostics.append("duplicate:" + duplicate_present[dj])
         dj ← dj + 1
     }
     var int ek ← 0
@@ -435,8 +435,8 @@ fn hydration_diagnostics(
         const string identity ← view_identities[mi]
         if count_occurrences(present_identities, identity) ≡ 1 and count_occurrences(view_identities, identity) ≡ 1 {
             const string tag_view ← tag_name(element_tag(markup, identity) coalesce "")
-            const string tag_praesens ← tag_at(identity, present_identities, present_tags)
-            if not (tag_view ≡ "") and not (tag_praesens ≡ "") and tag_view ≠ tag_praesens {
+            const string present_tag ← tag_at(identity, present_identities, present_tags)
+            if not (tag_view ≡ "") and not (present_tag ≡ "") and tag_view ≠ present_tag {
                 diagnostics.append("changed:" + identity)
             }
         }
@@ -457,13 +457,13 @@ fn hydration_diagnostics(
 # ---------------------------------------------------------------------------
 
 fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ null {
-    # Fail-closed: an invalid View (html_visus null), an invalid Theme
+    # Fail-closed: an invalid View (html_view null), an invalid Theme
     # (theme_css null), or a null hydration snapshot (the runtime returns
     # null only for a null scope) never mounts — no partial region. The
     # nullable checks run against the call / the bound nullable
     # (fix:prim-nullable workaround).
-    if tela.html_visus(view) is null then return null
-    const string markup ← tela.html_visus(view) coalesce ""
+    if tela.html_view(view) is null then return null
+    const string markup ← tela.html_view(view) coalesce ""
     if tela.theme_css(theme) is null then return null
     const string css ← tela.theme_css(theme) coalesce ""
 
@@ -529,7 +529,7 @@ fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ null
 # ---------------------------------------------------------------------------
 
 fn replace(Mounted m, tela.View view) → tela.Update ∪ null {
-    if tela.html_visus(view) is null then return null
+    if tela.html_view(view) is null then return null
     var list<tela.Effect> effects ← vacua
     if not (m.focused_identity ≡ "") {
         effects.append(tela.restore(m.focused_identity))

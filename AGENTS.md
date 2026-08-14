@@ -55,8 +55,8 @@ by framework-contract weakening.
 - **Enum-member top-level binding (G5).** Enum members bind as top-level
   module names — a `fn html()` collides with the `Space.html` member
   binding (`SEM005.duplicate_definition`). Prefix helpers that shadow members
-  (`html_spatium`, `svg_spatium`). This is why the HTML renderer verb is
-  **`html_visus`** (U3 recorded + escalated; the G5 radix-lane fix restores
+  (`html_space`, `svg_space`). This is why the HTML renderer verb is
+  **`html_view`** (U3 recorded + escalated; the G5 radix-lane fix restores
   the exact `html` verb).
 - **Reserved-keyword spellings (G6).** Reserved `conversio` keywords are
   unavailable as identifiers — `fn tabula(...)` collides with the `tabula`
@@ -72,19 +72,19 @@ by framework-contract weakening.
   (cargo E0308). Route non-null identity through the helper
   `new_identity(v) → Identity ∪ null`; keep the workaround until the radix
   D3 delivery lands.
-- **Namespace-helper pattern (G1 → `html_spatium`/`svg_spatium`).** Enum
+- **Namespace-helper pattern (G1 → `html_space`/`svg_space`).** Enum
   member value access through an imported namespace fails
   (`ext.Space.html` → `SEM010`). Expose namespace values as helper functions
   even inside the kernel module.
 - **Imported-union construction (G3 → kernel-owned constructors).** Variant
   construction of an imported union fails and the qualified cast does not
-  parse (`variant Elementum {…}` → `SEM001.unknown_variant`; `∷ ext.Visus` →
-  `PARSE030`). The kernel owns constructors (`textus_view`,
-  `fragmentum_view`, `elementum_view`, `elementum_omne`) over the same public
+  parse (`variant Elementum {…}` → `SEM001.unknown_variant`; `∷ ext.View` →
+  `PARSE030`). The kernel owns constructors (`text_view`,
+  `fragment_view`, `element_view`, `element_full`) over the same public
   values; constructors are ordinary functions, not privileged syntax.
-- **Named type imports (G2 → wildcard + qualified).** `importa ex "m" publica
-  Visus` then bare `Visus` does not bind (`SEM002.unknown_type`). Use wildcard
-  imports (`* ut ns`) + qualified references.
+- **Named type imports (G2 → wildcard + qualified).** `import from "m" public
+  View` then bare `View` does not bind (`SEM002.unknown_type`). Use wildcard
+  imports (`* as ns`) + qualified references.
 - **Dialect note (spike evidence §6).** The Stage 0 build did not register
   `discretio` as a usable type name. Author with the spellings the current
   kernel proves (`union`, `enum`, `class`, `fn`) until a packet-local Radix
@@ -111,7 +111,7 @@ Convention locks (Stage 5 U0):
 - **Casing.** Types (`class`/`union`/`enum`): PascalCase, single token —
   multi-word types concatenate (`FieldProps`, `ElementNode`); Pascal_snake
   (`Props_campi`-style) is banned. Functions/fields: snake_case
-  (`html_visus`, `binding_status`, `tag_name`). Theme tokens: dotted
+  (`html_view`, `binding_status`, `tag_name`). Theme tokens: dotted
   lowercase (`chart.axis.muted`). CSS custom properties: `--kebab-case`.
 - **Identity strings are DATA.** kebab-case family-prefix `data-tela`
   identities (`form-field-<name>`, `tela-seg-N`, `ref-*`) are data —
@@ -122,15 +122,15 @@ Convention locks (Stage 5 U0):
   pattern), `Theme`, `Bundle`, `Order`, `EventName`, `Effect`
   (`Restore`/`Direct`/`Anchor`), `Update`; browser: `Mounted` (stays
   English), `RegionRoot`, `EventSubscription`, `Binding`.
-- **`html_visus` is the v1.0 renderer verb (pinned).** The exact `html`
+- **`html_view` is the v1.0 renderer verb (pinned).** The exact `html`
   verb collides with the `Space.html` enum-member binding (G5, `SEM005`);
-  the v2 restoration is a named rename (`html_visus` → `html`, grep-replace
-  predicate: `grep -rn 'html_visus'`), recorded, NOT done in v1.
+  the v2 restoration is a named rename (`html_view` → `html`, grep-replace
+  predicate: `grep -rn 'html_view'`), recorded, NOT done in v1.
 - **`focus_held`/`focus_target`** are the browser focus-model fns (the
   pre-replacement focused identity / the declared focus-movement target).
 - **Latin-named stdlib call sites keep their names** (the documented
-  exception list): `longitudo()`, `sectio()`, `continet()`, `appende()`,
-  `ordinata()`, `coalesce`, `vacua`, `∪`, `∷`, `∴`, `§`(…). Never rename a
+  exception list): `length()`, `slice()`, `contains()`, `append()`,
+  `sorted()`, `coalesce`, `vacua`, `∪`, `∷`, `∴`, `§`(…). Never rename a
   stdlib call.
 - **Seam types keep faber-web's spellings** (`dom.Scope`, `dom.DomNode`, …) —
   consumed, never re-declared; `dom.DomNode.identity` is the seam field.
@@ -217,7 +217,7 @@ exempla: `exempla/thema.fab`.
   each radix fix lands** (e.g. `grep -rn 'fix:codegen001' src/` →
   remove the markers once CODEGEN001 is fixed). A colliding locked verb is
   **escalated, never silently renamed** (the G5/G6 rule — the `html` →
-  `html_visus` precedent).
+  `html_view` precedent).
 - **Theme/token authoring constraints.** Token `nomen` is a dotted path;
   the 8-token core baseline is pinned in the kernel header (U1) — a theme
   must cover it or `thema_css` returns `null` (fail-closed). The theme
