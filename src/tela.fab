@@ -48,7 +48,7 @@
 #
 # Fail-closed boundary (policy (a)2; U2 done_when (d)): before ANY emission
 # the serializer runs the U2 lexical/namespace/void checks over the whole
-# tree (validate_tree). html_visus(View) → string ∪ null — null when any
+# tree (validate_tree). html_view(View) → string ∪ null — null when any
 # check fails, so invalid input NEVER emits markup (no partial output). The
 # concrete mechanism (nullable result) is the implementing Hand's documented
 # choice within the available Faber surface; exercised by exempla/serializer.fab.
@@ -74,7 +74,7 @@
 # the RECORDED G5 defect (stage-0-canary.md §5: "A `fn html()` collides with
 # the Space.html member binding → SEM005.duplicate_definition. Naming
 # constraint: prefix helpers (html_space)"). Applied workaround: the HTML
-# renderer verb is html_visus — the `html_` prefix per the G5 recorded
+# renderer verb is html_view — the `html_` prefix per the G5 recorded
 # constraint; the policy (b) English stem is preserved, NOT silently renamed.
 # ESCALATED To mind: the G5 radix-lane fix restores the exact `html` verb
 # (repro: SEM005.duplicate_definition on fn html(View) with
@@ -92,7 +92,7 @@
 #
 # Stage 2 U2 (product assembly + cascade) — this module gains the kernel-owned
 # Bundle/Order carriers, bundle dedup by stable identity, the topo-ordering
-# of library packages over the explicit ordines map (stable-identity
+# of library packages over the explicit orders map (stable-identity
 # tie-break), and the assemble(...) → Style ∪ null product assembler with
 # cascade layers: tela.reset (opt-in; v1 ships none) → tela.tokens → tela.
 # components → library packages (topo) → tela.applicatio (last). fix:<id>
@@ -225,14 +225,14 @@ fn element_full(
 
 # ---------------------------------------------------------------------------
 # Central escaping (policy (a)2) — ONE escape path for text AND attribute
-# values. in_attributo selects the attribute escape set: & < > for text,
+# values. in_attribute selects the attribute escape set: & < > for text,
 # additionally " for attribute values (double-quote delimiters — HTML
 # convention and Faber string syntax). The identity value flows through
 # the same attribute-escape path (policy (d)). No serializer path
 # concatenates an unescaped value.
 # ---------------------------------------------------------------------------
 
-fn escape(string s, bool in_attributo) → string {
+fn escape(string s, bool in_attribute) → string {
     var string accum ← ""
     var int i ← 0
     while i < s.length() {
@@ -258,7 +258,7 @@ fn escape(string s, bool in_attributo) → string {
         # backslash+quote), so a bare-quote comparison written as "\"" never
         # matches at runtime (NEW emitter observation, escalated to the radix
         # lane; probe escape on in-tree radix 0.80.0, 2026-08-09).
-        if in_attributo and c ≡ "§"('"') then fragment ← "&quot;"
+        if in_attribute and c ≡ "§"('"') then fragment ← "&quot;"
         accum ← accum + fragment
         i ← i + 1
     }
@@ -299,7 +299,7 @@ fn serialize_ns(Space space) → string {
 # Fail-closed pre-pass: the U2 lexical/namespace/void checks over the whole
 # tree, run BEFORE any emission. Text is escaped, never validated (any
 # string is safe once escaped — policy (a)2). Invalid input NEVER emits
-# markup: html_visus returns null (no output at all), never partial markup.
+# markup: html_view returns null (no output at all), never partial markup.
 fn validate_tree(View v) → bool {
     match v {
         case TextNode const value {
@@ -389,13 +389,13 @@ fn serialize_view(View v) → string {
     }
 }
 
-# Public renderer verb (policy (b)). The G5 workaround spelling (html_visus,
+# Public renderer verb (policy (b)). The G5 workaround spelling (html_view,
 # html_ prefix per stage-0-canary.md §5) carries the locked English `html`
 # stem; the exact `html` verb is blocked by the Space.html enum-member
 # top-level binding and is ESCALATED to the radix lane (see module header).
 # Fail-closed: null = rejected, no markup ever emitted. Deterministic bytes
 # over author order.
-fn html_visus(View v) → string ∪ null {
+fn html_view(View v) → string ∪ null {
     if not validate_tree(v) then return null
     return serialize_view(v)
 }
@@ -421,9 +421,9 @@ class Style {
 
 fn css(Style style) → string {
     var string accum ← ""
-    for from style.rules const regula {
-        accum ← accum + regula.selector + " { "
-        for from regula.declarations const decl {
+    for from style.rules const rule {
+        accum ← accum + rule.selector + " { "
+        for from rule.declarations const decl {
             accum ← accum + decl.name + ": " + decl.value + "; "
         }
         accum ← accum + "}\n"
@@ -548,9 +548,9 @@ fn theme_has_token(Theme theme, string name) → bool {
 # identity with different content → null (no output). Deterministic bytes
 # over author order.
 fn theme_css(Theme theme) → string ∪ null {
-    const Style ∪ null stilum_result ← theme_style(theme)
-    if stilum_result is null then return null
-    return css(Style { rules = stilum_result!.rules })
+    const Style ∪ null style_result ← theme_style(theme)
+    if style_result is null then return null
+    return css(Style { rules = style_result!.rules })
 }
 
 # Token-layer builder shared by theme_css and the product assembler (U2):
@@ -598,11 +598,11 @@ fn theme_style(Theme theme) → Style ∪ null {
 #   theme       — the selected theme (renders the tela.tokens :root layer)
 #   reset       — optional reset bundle (tela.reset layer; v1 ships NO reset
 #                 by default — the layer emits only when a bundle is given)
-#   componentes — component style bundles (tela.components layer, input order)
-#   ordines     — the explicit package-order map (identity + dependency list;
+#   components  — component style bundles (tela.components layer, input order)
+#   orders      — the explicit package-order map (identity + dependency list;
 #                 stdlib-only, no import introspection)
-#   codicilli   — extension/library style bundles keyed by package identity
-#                 (ordered by the ordines topo map)
+#   bundles     — extension/library style bundles keyed by package identity
+#                 (ordered by the orders topo map)
 #   applicatio  — the optional application style bundle (last layer)
 #
 # CASCADE LAYER ORDER (emission order — later rules win, the deterministic
@@ -616,10 +616,10 @@ fn theme_style(Theme theme) → Style ∪ null {
 # content rejects (fail-closed).
 #
 # LIBRARY ORDERING: dependency-graph topological order over the explicit
-# ordines map, then stable package identity as the deterministic
-# content-independent tie-break (lexicographic via the list ordinata
-# intrinsic). Cycles, unknown dependencies, and codicilli identities absent
-# from the ordines map reject (fail-closed).
+# orders map, then stable package identity as the deterministic
+# content-independent tie-break (lexicographic via the list sorted
+# intrinsic). Cycles, unknown dependencies, and bundle identities absent
+# from the orders map reject (fail-closed).
 #
 # FAIL-CLOSED (U2 done_when (d)): dependency cycles reject; duplicate bundle
 # identities with different content reject; duplicate token identities with
@@ -666,15 +666,15 @@ fn order(string identity, list<string> depends) → Order {
 # Bundle dedup by stable identity (policy (e)): identical duplicates (same
 # rendered css) collapse to one; duplicate identity with different content
 # → null (fail-closed).
-fn deduplicated_bundles(list<Bundle> codicilli) → list<Bundle> ∪ null {
+fn deduplicated_bundles(list<Bundle> bundles) → list<Bundle> ∪ null {
     var list<Bundle> unique ← vacua
     var int i ← 0
-    while i < codicilli.length() {
-        const Bundle bundle ← codicilli[i]
+    while i < bundles.length() {
+        const Bundle bundle ← bundles[i]
         var bool duplicate ← false
         var int j ← 0
         while j < i {
-            const Bundle prior ← codicilli[j]
+            const Bundle prior ← bundles[j]
             if prior.identity ≡ bundle.identity {
                 if css(prior.style) ≠ css(bundle.style) then return null
                 duplicate ← true
@@ -696,12 +696,12 @@ fn in_list(list<string> collection, string name) → bool {
 }
 
 # A package is ready when its declared dependencies are all already placed.
-# An identity absent from the ordines map is never ready (its dependencies
+# An identity absent from the orders map is never ready (its dependencies
 # are unknowable) — the topo fails closed.
-fn dependencies_met(list<Order> ordines, string identity, list<string> placed) → bool {
+fn dependencies_met(list<Order> orders, string identity, list<string> placed) → bool {
     var int i ← 0
-    while i < ordines.length() {
-        const Order order ← ordines[i]
+    while i < orders.length() {
+        const Order order ← orders[i]
         if order.identity ≡ identity {
             var int j ← 0
             while j < order.depends.length() {
@@ -715,25 +715,25 @@ fn dependencies_met(list<Order> ordines, string identity, list<string> placed) �
     return false
 }
 
-# Topological order of the package identities over the explicit ordines map
+# Topological order of the package identities over the explicit orders map
 # (policy (e)): dependencies precede dependents; among the ready packages the
 # stable identity is the deterministic tie-break (lexicographic via the list
-# ordinata intrinsic — content-independent). A cycle (no ready package while
+# sorted intrinsic — content-independent). A cycle (no ready package while
 # identities remain) or an unresolvable dependency → null (fail-closed).
-fn topological_order(list<Order> ordines, list<string> identities) → list<string> ∪ null {
-    var list<string> ordinata ← vacua
+fn topological_order(list<Order> orders, list<string> identities) → list<string> ∪ null {
+    var list<string> ordered ← vacua
     var list<string> remaining ← identities
     while remaining.length() > 0 {
         var list<string> ready ← vacua
         var int i ← 0
         while i < remaining.length() {
-            if dependencies_met(ordines, remaining[i], ordinata) then ready.append(remaining[i])
+            if dependencies_met(orders, remaining[i], ordered) then ready.append(remaining[i])
             i ← i + 1
         }
         if ready.length() ≡ 0 then return null
         ready ← ready.sorted()
         const string chosen ← ready[0]
-        ordinata.append(chosen)
+        ordered.append(chosen)
         var list<string> next ← vacua
         var int j ← 0
         while j < remaining.length() {
@@ -742,7 +742,7 @@ fn topological_order(list<Order> ordines, list<string> identities) → list<stri
         }
         remaining ← next
     }
-    return ordinata
+    return ordered
 }
 
 # CSS-structure-breaking characters in selector / property / value text make
@@ -763,10 +763,10 @@ fn unclean_style_text(string text) → bool {
 # Fail-closed rule/declaration shape: non-empty selector / property / value
 # and no CSS-structure-breaking characters.
 fn style_valid(Style style) → bool {
-    for from style.rules const regula {
-        if regula.selector.length() ≡ 0 then return false
-        if unclean_style_text(regula.selector) then return false
-        for from regula.declarations const decl {
+    for from style.rules const rule {
+        if rule.selector.length() ≡ 0 then return false
+        if unclean_style_text(rule.selector) then return false
+        for from rule.declarations const decl {
             if decl.name.length() ≡ 0 then return false
             if decl.value.length() ≡ 0 then return false
             if unclean_style_text(decl.name) then return false
@@ -778,8 +778,8 @@ fn style_valid(Style style) → bool {
 
 # Find the Style a package identity contributes (the library-layer bundle
 # lookup). Unknown identity → null (the topo already failed closed).
-fn bundle_for(string identity, list<Bundle> codicilli) → Style ∪ null {
-    for from codicilli const bundle {
+fn bundle_for(string identity, list<Bundle> bundles) → Style ∪ null {
+    for from bundles const bundle {
         if bundle.identity ≡ identity then return bundle.style
     }
     return null
@@ -791,9 +791,9 @@ fn bundle_for(string identity, list<Bundle> codicilli) → Style ∪ null {
 fn assemble(
     Theme theme,
     Style ∪ null reset,
-    list<Bundle> componentes,
-    list<Order> ordines,
-    list<Bundle> codicilli,
+    list<Bundle> components,
+    list<Order> orders,
+    list<Bundle> bundles,
     Bundle ∪ null applicatio
 ) → Style ∪ null {
     # tela.tokens — the rendered :root token layer (fail-closed).
@@ -808,37 +808,37 @@ fn assemble(
     }
 
     # tela.components — dedup + fail-closed rule shape, input order.
-    const list<Bundle> ∪ null componentes_unici ← deduplicated_bundles(componentes)
-    if componentes_unici is null then return null
-    const list<Bundle> componente_vacua ← vacua
-    const list<Bundle> componentes_finales ← componentes_unici coalesce componente_vacua
+    const list<Bundle> ∪ null unique_components ← deduplicated_bundles(components)
+    if unique_components is null then return null
+    const list<Bundle> empty_components ← vacua
+    const list<Bundle> final_components ← unique_components coalesce empty_components
     var int ci ← 0
-    while ci < componentes_finales.length() {
-        if not style_valid(componentes_finales[ci].style) then return null
+    while ci < final_components.length() {
+        if not style_valid(final_components[ci].style) then return null
         ci ← ci + 1
     }
 
     # Library packages — dedup, rule shape, then topo order over the explicit
-    # ordines map (every bundle identity must appear in ordines).
-    const list<Bundle> ∪ null codicilli_unici ← deduplicated_bundles(codicilli)
-    if codicilli_unici is null then return null
-    const list<Bundle> codicilli_vacui ← vacua
-    const list<Bundle> codicilli_finales ← codicilli_unici coalesce codicilli_vacui
+    # orders map (every bundle identity must appear in orders).
+    const list<Bundle> ∪ null unique_bundles ← deduplicated_bundles(bundles)
+    if unique_bundles is null then return null
+    const list<Bundle> empty_bundles ← vacua
+    const list<Bundle> final_bundles ← unique_bundles coalesce empty_bundles
     var int li ← 0
-    while li < codicilli_finales.length() {
-        if not style_valid(codicilli_finales[li].style) then return null
+    while li < final_bundles.length() {
+        if not style_valid(final_bundles[li].style) then return null
         li ← li + 1
     }
     var list<string> identities ← vacua
     var int m ← 0
-    while m < codicilli_finales.length() {
-        identities.append(codicilli_finales[m].identity)
+    while m < final_bundles.length() {
+        identities.append(final_bundles[m].identity)
         m ← m + 1
     }
-    const list<string> ∪ null librariae_result ← topological_order(ordines, identities)
-    if librariae_result is null then return null
-    const list<string> librariae_vacuae ← vacua
-    const list<string> librariae ← librariae_result coalesce librariae_vacuae
+    const list<string> ∪ null libraries_result ← topological_order(orders, identities)
+    if libraries_result is null then return null
+    const list<string> empty_libraries ← vacua
+    const list<string> libraries ← libraries_result coalesce empty_libraries
 
     # tela.applicatio — the last layer; validity only.
     if applicatio not is null {
@@ -848,32 +848,32 @@ fn assemble(
     # Assemble the ordered Style — layer order IS emission order.
     var list<Rule> rules ← vacua
     if reset not is null {
-        for from reset!.rules const regula {
-            rules.append(regula)
+        for from reset!.rules const rule {
+            rules.append(rule)
         }
     }
-    for from tokens.rules const regula {
-        rules.append(regula)
+    for from tokens.rules const rule {
+        rules.append(rule)
     }
     var int idx ← 0
-    while idx < componentes_finales.length() {
-        for from componentes_finales[idx].style.rules const regula {
-            rules.append(regula)
+    while idx < final_components.length() {
+        for from final_components[idx].style.rules const rule {
+            rules.append(rule)
         }
         idx ← idx + 1
     }
     var int ord ← 0
-    while ord < librariae.length() {
-        const Style ∪ null style ← bundle_for(librariae[ord], codicilli_finales)
+    while ord < libraries.length() {
+        const Style ∪ null style ← bundle_for(libraries[ord], final_bundles)
         if style is null then return null
-        for from style!.rules const regula {
-            rules.append(regula)
+        for from style!.rules const rule {
+            rules.append(rule)
         }
         ord ← ord + 1
     }
     if applicatio not is null {
-        for from applicatio!.style.rules const regula {
-            rules.append(regula)
+        for from applicatio!.style.rules const rule {
+            rules.append(rule)
         }
     }
     return Style { rules = rules }

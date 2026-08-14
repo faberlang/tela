@@ -62,10 +62,10 @@
 # matches ("line" inside "polyline", "meta" inside "metadata") cannot pass.
 # ---------------------------------------------------------------------------
 
-fn in_group(string name, string grex) → bool {
-    const string grex_limitata ← " " + grex + " "
-    const string nomen_limitatum ← " " + name + " "
-    return grex_limitata.contains(nomen_limitatum)
+fn in_group(string name, string group) → bool {
+    const string group_bounded ← " " + group + " "
+    const string name_bounded ← " " + name + " "
+    return group_bounded.contains(name_bounded)
 }
 
 # ---------------------------------------------------------------------------
@@ -73,15 +73,15 @@ fn in_group(string name, string grex) → bool {
 # ---------------------------------------------------------------------------
 
 fn valid_tag_name(string name) → bool {
-    const string litterae ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    const string char_tagi ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_."
+    const string letters ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    const string tag_chars ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_."
     if name.length() ≡ 0 then return false
-    const string ch_primum ← name.slice(0, 1)
-    if not litterae.contains(ch_primum) then return false
+    const string first_char ← name.slice(0, 1)
+    if not letters.contains(first_char) then return false
     var int i ← 1
     while i < name.length() {
         const string ch ← name.slice(i, i + 1)
-        if not char_tagi.contains(ch) then return false
+        if not tag_chars.contains(ch) then return false
         i ← i + 1
     }
     return true
@@ -92,12 +92,12 @@ fn valid_tag_name(string name) → bool {
 # ---------------------------------------------------------------------------
 
 fn valid_attribute_name(string name) → bool {
-    const string char_attributi ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.:"
+    const string attr_chars ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.:"
     if name.length() ≡ 0 then return false
     var int i ← 0
     while i < name.length() {
         const string ch ← name.slice(i, i + 1)
-        if not char_attributi.contains(ch) then return false
+        if not attr_chars.contains(ch) then return false
         i ← i + 1
     }
     return true
@@ -118,15 +118,15 @@ fn valid_space(string space) → bool {
 # names are accepted in either context (dependency rule 9); an unknown
 # namespace context fails closed.
 fn valid_name_in_space(string name, string space) → bool {
-    const string nomen_svg_soli ← "svg g defs symbol use path rect circle ellipse line polyline polygon text tspan textPath foreignObject image linearGradient radialGradient stop clipPath mask pattern marker view switch metadata animate animateTransform animateMotion set mpath"
-    const string nomen_html_soli ← "div span p br hr wbr h1 h2 h3 h4 h5 h6 ul ol li dl dt dd table thead tbody tfoot tr td th caption colgroup form input button select option optgroup textarea label fieldset legend datalist output progress meter section article header footer nav main aside figure figcaption blockquote pre code em strong small sub sup mark time abbr address cite b i u s del ins q kbd samp var img iframe video audio canvas template dialog details summary picture source track map area link meta menu"
+    const string svg_only_names ← "svg g defs symbol use path rect circle ellipse line polyline polygon text tspan textPath foreignObject image linearGradient radialGradient stop clipPath mask pattern marker view switch metadata animate animateTransform animateMotion set mpath"
+    const string html_only_names ← "div span p br hr wbr h1 h2 h3 h4 h5 h6 ul ol li dl dt dd table thead tbody tfoot tr td th caption colgroup form input button select option optgroup textarea label fieldset legend datalist output progress meter section article header footer nav main aside figure figcaption blockquote pre code em strong small sub sup mark time abbr address cite b i u s del ins q kbd samp var img iframe video audio canvas template dialog details summary picture source track map area link meta menu"
     if not valid_tag_name(name) then return false
     if space ≡ "html" {
-        if in_group(name, nomen_svg_soli) then return false
+        if in_group(name, svg_only_names) then return false
         return true
     }
     if space ≡ "svg" {
-        if in_group(name, nomen_html_soli) then return false
+        if in_group(name, html_only_names) then return false
         return true
     }
     return false
@@ -134,8 +134,8 @@ fn valid_name_in_space(string name, string space) → bool {
 
 # HTML void-element set membership (exact HTML spec set).
 fn valid_void_html(string name) → bool {
-    const string nomen_voidi_html ← "area base br col embed hr img input link meta param source track wbr"
-    return in_group(name, nomen_voidi_html)
+    const string void_html_names ← "area base br col embed hr img input link meta param source track wbr"
+    return in_group(name, void_html_names)
 }
 
 # ---------------------------------------------------------------------------
