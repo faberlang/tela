@@ -76,10 +76,12 @@ fn valid_tag_name(string name) → bool {
     const string litterae ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     const string char_tagi ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_."
     if name.length() ≡ 0 then return false
-    if not litterae.contains(name.slice(0, 1)) then return false
+    const string ch_primum ← name.slice(0, 1)
+    if not litterae.contains(ch_primum) then return false
     var int i ← 1
     while i < name.length() {
-        if not char_tagi.contains(name.slice(i, i + 1)) then return false
+        const string ch ← name.slice(i, i + 1)
+        if not char_tagi.contains(ch) then return false
         i ← i + 1
     }
     return true
@@ -94,7 +96,8 @@ fn valid_attribute_name(string name) → bool {
     if name.length() ≡ 0 then return false
     var int i ← 0
     while i < name.length() {
-        if not char_attributi.contains(name.slice(i, i + 1)) then return false
+        const string ch ← name.slice(i, i + 1)
+        if not char_attributi.contains(ch) then return false
         i ← i + 1
     }
     return true
