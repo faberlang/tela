@@ -1,5 +1,10 @@
 # Tela Agent Instructions
 
+**Workspace work mode.** Ordinary development is **direct** in this
+checkout on `main`. Worktree packets under `../worktrees/<lane>/` are
+optional Tugboat isolation. Do not stand up lanes unless the operator
+asked. Container law: [`../AGENTS.md`](../AGENTS.md).
+
 Tela is the public Faber view-protocol package — typed HTML/SVG view values,
 fail-closed validation, and deterministic HTML + initial CSS serialization
 (the `tela:*` provider). The repo is the Stage 1 kernel + static renderer
@@ -31,7 +36,7 @@ file is the operating summary; the docs are the contract.
 | `proof/locale-la/` | Latin-consumer proof of `locale/la/pack.toml` (owned here; Radix has no Tela fixture) |
 | Speculum island | Consumer proof lives in `faberlang.dev/generator/src/tela_island.fab` — Latin Speculum imports `tela:tela`; `document_ir` stays the site serializer |
 | `docs/design/` | Design records (`identity-hydration.md`, `theme-protocol.md`, `browser-lifecycle.md`) |
-| `docs/factory/mvp/` | Campaign + delivery + policy docs (machine-managed; do not hand-edit `README.md` if present — regenerate) |
+| `docs/factory/mvp/` | Campaign + delivery + policy docs (machine-managed goal inventory; no generated factory README) |
 | `spike/` | **Frozen Stage 0 evidence — no unit writes here** |
 | `proof/benchmark/` | Stage 1 U5 benchmark packages (`extension-lib/`, `canary-app/`, `libhome/`) |
 
@@ -65,7 +70,7 @@ by framework-contract weakening.
 - **Field-name constraint (D2 → `nomen_tag`).** A field named `tag` collides
   with the TS emitter's discriminant (`type U = { tag: "V", tag: string }` →
   TS2300/TS2717). The working spelling is **`nomen_tag`**. (Re-checked clean
-  during U1; keep the spelling until a current packet-local Radix probe proves
+  during U1; keep the spelling until a current sibling Radix probe proves
   the emitter collision is gone.)
 - **Nullable-identity routing (D3 → `new_identity`).** Direct non-null
   construction into a nullable union field misses the Rust `Some(...)` wrap
@@ -87,7 +92,7 @@ by framework-contract weakening.
   imports (`* as ns`) + qualified references.
 - **Dialect note (spike evidence §6).** The Stage 0 build did not register
   `discretio` as a usable type name. Author with the spellings the current
-  kernel proves (`union`, `enum`, `class`, `fn`) until a packet-local Radix
+  kernel proves (`union`, `enum`, `class`, `fn`) until a sibling Radix
   probe closes the recorded gap.
 
 ## Vocabulary policy (policy (b) — SUPERSEDED by the English-first convention, U0 2026-08-09)
@@ -169,9 +174,9 @@ superseded).
 
 ## Validation (three lanes)
 
-Use the **packet-local sibling** Radix binary at
-`radix/target/debug/radix`. An installed `~/.cargo/bin/radix` may lag the
-workspace and is not validation authority.
+Use the sibling Radix binary at `../radix/target/debug/radix` (or a
+packet's `radix/` when lanes are on). An installed `~/.cargo/bin/radix`
+may lag the workspace and is not validation authority.
 Rust-lane cargo checks run in **scratch dirs outside the shared workspace**
 (`/tmp/…`). No workspace cargo suites (Cargo discipline, operator rule
 2026-08-07); full radix ladder stages 4–6 / `--e2e` are auditor-owned.
