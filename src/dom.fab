@@ -42,6 +42,7 @@
 #     they parse + emit): `local`, `width`, `alt`, `shift`, `id`, `status`,
 #     `ok`, `require`, `on` as field/fn names on this surface.
 
+@ public
 class Scope {
     string selector = ""
 }

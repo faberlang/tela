@@ -15,6 +15,7 @@
 #
 # Keyword surface (en): genus→class, textus→string, functio→fn.
 
+@ public
 @ annotatio { target = fn }
 class WebController {
     string selector
