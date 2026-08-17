@@ -3,8 +3,8 @@
 # Stage 3 U2 (browser-mount) + Stage 4 U6 (seam restoration) +
 # web-surface-import U4 (browser-flip-harness-rewire, the tela:dom flip).
 # The host seam is tela:dom (tela-owned — the en conversion of the faber-web
-# DOM contract, web-import-u1; the la `web:dom` provider dependency leaves
-# tela/src at this boundary). The flip renames the seam type references:
+# DOM contract, web-import-u1; the old la `web:dom` provider dependency has
+# left tela/src at this boundary). The flip renames the seam type references:
 # `dom.Nodus` → `dom.DomNode`, `.identitas` → `.identity` (DELIVERY §5.2).
 # This module consumes tela:dom DIRECTLY through the documented host seam —
 # the spec-locked shape `mount(dom.Scope, View, Theme)` per

@@ -252,63 +252,52 @@ exempla: `exempla/thema.fab`.
 
 Design record: [`docs/design/browser-lifecycle.md`](docs/design/browser-lifecycle.md).
 Stage 3 adds the interactive layer over the locked static renderer: the pure
-behavior carriers in the kernel (`Eventum`/`Effectus`/`Renovatio`, U1
-`4ca331a`), a new flat browser module owning the mount/update/dispose
-lifecycle + hydration over the `web:dom` host seam, a DOM shim for the node
-runtime gate, and the segmented-control interaction proof.
+behavior carriers in the kernel (`EventName`/`Effect`/`Update`, U1
+`4ca331a`), a flat browser module owning the mount/update/dispose lifecycle and
+hydration over the Tela-owned `tela:dom` seam, a DOM shim for the node runtime
+gate, and the segmented-control interaction proof.
 
 - **Browser-module conventions.** The browser module `src/browser.fab`
-  (`tela:browser`, U2 `9f23095`) owns the mount/update/dispose lifecycle.
-  The **pinned seam call shape** (policy (b) English renderer/host verbs;
-  behavior-design §5) as landed: `mount(Scope, Visus, Thema) → Mounted ∪
-  null`, `replace(Mounted, Visus) → Renovatio ∪ null`, `dispose(Mounted) →
-  void`. The spec sketch's `dom.Scope` is carried by tela:browser's own
-  `Scope { selector, textus_praesens }` handle: the en→la `web:dom` import
-  was **blocked** in the recorded Radix probe (PARSE001/SEM002 —
-  `fix:web-dom-locale`), so the module does **not** import `web:dom` and
-  the DOM surface binds at the **harness level** (the dom-shim binds the
-  `webDom*` surface). `void` is the en void type (the reader pack maps
-  `vacuum = "void"`), not `vacua`. `Mounted` carries host state (scope,
-  mounted root, current `Visus`, active theme, render plan
-  `textus_markup`/`textus_css`, identity index, hydration diagnostics,
-  binding plan, subscription list, modeled focus). The module-local
-  carriers are `Scope`/`Radiculum`/`Subscriptio`/`Ligamen`; the hydration
-  policy lives in exported G4-safe pure fns (`parse_identitates`,
-  `elementum_tag`, `quotiens`, `identitates_duplicatae`,
-  `ligamen_status`, `diagnosia_hydrationis`). The kernel owns the pure
-  carriers only — Faber-Latin protocol spellings `Eventum { nomen }`,
-  `union Effectus` (`Restitue`/`Dirige`/`Ancora`, each keyed by
-  `identitas`), `Renovatio { Visus visus, list<Effectus> effectus }`, with
-  kernel-owned constructors (`eventum`, `restitue`, `dirige`, `ancora`,
-  `renovatio`) and the `effectus_identitas` accessor. The message-typed
-  behavior plan is **app-typed** (radix D1 blocks generic user-type
-  construction — never kernel-generic; the campaign's conceptual
-  `mount(Scope, Program, Theme)` decomposes at the app boundary, attaching
-  through the `data-tela` seam). Never ambient global document shortcuts —
-  DOM operations flow through the `Scope`.
-- **Escalation markers (G4/dialect).** `fix:g4` — WARN014 snapshot skip on
-  public signatures referencing imported sibling types; **landed
-  observation**: the pinned seam fns `mount`/`replace` (imported `tela`
-  types in signatures) are export-skipped for consumers — the G4-safe pure
-  policy fns (string/list signatures) stay exported for the check-time
-  exempla, and the harness-assembly workaround binds the `webDom*` surface
-  directly, so the snapshot does not apply at runtime. `fix:web-dom-locale`
-  — en→la provider-module locale/dialect propagation at `radix check`
-  (PARSE001-family, the CODEGEN001 mechanism): **attempted and failed** in the
-  recorded probe; the landed fallback is the harness-level DOM
-  binding (dom-shim binds the `webDom*` surface); **never re-author a
-  `web:dom` copy inside tela**. `fix:prim-nullable` (NEW) — a primitive
-  `∪ null` const/var annotation and a `!` unwrap of a primitive nullable do
-  not parse in named fn bodies (PARSE030/PARSE001); workaround = null
-  checks against the call + `coalesce ""`.
+  (`tela:browser`, U2 `9f23095`, U6 seam restoration, WSI U4 flip) imports
+  `tela:tela` and `tela:dom` directly. The live seam is
+  `mount(dom.Scope, tela.View, tela.Theme) → Mounted ∪ null`,
+  `replace(Mounted, tela.View) → tela.Update ∪ null`, and
+  `dispose(Mounted) → void`. `dom.Scope` is the Tela-owned browser seam
+  type; callers construct it through `dom.scope(selector)`, and hydration
+  reads the typed `dom.snapshot(scope)`. The removed tela-local `Scope`/
+  `textus_praesens` carrier is not a supported authoring shape. `Mounted`
+  carries the scope, mounted root, current view, active theme, render plan,
+  identity index, hydration diagnostics, binding plan, subscriptions, and
+  modeled focus. The module-local carriers are `RegionRoot`,
+  `EventSubscription`, and `Binding`; the hydration policy is exposed through
+  the current pure functions `parse_identities`, `element_tag`,
+  `count_occurrences`, `duplicate_identities`, `binding_status`,
+  `hydration_diagnostics`, `identities_from_nodes`, `tags_from_nodes`,
+  `tag_name`, and `tag_at`. The kernel owns only the pure non-generic
+  behavior carriers; the message-typed behavior plan remains app-typed and
+  attaches through the `data-tela` seam. Never use ambient global document
+  shortcuts — DOM operations flow through an explicit `Scope`.
+- **Export and workaround state.** The `fix:g4` WARN014 workaround for
+  imported-sibling signatures is removed for `tela:browser`: `mount` and
+  `replace` export through the live file interface after the radix file-
+  interface delivery. The remaining `dom.on*` handler-typed WARN014 notes
+  belong to the provider's handler exports and are recorded in `src/dom.fab`;
+  they are not a tela:browser export failure. The former
+  `fix:web-dom-locale` and browser `fix:g4` marker sites were removed after
+  the Tela seam flip. `fix:prim-nullable` remains only for the narrow
+  primitive nullable forms recorded in `src/browser.fab`; `fix:codegen001` and
+  `fix:snapshot-name-collision` remain explicit where their module headers
+  record them. Do not recreate a `web:dom` provider copy
+  inside Tela; `tela:dom` owns the converted source and keeps the `webDom*`
+  runtime-binding names.
 - **DOM shim + check-mount harness.** The node runtime gate runs the
-  mount/update proofs through `scripta/dom-shim.ts` (U2) — a minimal
-  in-memory DOM implementing the `webDom*` runtime-binding surface (the
-  WEB5 `fake-dom.mjs`/`web-shim-dom.js` precedent). **Bounded fidelity**:
-  state-level assertions (selection / ARIA / live-region / subscription /
-  focus / scroll intent), not real layout; a real-browser driver is out of
-  scope. `scripta/check-mount` (U4) is the interaction gate: it assembles
-  the interactive composition and runs the scripted sequence under `node`,
+  mount/update proofs through `scripta/dom-shim.ts` and
+  `scripta/check-mount`. The shim implements the `webDom*` runtime-binding
+  surface, while the generated module consumes `tela:dom` types and
+  operations. **Bounded fidelity**: state-level assertions (selection / ARIA
+  / live-region / subscription / focus / scroll intent), not real layout; a
+  real-browser driver is out of scope. The interaction gate assembles the
+  interactive composition and runs the scripted sequence under `node`,
   fail-closed.
 - **Interaction-gate proof shape.** The segmented-control scripted sequence
   (U3/U4): pointer click on an unselected segment selects (previous
@@ -320,29 +309,24 @@ runtime gate, and the segmented-control interaction proof.
   subscriptions (a post-dispose event dispatch does nothing). Assertions
   execute under `node` — any failure or non-zero exit FAILS the gate.
 - **Synchronous-only posture.** Stage 3 proofs are synchronous only: no
-  `@ futura`, no `dom.fetch_text`, no async event sources, no
-  fetch-driven/async update claim (the TS async gap is a named Stage 3
-  input, routed — see the design record §6). A unit that hits an
-  async-shaped need records the workaround + escalation To mind; it never
-  weakens the contract and never waits.
-- **`fix:<id>` discipline inventory (Stage 3).** Markers: `fix:web-dom-locale`
-  (NEW, landed — attempt failed, harness-level fallback), `fix:g4`,
-  `fix:g5`, `fix:prim-nullable` (NEW — primitive nullable bindings in fn
-  bodies), `fix:codegen001`, `fix:ts-emitter`,
-  `fix:snapshot-nomen-collision`. Every applied workaround is marked at the
-  site in the module header; **removal = grep-replace after each radix fix
-  lands** (e.g. `grep -rn 'fix:web-dom-locale' src/`). A colliding locked
-  verb is **escalated, never silently renamed** (the G5/G6 rule).
+  `@ future`, no `dom.fetch_text`, no async event sources, and no
+  fetch-driven/async update claim (the TS async gap is a named Stage 3 input,
+  routed in the design record §6). A unit that hits an async-shaped need
+  records the workaround + escalation To mind; it never weakens the contract
+  and never waits.
+- **`fix:<id>` discipline inventory.** Every applied workaround is marked at
+  the site in the module header; removal is a grep-replace after each radix
+  fix lands. A colliding locked verb is escalated, never silently renamed
+  (the G5/G6 rule).
 - **Determinism posture.** Determinism applies to **static/mount-time
   serialization only** (the segmented control's initial HTML + full cascade
   — byte-identical double-build, fail-closed); interactive state is
   time-variant, so the interaction gate is a scripted deterministic
-  assertion sequence, not a racy timing test. R2 note: when CODEGEN001
-  lands, the Rust-lane capture must equal the TS-lane capture
-  (stage-2-determinism.md §3).
-- **Hydration + the app-typed plan.** The concrete message type +
-  `Vinculum`-shaped bindings are built app-side in the benchmark (U3),
-  keyed to the `data-tela` identities the static renderer emits
+  assertion sequence, not a racy timing test. R2 remains a TS-lane record
+  until the separate Rust codegen blocker is resolved.
+- **Hydration + the app-typed plan.** The concrete message type and
+  message-producing bindings are built app-side in the benchmark (U3), keyed
+  to the `data-tela` identities the static renderer emits
   (identity-hydration.md §7). Hydration attaches to matching `data-tela`
   nodes; a mismatch diagnoses + replaces the mismatched region from the
   View; duplicate `data-tela` values are diagnosed — never a silent bind

@@ -3,18 +3,17 @@
 **Record**: `tela-s3-u5-docs` + `tela-s4-u6-seam-restoration` — the browser
 mount/update/dispose lifecycle + the Branch B behavior plan written down for
 later Hands, reviewers, and the Stage 4 independent-extension gate.
-**Status**: active (U6 seam restoration reconciled — the CTO10-3 gate is
-open and the seam flips to the real `dom.Scope` with snapshot-based
-hydration; §12).
+**Status**: active (Stage 4 U6 seam restoration and the WSI U4
+`tela:dom` flip are reconciled; the current seam is `dom.Scope` with
+snapshot-based hydration — see §12).
 **Sources**: the landed Stage 3 U1 kernel emission (`src/tela.fab`,
-`4ca331a`), the Stage 3 delivery spec (Normalized Spec; Async-gap Routing;
-Coordination Constraints; Escalation Path), `stage-0-behavior-design.md`
-§1/§3/§4/§5, `docs/design/identity-hydration.md` §6/§7,
-`stage-0-protocol-policies.md` policies (b)/(d), `CAMPAIGN.md` §6/§7, and
-the Stage 1/2 records (`stage-2-determinism.md` R2 note; closeouts).
-**Status**: active (Stage 3 U5 docs unit, reconciled against the landed U2
-emission). U1 landed (`4ca331a`), U2 landed (`9f23095`) — see §12
-(Reconciliation state) for the deviation ledger. U3 pending.
+`4ca331a`), the landed browser seam (`src/browser.fab`, `1423666`), the
+Tela-owned DOM conversion (`src/dom.fab`, `a2c8a2c`), the Stage 3 delivery
+spec (Normalized Spec; Async-gap Routing; Coordination Constraints;
+Escalation Path), `stage-0-behavior-design.md` §1/§3/§4/§5,
+`docs/design/identity-hydration.md` §6/§7, `stage-0-protocol-policies.md`
+policies (b)/(d), `CAMPAIGN.md` §6/§7, and the Stage 1/2 records
+(`stage-2-determinism.md` R2 note; closeouts).
 
 This record documents the Stage 3 lifecycle surface **as the delivery locks
 it** and **as the U1/U2 emissions landed them** (the landed emission is the
@@ -26,7 +25,8 @@ see §12 for the deviation ledger).
 ## 1. Pinned seam call shape
 
 The browser module `tela:browser` (`src/browser.fab`, U2) owns the
-mount/update/dispose lifecycle + hydration over the `web:dom` host seam.
+mount/update/dispose lifecycle + hydration over the Tela-owned `tela:dom`
+seam.
 The **pinned seam call shape** (behavior-design §5 "Stage 3 pins the exact
 seam call shape"; policy (b) renderer/host verbs English; campaign §7) as
 **landed by U2 (`9f23095`)**:
@@ -39,20 +39,16 @@ dispose(Mounted)           → void
 
 - The English verbs (`mount`/`replace`/`dispose`), the three-argument shape,
   and the fail-closed nullable returns are unchanged from the spec sketch.
-- **`dom.Scope` → the REAL `dom.Scope`** (restored — Stage 4 U6
-  `tela-s4-u6`): the spec-locked sketch read `mount(dom.Scope, View, Theme)`.
-  The en→la `web:dom` import was blocked on in-tree radix 0.80.0
-  (PARSE001/SEM002 at any real use), so U2 carried the blocked `dom.Scope`
-  type as tela:browser's own opaque `Scope` handle (`{ selector,
-  textus_praesens }`). The CTO10-3 gate opened: cds-u5 (cross-package
-  locale propagation, radix `e32397630`) + cds-u6 (file-interface exports,
-  radix `2103f8a7f`) landed, and U6 flips the seam back to the real
-  `dom.Scope` (`mount(dom.Scope, View, Theme)` — the pinned shape). The
-  opaque `Scope` carrier and its `textus_praesens` field are REMOVED — the
-  pre-existing hydration state is READ from the DOM through the provider's
-  typed snapshot (`web:dom.snapshot`, faber-web `0d79f5b`), never carried.
-  The marker rows for the two workarounds flip to removed (§11); the
-  grep-replace predicates are verified (no live marker site in `tela/src`).
+- **`dom.Scope` is the real Tela-owned seam** (restored in Stage 4 U6,
+  then carried through the WSI U4 `tela:dom` flip). The current
+  `tela:browser` module imports `tela:dom` and uses
+  `mount(dom.Scope, View, Theme)`. The removed opaque `Scope` carrier and its
+  `textus_praesens` field are not part of the live API. Callers construct a
+  scope through `dom.scope(selector)`; pre-existing hydration state is read
+  through the typed `dom.snapshot(scope)`, never carried in `Mounted`.
+  The former `fix:web-dom-locale` and browser `fix:g4` marker sites were
+  removed; the current source headers and §11 record the remaining provider
+  handler-export and code-generation boundaries.
 - **`dispose(Mounted) → void`** (reconciled deviation): the spec/U5 sketch
   read `→ vacuum`. `void` is the en-locale void type (the reader pack maps
   `vacuum = "void"`); `vacua` is the empty-collection value, not a type.
@@ -134,7 +130,7 @@ consumer-imported union's variants can be matched (the G3-family
 imported-union pattern does not bind from a consumer; recorded in the
 kernel header), so consumers read effect keys through the accessor.
 
-The carriers are **closure-free and `web:dom`-free** — plain values
+The carriers are **closure-free and host-seam-free** — plain values
 (construct, combine, read fields, render; no behavior smuggled in) — so the
 kernel's G4-safe flat stdlib-only shape is preserved. The kernel explicitly
 does **NOT** own `EventBinding`/`Message`/`Program` (D1 + the concrete-message-
@@ -164,10 +160,10 @@ On mount into a scope whose root already contains Tela-rendered markup
 
 The policy lives in exported G4-safe pure functions (string/list signatures
 only — they stay on the exported file interface) that `mount` composes and
-the check-time exempla asserts directly. **Stage 4 U6 (the seam flip)**: the
-pre-existing identity set + per-identity tag names come from the provider's
-TYPED hydration snapshot (`web:dom.snapshot`, faber-web `0d79f5b` — one
-`Nodus { identity, tag }` per data-tela descendant), so the policy fns'
+the check-time exempla asserts directly. **Stage 4 U6 plus the WSI U4 seam
+flip**: the pre-existing identity set + per-identity tag names come from the
+Tela-owned typed hydration snapshot (`tela:dom.snapshot`, one
+`DomNode { identity, tag }` per data-tela descendant), so the policy fns'
 present input is the **aligned tag-index** (`present_tags`) — the
 `textus_praesens` markup string is gone (no textual DOM parse):
 
@@ -177,8 +173,8 @@ element_tag(string markup, string identity) → string ∪ null  # the identity 
 tag_name(string tag) → string                        # open-tag → tag name ("<button …>" → "button")
 count_occurrences(list<string> collection, string name) → int    # occurrence count
 duplicate_identities(list<string> collection) → list<string>    # distinct identities appearing > once
-identities_from_nodes(list<dom.Nodus> ∪ null) → list<string>     # snapshot → the present identity set
-tags_from_nodes(list<dom.Nodus> ∪ null) → list<string>            # snapshot → the aligned tag names
+identities_from_nodes(list<dom.DomNode> ∪ null) → list<string>     # snapshot → the present identity set
+tags_from_nodes(list<dom.DomNode> ∪ null) → list<string>            # snapshot → the aligned tag names
 tag_at(identity, present_identities, present_tags) → string  # the present tag for an identity
 binding_status(identity, view_identities, present_identities, markup, present_tags) → string  # "bind" | "create"
 hydration_diagnostics(markup, view_identities, present_identities, present_tags) → list<string>
@@ -201,13 +197,12 @@ hydration_diagnostics(markup, view_identities, present_identities, present_tags)
   `foreign:<id>` (a pre-existing identity absent from the View), and
   `changed:<id>` (present in both, unique in both, but the element TAG NAMES
   differ). **Fidelity narrowing (recorded honestly)**: the landed
-  `web:dom.snapshot` carries identity + tag NAME only (faber-web `0d79f5b`
-  chose `tagName.toLowerCase()`), so `changed` fires on a tag-name mismatch,
-  not on an attribute-level open-tag shape difference. The U2-era
-  attribute-shape `changed` (e.g. a same-tag class change) is superseded; the
-  mismatch proof fixtures moved to tag-name mismatches. The full open-tag
-  shape comparison would require the snapshot to carry attributes — a
-  future faber-web host extension if a consumer needs it (overlap rule).
+  `tela:dom.snapshot` carries identity + tag NAME only, so `changed` fires on
+  a tag-name mismatch, not on an attribute-level open-tag shape difference.
+  The U2-era attribute-shape `changed` (e.g. a same-tag class change) is
+  superseded; the mismatch proof fixtures moved to tag-name mismatches. The
+  full open-tag shape comparison would require the snapshot to carry
+  attributes, which remains outside the current seam contract.
 
 ## 4. Update strategy
 
@@ -286,42 +281,31 @@ reviewers see it without re-reading the campaign:
 
 ## 7. Host-seam consumption
 
-- **`web:dom` consumed directly through the documented host seam (Stage 4
-  U6 — the flip).** `tela:browser` imports `web:dom` (`import from "web:dom"
-  public * ut dom`) and consumes the REAL seam: `dom.Scope` in signatures/
-  field types/call sites, the `dom.scope(selector)` constructor, and the
-  typed hydration snapshot `dom.snapshot(scope)`. The en→la import was
-  **blocked** on in-tree radix 0.80.0 (PARSE001/SEM002 at any real use —
-  calls, type inference, construction, class-field types); the CTO10-3 gate
-  opened with cds-u5 (cross-package locale propagation, radix `e32397630`)
-  + cds-u6 (file-interface exports, radix `2103f8a7f`), and the blocked
-  posture is REMOVED. The harness-level `webDom*` binding posture (U2–U5)
-  is reduced to the **fake-DOM Node host env**: the dom-shim
-  (`tela/scripta/dom-shim.ts`) implements the same `webDom*`
-  runtime-binding surface the real host binds, and the assembled runner
-  binds it — the seam shape the module consumes is now the provider's
-  (Scope/Nodus/scope/snapshot), not tela's own carriers. web:dom is NEVER
-  re-authored inside tela (the flip kept that invariant).
+- **`tela:dom` is consumed directly through the documented host seam
+  (Stage 4 U6 restoration plus WSI U4 flip).** `tela:browser` imports
+  `tela:dom` (`import from "tela:dom" public * as dom`) and consumes the
+  real seam: `dom.Scope` in signatures and fields, `dom.scope(selector)` for
+  caller-side construction, and the typed hydration snapshot
+  `dom.snapshot(scope)`. The old en→la `web:dom` blocker and its
+  `fix:web-dom-locale` marker are historical; the current Tela package owns
+  the English `tela:dom` conversion. The runtime binding names remain
+  `webDom*`, so the dom-shim and the assembled runner provide those names at
+  the host boundary. The seam types are `Scope`/`DomNode`, not tela's old
+  opaque carriers, and the package does not import or re-author a `web:dom`
+  provider.
 - **No ambient global document shortcuts** for descendant lookup
-  (behavior-design §5; `faber-web/README.md`) — DOM operations flow through
-  an explicit `Scope`.
-- **`faber-web` is read-only in this campaign** — consumed through
-  documented host seams, not edited. The one seam extension the tela
-  hydration contract needed (the typed snapshot op) landed as a **faber-web
-  host extension** (`0d79f5b` — `web:dom.snapshot` → `webDomSnapshot`,
-  routed separately per the overlap rule, not a tela-campaign edit).
-- **Locale/dialect posture (RESOLVED — cds-u5)**: `faber-web` is authored
-  in the Latin dialect (`faber.toml` `[reader] locale = "la"`), targets
-  **ts only**. The en-locale tela package importing `web:dom` cross-package
-  was **blocked** by the provider-module locale-propagation family
-  (PARSE001 — the CODEGEN001 mechanism; SEM002 at qualified class-field
-  types); cds-u5 fixed the propagation (an import target's reader surface
-  resolves from ITS OWN chain — frontmatter > package locale > the importing
-  module's pack > Latin default). Re-verified live at the U6 gate: the
-  en-locale `web:dom` import checks + emits clean at real use (call sites,
-  construction, class-field types, fn signatures, the snapshot route).
-
-## 8. DOM-shim proof vehicle + bounded fidelity
+  (behavior-design §5) — DOM operations flow through an explicit `Scope`.
+- **`faber-web` remains a read-only source reference for the conversion**;
+  Tela owns the live `tela:dom` source and its host-binding contract. The
+  typed snapshot route is part of `tela:dom`; the runtime implements it as
+  `webDomSnapshot`.
+- **Locale/dialect posture**: the live Tela browser modules are authored in
+  the English reader surface and the browser lane is TypeScript-only. The
+  earlier cross-package locale-propagation blocker was cleared by the radix
+  delivery and then superseded by the WSI conversion to `tela:dom`; current
+  checks and emits use the Tela-owned English seam at real call sites,
+  constructors, class-field types, function signatures, and the snapshot
+  route.
 
 ## 8. DOM-shim proof vehicle + bounded fidelity
 
@@ -330,14 +314,13 @@ convention) through a **DOM shim** (`tela/scripta/dom-shim.ts`, U2
 `9f23095`): a minimal in-memory DOM implementing the `webDom*`
 runtime-binding surface — the WEB5 fixture precedent
 (`examples/browser-app/tests/fake-dom.mjs` + the `web-shim-dom.js` binding
-facade). **Stage 4 U6**: the shim implements the typed hydration snapshot
-read (`webDomSnapshot`, mirroring faber-web `0d79f5b`) + the bare
-`Scope`/`Nodus` types the emitted module references; mount reads the
-planted pre-existing markup through the snapshot (the real provider route
-shape — the driver plants the present DOM, then the scope is constructed
-through the provider seam `webDomScope`, and mount derives the hydration
-state from `dom.snapshot`). Landed driver surface (U4 `check-mount` builds
-on these):
+facade). **Stage 4 U6 plus the WSI U4 flip**: the shim implements the typed
+hydration snapshot read (`webDomSnapshot`) and the `Scope`/`DomNode` seam
+shape the emitted module references. Mount reads the planted pre-existing
+markup through the snapshot; the driver constructs the scope through the
+provider binding and mount derives the hydration state from
+`tela:dom.snapshot`. Landed driver surface (U4 `check-mount` builds on
+these):
 
 - `parseFragment(markup)` — the bounded HTML parser for the serializer's
   markup shape (elements + single-quoted attributes + `data-tela`
@@ -385,8 +368,9 @@ inventing a premature interface.
   non-zero exit.
 - **R2 note** (`stage-2-determinism.md` §3): when the CODEGEN001
   Rust-lane fix lands, the Rust-lane capture must equal the TS-lane
-  capture (sha equality); Rust emit of a `web:dom`-importing module is
-  doubly out (`web:dom` is ts-only) — recorded, never the gate. **Stage 4
+  capture (sha equality); Rust emit of a `tela:dom`-importing module is
+  doubly out (the Tela browser seam is TypeScript-only) — recorded, never
+  the gate. **Stage 4
   U6 observation (recorded honestly)**: cds-u5 fixed the provider-module
   locale-propagation half, but the Rust lane remains BLOCKED on a NEW
   CODEGEN001 manifestation (`definition id … could not be resolved during
@@ -406,14 +390,14 @@ predicates (cds-u5 + cds-u6) are executed — the rows below flip to REMOVED.
 
 | Defect | Marker | Posture |
 | --- | --- | --- |
-| `web:dom` locale/dialect gap (en→la) | `fix:web-dom-locale` | **REMOVED (Stage 4 U6)** — cds-u5 (cross-package locale propagation, radix `e32397630`) landed; the en→la `web:dom` import re-verified green at real use; `tela:browser` consumes `dom.Scope` directly; the marker has no live site in `tela/src` (grep-verified) |
+| historical `web:dom` locale/dialect gap (en→la) | `fix:web-dom-locale` | **REMOVED** — the radix propagation fix cleared the original blocker, and the WSI U4 flip moved the live browser seam to the Tela-owned English `tela:dom` module; the marker has no live site in `tela/src` (grep-verified) |
 | imported-union variant matching from a consumer | `fix:sem001` | **Landed (U1, `4ca331a`; row added at the Stage 3 closeout)**: a consumer-side `match` over an imported union's variants does not bind — the kernel owns the only `Effect` matcher (`effect_identity`, `src/tela.fab:970` + module-header marker `src/tela.fab:913`); consumers read effect keys through the accessor. Removal = grep-replace after the radix fix lands |
-| G4 — WARN014 snapshot skip on public signatures referencing imported sibling types | `fix:g4` | **REMOVED (Stage 4 U6)** — cds-u6 (file-interface exports, radix `2103f8a7f`) landed; `tela:browser`'s `mount`/`replace` export cleanly (no WARN014 on the tela-side surface; the remaining `dom.*` WARN014s at the import are the la provider's OWN handler-typed exports, not tela's — the seam surface tela consumes resolves). The marker has no live site in `tela/src` (grep-verified) |
+| G4 — WARN014 snapshot skip on public signatures referencing imported sibling types | `fix:g4` | **REMOVED (Stage 4 U6)** — cds-u6 (file-interface exports, radix `2103f8a7f`) landed; `tela:browser`'s `mount`/`replace` export cleanly (no WARN014 on the tela-side surface; the remaining `dom.*` WARN014s at the import belong to the DOM provider's own handler-typed exports, not Tela's — the seam surface Tela consumes resolves). The marker has no live site in `tela/src` (grep-verified) |
 | **primitive nullable bindings in fn bodies (NEW parser observation)** | **`fix:prim-nullable`** | **Extended (Stage 4 U6)**: a `lista<X> ∪ nihil` cannot call methods directly in an en fn body on this radix (the non-null / optional chain Member resolution does not route to list methods). Workaround (landed): bind the `∪ null`, check `is null`, then narrow inside `if nodes not is null { … }` to a non-null copy (the triga `vp_result![k]` precedent extended); method calls run on the copy |
-| CODEGEN001 — Rust emit-across-imports | `fix:codegen001` | **PARTIAL (Stage 4 U6)**: the provider-module locale-propagation half is fixed (cds-u5); the Rust lane remains blocked on a NEW manifestation (`definition id … could not be resolved during code generation`); `web:dom` is ts-only so Rust emit of a browser module is doubly out; TS lane is the proven lane; R2 sha-equality re-checked on the first post-fix run |
+| CODEGEN001 — Rust emit-across-imports | `fix:codegen001` | **PARTIAL**: the provider-module locale-propagation half is fixed; the Rust lane remains blocked on the recorded imported-definition manifestation, and the `tela:dom` browser seam is TypeScript-only, so Rust emit of a browser module is doubly out; the TS lane is the proven lane |
 | G5/G6 — verb/identifier collisions (`mount`/`replace`/`dispose` + new identifiers) | `fix:g5` | Probed collision-free (U2: `scope`/`region_root`/`subscription`/`binding`/`focus_held`/`focus_target`/`parse_identities`/`element_tag` — NONE; U6: `tag_name`/`tag_at`/`identities_from_nodes`/`tags_from_nodes` — NONE); a colliding verb is escalated, never silently renamed |
 | TS-emitter observations | `fix:ts-emitter` | Workarounds held; fragile against emitter changes |
-| snapshot-name-collision | `fix:snapshot-name-collision` | Stage 2 workaround held; new identifiers avoid kernel type names (U6: the seam types `Scope`/`Nodus` are imported from web:dom, never re-declared) |
+| snapshot-name-collision | `fix:snapshot-name-collision` | Stage 2 workaround held; new identifiers avoid kernel type names (the seam types `Scope`/`DomNode` are imported from `tela:dom`, never re-declared in `tela:browser`) |
 
 ## 12. Reconciliation state (U1 + U2 + U3 landed; all reconciled)
 
@@ -434,7 +418,7 @@ predicates (cds-u5 + cds-u6) are executed — the rows below flip to REMOVED.
      `identitas_focus_optata`). `Mounted` itself STAYS English (operator).
   3. **Value carriers** — `RegionRoot` (was `Radiculum`),
      `EventSubscription` (was `Subscriptio` — NOT `Subscription`, which
-     collides with the web:dom seam type in the TS assembly),
+     collides with the Tela DOM seam type in the TS assembly),
      `Binding` (was `Ligamen`); status strings `"bind"`/`"create"` (was
      `"ligare"`/`"creare"`); diagnostic prefixes `duplicate:`/`foreign:`/
      `changed:` (was `duplicata:`/`extranea:`/`muta:`); the tela-owned
@@ -505,10 +489,11 @@ predicates (cds-u5 + cds-u6) are executed — the rows below flip to REMOVED.
   4. **`fix:<id>` inventory (§11)** — gained `fix:sem001` (the kernel owns
      the only `Effect` matcher, `effect_identity`) at the closeout
      (auditor-4 P2-1).
-- **U6 emission (`tela-s4-u6`) — the seam restoration, reconciled.** The
-  CTO10-3 gate opened (cds-u5 `e32397630` + cds-u6 `2103f8a7f` + the
-  faber-web snapshot op `0d79f5b`); this record + `browser.fab` reflect the
-  flip:
+- **U6 emission (`tela-s4-u6`) — the seam restoration, reconciled; WSI U4
+  is the current provider ownership.** The CTO10-3 gate opened (cds-u5
+  `e32397630` + cds-u6 `2103f8a7f`). The later WSI U4 flip moved the live
+  browser seam from the historical `web:dom` provider to Tela's `tela:dom`
+  source; this record and `browser.fab` now use the current names:
   1. **Seam call shape restored** — `mount(dom.Scope, View, Theme)`, the
      spec-locked shape (§1). The opaque `Scope { selector,
      textus_praesens }` carrier + the `scope` constructor are REMOVED; the
@@ -521,13 +506,12 @@ predicates (cds-u5 + cds-u6) are executed — the rows below flip to REMOVED.
      `changed` diagnostic fires on a tag-name mismatch (the landed snapshot's
      fidelity — attribute-level open-tag shape comparison superseded,
      recorded honestly in §3).
-  4. **Markers flipped (§11)** — the two removal predicates executed
-     (grep-verified: no live marker site in `tela/src`); the R2 note
-     updated (the Rust lane's CODEGEN001 changed manifestation after
-     cds-u5 — recorded, §10).
-  5. **Harness surface** — the dom-shim implements `webDomSnapshot` + the
-     bare `Scope`/`Nodus` types; the driver constructs scopes through the
-     provider seam and mount reads the planted pre-existing markup through
+  4. **Markers flipped (§11)** — the removal predicates executed
+     (grep-verified: no live marker site in `tela/src`); the R2 note records
+     the separate Rust-lane CODEGEN001 manifestation (§10).
+  5. **Harness surface** — the dom-shim implements `webDomSnapshot` and the
+     `Scope`/`DomNode` seam shape; the driver constructs scopes through the
+     provider binding and mount reads the planted pre-existing markup through
      the snapshot (§8).
 
 ## Non-goals

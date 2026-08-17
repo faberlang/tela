@@ -3,8 +3,8 @@
 #
 # SOURCE: faber-web/src/dom.fab (la) converted to the English-first surface
 # (web-surface-import U1, web-import-u1-tela-dom-source; DELIVERY.md §U1 +
-# §5.2 naming resolutions). The la `web:dom` provider dependency leaves
-# tela/src once the browser flip lands (U4); the runtime symbols (`webDom*`)
+# §5.2 naming resolutions). The old la `web:dom` provider dependency has
+# left `tela/src` after the browser flip (U4); the runtime symbols (`webDom*`)
 # are KEPT (the documented host-binding contract — §5.2). This module is
 # **import-free** (the G4-safe flat shape, mirroring the kernel).
 #
