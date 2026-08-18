@@ -1,0 +1,15 @@
+[package]
+name = "tela-dom-export"
+version = "0.0.0"
+edition = "2026"
+
+[paths]
+source = "."
+entry = "probe.fab"
+
+[build]
+kind = "bin"
+target = "ts"
+
+[reader]
+locale = "en"

@@ -47,6 +47,7 @@ class Scope {
     string selector = ""
 }
 
+@ public
 class Element {
     string selector = ""
 }
@@ -64,23 +65,27 @@ class DomNode {
     string local = ""
 }
 
+@ public
 class DomEvent {
     string kind = ""
     bool default_prevented = false
 }
 
+@ public
 class FrameState {
     int frame = 0
     f32 time_ms = 0.0
     f32 delta_ms = 0.0
 }
 
+@ public
 class ResizeState {
     int width = 0
     int height = 0
     f32 device_pixel_ratio = 1.0
 }
 
+@ public
 class KeyboardState {
     string kind = ""
     string key = ""
@@ -92,6 +97,7 @@ class KeyboardState {
     bool meta = false
 }
 
+@ public
 class PointerState {
     string kind = ""
     f32 x = 0.0
@@ -102,10 +108,12 @@ class PointerState {
     bool primary = false
 }
 
+@ public
 class FocusState {
     bool focused = false
 }
 
+@ public
 class PointerLockState {
     bool supported = false
     bool locked = false
@@ -113,10 +121,12 @@ class PointerLockState {
     bool target_matches = false
 }
 
+@ public
 class Subscription {
     int id = 0
 }
 
+@ public
 class SubmitOptions {
     bool prevent_default = true
 }
@@ -151,10 +161,12 @@ type FocusHandler = (FocusState) → void
 
 type PointerLockHandler = (PointerLockState) → void
 
+@ public
 fn scope(string selector) → Scope {
     return Scope { selector = selector }
 }
 
+@ public
 fn element(string selector) → Element {
     return Element { selector = selector }
 }
@@ -169,6 +181,7 @@ fn query(Scope scope, string selector) → Element ∪ null {
 
 # Scoped require traps on a missing descendant. Runtime binding:
 # webDomRequire(scope, selector).
+@ public
 fn require(Scope scope, string selector) → Element {
     print scope
     return Element { selector = selector }
@@ -192,11 +205,13 @@ fn snapshot(Scope scope) → list<DomNode> ∪ null {
     return null
 }
 
+@ public
 fn text_set(Element element, string value) → void {
     print element
     print value
 }
 
+@ public
 fn attr_set(Element element, string name, string value) → void {
     print element
     print name
@@ -208,11 +223,13 @@ fn attr_remove(Element element, string name) → void {
     print name
 }
 
+@ public
 fn class_add(Element element, string class_name) → void {
     print element
     print class_name
 }
 
+@ public
 fn class_remove(Element element, string class_name) → void {
     print element
     print class_name
@@ -223,6 +240,7 @@ fn class_toggle(Element element, string class_name) → void {
     print class_name
 }
 
+@ public
 fn on(Element element, string event_name, EventHandler handler) → Subscription {
     print element
     print event_name
@@ -254,6 +272,7 @@ fn on_input(Element element, InputHandler handler) → Subscription {
     return Subscription { id = 0 }
 }
 
+@ public
 fn on_submit(Element element, SubmitOptions options, SubmitHandler handler) → Subscription {
     print element
     print options
@@ -261,16 +280,19 @@ fn on_submit(Element element, SubmitOptions options, SubmitHandler handler) → 
     return Subscription { id = 0 }
 }
 
+@ public
 fn on_frame(FrameHandler handler) → Subscription {
     print handler
     return Subscription { id = 0 }
 }
 
+@ public
 fn on_resize(ResizeHandler handler) → Subscription {
     print handler
     return Subscription { id = 0 }
 }
 
+@ public
 fn on_keyboard(Element element, string event_name, KeyboardHandler handler) → Subscription {
     print element
     print event_name
@@ -278,6 +300,7 @@ fn on_keyboard(Element element, string event_name, KeyboardHandler handler) → 
     return Subscription { id = 0 }
 }
 
+@ public
 fn on_pointer(Element element, string event_name, PointerHandler handler) → Subscription {
     print element
     print event_name
@@ -285,6 +308,7 @@ fn on_pointer(Element element, string event_name, PointerHandler handler) → Su
     return Subscription { id = 0 }
 }
 
+@ public
 fn on_focus(Element element, string event_name, FocusHandler handler) → Subscription {
     print element
     print event_name
@@ -292,6 +316,7 @@ fn on_focus(Element element, string event_name, FocusHandler handler) → Subscr
     return Subscription { id = 0 }
 }
 
+@ public
 fn pointer_lock_state(Element element) → PointerLockState {
     print element
     return PointerLockState {
@@ -302,6 +327,7 @@ fn pointer_lock_state(Element element) → PointerLockState {
     }
 }
 
+@ public
 fn request_pointer_lock(Element element) → PointerLockState {
     print element
     return PointerLockState {
@@ -321,6 +347,7 @@ fn exit_pointer_lock() → PointerLockState {
     }
 }
 
+@ public
 fn on_pointer_lock(Element element, PointerLockHandler handler) → Subscription {
     print element
     print handler
