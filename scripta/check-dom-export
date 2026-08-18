@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# Prove the tela:dom public surface: a synthetic cross-package consumer
+# that names every live-used example symbol must check SEM006-free.
+#
+# Usage: ./scripta/check-dom-export
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROOF="$ROOT/proof/dom-export/probe.fab"
+
+if [[ -n "${RADIX_ROOT:-}" ]]; then
+  RADIX="$RADIX_ROOT"
+elif [[ -d "$ROOT/../radix/crates/radix" ]]; then
+  RADIX="$ROOT/../radix"
+else
+  RADIX="$ROOT/../../../radix"
+fi
+
+if [[ ! -d "$RADIX/crates/radix" ]]; then
+  echo "check-dom-export: missing radix checkout at $RADIX" >&2
+  exit 1
+fi
+
+RADIX_BIN="$RADIX/target/debug/radix"
+if [[ ! -x "$RADIX_BIN" ]]; then
+  (cd "$RADIX" && cargo build -q -p radix-module --bin radix)
+fi
+
+export FABER_LIBRARY_HOME="${FABER_LIBRARY_HOME:-$ROOT/..}"
+if [[ ! -f "$ROOT/src/dom.fab" ]]; then
+  echo "check-dom-export: missing $ROOT/src/dom.fab" >&2
+  exit 1
+fi
+if [[ ! -f "$PROOF" ]]; then
+  echo "check-dom-export: missing $PROOF" >&2
+  exit 1
+fi
+
+echo "check-dom-export: radix=$RADIX_BIN"
+echo "check-dom-export: FABER_LIBRARY_HOME=$FABER_LIBRARY_HOME"
+
+out="$("$RADIX_BIN" check --locale en "$PROOF" 2>&1)" || {
+  echo "$out" >&2
+  echo "check-dom-export: radix check failed on $PROOF" >&2
+  exit 1
+}
+
+if grep -E 'SEM006|import_module_private' <<<"$out"; then
+  echo "$out" >&2
+  echo "check-dom-export: SEM006 on live tela:dom surface" >&2
+  exit 1
+fi
+
+if ! grep -q "^ok:" <<<"$out"; then
+  echo "$out" >&2
+  echo "check-dom-export: missing ok: line on $PROOF" >&2
+  exit 1
+fi
+
+echo "$out"
+echo "check-dom-export: GREEN"

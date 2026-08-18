@@ -1,0 +1,82 @@
++++
+locale = "en"
++++
+
+# Cross-package consumer of tela:dom. Every live-used symbol from
+# examples/triga-drift-city, examples/triga-budapest, and
+# examples/hello-voxel is referenced here so an unmarked export is SEM006.
+# Handler fns are named, not invoked: importers still emit the recorded
+# WARN014 skip on the 9 `dom.on*` handler-typed exports.
+
+import from "tela:dom" public * as dom
+
+fn handle_frame(dom.FrameState frame) → void {
+    print frame.frame
+}
+
+fn handle_resize(dom.ResizeState resize) → void {
+    print resize.width
+}
+
+fn handle_key(dom.KeyboardState key) → void {
+    print key.code
+}
+
+fn handle_pointer(dom.PointerState pointer) → void {
+    print pointer.x
+}
+
+fn handle_focus(dom.FocusState focus) → void {
+    print focus.focused
+}
+
+fn handle_lock(dom.PointerLockState state) → void {
+    print state.locked
+}
+
+fn handle_submit(dom.Element form) → void {
+    print form
+}
+
+fn handle_event(dom.DomEvent event) → void {
+    print event.kind
+}
+
+fn probe_live_surface() → list<dom.Subscription> {
+    const dom.Scope made ← dom.scope("#probe")
+    const dom.Element extra ← dom.element(".extra")
+    const dom.Element root ← dom.require(made, ".root")
+    const dom.SubmitOptions opts ← dom.SubmitOptions { prevent_default = true }
+    const dom.PointerLockState lock ← dom.pointer_lock_state(root)
+    const dom.PointerLockState requested ← dom.request_pointer_lock(root)
+    print extra
+    print opts
+    print lock
+    print requested
+    print handle_frame
+    print handle_resize
+    print handle_key
+    print handle_pointer
+    print handle_focus
+    print handle_lock
+    print handle_submit
+    print handle_event
+    print dom.on_frame
+    print dom.on_resize
+    print dom.on_keyboard
+    print dom.on_pointer
+    print dom.on_focus
+    print dom.on_pointer_lock
+    print dom.on_submit
+    print dom.on
+    dom.text_set(root, "ok")
+    dom.attr_set(root, "data-ok", "1")
+    dom.class_add(root, "ready")
+    dom.class_remove(root, "pending")
+    const list<dom.Subscription> empty ← vacua
+    return empty
+}
+
+main {
+    print probe_live_surface()
+}
