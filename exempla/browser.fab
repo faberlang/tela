@@ -230,8 +230,8 @@ main {
     assert identities[2] ≡ "tela-seg-2"
 
     # --- mount onto an empty scope: every identity creates ----------------
-    const list<string> vacua_ids ← vacua
-    const list<string> vacua_tags ← vacua
+    const list<string> vacua_ids ← empty
+    const list<string> vacua_tags ← empty
     assert browser.binding_status("tela-control", identities, vacua_ids, tree_markup(), vacua_tags) ≡ "create"
     assert browser.binding_status("tela-seg-1", identities, vacua_ids, tree_markup(), vacua_tags) ≡ "create"
     assert browser.binding_status("tela-seg-2", identities, vacua_ids, tree_markup(), vacua_tags) ≡ "create"

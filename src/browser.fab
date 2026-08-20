@@ -176,7 +176,7 @@ fn unescape(string text) → string {
 }
 
 fn parse_identities(string text) → list<string> {
-    var list<string> identities ← vacua
+    var list<string> identities ← empty
     var int i ← 0
     while i < text.length() {
         if not (i + 12 > text.length()) and text.slice(i, i + 12) ≡ identity_marker() {
@@ -300,7 +300,7 @@ fn count_occurrences(list<string> collection, string name) → int {
 
 # Distinct identities appearing more than once (the ambiguity set).
 fn duplicate_identities(list<string> collection) → list<string> {
-    var list<string> duplicates ← vacua
+    var list<string> duplicates ← empty
     var int i ← 0
     while i < collection.length() {
         const string identity ← collection[i]
@@ -323,7 +323,7 @@ fn duplicate_identities(list<string> collection) → list<string> {
 # ---------------------------------------------------------------------------
 
 fn identities_from_nodes(list<dom.DomNode> ∪ null nodes) → list<string> {
-    var list<string> result ← vacua
+    var list<string> result ← empty
     if nodes not is null {
         var int i ← 0
         while i < nodes.length() {
@@ -335,7 +335,7 @@ fn identities_from_nodes(list<dom.DomNode> ∪ null nodes) → list<string> {
 }
 
 fn tags_from_nodes(list<dom.DomNode> ∪ null nodes) → list<string> {
-    var list<string> result ← vacua
+    var list<string> result ← empty
     if nodes not is null {
         var int i ← 0
         while i < nodes.length() {
@@ -409,7 +409,7 @@ fn hydration_diagnostics(
     list<string> present_identities,
     list<string> present_tags
 ) → list<string> {
-    var list<string> diagnostics ← vacua
+    var list<string> diagnostics ← empty
     const list<string> duplicate_view ← duplicate_identities(view_identities)
     var int di ← 0
     while di < duplicate_view.length() {
@@ -483,7 +483,7 @@ fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ null
     const list<string> diagnostics ← hydration_diagnostics(markup, view_identities, present_identities, present_tags)
 
     # Binding plan: per View identity in order (binding_status decides).
-    var list<Binding> bindings ← vacua
+    var list<Binding> bindings ← empty
     var int li ← 0
     while li < view_identities.length() {
         const string status ← binding_status(view_identities[li], view_identities, present_identities, markup, present_tags)
@@ -494,7 +494,7 @@ fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ null
     # Region-bind subscriptions: one per View identity (the U2 dispose
     # proof surface; the app's event bindings are app-typed in U3). The
     # host binds a tela:dom on(node, "tela:binding") per descriptor.
-    var list<EventSubscription> subscriptions ← vacua
+    var list<EventSubscription> subscriptions ← empty
     var int sub ← 0
     while sub < view_identities.length() {
         subscriptions.append(event_subscription(view_identities[sub], "tela:binding"))
@@ -530,7 +530,7 @@ fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ null
 
 fn replace(Mounted m, tela.View view) → tela.Update ∪ null {
     if tela.html_view(view) is null then return null
-    var list<tela.Effect> effects ← vacua
+    var list<tela.Effect> effects ← empty
     if not (m.focused_identity ≡ "") {
         effects.append(tela.restore(m.focused_identity))
     }

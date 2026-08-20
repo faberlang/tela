@@ -720,7 +720,7 @@ fn table_props(string name, string caption, list<string> headers, list<TableRow>
 # (the §8 "table headers" contract). Stable identities
 # ref-table-<name>-header-<i> (the interaction-case focus targets).
 fn table_header_cells(string name, list<string> headers) → list<tela.View> {
-    var list<tela.View> cells ← vacua
+    var list<tela.View> cells ← empty
     var int i ← 0
     while i < headers.length() {
         cells.append(tela.element_full(
@@ -740,7 +740,7 @@ fn table_header_cells(string name, list<string> headers) → list<tela.View> {
 # ref-table-<name>-cell-<r>-<c> (the declared consumer-plan row-navigation
 # focus targets).
 fn table_body_cells(string name, int row, list<string> cells) → list<tela.View> {
-    var list<tela.View> tds ← vacua
+    var list<tela.View> tds ← empty
     var int i ← 0
     while i < cells.length() {
         tds.append(tela.element_full(
@@ -767,7 +767,7 @@ fn table_body_cells(string name, int row, list<string> cells) → list<tela.View
 # table is STATELESS — a declared keyboard/sort interaction stays in the
 # consumer plan (the D1 app-typed boundary, recorded in the module header).
 fn table(TableProps props) → tela.View {
-    var list<tela.View> children ← vacua
+    var list<tela.View> children ← empty
     if not (props.caption ≡ "") {
         children.append(tela.element_view(
             tela.html_space(),
@@ -784,7 +784,7 @@ fn table(TableProps props) → tela.View {
             table_header_cells(props.name, props.headers)
         ) ]
     ))
-    var list<tela.View> body_rows ← vacua
+    var list<tela.View> body_rows ← empty
     var int r ← 0
     while r < props.rows.length() {
         const TableRow row ← props.rows[r]
@@ -879,7 +879,7 @@ fn segmented_live_region() → tela.View {
 # The segment children in focus order (1-based identities:
 # ref-seg-<name>-1..N), followed by the control's live region.
 fn segmented_options(SegmentedProps props) → list<tela.View> {
-    var list<tela.View> options ← vacua
+    var list<tela.View> options ← empty
     var int i ← 1
     while i ≤ props.options.length() {
         const string identity ← "ref-seg-" + props.name + "-" + "§"(i)
@@ -960,7 +960,7 @@ fn button_event() → string {
 # data-ref-variant attribute. Attribute author order: aria-label (when
 # present) → disabled (when disabled) → data-ref-variant → data-tela.
 fn button(ButtonProps props) → tela.View {
-    var list<tela.Attribute> attributes ← vacua
+    var list<tela.Attribute> attributes ← empty
     if not (props.aria_label ≡ "") {
         attributes.append(tela.Attribute { name = "aria-label", value = props.aria_label })
     }
@@ -1020,7 +1020,7 @@ fn field_invalid(FieldInputProps props) → string {
 # aria-describedby (when invalid) → value (when non-empty) → disabled
 # (when disabled) → data-tela.
 fn field_input(FieldInputProps props) → tela.View {
-    var list<tela.Attribute> attributes ← vacua
+    var list<tela.Attribute> attributes ← empty
     attributes.append(tela.Attribute { name = "type", value = "text" })
     attributes.append(tela.Attribute { name = "aria-label", value = props.label })
     attributes.append(tela.Attribute { name = "aria-invalid", value = field_invalid(props) })
@@ -1048,7 +1048,7 @@ fn field_input(FieldInputProps props) → tela.View {
 # (the association structure is stable — the field_control group always
 # carries it).
 fn field_error_region(string name, string error) → tela.View {
-    var list<tela.View> children ← vacua
+    var list<tela.View> children ← empty
     if not (error ≡ "") {
         children.append(tela.text_view(error))
     }
@@ -1084,7 +1084,7 @@ fn field_live_region() → tela.View {
 # form-error-<name> when invalid) + its error node under
 # form-control-<name>.
 fn field_control(FieldInputProps props) → tela.View {
-    var list<tela.View> children ← vacua
+    var list<tela.View> children ← empty
     children.append(field_input(props))
     children.append(field_error_region(props.name, props.error))
     return tela.element_full(
