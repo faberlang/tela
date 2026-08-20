@@ -561,7 +561,7 @@ fn theme_css(Theme theme) → string ∪ null {
 # Deterministic bytes over author order.
 fn theme_style(Theme theme) → Style ∪ null {
     if not theme_has_core_tokens(theme) then return null
-    var list<Declaration> declarations ← vacua
+    var list<Declaration> declarations ← empty
     var int i ← 0
     while i < theme.tokens.length() {
         const Token token ← theme.tokens[i]
@@ -667,7 +667,7 @@ fn order(string identity, list<string> depends) → Order {
 # rendered css) collapse to one; duplicate identity with different content
 # → null (fail-closed).
 fn deduplicated_bundles(list<Bundle> bundles) → list<Bundle> ∪ null {
-    var list<Bundle> unique ← vacua
+    var list<Bundle> unique ← empty
     var int i ← 0
     while i < bundles.length() {
         const Bundle bundle ← bundles[i]
@@ -721,10 +721,10 @@ fn dependencies_met(list<Order> orders, string identity, list<string> placed) �
 # sorted intrinsic — content-independent). A cycle (no ready package while
 # identities remain) or an unresolvable dependency → null (fail-closed).
 fn topological_order(list<Order> orders, list<string> identities) → list<string> ∪ null {
-    var list<string> ordered ← vacua
+    var list<string> ordered ← empty
     var list<string> remaining ← identities
     while remaining.length() > 0 {
-        var list<string> ready ← vacua
+        var list<string> ready ← empty
         var int i ← 0
         while i < remaining.length() {
             if dependencies_met(orders, remaining[i], ordered) then ready.append(remaining[i])
@@ -734,7 +734,7 @@ fn topological_order(list<Order> orders, list<string> identities) → list<strin
         ready ← ready.sorted()
         const string chosen ← ready[0]
         ordered.append(chosen)
-        var list<string> next ← vacua
+        var list<string> next ← empty
         var int j ← 0
         while j < remaining.length() {
             if remaining[j] ≠ chosen then next.append(remaining[j])
@@ -810,7 +810,7 @@ fn assemble(
     # tela.components — dedup + fail-closed rule shape, input order.
     const list<Bundle> ∪ null unique_components ← deduplicated_bundles(components)
     if unique_components is null then return null
-    const list<Bundle> empty_components ← vacua
+    const list<Bundle> empty_components ← empty
     const list<Bundle> final_components ← unique_components coalesce empty_components
     var int ci ← 0
     while ci < final_components.length() {
@@ -822,14 +822,14 @@ fn assemble(
     # orders map (every bundle identity must appear in orders).
     const list<Bundle> ∪ null unique_bundles ← deduplicated_bundles(bundles)
     if unique_bundles is null then return null
-    const list<Bundle> empty_bundles ← vacua
+    const list<Bundle> empty_bundles ← empty
     const list<Bundle> final_bundles ← unique_bundles coalesce empty_bundles
     var int li ← 0
     while li < final_bundles.length() {
         if not style_valid(final_bundles[li].style) then return null
         li ← li + 1
     }
-    var list<string> identities ← vacua
+    var list<string> identities ← empty
     var int m ← 0
     while m < final_bundles.length() {
         identities.append(final_bundles[m].identity)
@@ -837,7 +837,7 @@ fn assemble(
     }
     const list<string> ∪ null libraries_result ← topological_order(orders, identities)
     if libraries_result is null then return null
-    const list<string> empty_libraries ← vacua
+    const list<string> empty_libraries ← empty
     const list<string> libraries ← libraries_result coalesce empty_libraries
 
     # tela.applicatio — the last layer; validity only.
@@ -846,7 +846,7 @@ fn assemble(
     }
 
     # Assemble the ordered Style — layer order IS emission order.
-    var list<Rule> rules ← vacua
+    var list<Rule> rules ← empty
     if reset not is null {
         for from reset!.rules const rule {
             rules.append(rule)

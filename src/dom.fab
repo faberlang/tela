@@ -192,7 +192,7 @@ fn require(Scope scope, string selector) → Element {
 fn all(Scope scope, string selector) → list<Element> {
     print scope
     print selector
-    const list<Element> elements ← vacua
+    const list<Element> elements ← empty
     return elements
 }
 
