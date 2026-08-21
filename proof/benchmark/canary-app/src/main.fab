@@ -1,370 +1,38 @@
 # tela/proof/benchmark/canary-app/src/main.fab
-# Stage 1 U5 benchmark — the application package (kind app), importing
-# tela:tela (kernel) + extensionlib:extension (the U5 extension package)
-# and assembling the campaign §10 static composition:
-#   - a themed panel (stable data-tela identity + aria-label),
-#   - a two-column metric table (dl/dt/dd),
-#   - a horizontal bar meter with label and textual value,
-#   - the segmented control (Stage 3 U3 — the campaign gate proof),
-# rendered through the kernel serializers. main is the static-render runner
-# for U6: it prints the full HTML + CSS bytes.
+# Benchmark canary application (kind app). Shared source for the static
+# composition runner, the app-typed behavior plans, and the mount seams
+# the package-test harnesses call.
 #
-# Spec-vs-live reconciliation (from the U3 escalation): the U5 spec's
-# `tela.html(tree)` is spelled `tela.html_view(tree)` here — the exact
-# `html` verb collides with the Space.html enum-member top-level binding
-# (G5, SEM005.duplicate_definition; stage-0-canary.md §5; recorded in the
-# tela.fab header). css is verbatim. U6 determinism consumes this runner.
+# Imports tela:tela, tela:reference, tela:browser, tela:dom,
+# extensionlib:extension, and formslib:forms. main prints theme-
+# independent HTML plus the full cascade CSS under two Theme values
+# (lumen / tenebrae). check-determinism byte-compares that stdout.
+# Interactive proofs run under check-mount, check-reference, and
+# check-forms-interactive.
 #
-# Static composition only — no behavior/mount (Stage 3), no catalog.
-# Stage 2 U3 extends the runner: the same tree renders under two materially
-# different Theme values (lumen/tenebrae) with the full cascade CSS assembled
-# per theme (the campaign gate bullets 1+2 proof, TS-lane runner).
+# Workarounds that still bind (removal = grep-replace after the radix
+# fix lands):
+#   html_view — G5: `fn html` collides with Space.html (SEM005).
+#   bar_meter_app — G4: ext.bar_meter is WARN014-skipped; the app
+#     composes the same meter with tela constructors and still consumes
+#     the extension token + style bundle.
+#   app_panel — not named `panel`: reference.panel shares the assembled
+#     TS file in harnesses (TS2393). Rendered identity stays
+#     canary-panelum.
+#   D1 — concrete message types and bindings are app-local. The kernel
+#     owns only EventName / Effect / Update.
+#   fix:sem001 — read Effect keys through tela.effect_identity; never
+#     match an imported union's variants.
+#   fix:snapshot-name-collision — plan types do not reuse kernel or
+#     catalog type names.
+#   fix:g4 — signatures that mention imported sibling types stay
+#     WARN014-skipped; harnesses read the emitted file.
+#   fix:codegen001 — Rust emit-across-imports is blocked; TS is the
+#     proven runtime lane.
 #
-# Stage 3 U3 (segmented-interactive) — the campaign gate proof. This module
-# gains the segmented-control component (typed props → View, §1.1/§1.4/
-# §1.5 of stage-0-behavior-design.md), the app-typed behavior plan (a
-# concrete message type + EventBinding-shaped bindings keyed to the data-tela
-# identities — built app-side, the D1 constraint: never kernel-generic),
-# the subscription wiring plan (event_name + message-producing closures), the
-# update loop (update → next View → replace on the mounted region), and
-# the pure-level runner proof. The DOM-level interaction sequence executes
-# through the dom-shim driver (the harness-assembly path — U2's
-# mount/replace are WARN014-skipped for consumers, fix:g4; the harness
-# calls the emitted mount/replace directly, the snapshot does not apply at
-# runtime).
-#
-# Synchronous-only boundary (the named Stage 3 async-gap input, routed):
-# this proof is fully synchronous — no `@ futura`, no dom.fetch_text, no
-# fetch-driven/async update claim. The interaction sequence is a scripted
-# deterministic assertion sequence, not a racy timing test.
-#
-# fix:<id> markers applied in this unit:
-#   fix:g5 — NONE: all new identifiers (segmented_control/segment_view/live_region/
-#            control_props/vinculum/message/selected/moved/update_control/
-#            key_message/announcement/…) probed collision-free on in-tree
-#            radix 0.80.0 (a free fn may share a class name — G5's collision
-#            is enum-member-specific).
-#   fix:sem001 — the kernel owns the only Effect matcher
-#            (tela.effect_identity); the app never matches an imported
-#            union's variants (consumer-side match does not bind — the
-#            recorded G3-family gap). Removal = grep-replace after the fix.
-#   fix:snapshot-name-collision — new identifiers avoid kernel type names:
-#            the app-local plan types (Message/EventBinding/ControlProps) do
-#            NOT collide with kernel type names (EventName/Effect/Update/
-#            View/…); probed.
-#   fix:web-dom-locale — REMOVED by the web-surface-import U4 flip: the
-#            app now imports the tela-owned seam (tela:dom) directly; the
-#            webDom* runtime symbols still bind at the HARNESS level
-#            (the authored fake-DOM surface + driver).
-#   fix:g4 — mount/replace consumed via the harness-assembly path (the
-#            WARN014 export-skip does not apply at runtime).
-#   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the TS
-#            lane is the proven runtime lane.
-#
-# Stage 4 U3 (tokens-styles-assembly) — the THREE-PACKAGE cascade. This
-# module imports formslib:forms (the Stage 4 proof package) and composes:
-#   - the namespaced `form.*` tokens (form.field.invalid / form.field.valid
-#     / form.focus) into both themes via the field-access pattern on the
-#     zero-arg accessors (the MF-7 resolution: the accessors return the
-#     kernel `Token` carrier — the ONE token-carrier pattern);
-#   - the formslib component style bundle (tela.bundle("formslib",
-#     forms.form_style())) into the assemble call — the three-package
-#     cascade orders extensionlib → formslib → canary-app (topological
-#     order + the stable package-identity tie-break; the kernel's
-#     topological_order picks extensionlib before formslib by identity);
-#   - the fail-closed regressions re-asserted (cycles /
-#     duplicate-identity-different-content / invalid output reject);
-#   - the runner output: the forms family static render (re-routed by U0
-#     to the `→ tela.View` component fns through the NORMAL package
-#     interface — the `*_html` helpers are RETIRED; the exempla-mode
-#     consumption was re-verified live, fix:g4 removed; the rendered
-#     bytes are identical, so the determinism sha is unaffected).
-# The Stage 3 determinism sha (77516916…e5490) is SUPERSEDED by this
-# output change — recorded; U5 re-records the official sha (check-
-# determinism is RED between U3 and U5 — flagged honestly, not a failure).
-#
-# Stage 4 U4 (behavior-semantics) — the forms behavior plan (app-typed,
-# D1). This module gains the pure-level behavior proof: a concrete message
-# type (field input / checkbox toggle / select change / submit) +
-# EventBinding-shaped bindings keyed to the forms identities
-# (form-field-name / form-checkbox-agree / form-select-tone / form-submit —
-# the submit identity is the app-declared form-level aggregate: the U2
-# static family renders no <form> element, the family declares the "submit"
-# event spelling, the app plan owns the submit source identity per D1),
-# the update/validation semantics (invalid → aria-invalid + error text;
-# valid → cleared; the no-op rule) + the live-region policy (announce on a
-# validation-state change, silent on no-op — the Stage 3 §1.5 pattern
-# extended to form validation). The SHARED-SOURCE statement: the same
-# components that render statically in U2 carry the behavior contract
-# (this unit); the interactive execution is U7 (gated — the dom-shim is
-# not the interactive claim).
-#
-# fix:<id> markers applied in this unit:
-#   fix:sem001 — HELD: consumers read effect keys through
-#     tela.effect_identity, never matching an imported union
-#     (consumer-side match over an imported union does not bind — the
-#     G3-family gap, recorded; the FormMessage union is app-local, so
-#     the app's match over it binds normally).
-#   fix:g5 — NONE: all new identifiers (FormMessage/FormBinding/
-#     FieldState/FieldText/CheckboxToggle/SelectChange/Submit/
-#     field_binding/checkbox_binding/select_binding/submit_binding/
-#     field_text_message/checkbox_toggle_message/select_change_message/
-#     submit_message/field_state/update_field/form_announcement/
-#     props_from_state) probed collision-free on in-tree radix 0.80.0 (a
-#     free fn may share a class name — G5's collision is enum-member-
-#     specific).
-#   fix:snapshot-name-collision — the plan type names avoid kernel type
-#     names (EventName/Effect/Update/View/…) AND the U3 plan's names
-#     (Message/EventBinding/ControlProps).
-#   fix:g4 — REMOVED by U0: the `→ tela.View` component fns are consumed
-#     through the normal package interface (the exempla-mode consumption
-#     re-verified live); the `*_html` helpers are RETIRED; the
-#     ARIA/validation round trip rides the direct component fns.
-#   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the
-#     TS lane is the proven runtime lane.
-#
-# Stage 4 U7 (interactive-provider-seam) — the CTO10-3 interactive claim.
-# This module imports the REAL seam — tela:dom (web-surface-import U4: the
-# flip from faber-web's web:dom to the tela-owned en surface; the
-# dom.Scope/dom.scope reference spellings are unchanged by the flip) +
-# tela:browser (exported, consumable, cds-u6) — and composes the forms
-# components through NORMAL qualified imports (the → tela.View component
-# fns are consumable: no compose-without, no *_html helper route, no
-# harness-assembly bypass, no tela-side shim). The seam call goes through
-# the app's OWN imports (mount_forms: dom.scope + browser.mount). The
-# scripted interaction sequence executes against the DOCUMENTED tela host
-# binding (bindings/ts.toml → runtime/dom.ts) under
-# check-forms-interactive; this module supplies the plan surface (the
-# composition + the app-typed update loop + the seam mount).
-#
-# Stage 5 U2 (tela-s5-u2-layout-typography) — the reference catalog
-# composition. This module imports tela:reference (the catalog's first
-# module) and composes the layout + typography families through NORMAL
-# qualified imports (the U1 probe (i) consumability at REAL use — done_when
-# (g)): the runner output extends (the layout + typography static renders +
-# the reference bundles joining the component cascade layer + the ref.*
-# tokens joining both themes), and the mount seam fns (mount_layout /
-# mount_typography) supply the check-reference browser-proof surface.
-#
-# fix:<id> markers applied in this unit:
-#   fix:g5 — NONE: all new identifiers (reference_theme/layout_composition/
-#     typography_composition/reference_composition/mount_layout/
-#     mount_typography) probed collision-free on in-tree radix 0.80.0 (a
-#     free fn may share a class name — G5's collision is enum-member-
-#     specific).
-#   fix:snapshot-name-collision — the new identifiers avoid kernel type
-#     names AND the tela:reference prop-class names.
-#   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the
-#     TS lane is the proven runtime lane.
-#   fix:g4 — the reference families are consumed through the NORMAL
-#     package interface (the U1 probe (i) post-cds-u6 surface — no
-#     compose-without, no harness-assembly bypass for the catalog).
-#
-# DETERMINISM SUPERSESSION (done_when (f)): the runner output extends with
-# the reference composition — the Stage 4 determinism sha
-# (8dfcb1430e44758df824bc8b68943915caac499dfb7a110d6bf4800dccb50a04) is
-# SUPERSEDED by this output change — recorded. check-determinism is RED
-# between units (the honest flag): the double-build input changed AND the
-# harnesses that assemble this module's emit (check-mount /
-# check-forms-interactive) need the reference namespace wiring — U10
-# re-wires + re-records the official sha (stage-5-delivery.md U2 done_when
-# (f) + U10).
-#
-# Stage 5 U3 (tela-s5-u3-panel-badge-metric) — the reference catalog
-# composition extends: the panel (theme-surface container), badge (textual
-# status — no color-only communication), and metric (label + value +
-# optional delta, the benchmark grammar's dl/dt/dd pattern) families join
-# the runner composition through NORMAL qualified imports; the reference
-# bundles gain panel_style/badge_style/metric_style (the component cascade
-# layer); the ref.panel.* / ref.badge.* / ref.metric.* tokens join both
-# themes (the ref.panel.surface/border + ref.metric.label.muted values
-# reference the theme's core tokens — theme-surface semantics). The mount
-# seam fns (mount_panel / mount_badge / mount_metric) supply the
-# check-reference U3 browser-proof surface.
-#
-# fix:<id> markers applied in this unit:
-#   fix:g5 — NONE: all new identifiers (panel_composition/
-#     badge_composition/metric_composition/mount_panel/mount_badge/
-#     mount_metric) probed collision-free on in-tree radix 0.80.0 (a free
-#     fn may share a class name — G5's collision is enum-member-specific).
-#   fix:snapshot-name-collision — the new identifiers avoid kernel type
-#     names AND the tela:reference prop-class names.
-#   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the
-#     TS lane is the proven runtime lane.
-#   fix:g4 — the reference families are consumed through the NORMAL
-#     package interface (the U1 probe (i) post-cds-u6 surface — no
-#     compose-without, no harness-assembly bypass for the catalog).
-#
-# Stage 5 U4 (tela-s5-u4-table) — the reference catalog composition
-# extends: the table family (the benchmark table grammar — headers + rows
-# + cells + optional caption) joins the runner composition through NORMAL
-# qualified imports; the ref.table.* tokens join both themes (the border +
-# caption color reference the theme's core tokens — theme-surface
-# semantics); the table_style bundle joins the component cascade layer
-# (prefix-keyed on the ref-table-* identities). The mount seam fn
-# (mount_table) supplies the check-reference U4 browser-proof surface:
-# the table mounts + the structure/a11y asserts hold + the DECLARED
-# consumer-plan interaction case (row navigation keyed to the ref-table-*
-# cell identities) runs scripted — the table itself is stateless (the D1
-# app-typed plan boundary, recorded in the reference.fab module header).
-#
-# fix:<id> markers applied in this unit:
-#   fix:g5 — NONE: all new identifiers (table_composition/mount_table)
-#     probed collision-free on in-tree radix 0.80.0 (a free fn may share
-#     a class name — G5's collision is enum-member-specific).
-#   fix:snapshot-name-collision — the new identifiers avoid kernel type
-#     names AND the tela:reference prop-class names (TableProps/TableRow).
-#   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the
-#     TS lane is the proven runtime lane.
-#
-# DETERMINISM SUPERSESSION (done_when (e)): the runner output extends AGAIN
-# with the table family static render — the determinism sha stays
-# SUPERSEDED (U10 re-records the official sha; check-determinism is RED
-# between units — the honest flag, unchanged).
-#
-# Stage 5 U5 (tela-s5-u5-segmented-control-reference) — the RE-HOME: the
-# Stage 3 segmented control (the app-local ControlProps/segment_view/
-# live_region/control_segments/segmented_control component section is
-# REMOVED) is now a `tela:reference` component — the app COMPOSES it
-# through the NORMAL qualified import (`reference.segmented_control`), keyed to
-# the ref-seg-* identities (ref-seg-control / ref-seg-control-N /
-# ref-seg-live). The app KEEPS its D1 behavior plan — the Message union
-# (Selected/Moved), the EventBinding carriers, update_control /
-# key_message / announcement / control_bindings / segment_order — and
-# RE-TARGETS it to the ref-seg-* identities (the app-typed plan is the
-# consumer's surface; the catalog control is stateless). The runner tree
-# composes the reference control; the ref.seg.* tokens join both themes;
-# the segmented_style bundle joins the component cascade layer; the mount
-# seam fn (mount_segmented) supplies the check-reference U5 browser-proof
-# surface (mount + structure + the scripted interaction case: pointer,
-# arrows, Home/End, Space/Enter, silent no-op, focus restoration).
-#
-# fix:<id> markers applied in this unit:
-#   fix:g5 — NONE: all new identifiers (segmented_composition/
-#     mount_segmented) probed collision-free on in-tree radix 0.80.0 (a
-#     free fn may share a class name — G5's collision is enum-member-
-#     specific); the moved control identifiers now live in tela:reference
-#     (probed there).
-#   fix:snapshot-name-collision — the new identifiers avoid kernel type
-#     names AND the tela:reference prop-class names (SegmentedProps).
-#   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the
-#     TS lane is the proven runtime lane.
-#   fix:g4 — the reference control is consumed through the NORMAL package
-#     interface (no compose-without, no harness-assembly bypass for the
-#     catalog); the app plan's `→ reference.SegmentedProps` fns are export-
-#     skipped (WARN014 — imported sibling types in signatures, recorded;
-#     the harnesses read the emitted file directly, the snapshot does not
-#     apply at runtime).
-#
-# DETERMINISM SUPERSESSION (done_when (e)): the runner output extends with
-# the segmented-control reference render (the ref-seg-* identities replace
-# the tela-* control identities — the rendered bytes change) — the
-# determinism sha stays SUPERSEDED (U10 re-records the official sha;
-# check-determinism is RED between units — the honest flag, unchanged).
-# The Stage 3 control identities (tela-control/tela-seg-*/tela-live) are
-# RETIRED from the runner; check-mount + check-determinism +
-# check-forms-interactive remain RED on the U2-inherited "Cannot find name
-# 'ref'" wiring (U10 re-wires the harnesses — NOT this unit's scope); the
-# check-mount driver additionally needs the re-home re-target
-# (segmented_control → reference.segmented_control) — part of the same U10
-# re-wire.
-#
-# Stage 5 U6 (tela-s5-u6-button) — the FIRST catalog behavior component
-# composes: the button family (tela:reference — NATIVE <button> semantics
-# (no ARIA role), the label/aria-label accessible name, the native
-# Space/Enter keyboard contract, the visible-focus :focus-visible rule,
-# the native disabled attribute) joins the runner composition through
-# NORMAL qualified imports; the ref.button.* tokens join both themes; the
-# button_style bundle joins the component cascade layer (the shape +
-# variant + focus-visible + disabled rules). The app-typed BUTTON plan
-# (D1): the ButtonMessage union (Pressed), the ButtonBinding carriers,
-# update_button / button_bindings / button_order — the plan binds ONLY
-# the enabled buttons' DECLARED activation event (props.event_name; a
-# disabled click no-ops by construction — the native disabled semantics +
-# no subscription). The mount seam fn (mount_button) supplies the
-# check-reference U6 browser-proof surface (mount + structure + the
-# scripted interaction case: click activates, Space/Enter activate (the
-# NATIVE keyboard → click modeled by the host driver), disabled click
-# no-ops, focus restoration across a replace via focus_held).
-#
-# fix:<id> markers applied in this unit:
-#   fix:g5 — NONE: all new identifiers (ButtonMessage/ButtonBinding/
-#     ButtonState/button_state/update_button/pressed/button_binding/
-#     button_bindings/button_order/save_button_props/cancel_button_props/
-#     delete_button_props/button_composition/mount_button) probed
-#     collision-free on in-tree radix 0.80.0 (a free fn may share a class
-#     name — G5's collision is enum-member-specific).
-#   fix:snapshot-name-collision — the new identifiers avoid kernel type
-#     names AND the tela:reference prop-class names (ButtonProps).
-#   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the
-#     TS lane is the proven runtime lane.
-#   fix:g4 — the reference button is consumed through the NORMAL package
-#     interface (no compose-without, no harness-assembly bypass for the
-#     catalog); the app plan's `→ reference.ButtonProps` fns are export-
-#     skipped (WARN014 — imported sibling types in signatures, recorded;
-#     the harnesses read the emitted file directly, the snapshot does not
-#     apply at runtime).
-#   G6 note — the catalog's button "variant" prop semantic is spelled
-#     variant (the probe: `variant` parses clean as a contextual
-#     identifier in NAME positions — field + constructor field name — on
-#     in-tree radix 0.80.0 --locale en; the U6 PARSE001 finding did NOT
-#     reproduce for the prop name, a false alarm; the value-position
-#     limit + the variant_value helper-param workaround are recorded in
-#     reference.fab as fix:g6-value-position); the app call sites pass
-#     the variant argument.
-#
-# DETERMINISM SUPERSESSION (done_when (d)): the runner output extends with
-# the button-family render + the field-plan surface (U8) — the determinism
-# sha stays SUPERSEDED (U10 re-records the official sha;
-# check-determinism is RED between units — the honest flag, unchanged).
-#
-# Stage 5 U7 (tela-s5-u7-field-forms-static) — the FORMS SPLIT half 1:
-# the field family joins the runner composition through NORMAL qualified
-# imports — the Stage 4 formslib field contract RE-HOMED as a tela-owned
-# reference component (tela:reference, the catalog's field_input /
-# field_control / field_error_region / field_live_region — formslib-
-# collision-free names). The app composes THREE field controls through
-# the catalog's typed carriers (the shared props the U8 plan will
-# consume): the VALID name field (aria-invalid="false"), the INVALID
-# email field (aria-invalid="true" + aria-describedby → form-error-email
-# + the error text), and the DISABLED phone field (the native disabled
-# attribute — no entry, the state exposed). The form.* tokens
-# (form.field.invalid / form.field.valid / form.focus — the Stage 4
-# namespaced-token surface, identical names + values) join both themes +
-# the reference mount theme (the canary themes dedup by name-identical-
-# content against the formslib tokens); the field_style bundle joins the
-# component cascade layer. The mount seam fn (mount_field) supplies the
-# check-reference U7 browser-proof surface (mount + the STATIC structure/
-# a11y case: the native input semantics, the accessible name, the
-# aria-invalid/aria-describedby surface, the error/live-region
-# association structure, the disabled attribute).
-#
-# THE BEHAVIOR SPLIT (recorded — U7 done_when (e)): the field's
-# validation transitions + live-region announcements + keyboard mapping
-# + the concrete message type + the bindings + the update loop are U8 —
-# NOT this unit. The app-typed field PROPS carriers + the composition +
-# the seam mount are the static half this unit lands.
-#
-# fix:<id> markers applied in this unit:
-#   fix:g5 — NONE: all new identifiers (name_field_props/
-#     email_field_props/phone_field_props/field_composition/mount_field)
-#     probed collision-free on in-tree radix 0.80.0 (a free fn may share
-#     a class name — G5's collision is enum-member-specific).
-#   fix:snapshot-name-collision — the new identifiers avoid kernel type
-#     names AND the tela:reference prop-class names (FieldInputProps).
-#   fix:codegen001 — the Rust lane is blocked (emit-across-imports); the
-#     TS lane is the proven runtime lane.
-#   fix:g4 — the reference field is consumed through the NORMAL package
-#     interface (no compose-without, no harness-assembly bypass for the
-#     catalog); the app plan's `→ reference.FieldInputProps` fns are
-#     export-skipped (WARN014 — imported sibling types in signatures,
-#     recorded; the harnesses read the emitted file directly, the
-#     snapshot does not apply at runtime).
-#
-# DETERMINISM SUPERSESSION (done_when (d)): the runner output extends
-# with the field-family render + the field bundle + the form.* tokens —
-# the determinism sha stays SUPERSEDED (U10 re-records the official sha;
-# check-determinism is RED between units — the honest flag, unchanged).
+# Synchronous only: no @ future, no fetch, no async event sources.
+# Catalog identities (ref-*, form-*, tela-chart-bar) are hydration
+# keys. canary-* wrappers are app-owned data.
 
 import from "tela:tela" public * ut tela
 import from "extensionlib:extension" public * ut ext
@@ -392,8 +60,6 @@ fn app_panel(list<tela.View> children) → tela.View {
         children
     )
 }
-
-# --- Two-column metric table: dl with dt/dd pairs (labels + values).
 
 fn metric_table() → tela.View {
     return tela.element_view(tela.html_space(), "dl", [
@@ -434,26 +100,11 @@ fn bar_meter_app(string label, string value, int width) → tela.View {
     )
 }
 
-# ===========================================================================
-# Stage 5 U5 — the segmented-control RE-HOME (tela:reference).
-#
-# The Stage 3 U3 app-local component section (ControlProps/selected_text/
-# active_tabindex/segment_view/live_region/control_segments/
-# segmented_control) is REMOVED — the control now lives in the reference
-# catalog (`reference.segmented_control`, tela:reference, Stage 5 U5) and the
-# app COMPOSES it through the NORMAL qualified import. The a11y contract
-# is documented in the reference.fab module header: role="radiogroup" on
-# the group, role="radio" + aria-selected on the segments, the roving
-# tabindex (one tab stop as a whole, §1.3), the control-owned declared
-# live region (role="status" + aria-live="polite", §1.5 — the no-op rule:
-# announce on a selection change, silent on no-op). The app keeps its D1
-# behavior plan (the Message union + EventBinding carriers + the update
-# loop) and RE-TARGETS it to the ref-seg-* identities below.
-# ===========================================================================
+# Segmented control: compose reference.segmented_control; the D1 plan
+# below re-targets ref-seg-* identities. A11y contract lives in
+# reference.fab (radiogroup / radio / roving tabindex / live region).
 
-# The default control props (the shared source the static render + the
-# app-typed plan consume) — a reference.SegmentedProps carrier built through the
-# catalog's constructor (normal qualified import).
+# Shared props for the static render and the app-typed plan.
 fn control_props() → reference.SegmentedProps {
     return reference.segmented_props("control", "segmented control", ["One", "Two", "Three"], "ref-seg-control-1")
 }
@@ -463,18 +114,9 @@ fn selected_props(reference.SegmentedProps props, string selected) → reference
     return reference.segmented_props(props.name, props.label, props.options, selected)
 }
 
-# ===========================================================================
-# Stage 3 U3 — the app-typed behavior plan (Branch B, behavior-design §2/§3).
-#
-# The concrete message type + EventBinding-shaped bindings (event_name +
-# message-producing closures) keyed to the data-tela identities, built
-# APP-SIDE (the D1 constraint, recorded: generic user-type construction is
-# blocked, so the kernel owns only the non-generic carriers — EventName/
-# Effect/Update — and the concrete plan is the application's surface,
-# never kernel-generic). The update function is an ordinary app function
-# over the concrete message type. Behavior is carried by typed message-
-# producing closures — never erased into strings.
-# ===========================================================================
+# App-typed segmented plan (D1 / Branch B). Concrete Message plus
+# EventBinding closures keyed to data-tela identities. The kernel owns
+# only EventName / Effect / Update.
 
 # The concrete app message type (two variants):
 #   Selected — select a segment (pointer click, Space, Enter on the focused
@@ -622,18 +264,9 @@ fn announcement(reference.SegmentedProps props, string selected) → string {
     return ""
 }
 
-# ===========================================================================
-# Stage 4 U4 — the forms behavior plan (app-typed — D1, recorded).
-#
-# The concrete message type + EventBinding-shaped bindings keyed to the forms
-# identities, the update/validation semantics (invalid → aria-invalid +
-# error text; valid → cleared; the no-op rule) + the live-region policy
-# (announce on a validation-state change, silent on no-op — the Stage 3
-# §1.5 pattern extended to form validation), built APP-SIDE — the D1
-# constraint, recorded: the concrete plan is the application's surface,
-# never kernel-generic. Behavior is carried by typed message-producing
-# closures (the Branch B shape) — never erased into strings.
-# ===========================================================================
+# App-typed forms plan (D1). FormMessage plus FormBinding closures keyed
+# to form-* identities. Invalid → aria-invalid + error text; valid →
+# cleared; announce only when validation state changes.
 
 # The concrete app message type (four variants — the forms plan):
 #   FieldText     — a field text entry (the "input" event) — live
@@ -793,15 +426,9 @@ fn props_from_state(string name, string label, FieldState state) → forms.Field
     )
 }
 
-# ===========================================================================
-# Stage 4 U7 — the interactive plan surface.
-#
-# The mounted forms composition (the REAL component fns through the normal
-# package interface), the app-typed re-render (the model → the next View),
-# and the seam mount (dom.scope + browser.mount through the app's OWN
-# imports). The scripted interaction driver (check-forms-interactive) calls
-# these against the documented faber-web host binding.
-# ===========================================================================
+# Forms interactive surface: composition, model → View, and
+# mount_forms (dom.scope + browser.mount). check-forms-interactive
+# drives the scripted sequence against the tela:dom host binding.
 
 # The interactive proof's theme (the 8-token core baseline).
 fn forms_theme() → tela.Theme {
@@ -871,11 +498,8 @@ fn mount_forms(string selector) → browser.Mounted ∪ null {
     return browser.mount(scope, forms_composition(), forms_theme())
 }
 
-# ===========================================================================
-# Stage 5 U2 — the reference catalog composition (tela:reference). The
-# layout + typography families compose through NORMAL qualified imports;
-# the mount seam fns supply the check-reference browser-proof surface.
-# ===========================================================================
+# Layout + typography (tela:reference). Mount seams: mount_layout /
+# mount_typography.
 
 # The reference mount theme: the 8-token core baseline + the namespaced
 # ref.* tokens (the catalog's token surface collected app-side — the
@@ -1004,9 +628,7 @@ fn typography_composition() → tela.View {
     )
 }
 
-# The seam mounts for the browser proof: the check-reference driver calls
-# these through the app's own imports (dom.scope + browser.mount, the U7
-# pattern). Each family mounts independently — done_when (e).
+# check-reference mount seams (dom.scope + browser.mount).
 fn mount_layout(string selector) → browser.Mounted ∪ null {
     const dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, layout_composition(), reference_theme())
@@ -1017,11 +639,7 @@ fn mount_typography(string selector) → browser.Mounted ∪ null {
     return browser.mount(scope, typography_composition(), reference_theme())
 }
 
-# ===========================================================================
-# Stage 5 U3 — the panel + badge + metric compositions (tela:reference).
-# The three families compose through NORMAL qualified imports; the mount
-# seam fns supply the check-reference U3 browser-proof surface.
-# ===========================================================================
+# Panel, badge, and metric (tela:reference).
 
 # The panel composition: a themed panel wrapping a prose paragraph. The
 # panel's surface semantics come from the ref.panel.* tokens (referencing
@@ -1077,9 +695,7 @@ fn metric_composition() → tela.View {
     )
 }
 
-# The seam mounts for the U3 browser proof: the check-reference driver
-# calls these through the app's own imports (dom.scope + browser.mount,
-# the U7 pattern). Each family mounts independently — done_when (d).
+# check-reference mount seams.
 fn mount_panel(string selector) → browser.Mounted ∪ null {
     const dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, panel_composition(), reference_theme())
@@ -1095,12 +711,8 @@ fn mount_metric(string selector) → browser.Mounted ∪ null {
     return browser.mount(scope, metric_composition(), reference_theme())
 }
 
-# ===========================================================================
-# Stage 5 U4 — the table composition (tela:reference).
-# The table family joins the runner composition through NORMAL qualified
-# imports; the mount seam fn supplies the check-reference U4 browser-proof
-# surface.
-# ===========================================================================
+# Table (tela:reference). Native table markup is the a11y structure;
+# interaction stays in the consumer plan (D1).
 
 # The table composition: the benchmark table grammar — headers + rows +
 # cells + a caption (the accessible name). The a11y structure: the native
@@ -1126,18 +738,13 @@ fn table_composition() → tela.View {
     )
 }
 
-# The seam mount for the U4 browser proof: the check-reference driver calls
-# this through the app's own imports (dom.scope + browser.mount, the U7
-# pattern). The table mounts independently — done_when (d).
+# check-reference mount seam.
 fn mount_table(string selector) → browser.Mounted ∪ null {
     const dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, table_composition(), reference_theme())
 }
 
-# ===========================================================================
-# Stage 5 U5 — the segmented-control composition + mount seam
-# (tela:reference — the re-homed Stage 3 control).
-# ===========================================================================
+# Segmented-control composition + mount_segmented.
 
 # The segmented-control composition: the catalog's control through NORMAL
 # qualified imports (the U5 re-home). The wrapper identity is app-owned
@@ -1153,31 +760,16 @@ fn segmented_composition() → tela.View {
     )
 }
 
-# The seam mount for the U5 browser proof: the check-reference driver calls
-# this through the app's own imports (dom.scope + browser.mount, the U7
-# pattern). The reference control mounts with the reference theme (the
-# core baseline + the ref.* tokens) — done_when (d).
+# check-reference mount seam.
 fn mount_segmented(string selector) → browser.Mounted ∪ null {
     const dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, segmented_composition(), reference_theme())
 }
 
-# ===========================================================================
-# Stage 5 U6 — the button composition + the app-typed button plan
-# (tela:reference — the first catalog behavior component).
-#
-# The button family composes through NORMAL qualified imports: the
-# enabled save/cancel buttons + the DISABLED delete button (the native
-# disabled attribute — no activation, the state exposed). The app-typed
-# plan (D1) binds ONLY the enabled buttons' DECLARED activation event
-# (props.event_name = the catalog's button_event() = "click"): the
-# ButtonMessage union (Pressed) + the ButtonBinding carriers + the
-# update loop (update_button) + the native keyboard contract (the host
-# driver models Space/Enter on a focused native button as a click — the
-# native semantics). The disabled button carries no subscription — a
-# disabled click is a no-op by construction. Focus restoration across a
-# replace rides focus_held (the driver case).
-# ===========================================================================
+# Button composition + app-typed plan (D1). Bind only enabled buttons'
+# declared activation event (reference.button_event() = "click"). The
+# disabled delete button has no subscription. Host models Space/Enter
+# on a focused native button as a click.
 
 # The shared props (the static render + the app-typed plan consume the
 # same carriers — the segment pattern). The delete button declares its
@@ -1287,28 +879,15 @@ fn button_composition() → tela.View {
     )
 }
 
-# The seam mount for the U6 browser proof: the check-reference driver calls
-# this through the app's own imports (dom.scope + browser.mount, the U7
-# pattern). The button composition mounts with the reference theme (the
-# core baseline + the ref.* tokens) — done_when (c).
+# check-reference mount seam.
 fn mount_button(string selector) → browser.Mounted ∪ null {
     const dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, button_composition(), reference_theme())
 }
 
-# ===========================================================================
-# Stage 5 U7 — the field composition + the app-typed props carriers
-# (tela:reference — the Stage 4 formslib field contract re-homed; the
-# forms split half 1, STATIC).
-#
-# The app composes the catalog's field family through NORMAL qualified
-# imports. The shared FieldInputProps carriers (the app-typed props
-# surface the U8 behavior plan will consume) cover the STATIC ARIA
-# surface: the valid field (aria-invalid="false"), the invalid field
-# (aria-invalid="true" + aria-describedby → the error identity + the
-# error text), and the disabled field (the native disabled attribute —
-# no entry, the state exposed). The wrapper identity is app-owned data.
-# ===========================================================================
+# Field composition (static ARIA surface). Valid name, invalid email
+# (aria-describedby → error identity), disabled phone. Behavior plan
+# is field_plan_* below.
 
 # The shared props carriers — the VALID name field (value present, no
 # error, enabled).
@@ -1349,40 +928,19 @@ fn field_composition() → tela.View {
     )
 }
 
-# The seam mount for the U7 browser proof: the check-reference driver calls
-# this through the app's own imports (dom.scope + browser.mount, the U7
-# pattern). The field composition mounts with the reference theme (the
-# core baseline + the ref.* + the form.* tokens) — done_when (c).
+# check-reference mount seam.
 fn mount_field(string selector) → browser.Mounted ∪ null {
     const dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, field_composition(), reference_theme())
 }
 
-# ===========================================================================
-# Stage 5 U8 — the catalog-field behavior plan (the forms split half 2,
-# BEHAVIOR + a11y): the app-typed plan (D1) over the catalog field.
+# Catalog-field behavior plan (D1). Catalog owns field_input_event,
+# field_error_for_value, and field_announcement. App owns FieldMessage /
+# FieldBinding / FieldPlanState / update_field_plan.
 #
-# The catalog (tela:reference) owns the PURE field behavior surface —
-# field_input_event (the declared input event), field_error_for_value (the
-# validation rule), field_announcement (the live-region policy) — see
-# the reference.fab module header. The APP owns the concrete message
-# type + the bindings + the update/validation loop:
-#
-#   FieldMessage (FieldInput — an input event's identity + value)
-#   FieldBinding (the subscription surface: identity + event_name)
-#   FieldPlanState (the per-field model: name + label + value + error)
-#   update_field_plan (the incoming value through the CATALOG's rule)
-#   field_plan_announcement (the CATALOG's live-region policy)
-#   field_plan_composition (the update loop's view-render input)
-#
-# The input event's VALUE payload is host-read (webDomValue at dispatch
-# time) and folded into the app's field_text message constructor — the
-# Branch B `(tela.EventName) → Message` closure shape carries no event
-# payload, so the field binding is the subscription surface (identity +
-# event_name) + a separate message constructor (recorded boundary). The
-# DISABLED phone field carries no subscription — no entry, the state
-# exposed (a disabled input event is a no-op by construction).
-# ===========================================================================
+# Branch B closures carry no event payload: the input value is host-read
+# (webDomValue) and folded into field_text. FieldBinding is therefore
+# identity + event_name only. Disabled phone has no subscription.
 
 # The concrete app message type (one variant): FieldInput — an input
 # event carrying the field identity (form-field-<name>) + the input's
@@ -1490,10 +1048,7 @@ fn field_plan_composition(FieldPlanState name_state) → tela.View {
     )
 }
 
-# The seam mount for the U8 browser proof: the check-reference driver
-# calls this through the app's own imports (dom.scope + browser.mount).
-# The plan composition mounts with the reference theme (the core
-# baseline + the ref.* + the form.* tokens) — done_when (c).
+# check-reference mount seam.
 fn mount_field_plan(string selector) → browser.Mounted ∪ null {
     const dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, field_plan_composition(field_plan_state("name", "Name", "", "")), reference_theme())
@@ -1958,7 +1513,7 @@ main {
     assert ext_index < forms_index
 
     # --- The Stage 3 static half (U3 done_when (a)) ------------------------
-    # The segmented control renders deterministically through html_visus:
+    # The segmented control renders deterministically through html_view:
     # exact bytes — role=radiogroup on the group, role=radio + aria-selected
     # + the roving tabindex on the segments (§1.3/§1.4), the control-owned
     # declared live region (§1.5), stable ref-seg-* data-tela identities
@@ -2435,7 +1990,7 @@ main {
     # The composition mounts through the app's own seam call (dom.scope +
     # browser.mount); the pure surface is asserted here, the scripted DOM
     # sequence executes under check-forms-interactive (the documented
-    # faber-web host binding).
+    # tela:dom host binding).
     const tela.View compositio ← forms_composition()
     assert tela.html_view(compositio) not is null
     assert tela.html_view(compositio) coalesce "" ≡ «<div data-tela="forma"><div data-tela="form-control-name"><input type="text" aria-label="Name" aria-invalid="false" data-tela="form-field-name"><div role="alert" data-tela="form-error-name"></div></div><input type="checkbox" aria-label="Agree" aria-checked="false" aria-invalid="false" data-tela="form-checkbox-agree"><select aria-label="Tone" aria-invalid="false" data-tela="form-select-tone"><option>Light</option><option>Dark</option></select><div role="status" aria-live="polite" data-tela="form-live"></div></div>»
