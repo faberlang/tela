@@ -44,7 +44,7 @@
 #     they parse + emit): `id` (the handle field), `ok` — keyword-like
 #     spellings on this surface.
 
-import from "tela:dom" private dom
+import from "tela:dom" dom
 
 # Element is tela:dom's element class, aliased to a single token so the
 # binding surface stays `canvas2d_context(Element)`.

@@ -106,7 +106,7 @@
 # PARTIAL marks + the D1/EventBinding constraint are recorded in the Stage 3 U1
 # section header.
 
-import from "tela:validate" private validate
+import from "tela:validate" validate
 
 # Space: namespace enum (html | svg). The open element model keeps the
 # tag itself an ordinary string, so custom elements and future-standard
