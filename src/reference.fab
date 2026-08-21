@@ -1,400 +1,84 @@
-# tela/src/reference.fab — tela:reference — the reference catalog module.
+# tela/src/reference.fab — tela:reference — the reference catalog.
 #
-# Stage 5 U2 (tela-s5-u2-layout-typography): the catalog STARTS — the
-# **layout** family (stacked rows / two-column grid / prose measures) and
-# the **typography** family (headings / prose / emphasis / scale), as
-# ordinary component functions over typed props → tela.View with stable
-# ref-layout-*/ref-typography-* data-tela identities, plus their style
-# bundles → tela.Style keyed on the identities and the namespaced ref.*
-# tokens (the kernel Token carrier pattern, MF-7). U3–U8 extend this one
-# flat module — strictly sequential (delivery Coordination Constraint 3).
+# Typed-props → tela.View components, style bundles, and namespaced
+# tokens. One flat module; one same-package import (`tela:tela`). Public
+# signatures stay on kernel types (G4-safe). Families: layout,
+# typography, panel, badge, metric, table, segmented-control, button,
+# field.
 #
-# Stage 5 U3 (tela-s5-u3-panel-badge-metric): the catalog EXTENDS with
-# three families — **panel** (a surface container with theme-surface
-# semantics: the surface/border come from the ref.panel.* tokens, which
-# reference the theme's core surface.panel / border.default — no hardcoded
-# color anywhere in the component), **badge** (a status/label indicator:
-# textual label + role="status" + aria-label carrying the status word — a
-# badge's meaning is never color alone, campaign §8), and **metric**
-# (label + value + optional delta in the benchmark grammar's definition-list
-# pattern — dl/dt/dd, the textual form preserved). Stable
-# ref-panel-<name>/ref-badge-<name>/ref-metric-<name> identities; the
-# style bundles key on the identity prefixes ([data-tela^='ref-panel-']
-# — the variable-suffix form, the formslib precedent), referencing the
-# namespaced ref.panel.* / ref.badge.* / ref.metric.* tokens.
+# Components are stateless. Message types, bindings, and update loops
+# stay in the consumer (D1). Meaning rides markup, ARIA, or text —
+# never color alone. Tokens are zero-arg `tela.Token` accessors;
+# consumers collect them app-side into Theme and pass bundles to
+# `tela.assemble`.
 #
-# Stage 5 U4 (tela-s5-u4-table): the catalog EXTENDS with the **table**
-# family — the benchmark table grammar as a composite component:
-# headers + rows + cells + an optional caption, with the §8 table
-# accessibility contract. Semantic structure: <table> → optional
-# <caption> → <thead> (one <tr> of <th scope='col'> header cells) →
-# <tbody> (one <tr> per data row, each a <td> per cell). The NATIVE
-# table semantics ARE the a11y structure (screen readers expose the
-# row/column/cell grid natively — no ARIA duplication); the header
-# association rides the th[scope] markup; the caption (or the app's
-# recorded equivalent) provides the accessible name. Identity scheme:
-# ref-table-<name> on the table root, ref-table-<name>-header-<i> on
-# each header cell, ref-table-<name>-cell-<r>-<c> on each body cell
-# (stable focus targets for the declared consumer-plan navigation
-# interaction). The style bundle keys on the identity prefix
-# ([data-tela^='ref-table-'] — the variable-suffix form), referencing
-# the namespaced ref.table.* tokens.
+# Identities are data (kebab-case `data-tela` values, never renamed):
+#   layout/typography:  ref-layout-stack|grid|prose,
+#                       ref-typography-heading-<1..6>,
+#                       ref-typography-prose,
+#                       ref-typography-emphasis-<kind>,
+#                       ref-typography-scale-<step>
+#   panel/badge/metric: ref-panel-<name>, ref-badge-<name>,
+#                       ref-metric-<name>
+#   table:              ref-table-<name>,
+#                       ref-table-<name>-header-<i> (0-based),
+#                       ref-table-<name>-cell-<r>-<c> (0-based)
+#   segmented:          ref-seg-<name>, ref-seg-<name>-<i> (1-based),
+#                       ref-seg-live (control-owned singleton)
+#   button:             ref-button-<name>
+#   field:              form-field-<name>, form-error-<name>,
+#                       form-control-<name>, form-live (singleton)
 #
-# THE TABLE ACCESSIBILITY CONTRACT (campaign §8 — table headers +
-# textual equivalents; done_when (a)+(b)):
-#   - SEMANTIC STRUCTURE: the native <table>/<caption>/<thead>/<th>/
-#     <tbody>/<tr>/<td> markup IS the a11y structure — no ARIA roles
-#     for the ordinary static table (ARIA would duplicate the native
-#     semantics); screen readers expose the grid natively.
-#   - HEADERS + SCOPE: every header cell is a <th> carrying
-#     scope='col' — the column association is the native th[scope]
-#     semantics (the §8 "table headers" contract).
-#   - THE ACCESSIBLE NAME: the <caption> when present provides it. No
-#     caption → the app supplies a recorded equivalent (an aria-label
-#     on the table or an off-screen equivalent is an app choice — the
-#     component never fabricates a name); the contract is: the table
-#     ALWAYS has a name source.
-#   - TEXTUAL EQUIVALENTS: headers + cells are text nodes (the §8
-#     "textual equivalents for visual charts" contract — the table
-#     never carries chart-only content).
-#   - KEYBOARD/SORT SEMANTICS + THE D1 APP-TYPED PLAN BOUNDARY
-#     (recorded): the table is STATELESS — it declares no behavior.
-#     Row navigation / cell focus movement / sort interactions are
-#     DECLARED in the consumer plan (D1 — the app-typed plan keyed to
-#     the ref-table-* identities); the check-reference interaction
-#     case proves the declared shape: the host driver executes the
-#     consumer's scripted row-navigation plan, synchronous-only,
-#     fail-closed. A sortable table's sort control is a consumer
-#     component (a th > button + aria-sort + the app's update) —
-#     never kernel/catalog behavior.
+# Family contracts:
+#   layout     — containers only; no ARIA roles.
+#   typography — heading rank is the native h1..h6 tag (level clamped
+#                1..6); emphasis is the tag (strong|em|code); unknown
+#                kinds stay renderable (open-element); scale is
+#                decorative sizing, never state.
+#   panel      — role=region; aria-label = title when non-empty; surface
+#                from ref.panel.* → theme core; no hardcoded color.
+#   badge      — role=status; aria-label "<status>: <text>"; meaning is
+#                never color alone.
+#   metric     — dl/dt/dd; empty delta omits the second dd.
+#   table      — native table/caption/thead/th[scope=col]/tbody/tr/td;
+#                no ARIA; caption is the name source (the component
+#                never fabricates one); keyboard/sort stay in the
+#                consumer.
+#   segmented  — radiogroup + radio; roving tabindex (selected = 0,
+#                others = -1); aria-selected; live region polite;
+#                announce only on selection change (consumer policy).
+#   button     — native <button>, no role; Space/Enter activate natively
+#                (button_event = "click"); native disabled; visible
+#                :focus-visible from ref.button.focus, never removed.
+#   field      — native <input type=text>, no role; aria-label = label;
+#                aria-invalid from error; aria-describedby →
+#                form-error-<name> when invalid; native disabled.
+#                Pure helpers: field_input_event = "input";
+#                field_error_for_value (empty → "Required");
+#                field_announcement (silent when value and error are
+#                unchanged).
 #
-# Stage 5 U5 (tela-s5-u5-segmented-control-reference): the catalog
-# EXTENDS with the **segmented-control** family — the Stage 3 segmented
-# control RE-HOMED as a tela-owned reference component (the app's
-# control leaves the consumer; the app keeps its D1 behavior plan and
-# COMPOSES the reference control through normal qualified imports).
-# Typed props (name/label/options/selected) → tela.View with the
-# ref-seg-<name> group, the ref-seg-<name>-<i> segments (1-based, the
-# Stage 3 index scheme), and the ref-seg-live declared live region.
+# Shared-harness name locks (formslib top-level names share the
+# check-exempla / check-reference assemblies — TS2393):
+#   FieldInputProps not FieldProps; field_input / field_control /
+#   field_error_region / field_live_region / field_style not the
+#   formslib spellings; field_input_event not field_event;
+#   field_*_token accessors not form_field_* / form_focus (token
+#   *names* stay form.field.* / form.focus).
 #
-# THE SEGMENTED-CONTROL ACCESSIBILITY CONTRACT (campaign §8 + the Stage 3
-# §1.3/§1.4/§1.5 record; done_when (a)):
-#   - ROLES: the group carries role='radiogroup' + aria-label = the
-#     control's accessible name (the `label` prop); each segment
-#     carries role='radio'.
-#   - ROVING TABINDEX (one tab stop as a whole, §1.3): the selected
-#     segment carries tabindex='0', the others tabindex='-1' — only the
-#     selected segment is in the tab sequence; Tab leaves the control
-#     as a unit. The roving moves with the selection (a replace
-#     re-renders the roving tabindex).
-#   - SELECTED STATE (§1.4): aria-selected='true'/'false' on the
-#     segments.
-#   - THE DECLARED LIVE REGION (§1.5): the control-owned
-#     <div role='status' aria-live='polite' data-tela='ref-seg-live'>
-#     — not an ambient page notification. THE NO-OP RULE: an
-#     announcement fires ONLY when the selection CHANGES; a click or
-#     keypress on the already-selected segment is SILENT.
-#   - THE D1 APP-TYPED PLAN BOUNDARY (recorded): the control is
-#     STATELESS — it declares no behavior. The message type + bindings
-#     + update loop + announcement semantics are the CONSUMER's plan
-#     (D1 — app-typed), keyed to the ref-seg-* identities; the keyboard
-#     semantics (arrows/Home/End/Space/Enter), the focus-only movement,
-#     and the live-region policy are documented in the consumer's plan
-#     record. The catalog never carries a generic behavior plan.
-#
-# Stage 5 U6 (tela-s5-u6-button): the catalog EXTENDS with the **button**
-# family — the FIRST catalog behavior component (the behavior/a11y
-# boundary; delivery U6). Typed props (label / variant / state / the
-# declared event surface + the identity name + the optional accessible-
-# name override) → tela.View with the ref-button-<name> identities.
-#
-# THE BUTTON ACCESSIBILITY CONTRACT (campaign §8 keyboard + focus;
-# done_when (a)):
-#   - NATIVE BUTTON SEMANTICS: the element IS a native <button> — no ARIA
-#     role (a role would duplicate the native semantics).
-#   - THE ACCESSIBLE NAME (label/aria-label): the visible label text
-#     (native — a <button>'s accessible name is its content) or the
-#     declared aria-label override (the aria_label prop — an app-supplied
-#     name differing from the label).
-#   - THE KEYBOARD CONTRACT: NATIVE button semantics — Space/Enter on the
-#     focused button fire the activation event (the declared event
-#     surface; button_event() = "click"). The consumer plan binds ONLY the
-#     activation event — the native keyboard → click needs no app key map.
-#   - VISIBLE FOCUS (campaign §8): the button_style bundle's
-#     :focus-visible rule draws the focus indicator from the
-#     ref.button.focus token (the theme's accent) — the focus indicator
-#     is never removed, no hardcoded color.
-#   - THE DISABLED STATE: the native `disabled` attribute when
-#     state = "disabled" — the button leaves the tab sequence, NO
-#     activation fires, and the state is exposed to assistive tech
-#     natively. The plan binds ONLY enabled buttons (a disabled click is
-#     a no-op by construction — the native semantics + no subscription).
-#   - THE D1 APP-TYPED PLAN BOUNDARY (recorded): the button is STATELESS —
-#     it declares no behavior. The concrete message type + the bindings +
-#     the update loop are the CONSUMER's plan (D1 — app-typed), keyed to
-#     the ref-button-* identities; the catalog never carries a generic
-#     behavior plan. The event surface is the props' event_name (the
-#     declared activation event); the plan binds that event name.
-#
-# Stage 5 U7 (tela-s5-u7-field-forms-static): the catalog EXTENDS with the
-# **field** family — the Stage 4 formslib field (text input) contract
-# RE-HOMED as a tela-owned reference component (the forms split, half 1:
-# STATIC only — the behavior half — validation transitions, live-region
-# announcements, keyboard — is U8, the D1 app-typed plan boundary,
-# recorded below). Typed props (name/label/value/error/disabled) →
-# tela.View with the stable form-* identities (form-field-<name> /
-# form-error-<name> / form-control-<name> / form-live — the Stage 3/4
-# identity precedent), the aria-invalid/aria-describedby surface, the
-# error/live-region association structure, and labels. formslib STAYS the
-# frozen Stage 4 proof package (the three-package cascade keeps it) — no
-# code duplication; the catalog's field is tela-owned. The catalog
-# family's fn names are formslib-collision-free (field_input /
-# field_control / field_error_region / field_live_region / field_style /
-# FieldInputProps — NOT field/field_group/error_region/form_live_region/
-# FieldProps): formslib's top-level declarations share the assembled
-# harness files (check-exempla/check-reference), so the same-named
-# declarations would break the tsc lane (TS2393 — the U6 `app_panel`
-# precedent).
-#
-# THE FIELD ACCESSIBILITY CONTRACT (campaign §8 + the Stage 4 field
-# contract; done_when (a)):
-#   - NATIVE FIELD SEMANTICS: the element IS a native <input type='text'>
-#     — no ARIA role (a role would duplicate the native semantics); the
-#     native input is natively focusable (Tab reaches it — the §8
-#     keyboard contract; the KEYBOARD MAPPING semantics stay in the
-#     consumer plan, U8).
-#   - THE ACCESSIBLE NAME (label/aria-label): aria-label = the label prop
-#     (the Stage 4 contract). A visible <label> composition is an app
-#     choice — the component never fabricates one.
-#   - THE ARIA-INVALID SURFACE: aria-invalid = "true"/"false" DERIVED
-#     from the error prop (a non-empty error = invalid — the field_invalid
-#     mapping; the formslib error_present precedent, re-homed).
-#   - THE ERROR ASSOCIATION: when invalid, aria-describedby → the error
-#     identity (form-error-<name>); the error node (role='alert',
-#     form-error-<name>) carries the error text; the field_control group
-#     (form-control-<name>) is the association surface (the field + its
-#     error node under one identity).
-#   - THE DECLARED LIVE REGION: the field-own <div role='status'
-#     aria-live='polite' data-tela='form-live'> — not an ambient page
-#     notification. THE ANNOUNCEMENT POLICY (announce on a
-#     validation-state change, silent on no-op — the Stage 3 §1.5 rule
-#     extended to form validation) is U8 (the behavior split, recorded).
-#   - THE DISABLED STATE: the native `disabled` attribute when
-#     disabled = "disabled" — the field leaves the tab sequence, no
-#     entry, and the state is exposed to assistive tech natively.
-#   - THE D1 APP-TYPED PLAN BOUNDARY (recorded): the field is STATELESS —
-#     it declares no behavior. The validation transitions + the
-#     live-region announcements + the keyboard mapping + the concrete
-#     message type + the bindings + the update loop are U8 / the
-#     CONSUMER's plan (D1 — app-typed), keyed to the form-field-*
-#     identities; the catalog never carries a generic behavior plan.
-#
-# MODULE SHAPE (U1-locked, stage-5-discovery.md §1): ONE flat module
-# mirroring the kernel (G4-safe), stdlib-only + ONE same-package sibling
-# import (tela:tela); no public signature references a type outside the
-# kernel's own surface. Every new identifier probed collision-free on
-# in-tree radix 0.80.0 (the G5 probe discipline) — no kernel-type-name
-# collisions (View/Style/Token/Theme/Bundle/Order/...), no seam-type-name
-# collisions, no verum/falsum identifiers (fix:verum-b). Casing: types
-# PascalCase concatenation (StackProps), fns/fields snake_case, identities
-# kebab-case data (MF-8), tokens dotted lowercase (ref.*).
-#
-# THE EIGHT FAMILIES (delivery U2/U3/U4/U5/U6/U7 outcomes; campaign §3
-# component contract):
-#
-#   LAYOUT — semantic containers for arrangement, no ARIA roles (pure
-#   layout grouping; the a11y structure is the container semantics + the
-#   prose measure):
-#     layout_stack(StackProps)            → ref-layout-stack  — stacked
-#       rows: a vertical stack of child views (one per row).
-#     layout_grid(GridProps)              → ref-layout-grid   — the
-#       two-column grid: children fill the two-column track in order.
-#     layout_prose(LayoutProseProps)      → ref-layout-prose  — the prose
-#       measure container: constrains the line measure around prose
-#       content (the layout-level measure; the paragraph itself is
-#       typography_prose).
-#
-#   TYPOGRAPHY — the text semantics, communicated by MARKUP, never by
-#   color alone (campaign §8 no-color-only-communication):
-#     typography_heading(HeadingProps)    → ref-typography-heading-<level>
-#       — native h1..h6 by level: the HEADING HIERARCHY is the a11y
-#       structure (screen readers expose the native heading semantics;
-#       the level is the documented 1..6 range, clamped fail-safe at the
-#       edges so h0/h7 never emit).
-#     typography_prose(ProseProps)        → ref-typography-prose — the
-#       paragraph (prose semantics; the layout prose measure wraps it).
-#     typography_emphasis(EmphasisProps)  → ref-typography-emphasis-<kind>
-#       — semantic emphasis: kind ∈ strong | em | code, emitted as the
-#       element tag (strong/em/code are the HTML semantic tags — emphasis
-#       is NEVER communicated by color or size alone).
-#     typography_scale(ScaleProps)        → ref-typography-scale-<step> —
-#       text at a documented type-scale step (xs/sm/md/lg/xl); the scale
-#       is decorative sizing (the size comes from the ref.type.scale.*
-#       tokens), never a semantic state carrier.
-#
-#   PANEL / BADGE / METRIC (U3) — theme-surface container + textual
-#   status + label/value(+delta) pairs: panel(PanelProps) →
-#   ref-panel-<name> (role='region' landmark + aria-label when titled;
-#   the surface comes from the ref.panel.* tokens referencing the theme
-#   core — no hardcoded color), badge(BadgeProps) → ref-badge-<name>
-#   (role='status' + aria-label "<status>: <text>" — meaning never color
-#   alone), metric(MetricProps) → ref-metric-<name> (the benchmark
-#   grammar's dl/dt/dd definition-list pattern — the textual form
-#   preserved).
-#
-#   TABLE (U4) — the benchmark table grammar as a semantic composite:
-#     table(TableProps)                   → ref-table-<name> — headers +
-#       rows + cells + optional caption; the native <table>/<caption>/
-#       <thead>/<th scope='col'>/<tbody>/<tr>/<td> markup IS the a11y
-#       structure (the §8 table contract — headers + scope + accessible
-#       name + textual equivalents); stateless (D1: a declared
-#       keyboard/sort interaction stays in the consumer plan).
-#
-#   SEGMENTED-CONTROL (U5) — the Stage 3 control re-homed:
-#     segmented_control(SegmentedProps)   → ref-seg-<name> — the group
-#       (role='radiogroup' + the accessible name), the
-#       ref-seg-<name>-<i> segments (role='radio' + aria-selected +
-#       the roving tabindex — ONE tab stop as a whole, §1.3), the
-#       control-owned declared live region ref-seg-live (role='status' +
-#       aria-live='polite', §1.5 — the no-op rule: announce on a
-#       selection change, silent on no-op); stateless (D1: the app-typed
-#       plan + the keyboard/live-region semantics stay in the consumer).
-#
-#   BUTTON (U6) — the first behavior component:
-#     button(ButtonProps)                  → ref-button-<name> — NATIVE
-#       <button> semantics (no ARIA role — no duplication), the
-#       accessible name (the label text / the aria-label override), the
-#       NATIVE keyboard contract (Space/Enter activate — the activation
-#       event fires, the declared event surface button_event()="click"),
-#       the visible focus (the bundle's :focus-visible rule, the
-#       ref.button.focus token), the native disabled attribute (no
-#       activation, the state exposed); stateless (D1: the app-typed
-#       plan + the update loop stay in the consumer, keyed to the
-#       ref-button-* identities; the plan binds only enabled buttons).
-#
-#   FIELD (U7) — the text input, the Stage 4 formslib field contract
-#     re-homed (the forms split, half 1 — STATIC):
-#     field_input(FieldInputProps)      → form-field-<name> — a NATIVE
-#       <input type='text'> (no ARIA role — native semantics), the
-#       accessible name (aria-label = the label prop), the
-#       aria-invalid true/false surface (derived from the error prop),
-#       the aria-describedby → the error identity when invalid, the
-#       native value + disabled attributes.
-#     field_error_region(name, error)   → form-error-<name> — the error
-#       node (role='alert') the field's aria-describedby references.
-#     field_live_region()               → form-live — the declared live
-#       region (role='status' + aria-live='polite'); the announcement
-#       policy is U8 (the D1 app-typed boundary).
-#     field_control(FieldInputProps)    → form-control-<name> — the
-#       association surface: the field + its error node under one
-#       identity.
-#     field_style() → tela.Style — rules keyed on the form-* identities
-#       referencing the form.* tokens (the Stage 4 namespaced-token
-#       surface, re-homed); stateless (D1: validation transitions +
-#       announcements + keyboard are U8, the consumer plan).
-#
-# NO COLOR-ONLY COMMUNICATION (campaign §8): no component in U2 carries
-# meaning through color. Emphasis is semantic markup; the scale is
-# decorative sizing; the layout containers are structural. The style
-# bundles color no state — tokens supply values only through the selected
-# theme (campaign §5: themes supply values, not semantics).
-#
-# STYLE BUNDLES + TOKENS (delivery U2 done_when (c)):
-#   layout_style() → tela.Style      — rules keyed on the layout
-#     identities, referencing the ref.layout.* tokens.
-#   typography_style() → tela.Style  — rules keyed on the typography
-#     identities, referencing the ref.type.* tokens (the heading scale,
-#     the prose measure/leading, the scale steps).
-#   The tokens are zero-arg accessors returning the kernel tela.Token
-#   carrier (the MF-7 ONE-carrier pattern — the formslib precedent):
-#   ref.layout.gap, ref.layout.prose.measure, ref.type.scale.xs|sm|md|lg|xl,
-#   ref.type.heading.weight, ref.type.heading.margin, ref.type.prose.
-#   line-height, ref.type.prose.margin. Consumers collect them app-side
-#   into their Theme (the compose-without pattern) and pass the bundles to
-#   tela.assemble (the Stage 2 assembly contract — cascade order,
-#   fail-closed).
-#
-# fix:<id> markers applied in this unit:
-#   fix:g5 — NONE: all new identifiers (layout_stack/layout_grid/
-#     layout_prose/typography_heading/typography_prose/typography_emphasis/
-#     typography_scale/stack_props/grid_props/layout_prose_props/
-#     heading_props/prose_props/emphasis_props/scale_props/clamped_level/
-#     layout_style/typography_style/reference_tokens + the token
-#     accessors; U3: panel/badge/metric/panel_props/badge_props/
-#     metric_props/panel_style/badge_style/metric_style + the
-#     ref_panel_*/ref_badge_*/ref_metric_* accessors; U4:
-#     table/table_row/table_props/table_header_cells/table_body_cells/
-#     table_style + the ref_table_* accessors; U5:
-#     segmented_control/segmented_props/segmented_option/
-#     segmented_options/segmented_live_region/selected_text/
-#     active_tabindex/segmented_style/SegmentedProps + the ref_seg_*
-#     accessors; U6:
-#     button/button_props/button_event/button_style/ButtonProps + the
-#     ref_button_* accessors; U7:
-#     field_input/field_input_props/field_invalid/field_error_region/
-#     field_live_region/field_control/field_style/FieldInputProps + the
-#     field_invalid_token/field_valid_token/field_focus_token accessors)
-#     probed
-#     collision-free on in-tree radix 0.80.0 (a free fn may share a class
-#     name — G5's collision is enum-member-specific).
-#   fix:codegen001 — the Rust emit-across-imports block persists
-#     (attempted + recorded; the TS lane is the proven runtime lane).
-#   fix:snapshot-name-collision — the props classes avoid the kernel type
-#     names AND the browser/forms carrier names (StackProps/GridProps/
-#     LayoutProseProps/HeadingProps/ProseProps/EmphasisProps/ScaleProps/
-#     PanelProps/BadgeProps/MetricProps/TableRow/TableProps/
-#     SegmentedProps/ButtonProps; U7: FieldInputProps — NOT FieldProps,
-#     the formslib carrier in the shared harness assemblies).
-#   fix:verum-b — en-locale naming: no verum/falsum identifiers.
-#   G6 note (U6, REVISED by the probe): the delivery's button "variant"
-#     prop semantic is spelled **variant** — `variant` is the en-locale
-#     UNION-VARIANT-CONSTRUCTION keyword (the `variant Selected { … }`
-#     spelling, main.fab) but parses clean as a contextual identifier in
-#     NAME positions: the empirical probe on in-tree radix 0.80.0
-#     (--locale en) accepts `variant` as a record field name + as a
-#     constructor field name with a literal/other-identifier value (exit
-#     0). The U6 PARSE001 finding did NOT reproduce for the prop name — a
-#     false alarm; the variant_name spelling reverts to variant (this
-#     unit). ONE value-position limit persists: the bare identifier
-#     `variant` as a constructor VALUE fails PARSE001 (probed: `P2 {
-#     variant = variant }` where the RHS names the helper param) — the
-#     button_props helper param is therefore spelled **variant_value**
-#     (fix:g6-value-position — the field/param NAME stays `variant`; the
-#     data-ref-variant ATTRIBUTE keeps the exact "variant" spelling,
-#     attribute names are data). Removal = grep-replace
-#     (`variant_value` → `variant`) only if/when a radix-lane expression-
-#     position keyword change lands; never silently renamed after.
-#   G6 note (U7, the keyword-collision record): the FIELD prop names were
-#     checked against the en keyword pack (radix/stdlib/locale/en/
-#     pack.toml) before authoring — name/label/value/error/disabled are
-#     NOT reserved spellings (name/value appear in the annotation/type
-#     keyword families — contextual, proven safe as fields/params by the
-#     kernel Token/formslib carriers; none is used as a top-level fn or
-#     type name). NO variant-class collision in this family.
-#   Stage 5 U8 (the field behavior contract surface — the forms split
-#     half 2): the catalog owns the PURE field behavior surface over the
-#     FieldInputProps carriers — `field_input_event` (the declared input
-#     event constant; the formslib `field_event` carrier name is taken in
-#     the shared harness assemblies — fix:snapshot-name-collision),
-#     `field_error_for_value` (the validation rule: empty →
-#     invalid, non-empty → cleared), `field_announcement` (the live-
-#     region policy: announce once on a validation-state change, silent
-#     on a no-op — the §1.5 rule extended to the catalog field). The
-#     D1 app-typed boundary (recorded): the concrete message type + the
-#     bindings + the update/validation loop stay in the CONSUMER (the
-#     canary's field plan); the catalog field is STATELESS — it renders
-#     the props it is given, the consumer owns the transitions. New U8
-#     identifiers (field_input_event/field_error_for_value/
-#     field_announcement) probed collision-free on in-tree radix 0.80.0
-#     (--locale en).
-#   LOCALE002 advisory (recorded, non-blocking): the BadgeProps `status`
-#     field is a keyword-like spelling (advisory only — it parses + emits,
-#     per the web-surface-import DELIVERY §5.2 record); no rename needed.
-#
-# G4 consumability (done_when (g)): the `→ tela.View` component fns + the
-# `→ tela.Style`/`→ tela.Token` accessors are consumable through NORMAL
-# qualified imports (the U1 probe (i) + cds-u6; re-verified at real use by
-# the canary-app + check-reference — never assumed).
+# fix:g6-value-position — `button_props` param is `variant_value`:
+#   `variant` is a valid field/param name; the bare identifier as a
+#   constructor VALUE fails PARSE001. Field stays `variant`; attribute
+#   `data-ref-variant` stays "variant". Removal: grep-replace
+#   `variant_value` → `variant` after an expression-position keyword
+#   change lands.
+# fix:codegen001 — Rust emit-across-imports still blocked; TS is the
+#   proven runtime lane.
+# fix:snapshot-name-collision — props classes avoid kernel and
+#   browser/forms carrier names (see the formslib locks above).
+# fix:verum-b — no verum/falsum identifiers.
+# LOCALE002 advisory — BadgeProps.status is keyword-like; parses and
+#   emits; no rename.
 
 import from "tela:tela" public * as tela
 
@@ -410,8 +94,6 @@ fn stack_props(list<tela.View> children) → StackProps {
     return StackProps { children = children }
 }
 
-# Stacked rows: a vertical stack of child views, one per row. Pure layout
-# grouping (no ARIA role); the row structure is the container semantics.
 fn layout_stack(StackProps props) → tela.View {
     return tela.element_full(
         tela.new_identity("ref-layout-stack"),
@@ -431,9 +113,7 @@ fn grid_props(list<tela.View> columns) → GridProps {
     return GridProps { columns = columns }
 }
 
-# The two-column grid: children fill the two-column track in author order
-# (the CSS grid rule in layout_style declares the track). Pure layout
-# grouping; the column structure is the container semantics.
+# Two-column track is declared in layout_style, not on the view.
 fn layout_grid(GridProps props) → tela.View {
     return tela.element_full(
         tela.new_identity("ref-layout-grid"),
@@ -453,9 +133,6 @@ fn layout_prose_props(list<tela.View> children) → LayoutProseProps {
     return LayoutProseProps { children = children }
 }
 
-# The prose measure: constrains the line measure (the ref.layout.prose.
-# measure token) around prose content. The measure is a layout-level
-# container — prose SEMANTICS live in the typography paragraph.
 fn layout_prose(LayoutProseProps props) → tela.View {
     return tela.element_full(
         tela.new_identity("ref-layout-prose"),
@@ -480,18 +157,13 @@ fn heading_props(int level, string text) → HeadingProps {
     return HeadingProps { level = level, text = text }
 }
 
-# The heading level, clamped to the documented 1..6 range (fail-safe at
-# the edges — h0/h7 never emit; the clamp is asserted by the exempla).
+# Fail-safe 1..6 — h0/h7 never emit (exempla-asserted).
 fn clamped_level(int level) → int {
     if level < 1 then return 1
     if level > 6 then return 6
     return level
 }
 
-# Heading: native h1..h6 by level — the HEADING HIERARCHY is the a11y
-# structure (native heading semantics for screen readers; the level is the
-# range contract 1..6). No color-only communication: the heading carries
-# its rank in the tag, never in styling alone.
 fn typography_heading(HeadingProps props) → tela.View {
     const int level ← clamped_level(props.level)
     return tela.element_full(
@@ -512,9 +184,6 @@ fn prose_props(list<tela.View> children) → ProseProps {
     return ProseProps { children = children }
 }
 
-# Prose: the paragraph — prose semantics (the layout prose measure wraps
-# it; the type scale + leading come from the ref.type.* tokens). Mixed
-# content is carried by the children (text + emphasis compose inline).
 fn typography_prose(ProseProps props) → tela.View {
     return tela.element_full(
         tela.new_identity("ref-typography-prose"),
@@ -535,12 +204,6 @@ fn emphasis_props(string kind, string text) → EmphasisProps {
     return EmphasisProps { kind = kind, text = text }
 }
 
-# Emphasis: semantic emphasis — kind ∈ strong | em | code, emitted as the
-# element tag (the HTML semantic emphasis tags). Emphasis is NEVER
-# communicated by color or size alone (campaign §8) — the meaning rides
-# the markup. The documented kind set is {strong, em, code} (the
-# open-element model keeps unknown kinds renderable; the catalog contract
-# names the three).
 fn typography_emphasis(EmphasisProps props) → tela.View {
     return tela.element_full(
         tela.new_identity("ref-typography-emphasis-" + props.kind),
@@ -561,10 +224,6 @@ fn scale_props(string step, string text) → ScaleProps {
     return ScaleProps { step = step, text = text }
 }
 
-# Type scale: text at a documented scale step (xs/sm/md/lg/xl). The size
-# comes from the ref.type.scale.* tokens via the typography style bundle.
-# The scale is decorative sizing — it never carries semantic state (no
-# status/level meaning in size, never in color).
 fn typography_scale(ScaleProps props) → tela.View {
     return tela.element_full(
         tela.new_identity("ref-typography-scale-" + props.step),
@@ -590,15 +249,6 @@ fn panel_props(string name, string title, list<tela.View> children) → PanelPro
     return PanelProps { name = name, title = title, children = children }
 }
 
-# Panel: a surface/container. THE THEME-SURFACE SEMANTICS (done_when (a)):
-# the surface background + border come from the ref.panel.surface /
-# ref.panel.border tokens, which reference the theme's core surface.panel /
-# border.default tokens (var(--surface-panel) / var(--border-default)) —
-# the component contains NO hardcoded color; the panel follows the selected
-# theme's surface. The a11y structure: role='region' (a named landmark —
-# the accessible name) + aria-label = the title when present (no title → no
-# aria-label). A visible title is app content (a heading in the children —
-# the heading hierarchy is the app's call).
 fn panel(PanelProps props) → tela.View {
     var list<tela.Attribute> attributes ← [
         tela.Attribute { name = "role", value = "region" }
@@ -630,13 +280,6 @@ fn badge_props(string name, string status, string text) → BadgeProps {
     return BadgeProps { name = name, status = status, text = text }
 }
 
-# Badge: a small status/label indicator. NO COLOR-ONLY COMMUNICATION
-# (done_when (a), campaign §8): the meaning is textual — the label is the
-# visible text and the status word rides the accessible name, never color
-# alone. The a11y shape: role='status' (the status live-region semantic) +
-# aria-label = "<status>: <text>" (the full textual meaning). The style
-# bundle may shape the badge (size/padding/radius) but colors nothing
-# semantic — a status color is app-side styling over its own selectors.
 fn badge(BadgeProps props) → tela.View {
     return tela.element_full(
         tela.new_identity("ref-badge-" + props.name),
@@ -666,13 +309,6 @@ fn metric_props(string name, string label, string value, string delta) → Metri
     return MetricProps { name = name, label = label, value = value, delta = delta }
 }
 
-# Metric: label + value (+ optional delta) in the benchmark grammar's
-# definition-list pattern (dl/dt/dd — the stage-1 metric-table shape; the
-# delivery done_when (a): "the benchmark grammar's metric pattern"). THE
-# TEXTUAL FORM IS PRESERVED: the label + value (+ delta) are visible text —
-# never replaced by a visualization. The a11y structure: the dl carries the
-# ref-metric-<name> identity; dt = the label (the accessible label), dd =
-# the value, an optional second dd = the delta ("" → no delta row).
 fn metric(MetricProps props) → tela.View {
     var list<tela.View> children ← [
         tela.element_view(tela.html_space(), "dt", [ tela.text_view(props.label) ]),
@@ -692,8 +328,7 @@ fn metric(MetricProps props) → tela.View {
 }
 
 # ===========================================================================
-# TABLE family — the benchmark table grammar, semantic + accessible
-# (ref-table-*; Stage 5 U4).
+# TABLE family — native table grammar (ref-table-*).
 # ===========================================================================
 
 class TableRow {
@@ -715,10 +350,7 @@ fn table_props(string name, string caption, list<string> headers, list<TableRow>
     return TableProps { name = name, caption = caption, headers = headers, rows = rows }
 }
 
-# The header-row cells: one <th> per header, each carrying the scope='col'
-# attribute — the column association is the native th[scope] semantics
-# (the §8 "table headers" contract). Stable identities
-# ref-table-<name>-header-<i> (the interaction-case focus targets).
+# 0-based identities ref-table-<name>-header-<i>; native th scope=col.
 fn table_header_cells(string name, list<string> headers) → list<tela.View> {
     var list<tela.View> cells ← empty
     var int i ← 0
@@ -736,9 +368,7 @@ fn table_header_cells(string name, list<string> headers) → list<tela.View> {
     return cells
 }
 
-# One body row: a <tr> of <td> cells. Stable identities
-# ref-table-<name>-cell-<r>-<c> (the declared consumer-plan row-navigation
-# focus targets).
+# 0-based identities ref-table-<name>-cell-<r>-<c>.
 fn table_body_cells(string name, int row, list<string> cells) → list<tela.View> {
     var list<tela.View> tds ← empty
     var int i ← 0
@@ -756,16 +386,6 @@ fn table_body_cells(string name, int row, list<string> cells) → list<tela.View
     return tds
 }
 
-# Table: the benchmark table grammar as a semantic composite — <table> →
-# optional <caption> (the accessible name) → <thead> (one <tr> of
-# <th scope='col'> header cells) → <tbody> (one <tr> per data row, each a
-# <td> per cell). The NATIVE semantics ARE the a11y structure (screen
-# readers expose the grid natively — no ARIA duplication); the header
-# association rides th[scope]; the caption (or the app's recorded
-# equivalent — an aria-label/off-screen equivalent is an app choice, the
-# component never fabricates a name) provides the accessible name. The
-# table is STATELESS — a declared keyboard/sort interaction stays in the
-# consumer plan (the D1 app-typed boundary, recorded in the module header).
 fn table(TableProps props) → tela.View {
     var list<tela.View> children ← empty
     if not (props.caption ≡ "") {
@@ -811,11 +431,7 @@ fn table(TableProps props) → tela.View {
 }
 
 # ===========================================================================
-# SEGMENTED-CONTROL family — the Stage 3 control re-homed (ref-seg-*;
-# Stage 5 U5). The control is STATELESS — the D1 app-typed plan boundary
-# (the message type + bindings + update loop + announcement semantics stay
-# in the consumer, keyed to the ref-seg-* identities; the a11y contract is
-# documented in the module header).
+# SEGMENTED-CONTROL family (ref-seg-*).
 # ===========================================================================
 
 class SegmentedProps {
@@ -839,9 +455,6 @@ fn active_tabindex(bool selected) → string {
     return "-1"
 }
 
-# One segment: role=radio + aria-selected + the roving tabindex (the
-# selected segment is the control's one tab stop, §1.3). Stable identity
-# ref-seg-<name>-<i>.
 fn segmented_option(string identity, string option, string tabindex, string selected) → tela.View {
     return tela.element_full(
         tela.new_identity(identity),
@@ -857,11 +470,6 @@ fn segmented_option(string identity, string option, string tabindex, string sele
     )
 }
 
-# The control-owned declared live region (§1.5): explicitly marked with a
-# live-region policy (role='status' / aria-live='polite'), owned by the
-# control, not an ambient page notification. THE NO-OP RULE: the consumer's
-# plan writes the announcement ONLY on a selection change — a no-op is
-# SILENT.
 fn segmented_live_region() → tela.View {
     return tela.element_full(
         tela.new_identity("ref-seg-live"),
@@ -876,8 +484,7 @@ fn segmented_live_region() → tela.View {
     )
 }
 
-# The segment children in focus order (1-based identities:
-# ref-seg-<name>-1..N), followed by the control's live region.
+# 1-based identities ref-seg-<name>-1..N, then the singleton live region.
 fn segmented_options(SegmentedProps props) → list<tela.View> {
     var list<tela.View> options ← empty
     var int i ← 1
@@ -892,9 +499,6 @@ fn segmented_options(SegmentedProps props) → list<tela.View> {
     return options
 }
 
-# The segmented-control component: ordinary Faber over typed props (campaign
-# §3 component contract) → a View keyed to stable data-tela identities.
-# The group is role=radiogroup + the accessible name (aria-label).
 fn segmented_control(SegmentedProps props) → tela.View {
     return tela.element_full(
         tela.new_identity("ref-seg-" + props.name),
@@ -910,16 +514,7 @@ fn segmented_control(SegmentedProps props) → tela.View {
 }
 
 # ===========================================================================
-# BUTTON family — the first behavior component (ref-button-*; Stage 5 U6).
-# The element is a NATIVE <button> (native semantics — no ARIA role); the
-# accessible name is the label text or the aria-label override; the
-# keyboard contract (Space/Enter) rides the native semantics; the disabled
-# state is the native `disabled` attribute (no activation, the state
-# exposed); the declared event surface rides the props' event_name. The
-# component is STATELESS — the D1 app-typed plan boundary (the message
-# type + bindings + update loop stay in the consumer, keyed to the
-# ref-button-* identities; the a11y contract is documented in the module
-# header).
+# BUTTON family (ref-button-*).
 # ===========================================================================
 
 class ButtonProps {
@@ -931,6 +526,7 @@ class ButtonProps {
     string aria_label
 }
 
+# fix:g6-value-position — variant as a constructor VALUE fails PARSE001.
 fn button_props(string name, string label, string variant_value, string state, string event_name, string aria_label) → ButtonProps {
     return ButtonProps {
         name = name,
@@ -942,23 +538,11 @@ fn button_props(string name, string label, string variant_value, string state, s
     }
 }
 
-# The declared activation-event spelling (the event surface's documented
-# default — "click"). The consumer plan binds the props' event_name.
 fn button_event() → string {
     return "click"
 }
 
-# Button: native <button> semantics — no ARIA role (a role would duplicate
-# the native semantics). The accessible name: the label text (native) or
-# the declared aria-label override (the aria_label prop — the
-# "label/aria-label" contract). The keyboard contract (Space/Enter
-# activate) rides the native semantics — the plan binds ONLY the declared
-# activation event. The disabled state: the native `disabled` attribute
-# when state = "disabled" — the button leaves the tab sequence, no
-# activation fires, the state is exposed natively. The variant (the
-# visual treatment, token-keyed — never semantic) rides the
-# data-ref-variant attribute. Attribute author order: aria-label (when
-# present) → disabled (when disabled) → data-ref-variant → data-tela.
+# Attribute author order: aria-label? → disabled? → data-ref-variant → data-tela.
 fn button(ButtonProps props) → tela.View {
     var list<tela.Attribute> attributes ← empty
     if not (props.aria_label ≡ "") {
@@ -979,9 +563,7 @@ fn button(ButtonProps props) → tela.View {
 }
 
 # ===========================================================================
-# FIELD family — the text input, RE-HOMED from the Stage 4 formslib field
-# contract (form-* identities; Stage 5 U7 — the forms split half 1, the
-# STATIC surface). The a11y contract is documented in the module header.
+# FIELD family — static surface (form-*).
 # ===========================================================================
 
 class FieldInputProps {
@@ -1002,23 +584,13 @@ fn field_input_props(string name, string label, string value, string error, stri
     }
 }
 
-# The aria-invalid mapping (the validation-state surface): a non-empty
-# error = invalid ("true"); otherwise "false". The formslib error_present
-# precedent, re-homed. The U8 validation transitions flip the error prop
-# (the pure mapping stays the static surface's source of truth).
+# Non-empty error → aria-invalid "true"; otherwise "false".
 fn field_invalid(FieldInputProps props) → string {
     if not (props.error ≡ "") then return "true"
     return "false"
 }
 
-# The field: a NATIVE <input type='text'> — no ARIA role (native
-# semantics, no duplication), the accessible name (aria-label = the label
-# prop), the aria-invalid true/false surface, the aria-describedby → the
-# error identity (form-error-<name>) when invalid, the value attribute
-# when non-empty, the native disabled attribute when disabled =
-# "disabled". Attribute author order: type → aria-label → aria-invalid →
-# aria-describedby (when invalid) → value (when non-empty) → disabled
-# (when disabled) → data-tela.
+# Attribute author order: type → aria-label → aria-invalid → describedby? → value? → disabled? → data-tela.
 fn field_input(FieldInputProps props) → tela.View {
     var list<tela.Attribute> attributes ← empty
     attributes.append(tela.Attribute { name = "type", value = "text" })
@@ -1043,10 +615,7 @@ fn field_input(FieldInputProps props) → tela.View {
     )
 }
 
-# The error node for a field: role='alert' + the identity the field's
-# aria-describedby references (form-error-<name>). Empty text = empty node
-# (the association structure is stable — the field_control group always
-# carries it).
+# Empty error still emits the node so the association structure stays stable.
 fn field_error_region(string name, string error) → tela.View {
     var list<tela.View> children ← empty
     if not (error ≡ "") {
@@ -1062,10 +631,6 @@ fn field_error_region(string name, string error) → tela.View {
     )
 }
 
-# The declared live region (the Stage 3 §1.5 pattern, re-homed): the
-# field-own <div role='status' aria-live='polite' data-tela='form-live'>.
-# THE ANNOUNCEMENT POLICY (announce on a validation-state change, silent
-# on no-op) is U8 — the D1 app-typed plan boundary (recorded).
 fn field_live_region() → tela.View {
     return tela.element_full(
         tela.new_identity("form-live"),
@@ -1080,9 +645,6 @@ fn field_live_region() → tela.View {
     )
 }
 
-# The field group — the association surface: the field (aria-describedby →
-# form-error-<name> when invalid) + its error node under
-# form-control-<name>.
 fn field_control(FieldInputProps props) → tela.View {
     var list<tela.View> children ← empty
     children.append(field_input(props))
@@ -1098,39 +660,21 @@ fn field_control(FieldInputProps props) → tela.View {
 }
 
 # ===========================================================================
-# FIELD family — the BEHAVIOR contract surface (Stage 5 U8 — the forms
-# split half 2, BEHAVIOR + a11y). The catalog owns the PURE surface; the
-# D1 app-typed boundary (the message type + bindings + update loop) stays
-# in the consumer — recorded in the module header.
+# FIELD family — pure behavior helpers.
 # ===========================================================================
 
-# The declared input event (the event-name constant — the field's input
-# surface). The consumer plan binds the subscription to this spelling
-# (consumable; never a magic string in the app plan). Spelled
-# field_input_event — the formslib `field_event` carrier name is taken in
-# the shared harness assemblies (fix:snapshot-name-collision; the catalog
-# event constant avoids the forms carrier names, the U8 record).
+# fix:snapshot-name-collision — formslib `field_event` is taken in the shared harness.
 fn field_input_event() → string {
     return "input"
 }
 
-# The pure validation rule (the validation semantics): an empty value is
-# invalid (the error text "Required"); a non-empty value is valid ("" —
-# cleared). The consumer's update loop maps an incoming value through
-# this rule; the static mapping (field_invalid) derives aria-invalid
-# from the resulting error. The formslib error_present precedent,
-# re-homed as the catalog's single source of truth.
+# Empty value → "Required"; otherwise cleared.
 fn field_error_for_value(string value) → string {
     if value ≡ "" then return "Required"
     return ""
 }
 
-# The live-region policy (the §1.5 pattern, extended to the catalog
-# field): announce once on a validation-state change (the value OR the
-# error flipped between the ante/post props), SILENT on a no-op (both
-# unchanged — ""). The announcement text rides the field identity
-# (form-field-<name> — the identity construction the catalog owns) + the
-# post state (" invalid: <error>" / " valid").
+# Silent when value and error are unchanged; otherwise identity + valid/invalid text.
 fn field_announcement(FieldInputProps ante, FieldInputProps post) → string {
     if ante.value ≡ post.value and ante.error ≡ post.error {
         return ""
@@ -1142,8 +686,7 @@ fn field_announcement(FieldInputProps ante, FieldInputProps post) → string {
 }
 
 # ===========================================================================
-# STYLE BUNDLES — rules keyed on the ref-* identities, referencing the
-# ref.* tokens as CSS custom properties (the --ref-* emission form).
+# STYLE BUNDLES — identity-keyed rules, --ref-* / --form-* custom properties.
 # ===========================================================================
 
 fn layout_style() → tela.Style {
@@ -1176,8 +719,7 @@ fn layout_style() → tela.Style {
     }
 }
 
-# The heading scale: each level maps to a scale step token
-# (h1 → xl, h2 → lg, h3 → md, h4 → sm, h5/h6 → xs).
+# Heading scale: h1→xl, h2→lg, h3→md, h4→sm, h5/h6→xs.
 fn typography_style() → tela.Style {
     return tela.Style {
         rules = [
@@ -1271,11 +813,6 @@ fn typography_style() → tela.Style {
     }
 }
 
-# The panel style bundle: keyed on the ref-panel-* identity PREFIX (the
-# variable-suffix form — the formslib precedent). The surface + border
-# reference the ref.panel.* tokens, which resolve to the theme's core
-# surface.panel / border.default (theme-surface semantics — no hardcoded
-# color).
 fn panel_style() → tela.Style {
     return tela.Style {
         rules = [
@@ -1292,9 +829,6 @@ fn panel_style() → tela.Style {
     }
 }
 
-# The badge style bundle: keyed on the ref-badge-* identity prefix. Shapes
-# the badge (size/padding/radius) but colors nothing semantic — a badge's
-# meaning is textual (the status word + label), never color alone.
 fn badge_style() → tela.Style {
     return tela.Style {
         rules = [
@@ -1311,9 +845,6 @@ fn badge_style() → tela.Style {
     }
 }
 
-# The metric style bundle: keyed on the ref-metric-* identity prefix. The
-# label/value typography; the label color references the theme's core
-# text.muted (ref.metric.label.muted — no hardcoded color).
 fn metric_style() → tela.Style {
     return tela.Style {
         rules = [
@@ -1343,12 +874,6 @@ fn metric_style() → tela.Style {
     }
 }
 
-# The table style bundle: keyed on the ref-table-* identity PREFIX (the
-# variable-suffix form — the composite's cells carry the
-# ref-table-<name>-header-*/cell-* identities). The border + caption
-# color reference the theme's core tokens (ref.table.border →
-# var(--border-default), ref.table.caption.muted → var(--text-muted)) —
-# the table follows the selected theme's surface, no hardcoded color.
 fn table_style() → tela.Style {
     return tela.Style {
         rules = [
@@ -1387,13 +912,7 @@ fn table_style() → tela.Style {
     }
 }
 
-# The segmented-control style bundle: keyed on the ref-seg-* identity
-# PREFIX plus the role (the group vs the segments — the prefix alone would
-# match both). The group carries the flex layout + gap + radius; the
-# segments carry the type scale + padding + border; the SELECTED segment
-# border color references the theme's accent core token (the selected
-# STATE is communicated by aria-selected — semantic — never by color
-# alone; the accent border is decorative emphasis, campaign §8).
+# Prefix + role: the prefix alone would match both the group and the segments.
 fn segmented_style() → tela.Style {
     return tela.Style {
         rules = [
@@ -1423,21 +942,6 @@ fn segmented_style() → tela.Style {
     }
 }
 
-# The button style bundle: keyed on the ref-button-* identity PREFIX +
-# the variant attribute (the visual treatment — never semantic) + the
-# native state pseudo-classes. The shape rule (display/size/padding/
-# border/radius + the base text color) references the ref.button.*
-# tokens; the variant treatments reference the theme's core tokens (the
-# primary background = the accent, the primary text = the inverse
-# surface, secondary = the panel surface, ghost = the transparent
-# neutral — the button never hardcodes a color). THE VISIBLE FOCUS
-# (campaign §8): the :focus-visible rule draws the focus indicator from
-# the ref.button.focus token (the theme's accent) — the indicator is
-# never removed, no hardcoded color. THE DISABLED STATE: the :disabled
-# rule dims the button (the ref.button.disabled.opacity token) — the
-# SEMANTIC state rides the native disabled attribute (no activation,
-# exposed to AT); the opacity is the visual treatment, never a
-# color-only signal.
 fn button_style() → tela.Style {
     return tela.Style {
         rules = [
@@ -1489,14 +993,6 @@ fn button_style() → tela.Style {
     }
 }
 
-# The field style bundle (Stage 5 U7): rules keyed on the form-*
-# identities (the field + error + live-region surface), referencing the
-# --form-* tokens (the Stage 4 namespaced-token surface, re-homed with
-# the identical names + values). The invalid border-bottom + the focus
-# ring + the error color + the live-region emphasis come from the form.*
-# tokens; the disabled dim is the native disabled state's VISUAL
-# treatment (opacity/cursor — never a color-only signal: the SEMANTIC
-# state rides the native disabled attribute, exposed to AT).
 fn field_style() → tela.Style {
     return tela.Style {
         rules = [
@@ -1539,9 +1035,7 @@ fn field_style() → tela.Style {
 }
 
 # ===========================================================================
-# TOKENS — the namespaced ref.* theme tokens (the kernel Token carrier,
-# MF-7): zero-arg accessors returning tela.Token values; consumers collect
-# them app-side into their Theme (the compose-without pattern).
+# TOKENS — zero-arg tela.Token accessors (ref.* / form.*).
 # ===========================================================================
 
 fn ref_layout_gap() → tela.Token {
@@ -1588,10 +1082,6 @@ fn ref_type_prose_margin() → tela.Token {
     return tela.Token { name = "ref.type.prose.margin", value = "0 0 1rem 0" }
 }
 
-# The ref.panel.* tokens — the THEME-SURFACE semantics (Stage 5 U3): the
-# color-bearing tokens (surface, border) reference the theme's core tokens
-# (var(--surface-panel) / var(--border-default)) — the panel follows the
-# selected theme's surface; radius/padding are neutral spacing values.
 fn ref_panel_surface() → tela.Token {
     return tela.Token { name = "ref.panel.surface", value = "var(--surface-panel)" }
 }
@@ -1608,8 +1098,6 @@ fn ref_panel_padding() → tela.Token {
     return tela.Token { name = "ref.panel.padding", value = "1rem" }
 }
 
-# The ref.badge.* tokens — badge shaping (size/padding/radius); nothing
-# semantic rides color.
 fn ref_badge_size() → tela.Token {
     return tela.Token { name = "ref.badge.size", value = "0.75rem" }
 }
@@ -1622,8 +1110,6 @@ fn ref_badge_radius() → tela.Token {
     return tela.Token { name = "ref.badge.radius", value = "0.25rem" }
 }
 
-# The ref.metric.* tokens — the label/value typography; the label color
-# references the theme's core text.muted (no hardcoded color).
 fn ref_metric_label_size() → tela.Token {
     return tela.Token { name = "ref.metric.label.size", value = "0.875rem" }
 }
@@ -1640,8 +1126,6 @@ fn ref_metric_value_weight() → tela.Token {
     return tela.Token { name = "ref.metric.value.weight", value = "600" }
 }
 
-# The ref.table.* tokens — the table borders/typography; the border +
-# caption color reference the theme's core tokens (no hardcoded color).
 fn ref_table_border() → tela.Token {
     return tela.Token { name = "ref.table.border", value = "var(--border-default)" }
 }
@@ -1658,9 +1142,6 @@ fn ref_table_caption_muted() → tela.Token {
     return tela.Token { name = "ref.table.caption.muted", value = "var(--text-muted)" }
 }
 
-# The ref.seg.* tokens — the segmented-control shaping; the border color
-# references the theme's core tokens (the selected state is SEMANTIC —
-# aria-selected — never color alone; the accent border is decorative).
 fn ref_seg_gap() → tela.Token {
     return tela.Token { name = "ref.seg.gap", value = "0.25rem" }
 }
@@ -1685,14 +1166,6 @@ fn ref_seg_selected_border() → tela.Token {
     return tela.Token { name = "ref.seg.selected.border", value = "var(--accent-primary)" }
 }
 
-# The ref.button.* tokens (Stage 5 U6) — the button shape + the variant
-# treatments + the visible-focus + the disabled treatment. The
-# color-bearing tokens reference the theme's core tokens (the primary
-# background = the accent, the primary text = the inverse surface, the
-# secondary background = the panel surface, the focus = the accent — no
-# hardcoded color); the ghost background = the borderless neutral
-# ("transparent" is a value, never a semantic color — the button's
-# meaning is never color alone).
 fn ref_button_size() → tela.Token {
     return tela.Token { name = "ref.button.size", value = "0.875rem" }
 }
@@ -1737,13 +1210,7 @@ fn ref_button_disabled_opacity() → tela.Token {
     return tela.Token { name = "ref.button.disabled.opacity", value = "0.6" }
 }
 
-# The form.* tokens (Stage 5 U7 — the Stage 4 namespaced-token surface,
-# RE-HOMED with the identical names + values): the field invalid/valid
-# colors + the focus ring. The accessor fn names are formslib-collision-
-# free (form_field_invalid/form_field_valid/form_focus are formslib's own
-# top-level names in the shared harness assemblies — TS2393; the token
-# NAMES are identical, so the canary-app themes dedup by
-# name-identical-content).
+# Accessor names are formslib-collision-free; token names stay form.field.* / form.focus.
 fn field_invalid_token() → tela.Token {
     return tela.Token { name = "form.field.invalid", value = "#dc2626" }
 }
@@ -1756,9 +1223,7 @@ fn field_focus_token() → tela.Token {
     return tela.Token { name = "form.focus", value = "#2563eb" }
 }
 
-# The catalog's token collection (the self-usable summary — consumers
-# compose their Theme via the individual accessors; this is the package's
-# assembly-input convenience, the formslib precedent).
+# Assembly-input convenience; consumers may still collect accessors individually.
 fn reference_tokens() → list<tela.Token> {
     return [
         ref_layout_gap(),
