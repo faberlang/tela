@@ -137,8 +137,8 @@ class CheckboxProps {
     string invalid
 }
 
-# Kernel-owned constructors (G3 posture — ordinary functions over the same
-# public values; local-class-returning → consumable by the consumer today).
+# Props constructors — ordinary functions returning local classes, keeping
+# the provider boundary consumable.
 fn field_props(string name, string label, string value, string invalid, string error) → FieldProps {
     return FieldProps { name = name, label = label, value = value, invalid = invalid, error = error }
 }
@@ -362,18 +362,11 @@ fn form_style() → tela.Style {
     }
 }
 
-# The product-assembly input surface (delivery U3 done_when (c)): the
-# package contributes its Style-returning bundle + its package identity
-# (`formslib` — the app declares the order entry app-side). The consumer
-# wraps it: `tela.bundle("formslib", forms.form_style())`.
-
 # ---------------------------------------------------------------------------
 # Stage 4 U4 — the behavior-semantics contract surface.
 #
-# The event-name constants: the documented event spellings the consumers'
-# bindings key to (the app-typed plan consumes these accessors — never a
-# magic string in the plan). Zero-arg string accessors (G4-safe — the
-# Scopulus accessor precedent).
+# Event-name accessors keep the consumer plan on the G4-safe string
+# surface instead of duplicating event literals.
 # ---------------------------------------------------------------------------
 
 fn field_event() → string {
