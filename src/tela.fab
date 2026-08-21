@@ -145,11 +145,11 @@ class Identity {
 # (Stage 3), not inside view values. No raw-markup variant (policy (a)).
 union View {
     ElementNode {
-        Identity ∪ null identity,
-        Space space,
-        string tag_name,
-        list<Attribute> attributes,
-        list<Property> properties,
+        Identity ∪ null identity
+        Space space
+        string tag_name
+        list<Attribute> attributes
+        list<Property> properties
         list<View> children
     },
     TextNode { string value },
