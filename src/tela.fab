@@ -17,7 +17,7 @@
 # Policy locks applied (stage-0-protocol-policies.md):
 #   (a) no raw-markup View variant — typed elements only, no RawHtml-style
 #       escape in the ordinary path;
-#   (b) Faber-Latin protocol spellings: name/value/children/tag_name
+#   (b) English-first protocol identifiers: name/value/children/tag_name
 #       (tag_name avoids the D2 TS discriminant collision);
 #   (d) Identity is an explicit typed field, never position-derived;
 #       serialization into data-tela is the U3 serializer's job.
@@ -53,7 +53,7 @@
 # concrete mechanism (nullable result) is the implementing Hand's documented
 # choice within the available Faber surface; exercised by exempla/serializer.fab.
 #
-# Property static posture (spec decision Q3): Property are carried in the
+# Properties static posture (spec decision Q3): Properties are carried in the
 # tree as browser-lane DOM properties and are NOT serialized into static
 # HTML in Stage 1. The spike's provisional data-prop: marker is SUPERSEDED.
 # Recorded here for identity-hydration.md (U4).
@@ -105,8 +105,6 @@
 # names probed collision-free); fix:codegen001 — the Rust block persists.
 # PARTIAL marks + the D1/EventBinding constraint are recorded in the Stage 3 U1
 # section header.
-# enum Space { html, svg } in one module; in-tree radix 0.80.0,
-# 2026-08-09).
 
 import from "tela:validate" private validate
 
