@@ -657,7 +657,7 @@ union FormMessage {
     },
     Submit {
         string identity
-    },
+    }
 }
 
 # EventBinding-shaped binding (the Branch B shape, the U3 pattern): one event
@@ -1388,7 +1388,7 @@ fn mount_field(string selector) → browser.Mounted ∪ null {
 # event carrying the field identity (form-field-<name>) + the input's
 # value.
 union FieldMessage {
-    FieldInput { string identity, string value }
+    FieldInput { string identity string value }
 }
 
 # The field binding — the subscription surface (the Branch B shape, the

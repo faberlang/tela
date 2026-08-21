@@ -47,11 +47,11 @@ class Identitas {
 
 union Visus {
     Elementum {
-        Identitas ∪ null identitas,
-        Spatium spatium,
-        string nomen_tag,
-        list<Attributum> attributa,
-        list<Proprietas> proprietates,
+        Identitas ∪ null identitas
+        Spatium spatium
+        string nomen_tag
+        list<Attributum> attributa
+        list<Proprietas> proprietates
         list<Visus> liberi
     },
     Textus { string valor },

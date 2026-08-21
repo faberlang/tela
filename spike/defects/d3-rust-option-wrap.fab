@@ -26,7 +26,7 @@ class Identitas {
 }
 
 union U {
-    V { Identitas ∪ null identitas, string tag },
+    V { Identitas ∪ null identitas string tag },
     W { string valor }
 }
 
