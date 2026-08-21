@@ -1,52 +1,24 @@
-# tela/scripta/harness_dom.fab — the harness fake DOM, authored as Faber
-# source (tela-s5-u9-dogfooding-harness-dom, the DOGFOODING unit).
+# tela/scripta/harness_dom.fab — harness fake DOM, authored as Faber and
+# emitted to TypeScript. check-mount / check-exempla / check-forms-interactive
+# / check-reference assemble the emitted module. The document is an explicit
+# parameter; globalThis.document/window wiring stays in the TS drivers.
 #
-# The node host simulation for the Stage 3 mount/update runtime gate
-# (tela-s3-u2 + tela-s4-u6), previously scripta/dom-shim.ts (35.7KB) plus
-# the embedded fake DOM in check-forms-interactive / check-reference.
-# This module authors the SAME surface as Faber source and EMITS to
-# TypeScript via the provider-module emit pattern (the faber-web/src/dom.fab
-# precedent). The harnesses assemble the emitted module.
-#
-# Authoring posture (en locale, the tela package reader; the U1 probe (ii)
-# home): genus records + functions over records (Faber has no global state)
-# — the document instance flows as an EXPLICIT parameter. The global
-# installation (installFakeDom — globalThis.document/window wiring) stays at
-# the driver boundary (orchestration TS, the hardening lane).
-#
-# Authoring-surface findings (the U9 probe (a); minimized repros under
-# tela/spike/defects/; recorded in stage-5-dogfooding.md):
-#   - Genus METHODS exist on radix 0.80.0 (the EBNF methodDecl; the
-#     ordinata.fab precedent) — the write_scope's "Faber has no methods"
-#     premise is STALE. The faber-web runtime/dom.ts (TS by contract,
-#     unchanged) calls a METHOD surface on the fake nodes
-#     (webDomScope -> root.querySelector, webDomSnapshot -> el.getAttribute,
-#     webDomClass* -> classList.add/remove/toggle). This module authors
-#     those methods as genus methods that delegate to the free-function
-#     surface — the runtime contract is satisfied by FABER-authored code,
-#     never weakened.
-#   - fix:copia-iteration — genuine gap: copia (Set) has NO iteration or
-#     read-back surface (copia-intrinsics.md: valores/perambula/inLista are
-#     "preserved, not promoted"; `itera ex` over a copia fails SEM010;
-#     minimized repro tela/spike/defects/d4-copia-iteration.fab). The Set
-#     semantics of FakeClassList/listeners are preserved EXACTLY with a
-#     tabula-backed store (insertion-ordered read-back via claves();
-#     membership via habet; listener dedup via the continet-guard before
-#     append). Recorded with fix:copia-iteration; a radix-lane follow-on
-#     (never this unit).
-#   - No else-if chain (the `secus si`/`else if` construct is deliberately
-#     rejected — radix-parser secus_si_else_if; nested if/else is the
-#     work-around). No ternaries (if/else blocks). No regexes (the bounded
-#     parser + selector matcher are string-scanning re-authors).
-#   - Mutable scalar/field state: a `var` copy of the record + `←`
-#     assignment (fields are otherwise write-once — SEM020); container
-#     fields mutate through their methods.
-#   - Nullable reads (tabula.accipe) bind + `is null`-guard + copy-narrow
-#     (the fix:prim-nullable pattern).
-#
-# The assertion/orchestration drivers (the mount-proof scenarios, the
-# global-install wiring, the scripted interaction sequences) stay TS and
-# ride the hardening executed lane — recorded, not a Stage-5 blocker.
+# Authoring constraints:
+#   - Runtime-contract method names on the fake nodes (runtime/dom.ts):
+#     getAttribute, querySelector, querySelectorAll, tagName, and
+#     classList add/remove/toggle/has. Methods delegate to the free
+#     functions below.
+#   - fix:copia-iteration — copia has no iteration/read-back (repro:
+#     spike/defects/d4-copia-iteration.fab). Set semantics use a tabula
+#     store: keys() insertion order, has() membership, contains() listener
+#     dedup.
+#   - fix:codegen002 — TS emitter rejects `≡` whose RHS variable is named
+#     `value` (repro: spike/defects/d5-rhs-value-equality.fab). The local
+#     is spelled attr_value.
+#   - No else-if (nested if/else). No ternaries. No regexes (string-scanning
+#     parser + selector matcher).
+#   - Mutable fields: `var` copy of the record + `←` (SEM020).
+#   - Nullable reads: bind + `is null` guard + copy-narrow.
 
 # ---------------------------------------------------------------------------
 # Records (the fake DOM node model).
@@ -55,21 +27,21 @@
 # The class-list set. Set semantics (presence + insertion-ordered
 # read-back) backed by a tabula — see fix:copia-iteration.
 class FakeClassList {
-    tabula<string, bool> classes = vacua
+    tabula<string, bool> classes = empty
 
     # The runtime-contract method bridge (faber-web runtime/dom.ts —
     # webDomClassAdd/Remove/Toggle call the classList method surface).
     fn add(string cls) → void {
-        class_list_add(ego, cls)
+        class_list_add(self, cls)
     }
     fn remove(string cls) → void {
-        class_list_remove(ego, cls)
+        class_list_remove(self, cls)
     }
     fn toggle(string cls) → bool {
-        return class_list_toggle(ego, cls)
+        return class_list_toggle(self, cls)
     }
     fn has(string cls) → bool {
-        return class_list_has(ego, cls)
+        return class_list_has(self, cls)
     }
 }
 
@@ -98,7 +70,7 @@ class FakeEvent {
 # functions over the record (element_text / element_text_set / the
 # maintained data_tela field); the mutable maps stay tabula/list fields.
 class FakeElement {
-    list<FakeElement> children = vacua
+    list<FakeElement> children = empty
     FakeElement ∪ null parent = null
     # The runtime contract reads `tagName` (webDomSnapshot -> el.tagName);
     # the field is spelled tagName so the emitted class satisfies it.
@@ -110,19 +82,22 @@ class FakeElement {
     string data_tela = ""
     # Hydration stamp: "original" when the node was bound (not recreated).
     string token = ""
-    tabula<string, string> attrs = vacua
-    # Listener sets per event kind (Set-dedup via the continet-guard).
-    tabula<string, list<(FakeEvent) → void>> listeners = vacua
+    tabula<string, string> attrs = empty
+    # Listener sets per event kind (Set-dedup via contains() before append).
+    tabula<string, list<(FakeEvent) → void>> listeners = empty
     string own_text = ""
 
-    # The runtime-contract method bridge (faber-web runtime/dom.ts —
-    # webDomSnapshot reads getAttribute + tagName on every data-tela
-    # descendant; webDomScope/webDomQuery read querySelector on the root).
+    # Runtime-contract methods: webDomSnapshot reads getAttribute + tagName
+    # on every data-tela descendant; webDomScope/webDomQuery read
+    # querySelector / querySelectorAll on the scoped root.
     fn getAttribute(string name) → string ∪ null {
-        return element_attr_get(ego, name)
+        return element_attr_get(self, name)
+    }
+    fn querySelector(string selector) → FakeElement ∪ null {
+        return element_query_selector(self, selector)
     }
     fn querySelectorAll(string selector) → list<FakeElement> {
-        return element_query_all(ego, selector)
+        return element_query_all(self, selector)
     }
 }
 
@@ -130,20 +105,20 @@ class FakeElement {
 # the subscription registry (the shim's module-global activeSubscriptions
 # lives on the document — the explicit-parameter posture).
 class FakeDocument {
-    list<FakeElement> children = vacua
+    list<FakeElement> children = empty
     FakeElement body
     FakeElement ∪ null active_element = null
     int next_subscription_id = 1
-    tabula<int, SubscriptionRecord> active_subscriptions = vacua
+    tabula<int, SubscriptionRecord> active_subscriptions = empty
 
     # The runtime-contract method bridge (webDomScope reads
     # document.querySelector; webDomSnapshot reads scope.root.querySelectorAll
     # — when the scope root is the document).
     fn querySelector(string selector) → FakeElement ∪ null {
-        return doc_query_selector(ego, selector)
+        return doc_query_selector(self, selector)
     }
     fn querySelectorAll(string selector) → list<FakeElement> {
-        return doc_query_all(ego, selector)
+        return doc_query_all(self, selector)
     }
 }
 
@@ -193,7 +168,7 @@ class MountedLike {
     list<BindingLike> bindings
     list<SubscriptionLike> subscriptions
     list<string> identities
-    list<string> diagnostics = vacua
+    list<string> diagnostics = empty
 }
 
 # The handler-state carriers (the keyboard/pointer/focus states the
@@ -229,34 +204,34 @@ class FakeSubmitOptions {
 # ---------------------------------------------------------------------------
 
 fn fake_class_list() → FakeClassList {
-    return FakeClassList { classes = vacua }
+    return FakeClassList { classes = empty }
 }
 
 fn class_list_add(FakeClassList cl, string name) → void {
-    cl.classes.pone(name, true)
+    cl.classes.put(name, true)
 }
 
 fn class_list_remove(FakeClassList cl, string name) → void {
-    cl.classes.dele(name)
+    cl.classes.delete(name)
 }
 
 fn class_list_toggle(FakeClassList cl, string name) → bool {
-    if cl.classes.habet(name) {
-        cl.classes.dele(name)
+    if cl.classes.has(name) {
+        cl.classes.delete(name)
         return false
     } else {
-        cl.classes.pone(name, true)
+        cl.classes.put(name, true)
         return true
     }
 }
 
 fn class_list_has(FakeClassList cl, string name) → bool {
-    return cl.classes.habet(name)
+    return cl.classes.has(name)
 }
 
 # Insertion-ordered read-back (the Set's classNames()).
 fn class_list_names(FakeClassList cl) → list<string> {
-    return cl.classes.claves()
+    return cl.classes.keys()
 }
 
 # ---------------------------------------------------------------------------
@@ -299,7 +274,7 @@ fn element_text(FakeElement el) → string {
     }
     var string accum ← el.own_text
     var int i ← 0
-    while i < el.children.longitudo() {
+    while i < el.children.length() {
         accum ← accum + element_text(el.children[i])
         i ← i + 1
     }
@@ -311,18 +286,18 @@ fn element_text_set(FakeElement el, string value) → void {
     var FakeElement e ← el
     e.own_text ← value
     if e.tagName ≠ "#text" {
-        e.children ← vacua
+        e.children ← empty
     }
 }
 
 fn element_attr_get(FakeElement el, string name) → string ∪ null {
-    return el.attrs.accipe(name)
+    return el.attrs.get(name)
 }
 
 # String(value) coercion is identity for the harness's string call sites.
 fn element_attr_set(FakeElement el, string name, string value) → void {
     var FakeElement e ← el
-    e.attrs.pone(name, value)
+    e.attrs.put(name, value)
     if name ≡ "data-tela" {
         e.data_tela ← value
     }
@@ -330,23 +305,23 @@ fn element_attr_set(FakeElement el, string name, string value) → void {
 
 fn element_attr_remove(FakeElement el, string name) → void {
     var FakeElement e ← el
-    e.attrs.dele(name)
+    e.attrs.delete(name)
     if name ≡ "data-tela" {
         e.data_tela ← ""
     }
 }
 
 fn element_attr_has(FakeElement el, string name) → bool {
-    return el.attrs.habet(name)
+    return el.attrs.has(name)
 }
 
 # Serialized attribute shape (insertion order) — the open-tag compare.
 fn element_attribute_shape(FakeElement el) → string {
     var string accum ← ""
-    const list<string> names ← el.attrs.claves()
+    const list<string> names ← el.attrs.keys()
     var int i ← 0
-    while i < names.longitudo() {
-        const string ∪ null maybe_value ← el.attrs.accipe(names[i])
+    while i < names.length() {
+        const string ∪ null maybe_value ← el.attrs.get(names[i])
         if maybe_value not is null {
             const string value ← maybe_value
             accum ← accum + " " + names[i] + "='" + value + "'"
@@ -363,34 +338,34 @@ fn element_matches(FakeElement el, string selector) → bool {
     if selector ≡ "[data-tela]" {
         return el.data_tela ≠ ""
     }
-    if selector.longitudo() > 0 and selector.sectio(0, 1) ≡ "#" {
+    if selector.length() > 0 and selector.slice(0, 1) ≡ "#" {
         const string ∪ null id ← element_attr_get(el, "id")
         if id not is null {
             const string certain ← id
-            return certain ≡ selector.sectio(1, selector.longitudo())
+            return certain ≡ selector.slice(1, selector.length())
         }
         return false
     }
-    if selector.longitudo() > 0 and selector.sectio(0, 1) ≡ "." {
-        return class_list_has(el.class_list, selector.sectio(1, selector.longitudo()))
+    if selector.length() > 0 and selector.slice(0, 1) ≡ "." {
+        return class_list_has(el.class_list, selector.slice(1, selector.length()))
     }
-    if selector.longitudo() ≥ 2 and selector.sectio(0, 1) ≡ "[" and selector.sectio(selector.longitudo() - 1, selector.longitudo()) ≡ "]" {
-        const string inner ← selector.sectio(1, selector.longitudo() - 1)
+    if selector.length() ≥ 2 and selector.slice(0, 1) ≡ "[" and selector.slice(selector.length() - 1, selector.length()) ≡ "]" {
+        const string inner ← selector.slice(1, selector.length() - 1)
         const int eq ← index_of(inner, "=", 0)
         if eq < 0 {
             return element_attr_has(el, inner)
         }
-        var string name ← inner.sectio(0, eq)
+        var string name ← inner.slice(0, eq)
         # fix:codegen002 — the TS emitter rejects equality comparisons whose
         # RHS variable is named `value` (a codegen helper-name collision;
         # minimized repro tela/spike/defects/d5-rhs-value-equality.fab). The
         # local is spelled attr_value in this module.
-        var string attr_value ← inner.sectio(eq + 1, inner.longitudo())
-        if attr_value.longitudo() ≥ 2 {
-            const string first ← attr_value.sectio(0, 1)
+        var string attr_value ← inner.slice(eq + 1, inner.length())
+        if attr_value.length() ≥ 2 {
+            const string first ← attr_value.slice(0, 1)
             if first ≡ "'" or first ≡ "\"" {
-                if attr_value.sectio(attr_value.longitudo() - 1, attr_value.longitudo()) ≡ first {
-                    attr_value ← attr_value.sectio(1, attr_value.longitudo() - 1)
+                if attr_value.slice(attr_value.length() - 1, attr_value.length()) ≡ first {
+                    attr_value ← attr_value.slice(1, attr_value.length() - 1)
                 }
             }
         }
@@ -406,24 +381,24 @@ fn element_matches(FakeElement el, string selector) → bool {
 
 fn element_query_selector(FakeElement el, string selector) → FakeElement ∪ null {
     const list<FakeElement> all ← element_query_all(el, selector)
-    if all.longitudo() ≡ 0 {
+    if all.length() ≡ 0 {
         return null
     }
     return all[0]
 }
 
 fn element_query_all(FakeElement el, string selector) → list<FakeElement> {
-    var list<FakeElement> out ← vacua
+    var list<FakeElement> out ← empty
     query_all_into(el.children, selector, out)
     return out
 }
 
 fn query_all_into(list<FakeElement> children, string selector, list<FakeElement> out) → void {
     var int i ← 0
-    while i < children.longitudo() {
+    while i < children.length() {
         const FakeElement child ← children[i]
         if element_matches(child, selector) {
-            out.appende(child)
+            out.append(child)
         }
         query_all_into(child.children, selector, out)
         i ← i + 1
@@ -433,7 +408,7 @@ fn query_all_into(list<FakeElement> children, string selector, list<FakeElement>
 fn element_append_child(FakeElement parent, FakeElement child) → void {
     var FakeElement p ← parent
     var FakeElement c ← child
-    p.children.appende(child)
+    p.children.append(child)
     c.parent ← parent
 }
 
@@ -441,11 +416,11 @@ fn element_remove(FakeElement child) → void {
     const FakeElement ∪ null parent ← child.parent
     if parent not is null {
         const FakeElement certain ← parent
-        var list<FakeElement> kept ← vacua
+        var list<FakeElement> kept ← empty
         var int i ← 0
-        while i < certain.children.longitudo() {
+        while i < certain.children.length() {
             if certain.children[i] ≠ child {
-                kept.appende(certain.children[i])
+                kept.append(certain.children[i])
             }
             i ← i + 1
         }
@@ -458,51 +433,51 @@ fn element_remove(FakeElement child) → void {
 
 fn element_clear_children(FakeElement el) → void {
     var FakeElement e ← el
-    e.children ← vacua
+    e.children ← empty
 }
 
 fn element_add_listener(FakeElement el, string kind, (FakeEvent) → void handler) → void {
-    if not el.listeners.habet(kind) {
+    if not el.listeners.has(kind) {
         var FakeElement e ← el
-        e.listeners.pone(kind, vacua)
+        e.listeners.put(kind, empty)
     }
-    const list<(FakeEvent) → void> ∪ null maybe ← el.listeners.accipe(kind)
+    const list<(FakeEvent) → void> ∪ null maybe ← el.listeners.get(kind)
     if maybe not is null {
         var list<(FakeEvent) → void> handlers ← maybe
-        # The shim's listener Set dedups the same handler (fix:copia-iteration
-        # work-around — the continet-guard preserves the Set semantics).
-        if not handlers.continet(handler) {
-            handlers.appende(handler)
+        # Set-dedup the same handler (fix:copia-iteration: contains()
+        # stands in for copia membership).
+        if not handlers.contains(handler) {
+            handlers.append(handler)
         }
     }
 }
 
 fn element_remove_listener(FakeElement el, string kind, (FakeEvent) → void handler) → void {
-    if el.listeners.habet(kind) {
-        const list<(FakeEvent) → void> ∪ null maybe ← el.listeners.accipe(kind)
+    if el.listeners.has(kind) {
+        const list<(FakeEvent) → void> ∪ null maybe ← el.listeners.get(kind)
         if maybe not is null {
             const list<(FakeEvent) → void> handlers ← maybe
             var FakeElement e ← el
-            var list<(FakeEvent) → void> kept ← vacua
+            var list<(FakeEvent) → void> kept ← empty
             var int i ← 0
-            while i < handlers.longitudo() {
+            while i < handlers.length() {
                 if handlers[i] ≠ handler {
-                    kept.appende(handlers[i])
+                    kept.append(handlers[i])
                 }
                 i ← i + 1
             }
-            e.listeners.pone(kind, kept)
+            e.listeners.put(kind, kept)
         }
     }
 }
 
 fn element_dispatch(FakeElement el, FakeEvent event) → bool {
-    if el.listeners.habet(event.kind) {
-        const list<(FakeEvent) → void> ∪ null maybe ← el.listeners.accipe(event.kind)
+    if el.listeners.has(event.kind) {
+        const list<(FakeEvent) → void> ∪ null maybe ← el.listeners.get(event.kind)
         if maybe not is null {
             const list<(FakeEvent) → void> handlers ← maybe
             var int i ← 0
-            while i < handlers.longitudo() {
+            while i < handlers.length() {
                 const (FakeEvent) → void h ← handlers[i]
                 h(event)
                 i ← i + 1
@@ -532,14 +507,14 @@ fn doc_focus_node(FakeDocument doc, FakeElement ∪ null node) → void {
 
 fn doc_query_selector(FakeDocument doc, string selector) → FakeElement ∪ null {
     const list<FakeElement> all ← doc_query_all(doc, selector)
-    if all.longitudo() ≡ 0 {
+    if all.length() ≡ 0 {
         return null
     }
     return all[0]
 }
 
 fn doc_query_all(FakeDocument doc, string selector) → list<FakeElement> {
-    var list<FakeElement> out ← vacua
+    var list<FakeElement> out ← empty
     query_all_into(doc.children, selector, out)
     return out
 }
@@ -552,7 +527,7 @@ fn resolve_region(FakeDocument doc, string selector) → FakeElement {
         return certain
     }
     const FakeElement region ← fake_element("div")
-    element_attr_set(region, "id", selector.sectio(1, selector.longitudo()))
+    element_attr_set(region, "id", selector.slice(1, selector.length()))
     element_append_child(doc.body, region)
     return region
 }
@@ -582,26 +557,26 @@ fn is_void_tag(string name) → bool {
 fn unescape_html(string text) → string {
     var string accum ← ""
     var int i ← 0
-    while i < text.longitudo() {
-        var string fragment ← text.sectio(i, i + 1)
+    while i < text.length() {
+        var string fragment ← text.slice(i, i + 1)
         var int step ← 1
-        if not (i + 5 > text.longitudo()) and text.sectio(i, i + 5) ≡ "&quot;" {
+        if not (i + 5 > text.length()) and text.slice(i, i + 5) ≡ "&quot;" {
             fragment ← "\""
             step ← 5
         }
-        if not (i + 5 > text.longitudo()) and text.sectio(i, i + 5) ≡ "&#39;" {
+        if not (i + 5 > text.length()) and text.slice(i, i + 5) ≡ "&#39;" {
             fragment ← "'"
             step ← 5
         }
-        if not (i + 4 > text.longitudo()) and text.sectio(i, i + 4) ≡ "&amp;" {
+        if not (i + 4 > text.length()) and text.slice(i, i + 4) ≡ "&amp;" {
             fragment ← "&"
             step ← 4
         }
-        if not (i + 4 > text.longitudo()) and text.sectio(i, i + 4) ≡ "&lt;" {
+        if not (i + 4 > text.length()) and text.slice(i, i + 4) ≡ "&lt;" {
             fragment ← "<"
             step ← 4
         }
-        if not (i + 4 > text.longitudo()) and text.sectio(i, i + 4) ≡ "&gt;" {
+        if not (i + 4 > text.length()) and text.slice(i, i + 4) ≡ "&gt;" {
             fragment ← ">"
             step ← 4
         }
@@ -612,12 +587,12 @@ fn unescape_html(string text) → string {
 }
 
 fn index_of(string text, string needle, int start) → int {
-    if needle.longitudo() ≡ 0 {
+    if needle.length() ≡ 0 {
         return start
     }
     var int i ← start
-    while i ≤ text.longitudo() - needle.longitudo() {
-        if text.sectio(i, i + needle.longitudo()) ≡ needle {
+    while i ≤ text.length() - needle.length() {
+        if text.slice(i, i + needle.length()) ≡ needle {
             return i
         }
         i ← i + 1
@@ -632,8 +607,8 @@ fn parse_element(string html, int start) → ParseResult ∪ null {
     var int j ← start + 1
     var string name ← ""
     var bool name_scan ← true
-    while j < html.longitudo() and name_scan {
-        const string ch ← html.sectio(j, j + 1)
+    while j < html.length() and name_scan {
+        const string ch ← html.slice(j, j + 1)
         if ch ≡ " " or ch ≡ ">" {
             name_scan ← false
         } else {
@@ -641,27 +616,27 @@ fn parse_element(string html, int start) → ParseResult ∪ null {
             j ← j + 1
         }
     }
-    if name.longitudo() ≡ 0 {
+    if name.length() ≡ 0 {
         return null
     }
-    if name.sectio(0, 1) ≡ "/" {
+    if name.slice(0, 1) ≡ "/" {
         return null
     }
     const FakeElement node ← fake_element(name)
     # Attribute scan (single/double-quoted or bare values; boolean attrs).
     var bool in_tag ← true
-    while j < html.longitudo() and in_tag {
-        if html.sectio(j, j + 1) ≡ ">" {
+    while j < html.length() and in_tag {
+        if html.slice(j, j + 1) ≡ ">" {
             j ← j + 1
             in_tag ← false
         } else {
-            if html.sectio(j, j + 1) ≡ " " {
+            if html.slice(j, j + 1) ≡ " " {
                 j ← j + 1
             } else {
                 var string attr_name ← ""
                 var bool reading_name ← true
-                while j < html.longitudo() and reading_name {
-                    const string ch ← html.sectio(j, j + 1)
+                while j < html.length() and reading_name {
+                    const string ch ← html.slice(j, j + 1)
                     if ch ≡ "=" or ch ≡ ">" or ch ≡ " " {
                         reading_name ← false
                     } else {
@@ -670,30 +645,30 @@ fn parse_element(string html, int start) → ParseResult ∪ null {
                     }
                 }
                 var bool skipping ← true
-                while j < html.longitudo() and skipping {
-                    if html.sectio(j, j + 1) ≡ " " {
+                while j < html.length() and skipping {
+                    if html.slice(j, j + 1) ≡ " " {
                         j ← j + 1
                     } else {
                         skipping ← false
                     }
                 }
-                if j < html.longitudo() and html.sectio(j, j + 1) ≡ "=" {
+                if j < html.length() and html.slice(j, j + 1) ≡ "=" {
                     j ← j + 1
                     var bool skipping2 ← true
-                    while j < html.longitudo() and skipping2 {
-                        if html.sectio(j, j + 1) ≡ " " {
+                    while j < html.length() and skipping2 {
+                        if html.slice(j, j + 1) ≡ " " {
                             j ← j + 1
                         } else {
                             skipping2 ← false
                         }
                     }
-                    if j < html.longitudo() and (html.sectio(j, j + 1) ≡ "'" or html.sectio(j, j + 1) ≡ "\"") {
-                        const string quote ← html.sectio(j, j + 1)
+                    if j < html.length() and (html.slice(j, j + 1) ≡ "'" or html.slice(j, j + 1) ≡ "\"") {
+                        const string quote ← html.slice(j, j + 1)
                         j ← j + 1
                         var string val ← ""
                         var bool reading_val ← true
-                        while j < html.longitudo() and reading_val {
-                            const string ch ← html.sectio(j, j + 1)
+                        while j < html.length() and reading_val {
+                            const string ch ← html.slice(j, j + 1)
                             if ch ≡ quote {
                                 reading_val ← false
                             }
@@ -706,8 +681,8 @@ fn parse_element(string html, int start) → ParseResult ∪ null {
                     } else {
                         var string val ← ""
                         var bool reading_bare ← true
-                        while j < html.longitudo() and reading_bare {
-                            const string ch ← html.sectio(j, j + 1)
+                        while j < html.length() and reading_bare {
+                            const string ch ← html.slice(j, j + 1)
                             if ch ≡ " " or ch ≡ ">" {
                                 reading_bare ← false
                             } else {
@@ -723,22 +698,16 @@ fn parse_element(string html, int start) → ParseResult ∪ null {
             }
         }
     }
-    const string ∪ null data_tela ← element_attr_get(node, "data-tela")
-    if data_tela not is null {
-        const string certain ← data_tela
-        var FakeElement n ← node
-        n.data_tela ← certain
-    }
     if is_void_tag(name) {
         return ParseResult { node = node, next = j }
     }
     var bool closed ← false
-    while j < html.longitudo() and not closed {
-        if j + name.longitudo() + 3 ≤ html.longitudo() and html.sectio(j, j + name.longitudo() + 3) ≡ "</" + name + ">" {
-            j ← j + name.longitudo() + 3
+    while j < html.length() and not closed {
+        if j + name.length() + 3 ≤ html.length() and html.slice(j, j + name.length() + 3) ≡ "</" + name + ">" {
+            j ← j + name.length() + 3
             closed ← true
         } else {
-            if html.sectio(j, j + 1) ≡ "<" {
+            if html.slice(j, j + 1) ≡ "<" {
                 const ParseResult ∪ null child ← parse_element(html, j)
                 if child not is null {
                     const ParseResult certain ← child
@@ -750,14 +719,14 @@ fn parse_element(string html, int start) → ParseResult ∪ null {
             } else {
                 const int end ← index_of(html, "<", j)
                 if end < 0 {
-                    const string text ← html.sectio(j, html.longitudo())
-                    if text.longitudo() > 0 {
+                    const string text ← html.slice(j, html.length())
+                    if text.length() > 0 {
                         element_append_child(node, make_text_node(text))
                     }
-                    j ← html.longitudo()
+                    j ← html.length()
                 } else {
-                    const string text ← html.sectio(j, end)
-                    if text.longitudo() > 0 {
+                    const string text ← html.slice(j, end)
+                    if text.length() > 0 {
                         element_append_child(node, make_text_node(text))
                     }
                     j ← end
@@ -770,14 +739,14 @@ fn parse_element(string html, int start) → ParseResult ∪ null {
 
 # Parse a serializer-shaped markup string into top-level nodes.
 fn parse_fragment(string html) → list<FakeElement> {
-    var list<FakeElement> nodes ← vacua
+    var list<FakeElement> nodes ← empty
     var int i ← 0
-    while i < html.longitudo() {
-        if html.sectio(i, i + 1) ≡ "<" {
+    while i < html.length() {
+        if html.slice(i, i + 1) ≡ "<" {
             const ParseResult ∪ null parsed ← parse_element(html, i)
             if parsed not is null {
                 const ParseResult certain ← parsed
-                nodes.appende(certain.node)
+                nodes.append(certain.node)
                 i ← certain.next
             } else {
                 i ← i + 1
@@ -785,15 +754,15 @@ fn parse_fragment(string html) → list<FakeElement> {
         } else {
             const int end ← index_of(html, "<", i)
             if end < 0 {
-                const string text ← html.sectio(i, html.longitudo())
-                if text.longitudo() > 0 {
-                    nodes.appende(make_text_node(text))
+                const string text ← html.slice(i, html.length())
+                if text.length() > 0 {
+                    nodes.append(make_text_node(text))
                 }
-                i ← html.longitudo()
+                i ← html.length()
             } else {
-                const string text ← html.sectio(i, end)
-                if text.longitudo() > 0 {
-                    nodes.appende(make_text_node(text))
+                const string text ← html.slice(i, end)
+                if text.length() > 0 {
+                    nodes.append(make_text_node(text))
                 }
                 i ← end
             }
@@ -817,7 +786,7 @@ fn scoped_require(FakeDocument doc, string selector) → FakeElement {
 }
 
 fn web_dom_scope(FakeDocument doc, string selector) → FakeScope {
-    if selector.longitudo() ≡ 0 {
+    if selector.length() ≡ 0 {
         # The shim's empty-selector default roots the scope at the document.
         # The document's tree IS the body subtree (children = [body]), so a
         # scope rooted at the body is query-equivalent for the harness.
@@ -852,10 +821,10 @@ fn web_dom_snapshot(FakeScope ∪ null scope) → list<FakeNodus> ∪ null {
     }
     const FakeScope certain ← scope
     const list<FakeElement> nodes ← element_query_all(certain.root, "[data-tela]")
-    var list<FakeNodus> out ← vacua
+    var list<FakeNodus> out ← empty
     var int i ← 0
-    while i < nodes.longitudo() {
-        out.appende(FakeNodus { identity = nodes[i].data_tela, tag = nodes[i].tagName.minuscula() })
+    while i < nodes.length() {
+        out.append(FakeNodus { identity = nodes[i].data_tela, tag = nodes[i].tagName.lowercase() })
         i ← i + 1
     }
     return out
@@ -888,19 +857,19 @@ fn web_dom_class_toggle(FakeElement element, string class_name) → bool {
 fn web_dom_on(FakeDocument doc, FakeElement element, string event_name, (FakeEvent) → void handler) → FakeSubscription {
     element_add_listener(element, event_name, handler)
     var FakeDocument d ← doc
-    d.active_subscriptions.pone(d.next_subscription_id, SubscriptionRecord { element = element, event_name = event_name, handler = handler })
+    d.active_subscriptions.put(d.next_subscription_id, SubscriptionRecord { element = element, event_name = event_name, handler = handler })
     d.next_subscription_id ← d.next_subscription_id + 1
     return FakeSubscription { id = d.next_subscription_id - 1 }
 }
 
 fn web_dom_unsubscribe(FakeDocument doc, FakeSubscription subscription) → void {
     var FakeDocument d ← doc
-    const SubscriptionRecord ∪ null record ← d.active_subscriptions.accipe(subscription.id)
+    const SubscriptionRecord ∪ null record ← d.active_subscriptions.get(subscription.id)
     if record not is null {
         const SubscriptionRecord certain ← record
         element_remove_listener(certain.element, certain.event_name, certain.handler)
     }
-    d.active_subscriptions.dele(subscription.id)
+    d.active_subscriptions.delete(subscription.id)
 }
 
 fn web_dom_value(FakeElement element) → string {
@@ -913,36 +882,30 @@ fn web_dom_value_set(FakeElement element, string value) → void {
 }
 
 fn web_dom_on_input(FakeDocument doc, FakeElement element, (FakeElement, string) → void handler) → FakeSubscription {
-    return web_dom_on(doc, element, "input", (FakeEvent event) → void ∴ fac {
-        handler(element, web_dom_value(element))
-    })
+    return web_dom_on(doc, element, "input", FakeEvent event → void ∴ handler(element, web_dom_value(element)))
+}
+
+fn submit_dispatch(FakeEvent event, FakeElement form, FakeSubmitOptions options, (FakeElement) → void handler) → void {
+    if options.prevent_default {
+        event_prevent_default(event)
+    }
+    handler(form)
 }
 
 fn web_dom_on_submit(FakeDocument doc, FakeElement form, FakeSubmitOptions options, (FakeElement) → void handler) → FakeSubscription {
-    return web_dom_on(doc, form, "submit", (FakeEvent event) → void ∴ fac {
-        if options.prevent_default {
-            event_prevent_default(event)
-        }
-        handler(form)
-    })
+    return web_dom_on(doc, form, "submit", FakeEvent event → void ∴ submit_dispatch(event, form, options, handler))
 }
 
 fn web_dom_on_keyboard(FakeDocument doc, FakeElement element, string event_name, (FakeKeyboardState) → void handler) → FakeSubscription {
-    return web_dom_on(doc, element, event_name, (FakeEvent event) → void ∴ fac {
-        handler(FakeKeyboardState { kind = event.kind, key = event.key, code = event.code, repeat = event.repeat, alt = event.alt_key, ctrl = event.ctrl_key, shift = event.shift_key, meta = event.meta_key })
-    })
+    return web_dom_on(doc, element, event_name, FakeEvent event → void ∴ handler(FakeKeyboardState { kind = event.kind, key = event.key, code = event.code, repeat = event.repeat, alt = event.alt_key, ctrl = event.ctrl_key, shift = event.shift_key, meta = event.meta_key }))
 }
 
 fn web_dom_on_pointer(FakeDocument doc, FakeElement element, string event_name, (FakePointerState) → void handler) → FakeSubscription {
-    return web_dom_on(doc, element, event_name, (FakeEvent event) → void ∴ fac {
-        handler(FakePointerState { kind = event.kind, x = event.client_x, y = event.client_y, movement_x = event.movement_x, movement_y = event.movement_y, button = event.button, primary = event.primary })
-    })
+    return web_dom_on(doc, element, event_name, FakeEvent event → void ∴ handler(FakePointerState { kind = event.kind, x = event.client_x, y = event.client_y, movement_x = event.movement_x, movement_y = event.movement_y, button = event.button, primary = event.primary }))
 }
 
 fn web_dom_on_focus(FakeDocument doc, FakeElement element, string event_name, (FakeFocusState) → void handler) → FakeSubscription {
-    const FakeSubscription subscription ← web_dom_on(doc, element, event_name, (FakeEvent event) → void ∴ fac {
-        handler(FakeFocusState { focused = doc_has_focus(doc) })
-    })
+    const FakeSubscription subscription ← web_dom_on(doc, element, event_name, FakeEvent event → void ∴ handler(FakeFocusState { focused = doc_has_focus(doc) }))
     handler(FakeFocusState { focused = doc_has_focus(doc) })
     return subscription
 }
@@ -957,7 +920,7 @@ fn web_dom_prevent_default(FakeEvent event) → FakeEvent {
 
 fn find_child_by_identity(list<FakeElement> children, string identity) → FakeElement ∪ null {
     var int i ← 0
-    while i < children.longitudo() {
+    while i < children.length() {
         if children[i].data_tela ≡ identity {
             return children[i]
         }
@@ -972,7 +935,7 @@ fn stamp_subtree(FakeElement node, string token) → void {
         n.token ← token
     }
     var int i ← 0
-    while i < node.children.longitudo() {
+    while i < node.children.length() {
         stamp_subtree(node.children[i], token)
         i ← i + 1
     }
@@ -997,10 +960,10 @@ fn clone_node(FakeElement node) → FakeElement {
     var FakeElement c ← copy
     c.value ← node.value
     c.data_tela ← node.data_tela
-    const list<string> names ← node.attrs.claves()
+    const list<string> names ← node.attrs.keys()
     var int i ← 0
-    while i < names.longitudo() {
-        const string ∪ null maybe_value ← node.attrs.accipe(names[i])
+    while i < names.length() {
+        const string ∪ null maybe_value ← node.attrs.get(names[i])
         if maybe_value not is null {
             const string value ← maybe_value
             element_attr_set(copy, names[i], value)
@@ -1009,13 +972,13 @@ fn clone_node(FakeElement node) → FakeElement {
     }
     const list<string> class_names ← class_list_names(node.class_list)
     var int j ← 0
-    while j < class_names.longitudo() {
+    while j < class_names.length() {
         class_list_add(copy.class_list, class_names[j])
         j ← j + 1
     }
     c.token ← node.token
     var int k ← 0
-    while k < node.children.longitudo() {
+    while k < node.children.length() {
         element_append_child(copy, clone_node(node.children[k]))
         k ← k + 1
     }
@@ -1026,7 +989,7 @@ fn find_match(list<FakeElement> children, string t_id, int k) → FakeElement �
     if t_id ≠ "" {
         return find_child_by_identity(children, t_id)
     }
-    if k < children.longitudo() {
+    if k < children.length() {
         return children[k]
     }
     return null
@@ -1040,15 +1003,15 @@ fn find_match(list<FakeElement> children, string t_id, int k) → FakeElement �
 # the same result when the target order matches the present order, which
 # holds for the proof corpus; recorded).
 fn sync_region(FakeElement parent, list<FakeElement> target, tabula<string, string> plan, bool stamp) → void {
-    var list<FakeElement> rebuilt ← vacua
+    var list<FakeElement> rebuilt ← empty
     var int k ← 0
-    while k < target.longitudo() {
+    while k < target.length() {
         const FakeElement t ← target[k]
         const string t_id ← t.data_tela
         const FakeElement ∪ null match ← find_match(parent.children, t_id, k)
         var string status ← "create"
-        if t_id ≠ "" and plan.habet(t_id) {
-            const string ∪ null s ← plan.accipe(t_id)
+        if t_id ≠ "" and plan.has(t_id) {
+            const string ∪ null s ← plan.get(t_id)
             if s not is null {
                 const string certain ← s
                 status ← certain
@@ -1062,20 +1025,20 @@ fn sync_region(FakeElement parent, list<FakeElement> target, tabula<string, stri
                     m.token ← "original"
                 }
                 sync_region(certain_match, t.children, plan, stamp)
-                rebuilt.appende(certain_match)
+                rebuilt.append(certain_match)
             } else {
                 const FakeElement fresh ← clone_node(t)
                 if stamp {
                     stamp_subtree(fresh, "fresh")
                 }
-                rebuilt.appende(fresh)
+                rebuilt.append(fresh)
             }
         } else {
             const FakeElement fresh ← clone_node(t)
             if stamp {
                 stamp_subtree(fresh, "fresh")
             }
-            rebuilt.appende(fresh)
+            rebuilt.append(fresh)
         }
         k ← k + 1
     }
@@ -1090,10 +1053,10 @@ fn sync_region(FakeElement parent, list<FakeElement> target, tabula<string, stri
 fn execute_mount_plan(FakeDocument doc, string selector, MountedLike mounted, bool stamp) → void {
     const FakeElement root ← resolve_region(doc, selector)
     const list<FakeElement> target ← parse_fragment(mounted.markup)
-    var tabula<string, string> plan ← vacua
+    var tabula<string, string> plan ← empty
     var int i ← 0
-    while i < mounted.bindings.longitudo() {
-        plan.pone(mounted.bindings[i].identity, mounted.bindings[i].status)
+    while i < mounted.bindings.length() {
+        plan.put(mounted.bindings[i].identity, mounted.bindings[i].status)
         i ← i + 1
     }
     sync_region(root, target, plan, stamp)
@@ -1103,13 +1066,13 @@ fn execute_mount_plan(FakeDocument doc, string selector, MountedLike mounted, bo
 fn bind_region_subscriptions(FakeDocument doc, string selector, MountedLike mounted, (FakeEvent) → void handler) → list<FakeSubscription> {
     const FakeElement root ← resolve_region(doc, selector)
     const list<FakeElement> nodes ← element_query_all(root, "[data-tela]")
-    var list<FakeSubscription> subs ← vacua
+    var list<FakeSubscription> subs ← empty
     var int i ← 0
-    while i < mounted.subscriptions.longitudo() {
+    while i < mounted.subscriptions.length() {
         const FakeElement ∪ null node ← find_child_by_identity(nodes, mounted.subscriptions[i].identity)
         if node not is null {
             const FakeElement certain ← node
-            subs.appende(web_dom_on(doc, certain, mounted.subscriptions[i].event_name, handler))
+            subs.append(web_dom_on(doc, certain, mounted.subscriptions[i].event_name, handler))
         } else {
             panic "dom-shim: subscription target missing: " + mounted.subscriptions[i].identity
         }
