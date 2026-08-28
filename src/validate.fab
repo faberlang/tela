@@ -80,6 +80,11 @@ fn valid_tag_name(string name) → bool {
     if name.length() ≡ 0 then return false
     const string first_char ← name.slice(0, 1)
     if not letters.contains(first_char) then return false
+    # Stay-with-reason (list-predicate-twins LPT-7): string-char fold over
+    # the indexed string (per-char slice) — outside the LPT-1 all/any
+    # surface, which admits list<T> receivers only. The text-family fold is
+    # the covering form a future need would admit; the explicit loop stays
+    # until then.
     var int i ← 1
     while i < name.length() {
         const string ch ← name.slice(i, i + 1)
@@ -97,6 +102,10 @@ fn valid_tag_name(string name) → bool {
 fn valid_attribute_name(string name) → bool {
     const string attr_chars ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.:"
     if name.length() ≡ 0 then return false
+    # Stay-with-reason (list-predicate-twins LPT-7): same class as
+    # valid_tag_name — string-char fold over the indexed string, outside
+    # the list<T>-receiver all/any surface; stays until a text-family twin
+    # is admitted.
     var int i ← 0
     while i < name.length() {
         const string ch ← name.slice(i, i + 1)
