@@ -18,7 +18,7 @@ locale = "en"
 # in-tree radix 0.80.0 (fix:g5 — NONE); fix:codegen001 — the Rust
 # emit-across-imports block persists, the TS lane is the proven lane.
 
-import from "tela:tela" private tela
+import from "tela:tela" tela
 
 main {
     # --- light palette: core baseline + the namespaced extension token -----

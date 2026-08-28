@@ -86,14 +86,17 @@ import from "tela:tela" public * as tela
 # LAYOUT family — semantic containers (ref-layout-*).
 # ===========================================================================
 
+@ public
 class StackProps {
     list<tela.View> children
 }
 
+@ public
 fn stack_props(list<tela.View> children) → StackProps {
     return StackProps { children = children }
 }
 
+@ public
 fn layout_stack(StackProps props) → tela.View {
     return tela.element_full(
         tela.new_identity("ref-layout-stack"),
@@ -105,15 +108,18 @@ fn layout_stack(StackProps props) → tela.View {
     )
 }
 
+@ public
 class GridProps {
     list<tela.View> columns
 }
 
+@ public
 fn grid_props(list<tela.View> columns) → GridProps {
     return GridProps { columns = columns }
 }
 
 # Two-column track is declared in layout_style, not on the view.
+@ public
 fn layout_grid(GridProps props) → tela.View {
     return tela.element_full(
         tela.new_identity("ref-layout-grid"),
@@ -125,14 +131,17 @@ fn layout_grid(GridProps props) → tela.View {
     )
 }
 
+@ public
 class LayoutProseProps {
     list<tela.View> children
 }
 
+@ public
 fn layout_prose_props(list<tela.View> children) → LayoutProseProps {
     return LayoutProseProps { children = children }
 }
 
+@ public
 fn layout_prose(LayoutProseProps props) → tela.View {
     return tela.element_full(
         tela.new_identity("ref-layout-prose"),
@@ -148,22 +157,26 @@ fn layout_prose(LayoutProseProps props) → tela.View {
 # TYPOGRAPHY family — text semantics via markup (ref-typography-*).
 # ===========================================================================
 
+@ public
 class HeadingProps {
     int level
     string text
 }
 
+@ public
 fn heading_props(int level, string text) → HeadingProps {
     return HeadingProps { level = level, text = text }
 }
 
 # Fail-safe 1..6 — h0/h7 never emit (exempla-asserted).
+@ public
 fn clamped_level(int level) → int {
     if level < 1 then return 1
     if level > 6 then return 6
     return level
 }
 
+@ public
 fn typography_heading(HeadingProps props) → tela.View {
     const int level ← clamped_level(props.level)
     return tela.element_full(
@@ -176,14 +189,17 @@ fn typography_heading(HeadingProps props) → tela.View {
     )
 }
 
+@ public
 class ProseProps {
     list<tela.View> children
 }
 
+@ public
 fn prose_props(list<tela.View> children) → ProseProps {
     return ProseProps { children = children }
 }
 
+@ public
 fn typography_prose(ProseProps props) → tela.View {
     return tela.element_full(
         tela.new_identity("ref-typography-prose"),
@@ -195,15 +211,18 @@ fn typography_prose(ProseProps props) → tela.View {
     )
 }
 
+@ public
 class EmphasisProps {
     string kind
     string text
 }
 
+@ public
 fn emphasis_props(string kind, string text) → EmphasisProps {
     return EmphasisProps { kind = kind, text = text }
 }
 
+@ public
 fn typography_emphasis(EmphasisProps props) → tela.View {
     return tela.element_full(
         tela.new_identity("ref-typography-emphasis-" + props.kind),
@@ -215,15 +234,18 @@ fn typography_emphasis(EmphasisProps props) → tela.View {
     )
 }
 
+@ public
 class ScaleProps {
     string step
     string text
 }
 
+@ public
 fn scale_props(string step, string text) → ScaleProps {
     return ScaleProps { step = step, text = text }
 }
 
+@ public
 fn typography_scale(ScaleProps props) → tela.View {
     return tela.element_full(
         tela.new_identity("ref-typography-scale-" + props.step),
@@ -239,16 +261,19 @@ fn typography_scale(ScaleProps props) → tela.View {
 # PANEL family — theme-surface containers (ref-panel-*).
 # ===========================================================================
 
+@ public
 class PanelProps {
     string name
     string title
     list<tela.View> children
 }
 
+@ public
 fn panel_props(string name, string title, list<tela.View> children) → PanelProps {
     return PanelProps { name = name, title = title, children = children }
 }
 
+@ public
 fn panel(PanelProps props) → tela.View {
     var list<tela.Attribute> attributes ← [
         tela.Attribute { name = "role", value = "region" }
@@ -270,16 +295,19 @@ fn panel(PanelProps props) → tela.View {
 # BADGE family — textual status indicators (ref-badge-*).
 # ===========================================================================
 
+@ public
 class BadgeProps {
     string name
     string status
     string text
 }
 
+@ public
 fn badge_props(string name, string status, string text) → BadgeProps {
     return BadgeProps { name = name, status = status, text = text }
 }
 
+@ public
 fn badge(BadgeProps props) → tela.View {
     return tela.element_full(
         tela.new_identity("ref-badge-" + props.name),
@@ -298,6 +326,7 @@ fn badge(BadgeProps props) → tela.View {
 # METRIC family — label + value (+ delta) pairs (ref-metric-*).
 # ===========================================================================
 
+@ public
 class MetricProps {
     string name
     string label
@@ -305,10 +334,12 @@ class MetricProps {
     string delta
 }
 
+@ public
 fn metric_props(string name, string label, string value, string delta) → MetricProps {
     return MetricProps { name = name, label = label, value = value, delta = delta }
 }
 
+@ public
 fn metric(MetricProps props) → tela.View {
     var list<tela.View> children ← [
         tela.element_view(tela.html_space(), "dt", [ tela.text_view(props.label) ]),
@@ -331,14 +362,17 @@ fn metric(MetricProps props) → tela.View {
 # TABLE family — native table grammar (ref-table-*).
 # ===========================================================================
 
+@ public
 class TableRow {
     list<string> cells
 }
 
+@ public
 fn table_row(list<string> cells) → TableRow {
     return TableRow { cells = cells }
 }
 
+@ public
 class TableProps {
     string name
     string caption
@@ -346,11 +380,13 @@ class TableProps {
     list<TableRow> rows
 }
 
+@ public
 fn table_props(string name, string caption, list<string> headers, list<TableRow> rows) → TableProps {
     return TableProps { name = name, caption = caption, headers = headers, rows = rows }
 }
 
 # 0-based identities ref-table-<name>-header-<i>; native th scope=col.
+@ public
 fn table_header_cells(string name, list<string> headers) → list<tela.View> {
     var list<tela.View> cells ← empty
     var int i ← 0
@@ -369,6 +405,7 @@ fn table_header_cells(string name, list<string> headers) → list<tela.View> {
 }
 
 # 0-based identities ref-table-<name>-cell-<r>-<c>.
+@ public
 fn table_body_cells(string name, int row, list<string> cells) → list<tela.View> {
     var list<tela.View> tds ← empty
     var int i ← 0
@@ -386,6 +423,7 @@ fn table_body_cells(string name, int row, list<string> cells) → list<tela.View
     return tds
 }
 
+@ public
 fn table(TableProps props) → tela.View {
     var list<tela.View> children ← empty
     if not (props.caption ≡ "") {
@@ -434,6 +472,7 @@ fn table(TableProps props) → tela.View {
 # SEGMENTED-CONTROL family (ref-seg-*).
 # ===========================================================================
 
+@ public
 class SegmentedProps {
     string name
     string label
@@ -441,20 +480,24 @@ class SegmentedProps {
     string selected
 }
 
+@ public
 fn segmented_props(string name, string label, list<string> options, string selected) → SegmentedProps {
     return SegmentedProps { name = name, label = label, options = options, selected = selected }
 }
 
+@ public
 fn selected_text(bool selected) → string {
     if selected then return "true"
     return "false"
 }
 
+@ public
 fn active_tabindex(bool selected) → string {
     if selected then return "0"
     return "-1"
 }
 
+@ public
 fn segmented_option(string identity, string option, string tabindex, string selected) → tela.View {
     return tela.element_full(
         tela.new_identity(identity),
@@ -470,6 +513,7 @@ fn segmented_option(string identity, string option, string tabindex, string sele
     )
 }
 
+@ public
 fn segmented_live_region() → tela.View {
     return tela.element_full(
         tela.new_identity("ref-seg-live"),
@@ -485,6 +529,7 @@ fn segmented_live_region() → tela.View {
 }
 
 # 1-based identities ref-seg-<name>-1..N, then the singleton live region.
+@ public
 fn segmented_options(SegmentedProps props) → list<tela.View> {
     var list<tela.View> options ← empty
     var int i ← 1
@@ -499,6 +544,7 @@ fn segmented_options(SegmentedProps props) → list<tela.View> {
     return options
 }
 
+@ public
 fn segmented_control(SegmentedProps props) → tela.View {
     return tela.element_full(
         tela.new_identity("ref-seg-" + props.name),
@@ -517,6 +563,7 @@ fn segmented_control(SegmentedProps props) → tela.View {
 # BUTTON family (ref-button-*).
 # ===========================================================================
 
+@ public
 class ButtonProps {
     string name
     string label
@@ -527,6 +574,7 @@ class ButtonProps {
 }
 
 # fix:g6-value-position — variant as a constructor VALUE fails PARSE001.
+@ public
 fn button_props(string name, string label, string variant_value, string state, string event_name, string aria_label) → ButtonProps {
     return ButtonProps {
         name = name,
@@ -538,11 +586,13 @@ fn button_props(string name, string label, string variant_value, string state, s
     }
 }
 
+@ public
 fn button_event() → string {
     return "click"
 }
 
 # Attribute author order: aria-label? → disabled? → data-ref-variant → data-tela.
+@ public
 fn button(ButtonProps props) → tela.View {
     var list<tela.Attribute> attributes ← empty
     if not (props.aria_label ≡ "") {
@@ -566,6 +616,7 @@ fn button(ButtonProps props) → tela.View {
 # FIELD family — static surface (form-*).
 # ===========================================================================
 
+@ public
 class FieldInputProps {
     string name
     string label
@@ -574,6 +625,7 @@ class FieldInputProps {
     string disabled
 }
 
+@ public
 fn field_input_props(string name, string label, string value, string error, string disabled) → FieldInputProps {
     return FieldInputProps {
         name = name,
@@ -585,12 +637,14 @@ fn field_input_props(string name, string label, string value, string error, stri
 }
 
 # Non-empty error → aria-invalid "true"; otherwise "false".
+@ public
 fn field_invalid(FieldInputProps props) → string {
     if not (props.error ≡ "") then return "true"
     return "false"
 }
 
 # Attribute author order: type → aria-label → aria-invalid → describedby? → value? → disabled? → data-tela.
+@ public
 fn field_input(FieldInputProps props) → tela.View {
     var list<tela.Attribute> attributes ← empty
     attributes.append(tela.Attribute { name = "type", value = "text" })
@@ -616,6 +670,7 @@ fn field_input(FieldInputProps props) → tela.View {
 }
 
 # Empty error still emits the node so the association structure stays stable.
+@ public
 fn field_error_region(string name, string error) → tela.View {
     var list<tela.View> children ← empty
     if not (error ≡ "") {
@@ -631,6 +686,7 @@ fn field_error_region(string name, string error) → tela.View {
     )
 }
 
+@ public
 fn field_live_region() → tela.View {
     return tela.element_full(
         tela.new_identity("form-live"),
@@ -645,6 +701,7 @@ fn field_live_region() → tela.View {
     )
 }
 
+@ public
 fn field_control(FieldInputProps props) → tela.View {
     var list<tela.View> children ← empty
     children.append(field_input(props))
@@ -664,17 +721,20 @@ fn field_control(FieldInputProps props) → tela.View {
 # ===========================================================================
 
 # fix:snapshot-name-collision — formslib `field_event` is taken in the shared harness.
+@ public
 fn field_input_event() → string {
     return "input"
 }
 
 # Empty value → "Required"; otherwise cleared.
+@ public
 fn field_error_for_value(string value) → string {
     if value ≡ "" then return "Required"
     return ""
 }
 
 # Silent when value and error are unchanged; otherwise identity + valid/invalid text.
+@ public
 fn field_announcement(FieldInputProps ante, FieldInputProps post) → string {
     if ante.value ≡ post.value and ante.error ≡ post.error {
         return ""
@@ -689,6 +749,7 @@ fn field_announcement(FieldInputProps ante, FieldInputProps post) → string {
 # STYLE BUNDLES — identity-keyed rules, --ref-* / --form-* custom properties.
 # ===========================================================================
 
+@ public
 fn layout_style() → tela.Style {
     return tela.Style {
         rules = [
@@ -720,6 +781,7 @@ fn layout_style() → tela.Style {
 }
 
 # Heading scale: h1→xl, h2→lg, h3→md, h4→sm, h5/h6→xs.
+@ public
 fn typography_style() → tela.Style {
     return tela.Style {
         rules = [
@@ -813,6 +875,7 @@ fn typography_style() → tela.Style {
     }
 }
 
+@ public
 fn panel_style() → tela.Style {
     return tela.Style {
         rules = [
@@ -829,6 +892,7 @@ fn panel_style() → tela.Style {
     }
 }
 
+@ public
 fn badge_style() → tela.Style {
     return tela.Style {
         rules = [
@@ -845,6 +909,7 @@ fn badge_style() → tela.Style {
     }
 }
 
+@ public
 fn metric_style() → tela.Style {
     return tela.Style {
         rules = [
@@ -874,6 +939,7 @@ fn metric_style() → tela.Style {
     }
 }
 
+@ public
 fn table_style() → tela.Style {
     return tela.Style {
         rules = [
@@ -913,6 +979,7 @@ fn table_style() → tela.Style {
 }
 
 # Prefix + role: the prefix alone would match both the group and the segments.
+@ public
 fn segmented_style() → tela.Style {
     return tela.Style {
         rules = [
@@ -942,6 +1009,7 @@ fn segmented_style() → tela.Style {
     }
 }
 
+@ public
 fn button_style() → tela.Style {
     return tela.Style {
         rules = [
@@ -993,6 +1061,7 @@ fn button_style() → tela.Style {
     }
 }
 
+@ public
 fn field_style() → tela.Style {
     return tela.Style {
         rules = [
@@ -1038,192 +1107,239 @@ fn field_style() → tela.Style {
 # TOKENS — zero-arg tela.Token accessors (ref.* / form.*).
 # ===========================================================================
 
+@ public
 fn ref_layout_gap() → tela.Token {
     return tela.Token { name = "ref.layout.gap", value = "1rem" }
 }
 
+@ public
 fn ref_layout_prose_measure() → tela.Token {
     return tela.Token { name = "ref.layout.prose.measure", value = "65ch" }
 }
 
+@ public
 fn ref_type_scale_xs() → tela.Token {
     return tela.Token { name = "ref.type.scale.xs", value = "0.75rem" }
 }
 
+@ public
 fn ref_type_scale_sm() → tela.Token {
     return tela.Token { name = "ref.type.scale.sm", value = "0.875rem" }
 }
 
+@ public
 fn ref_type_scale_md() → tela.Token {
     return tela.Token { name = "ref.type.scale.md", value = "1rem" }
 }
 
+@ public
 fn ref_type_scale_lg() → tela.Token {
     return tela.Token { name = "ref.type.scale.lg", value = "1.25rem" }
 }
 
+@ public
 fn ref_type_scale_xl() → tela.Token {
     return tela.Token { name = "ref.type.scale.xl", value = "1.5rem" }
 }
 
+@ public
 fn ref_type_heading_weight() → tela.Token {
     return tela.Token { name = "ref.type.heading.weight", value = "600" }
 }
 
+@ public
 fn ref_type_heading_margin() → tela.Token {
     return tela.Token { name = "ref.type.heading.margin", value = "0 0 0.5rem 0" }
 }
 
+@ public
 fn ref_type_prose_line_height() → tela.Token {
     return tela.Token { name = "ref.type.prose.line-height", value = "1.6" }
 }
 
+@ public
 fn ref_type_prose_margin() → tela.Token {
     return tela.Token { name = "ref.type.prose.margin", value = "0 0 1rem 0" }
 }
 
+@ public
 fn ref_panel_surface() → tela.Token {
     return tela.Token { name = "ref.panel.surface", value = "var(--surface-panel)" }
 }
 
+@ public
 fn ref_panel_border() → tela.Token {
     return tela.Token { name = "ref.panel.border", value = "var(--border-default)" }
 }
 
+@ public
 fn ref_panel_radius() → tela.Token {
     return tela.Token { name = "ref.panel.radius", value = "0.5rem" }
 }
 
+@ public
 fn ref_panel_padding() → tela.Token {
     return tela.Token { name = "ref.panel.padding", value = "1rem" }
 }
 
+@ public
 fn ref_badge_size() → tela.Token {
     return tela.Token { name = "ref.badge.size", value = "0.75rem" }
 }
 
+@ public
 fn ref_badge_padding() → tela.Token {
     return tela.Token { name = "ref.badge.padding", value = "0.125rem 0.5rem" }
 }
 
+@ public
 fn ref_badge_radius() → tela.Token {
     return tela.Token { name = "ref.badge.radius", value = "0.25rem" }
 }
 
+@ public
 fn ref_metric_label_size() → tela.Token {
     return tela.Token { name = "ref.metric.label.size", value = "0.875rem" }
 }
 
+@ public
 fn ref_metric_label_muted() → tela.Token {
     return tela.Token { name = "ref.metric.label.muted", value = "var(--text-muted)" }
 }
 
+@ public
 fn ref_metric_value_size() → tela.Token {
     return tela.Token { name = "ref.metric.value.size", value = "1.5rem" }
 }
 
+@ public
 fn ref_metric_value_weight() → tela.Token {
     return tela.Token { name = "ref.metric.value.weight", value = "600" }
 }
 
+@ public
 fn ref_table_border() → tela.Token {
     return tela.Token { name = "ref.table.border", value = "var(--border-default)" }
 }
 
+@ public
 fn ref_table_padding() → tela.Token {
     return tela.Token { name = "ref.table.padding", value = "0.5rem 0.75rem" }
 }
 
+@ public
 fn ref_table_header_weight() → tela.Token {
     return tela.Token { name = "ref.table.header.weight", value = "600" }
 }
 
+@ public
 fn ref_table_caption_muted() → tela.Token {
     return tela.Token { name = "ref.table.caption.muted", value = "var(--text-muted)" }
 }
 
+@ public
 fn ref_seg_gap() → tela.Token {
     return tela.Token { name = "ref.seg.gap", value = "0.25rem" }
 }
 
+@ public
 fn ref_seg_radius() → tela.Token {
     return tela.Token { name = "ref.seg.radius", value = "0.375rem" }
 }
 
+@ public
 fn ref_seg_size() → tela.Token {
     return tela.Token { name = "ref.seg.size", value = "0.875rem" }
 }
 
+@ public
 fn ref_seg_padding() → tela.Token {
     return tela.Token { name = "ref.seg.padding", value = "0.5rem 0.75rem" }
 }
 
+@ public
 fn ref_seg_border() → tela.Token {
     return tela.Token { name = "ref.seg.border", value = "var(--border-default)" }
 }
 
+@ public
 fn ref_seg_selected_border() → tela.Token {
     return tela.Token { name = "ref.seg.selected.border", value = "var(--accent-primary)" }
 }
 
+@ public
 fn ref_button_size() → tela.Token {
     return tela.Token { name = "ref.button.size", value = "0.875rem" }
 }
 
+@ public
 fn ref_button_padding() → tela.Token {
     return tela.Token { name = "ref.button.padding", value = "0.5rem 1rem" }
 }
 
+@ public
 fn ref_button_radius() → tela.Token {
     return tela.Token { name = "ref.button.radius", value = "0.25rem" }
 }
 
+@ public
 fn ref_button_border() → tela.Token {
     return tela.Token { name = "ref.button.border", value = "var(--border-default)" }
 }
 
+@ public
 fn ref_button_text() → tela.Token {
     return tela.Token { name = "ref.button.text", value = "var(--text-primary)" }
 }
 
+@ public
 fn ref_button_primary_background() → tela.Token {
     return tela.Token { name = "ref.button.primary.background", value = "var(--accent-primary)" }
 }
 
+@ public
 fn ref_button_primary_text() → tela.Token {
     return tela.Token { name = "ref.button.primary.text", value = "var(--surface-canvas)" }
 }
 
+@ public
 fn ref_button_secondary_background() → tela.Token {
     return tela.Token { name = "ref.button.secondary.background", value = "var(--surface-panel)" }
 }
 
+@ public
 fn ref_button_ghost_background() → tela.Token {
     return tela.Token { name = "ref.button.ghost.background", value = "transparent" }
 }
 
+@ public
 fn ref_button_focus() → tela.Token {
     return tela.Token { name = "ref.button.focus", value = "var(--accent-primary)" }
 }
 
+@ public
 fn ref_button_disabled_opacity() → tela.Token {
     return tela.Token { name = "ref.button.disabled.opacity", value = "0.6" }
 }
 
 # Accessor names are formslib-collision-free; token names stay form.field.* / form.focus.
+@ public
 fn field_invalid_token() → tela.Token {
     return tela.Token { name = "form.field.invalid", value = "#dc2626" }
 }
 
+@ public
 fn field_valid_token() → tela.Token {
     return tela.Token { name = "form.field.valid", value = "#16a34a" }
 }
 
+@ public
 fn field_focus_token() → tela.Token {
     return tela.Token { name = "form.focus", value = "#2563eb" }
 }
 
 # Assembly-input convenience; consumers may still collect accessors individually.
+@ public
 fn reference_tokens() → list<tela.Token> {
     return [
         ref_layout_gap(),

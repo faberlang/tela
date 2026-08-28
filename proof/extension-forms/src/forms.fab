@@ -113,6 +113,7 @@ import from "tela:tela" public * ut tela
 # The field (text input) props. `invalid` = "true"/"false" (aria-invalid);
 # `error` = the error message ("" = none — the group renders an empty error
 # node; aria-describedby → form-error-<name> when invalid).
+@ public
 class FieldProps {
     string name
     string label
@@ -122,6 +123,7 @@ class FieldProps {
 }
 
 # The select props (option list; aria-invalid + aria-describedby surface).
+@ public
 class SelectProps {
     string name
     string label
@@ -130,6 +132,7 @@ class SelectProps {
 }
 
 # The checkbox props. `selected` = "true"/"false" (aria-checked).
+@ public
 class CheckboxProps {
     string name
     string label
@@ -139,14 +142,17 @@ class CheckboxProps {
 
 # Props constructors — ordinary functions returning local classes, keeping
 # the provider boundary consumable.
+@ public
 fn field_props(string name, string label, string value, string invalid, string error) → FieldProps {
     return FieldProps { name = name, label = label, value = value, invalid = invalid, error = error }
 }
 
+@ public
 fn select_props(string name, string label, list<string> options, string invalid) → SelectProps {
     return SelectProps { name = name, label = label, options = options, invalid = invalid }
 }
 
+@ public
 fn checkbox_props(string name, string label, string selected, string invalid) → CheckboxProps {
     return CheckboxProps { name = name, label = label, selected = selected, invalid = invalid }
 }
@@ -155,6 +161,7 @@ fn checkbox_props(string name, string label, string selected, string invalid) �
 # The field (text input) — form-field-<name>.
 # ---------------------------------------------------------------------------
 
+@ public
 fn field(FieldProps props) → tela.View {
     var list<tela.Attribute> attributes ← vacua
     attributes.appende(tela.Attribute { name = "type", value = "text" })
@@ -180,6 +187,7 @@ fn field(FieldProps props) → tela.View {
 # The checkbox — form-checkbox-<name> (aria-checked + the invalid surface).
 # ---------------------------------------------------------------------------
 
+@ public
 fn checkbox(CheckboxProps props) → tela.View {
     var list<tela.Attribute> attributes ← vacua
     attributes.appende(tela.Attribute { name = "type", value = "checkbox" })
@@ -203,6 +211,7 @@ fn checkbox(CheckboxProps props) → tela.View {
 # The select — form-select-<name> (native option children).
 # ---------------------------------------------------------------------------
 
+@ public
 fn select(SelectProps props) → tela.View {
     var list<tela.Attribute> attributes ← vacua
     attributes.appende(tela.Attribute { name = "aria-label", value = props.label })
@@ -233,6 +242,7 @@ fn select(SelectProps props) → tela.View {
 # The error node for a field: role=alert + the identity the field's
 # aria-describedby references (form-error-<name>). Empty text = empty node
 # (the association structure is stable — the group always carries it).
+@ public
 fn error_region(string name, string text) → tela.View {
     var list<tela.View> children ← vacua
     if not (text ≡ "") {
@@ -251,6 +261,7 @@ fn error_region(string name, string text) → tela.View {
 # The form-level live region (the Stage 3 §1.5 pattern extended to forms):
 # role=status + aria-live=polite, form-live. The announcement policy (on a
 # validation-state change, silent on no-op) is the app-typed plan's (U4).
+@ public
 fn form_live_region() → tela.View {
     return tela.element_full(
         tela.new_identity("form-live"),
@@ -267,6 +278,7 @@ fn form_live_region() → tela.View {
 
 # The field group — the association surface: the field (aria-describedby →
 # form-error-<name> when invalid) + its error node under form-control-<name>.
+@ public
 fn field_group(FieldProps props) → tela.View {
     var list<tela.View> children ← vacua
     children.appende(field(props))
@@ -295,14 +307,17 @@ fn field_group(FieldProps props) → tela.View {
 # `--form-field-invalid`). `form.focus` is the focus-ring token.
 # ---------------------------------------------------------------------------
 
+@ public
 fn form_field_invalid() → tela.Token {
     return tela.Token { name = "form.field.invalid", value = "#dc2626" }
 }
 
+@ public
 fn form_field_valid() → tela.Token {
     return tela.Token { name = "form.field.valid", value = "#16a34a" }
 }
 
+@ public
 fn form_focus() → tela.Token {
     return tela.Token { name = "form.focus", value = "#2563eb" }
 }
@@ -310,6 +325,7 @@ fn form_focus() → tela.Token {
 # The token collection (the package's assembly-input convenience — the
 # consumer composes the theme via the individual accessors, the field-access
 # pattern; the collection is the package's self-usable summary).
+@ public
 fn form_tokens() → list<tela.Token> {
     return [ form_field_invalid(), form_field_valid(), form_focus() ]
 }
@@ -322,6 +338,7 @@ fn form_tokens() → list<tela.Token> {
 # consumer today (the stage-1 §3 evidence: `→ tela.Style` resolves).
 # ---------------------------------------------------------------------------
 
+@ public
 fn form_style() → tela.Style {
     return tela.Style {
         rules = [
@@ -369,18 +386,22 @@ fn form_style() → tela.Style {
 # surface instead of duplicating event literals.
 # ---------------------------------------------------------------------------
 
+@ public
 fn field_event() → string {
     return "input"
 }
 
+@ public
 fn change_event() → string {
     return "change"
 }
 
+@ public
 fn submit_event() → string {
     return "submit"
 }
 
+@ public
 fn click_event() → string {
     return "click"
 }
@@ -396,11 +417,13 @@ fn click_event() → string {
 # (invalid → aria-invalid + error text; valid → cleared; the no-op rule).
 # ---------------------------------------------------------------------------
 
+@ public
 fn invalid_state(bool invalid) → string {
     if invalid then return "true"
     return "false"
 }
 
+@ public
 fn error_present(string error) → bool {
     return not (error ≡ "")
 }

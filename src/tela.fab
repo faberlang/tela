@@ -111,6 +111,7 @@ import from "tela:validate" validate
 # Space: namespace enum (html | svg). The open element model keeps the
 # tag itself an ordinary string, so custom elements and future-standard
 # names stay open.
+@ public
 enum Space {
     html,
     svg
@@ -118,6 +119,7 @@ enum Space {
 
 # Attribute: serialized attribute — an (name, value) pair emitted into
 # the tag.
+@ public
 class Attribute {
     string name
     string value
@@ -126,6 +128,7 @@ class Attribute {
 # Property: DOM property (value, checked, selection), modeled separately
 # from serialized attributes because their semantics differ. Carried in
 # the tree; not serialized into static HTML in Stage 1 (browser lane).
+@ public
 class Property {
     string name
     string value
@@ -134,6 +137,7 @@ class Property {
 # Identity: stable identity. Explicit typed field — never inferred from
 # array position. Serialized in one documented hydration-ready form
 # (data-tela) by the U3 serializer.
+@ public
 class Identity {
     string value
 }
@@ -141,6 +145,7 @@ class Identity {
 # View: the recursive tagged union at the center of the protocol.
 # Closure-free (Branch B): behavior lives in the adjacent typed plan
 # (Stage 3), not inside view values. No raw-markup variant (policy (a)).
+@ public
 union View {
     ElementNode {
         Identity ∪ null identity
@@ -160,10 +165,12 @@ union View {
 # syntax (policy: kernel owns constructors; G3 workaround).
 # ---------------------------------------------------------------------------
 
+@ public
 fn text_view(string value) → View {
     return variant TextNode { value = value } ∷ View
 }
 
+@ public
 fn fragment_view(list<View> children) → View {
     return variant Fragment { children = children } ∷ View
 }
@@ -173,6 +180,7 @@ fn fragment_view(list<View> children) → View {
 # nullable union field is a known Rust-emission defect (D3 — Some() wrap
 # missing; stage-0-branch-a-b-evidence.md §4). Workaround KEPT until the
 # radix D3 delivery lands.
+@ public
 fn new_identity(string v) → Identity ∪ null {
     return Identity { value = v }
 }
@@ -180,15 +188,18 @@ fn new_identity(string v) → Identity ∪ null {
 # Namespace values as plain helpers: enum-member access through an
 # imported namespace does not resolve (gap G1), so the values are exposed
 # as functions even inside the kernel module.
+@ public
 fn html_space() → Space {
     return Space.html
 }
 
+@ public
 fn svg_space() → Space {
     return Space.svg
 }
 
 # Open-element shorthand: no identity, no attributes.
+@ public
 fn element_view(Space space, string tag_name, list<View> children) → View {
     return variant ElementNode {
         identity = null,
@@ -203,6 +214,7 @@ fn element_view(Space space, string tag_name, list<View> children) → View {
 # Full open-element constructor: identity + serialized attributes + DOM
 # properties. Cross-module variant construction does not resolve (gap G3),
 # so consumers reach the full ElementNode through this constructor.
+@ public
 fn element_full(
     Identity ∪ null identity,
     Space space,
@@ -230,6 +242,7 @@ fn element_full(
 # concatenates an unescaped value.
 # ---------------------------------------------------------------------------
 
+@ public
 fn escape(string s, bool in_attribute) → string {
     var string accum ← ""
     var int i ← 0
@@ -268,6 +281,7 @@ fn escape(string s, bool in_attribute) → string {
 # the fail-closed checks. validate.fab keeps its G4-safe string/bool surface.
 # ---------------------------------------------------------------------------
 
+@ public
 fn space_name(Space space) → string {
     match space {
         case Space.html {
@@ -282,6 +296,7 @@ fn space_name(Space space) → string {
 # Namespace emission: svg-namespace elements carry the xmlns declaration
 # (spike baseline; required on the svg root for inline SVG, harmless on
 # nested svg elements).
+@ public
 fn serialize_ns(Space space) → string {
     match space {
         case Space.html {
@@ -298,6 +313,7 @@ fn serialize_ns(Space space) → string {
 # tree, run BEFORE any emission. Text is escaped, never validated (any
 # string is safe once escaped — policy (a)2). Invalid input NEVER emits
 # markup: html_view returns null (no output at all), never partial markup.
+@ public
 fn validate_tree(View v) → bool {
     match v {
         case TextNode const value {
@@ -334,6 +350,7 @@ fn validate_tree(View v) → bool {
 
 # Attributes serialize as name="value" — double quotes (HTML convention
 # and Faber string syntax). The value is escaped through the attribute set.
+@ public
 fn serialize_attributes(list<Attribute> attributes) → string {
     const string q ← "§"('"')
     var string accum ← ""
@@ -346,6 +363,7 @@ fn serialize_attributes(list<Attribute> attributes) → string {
 # Identity: non-null Identity emits data-tela="<escaped value>" — the ONE
 # documented hydration-ready serialization form (policy (d)); elements
 # without identity emit nothing.
+@ public
 fn serialize_identity(Identity ∪ null identity) → string {
     match identity {
         case null {
@@ -358,6 +376,7 @@ fn serialize_identity(Identity ∪ null identity) → string {
     }
 }
 
+@ public
 fn serialize_view(View v) → string {
     match v {
         case TextNode const value {
@@ -393,6 +412,7 @@ fn serialize_view(View v) → string {
 # top-level binding and is ESCALATED to the radix lane (see module header).
 # Fail-closed: null = rejected, no markup ever emitted. Deterministic bytes
 # over author order.
+@ public
 fn html_view(View v) → string ∪ null {
     if not validate_tree(v) then return null
     return serialize_view(v)
@@ -403,20 +423,24 @@ fn html_view(View v) → string ∪ null {
 # emission preserving author order of rules and declarations.
 # ---------------------------------------------------------------------------
 
+@ public
 class Declaration {
     string name
     string value
 }
 
+@ public
 class Rule {
     string selector
     list<Declaration> declarations
 }
 
+@ public
 class Style {
     list<Rule> rules
 }
 
+@ public
 fn css(Style style) → string {
     var string accum ← ""
     for from style.rules const rule {
@@ -464,6 +488,7 @@ fn css(Style style) → string {
 # Token: one named token — dotted path (chart.axis.muted) + resolved CSS
 # value. U5-proven spelling (proof/benchmark/extension-lib declares the same
 # shape).
+@ public
 class Token {
     string name
     string value
@@ -472,6 +497,7 @@ class Token {
 # Theme: a named theme — a token collection over the core baseline. Two
 # materially different themes = two Theme values over the same component tree
 # (campaign §5; variants are tokens, not new machinery).
+@ public
 class Theme {
     string name
     list<Token> tokens
@@ -479,15 +505,18 @@ class Theme {
 
 # Kernel-owned constructors (G3 posture — ordinary functions over the same
 # public values, like the Stage 1 kernel constructors).
+@ public
 fn token(string name, string value) → Token {
     return Token { name = name, value = value }
 }
 
+@ public
 fn theme(string name, list<Token> tokens) → Theme {
     return Theme { name = name, tokens = tokens }
 }
 
 # The core token baseline — the required token set a theme must cover.
+@ public
 fn core_tokens() → list<string> {
     return [
         "surface.canvas", "surface.panel",
@@ -501,6 +530,7 @@ fn core_tokens() → list<string> {
 # Dotted path → CSS custom property: `--` + name with `.` → `-`.
 # Deterministic single-character scan (sequential independent ifs — the
 # TS-emitter-safe pattern from escape).
+@ public
 fn token_property_name(string name) → string {
     var string accum ← "--"
     var int i ← 0
@@ -517,12 +547,14 @@ fn token_property_name(string name) → string {
 # predicate (letters/digits/-/_/. /:; rejects whitespace, =, quotes, < > /,
 # and control characters). A token name is a dotted path, so the
 # attribute-name charset covers it fail-closed.
+@ public
 fn token_name_valid(string name) → bool {
     return validate.valid_attribute_name(name)
 }
 
 # Required-token coverage: every core baseline token name must be present in
 # the theme's token collection.
+@ public
 fn theme_has_core_tokens(Theme theme) → bool {
     const list<string> core ← core_tokens()
     var int i ← 0
@@ -533,6 +565,7 @@ fn theme_has_core_tokens(Theme theme) → bool {
     return true
 }
 
+@ public
 fn theme_has_token(Theme theme, string name) → bool {
     for from theme.tokens const token {
         if token.name ≡ name then return true
@@ -545,6 +578,7 @@ fn theme_has_token(Theme theme, string name) → bool {
 # missing required core token, invalid token name, or duplicate token
 # identity with different content → null (no output). Deterministic bytes
 # over author order.
+@ public
 fn theme_css(Theme theme) → string ∪ null {
     const Style ∪ null style_result ← theme_style(theme)
     if style_result is null then return null
@@ -557,6 +591,7 @@ fn theme_css(Theme theme) → string ∪ null {
 # identical content dedups, different content rejects (policy (e); the
 # stage-scope duplicate-token rule exercised here, the renderer surface).
 # Deterministic bytes over author order.
+@ public
 fn theme_style(Theme theme) → Style ∪ null {
     if not theme_has_core_tokens(theme) then return null
     var list<Declaration> declarations ← empty
@@ -640,6 +675,7 @@ fn theme_style(Theme theme) → Style ∪ null {
 # A style bundle: stable identity + the Style it contributes. Stable
 # identity = the locked package/bundle name (policy (e) — the deterministic
 # tie-break basis).
+@ public
 class Bundle {
     string identity
     Style style
@@ -647,16 +683,19 @@ class Bundle {
 
 # One package-order entry: package identity + its dependency identities.
 # The explicit package-order map — stdlib-only, no import introspection.
+@ public
 class Order {
     string identity
     list<string> depends
 }
 
 # Kernel-owned constructors (G3 posture).
+@ public
 fn bundle(string identity, Style style) → Bundle {
     return Bundle { identity = identity, style = style }
 }
 
+@ public
 fn order(string identity, list<string> depends) → Order {
     return Order { identity = identity, depends = depends }
 }
@@ -664,6 +703,7 @@ fn order(string identity, list<string> depends) → Order {
 # Bundle dedup by stable identity (policy (e)): identical duplicates (same
 # rendered css) collapse to one; duplicate identity with different content
 # → null (fail-closed).
+@ public
 fn deduplicated_bundles(list<Bundle> bundles) → list<Bundle> ∪ null {
     var list<Bundle> unique ← empty
     var int i ← 0
@@ -686,6 +726,7 @@ fn deduplicated_bundles(list<Bundle> bundles) → list<Bundle> ∪ null {
 }
 
 # Set membership over a string list.
+@ public
 fn in_list(list<string> collection, string name) → bool {
     for from collection const item {
         if item ≡ name then return true
@@ -696,6 +737,7 @@ fn in_list(list<string> collection, string name) → bool {
 # A package is ready when its declared dependencies are all already placed.
 # An identity absent from the orders map is never ready (its dependencies
 # are unknowable) — the topo fails closed.
+@ public
 fn dependencies_met(list<Order> orders, string identity, list<string> placed) → bool {
     var int i ← 0
     while i < orders.length() {
@@ -718,6 +760,7 @@ fn dependencies_met(list<Order> orders, string identity, list<string> placed) �
 # stable identity is the deterministic tie-break (lexicographic via the list
 # sorted intrinsic — content-independent). A cycle (no ready package while
 # identities remain) or an unresolvable dependency → null (fail-closed).
+@ public
 fn topological_order(list<Order> orders, list<string> identities) → list<string> ∪ null {
     var list<string> ordered ← empty
     var list<string> remaining ← identities
@@ -745,6 +788,7 @@ fn topological_order(list<Order> orders, list<string> identities) → list<strin
 
 # CSS-structure-breaking characters in selector / property / value text make
 # the emitted rule invalid — fail-closed before emission.
+@ public
 fn unclean_style_text(string text) → bool {
     var int i ← 0
     while i < text.length() {
@@ -760,6 +804,7 @@ fn unclean_style_text(string text) → bool {
 
 # Fail-closed rule/declaration shape: non-empty selector / property / value
 # and no CSS-structure-breaking characters.
+@ public
 fn style_valid(Style style) → bool {
     for from style.rules const rule {
         if rule.selector.length() ≡ 0 then return false
@@ -776,6 +821,7 @@ fn style_valid(Style style) → bool {
 
 # Find the Style a package identity contributes (the library-layer bundle
 # lookup). Unknown identity → null (the topo already failed closed).
+@ public
 fn bundle_for(string identity, list<Bundle> bundles) → Style ∪ null {
     for from bundles const bundle {
         if bundle.identity ≡ identity then return bundle.style
@@ -786,6 +832,7 @@ fn bundle_for(string identity, list<Bundle> bundles) → Style ∪ null {
 # Public product-assembly verb (policy (b); campaign §7): one ordered Style
 # grouped in cascade-layer order. Fail-closed (no output on any reject).
 # Deterministic bytes over the explicit inputs.
+@ public
 fn assemble(
     Theme theme,
     Style ∪ null reset,
@@ -919,6 +966,7 @@ fn assemble(
 
 # EventName: the event value — a typed event-name carrier (policy (b) locked
 # spelling). Closure-free: an event carries a name, not behavior.
+@ public
 class EventName {
     string name
 }
@@ -930,6 +978,7 @@ class EventName {
 #     before replacement (by its stable identity);
 #   Direct   — focus movement: move focus to a declared target identity;
 #   Anchor   — scroll anchoring: scroll-preservation intent for the region.
+@ public
 union Effect {
     Restore { string identity },
     Direct { string identity },
@@ -939,6 +988,7 @@ union Effect {
 # Update: the update result `replace` carries (behavior-design §3) — the
 # next view plus the declarative effects the host executes after
 # replacement.
+@ public
 class Update {
     View view
     list<Effect> effects
@@ -947,18 +997,22 @@ class Update {
 # Kernel-owned constructors (G3 posture — ordinary functions over the same
 # public values, like the Stage 1/2 kernel constructors; probed
 # collision-free).
+@ public
 fn event_name(string name) → EventName {
     return EventName { name = name }
 }
 
+@ public
 fn restore(string identity) → Effect {
     return variant Restore { identity = identity } ∷ Effect
 }
 
+@ public
 fn direct(string identity) → Effect {
     return variant Direct { identity = identity } ∷ Effect
 }
 
+@ public
 fn anchor(string identity) → Effect {
     return variant Anchor { identity = identity } ∷ Effect
 }
@@ -970,6 +1024,7 @@ fn anchor(string identity) → Effect {
 # imported-union variant pattern does not bind from a consumer; recorded).
 # fix:sem001 — removal = grep-replace after the radix fix lands.
 # Total over the three variants — never null.
+@ public
 fn effect_identity(Effect effects) → string {
     match effects {
         case Restore const identity {
@@ -984,6 +1039,7 @@ fn effect_identity(Effect effects) → string {
     }
 }
 
+@ public
 fn update(View view, list<Effect> effects) → Update {
     return Update { view = view, effects = effects }
 }

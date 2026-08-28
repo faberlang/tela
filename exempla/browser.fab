@@ -45,9 +45,9 @@ locale = "en"
 # fix:<id> markers: none applied beyond browser.fab's (fix:codegen001,
 # fix:prim-nullable, fix:g5 — NONE, fix:snapshot-name-collision).
 
-import from "tela:tela" public * ut tela
-import from "tela:browser" public * ut browser
-import from "tela:dom" public * ut dom
+import from "tela:tela" public * as tela
+import from "tela:browser" public * as browser
+import from "tela:dom" public * as dom
 
 # A valid theme (the 8-token core baseline — theme_css is fail-closed, so
 # mount requires a theme covering the core).
@@ -224,7 +224,7 @@ main {
 
     # --- identity extraction (the data-tela seam, document order) --------
     const list<string> identities ← tree_identities()
-    assert identities.longitudo() ≡ 3
+    assert identities.length() ≡ 3
     assert identities[0] ≡ "tela-control"
     assert identities[1] ≡ "tela-seg-1"
     assert identities[2] ≡ "tela-seg-2"
@@ -235,14 +235,14 @@ main {
     assert browser.binding_status("tela-control", identities, vacua_ids, tree_markup(), vacua_tags) ≡ "create"
     assert browser.binding_status("tela-seg-1", identities, vacua_ids, tree_markup(), vacua_tags) ≡ "create"
     assert browser.binding_status("tela-seg-2", identities, vacua_ids, tree_markup(), vacua_tags) ≡ "create"
-    assert browser.hydration_diagnostics(tree_markup(), identities, vacua_ids, vacua_tags).longitudo() ≡ 0
+    assert browser.hydration_diagnostics(tree_markup(), identities, vacua_ids, vacua_tags).length() ≡ 0
 
     # --- hydration: matching nodes bind (never recreate) ------------------
     const list<string> present_ids ← browser.parse_identities(hydration_present())
     assert browser.binding_status("tela-control", identities, present_ids, tree_markup(), hydration_tags()) ≡ "bind"
     assert browser.binding_status("tela-seg-1", identities, present_ids, tree_markup(), hydration_tags()) ≡ "bind"
     assert browser.binding_status("tela-seg-2", identities, present_ids, tree_markup(), hydration_tags()) ≡ "bind"
-    assert browser.hydration_diagnostics(tree_markup(), identities, present_ids, hydration_tags()).longitudo() ≡ 0
+    assert browser.hydration_diagnostics(tree_markup(), identities, present_ids, hydration_tags()).length() ≡ 0
 
     # --- the tag-name comparison (the U6 quote-normalization resolution) --
     # Both sides normalize to tag names: the view side extracts the tag name
@@ -263,18 +263,18 @@ main {
     const list<dom.DomNode> ∪ null hydration_nodes ← [control_node, seg1_node, seg2_node]
     const list<string> ids_from_nodes ← browser.identities_from_nodes(hydration_nodes)
     const list<string> tags_from_nodes ← browser.tags_from_nodes(hydration_nodes)
-    assert ids_from_nodes.longitudo() ≡ 3
+    assert ids_from_nodes.length() ≡ 3
     assert ids_from_nodes[2] ≡ "tela-seg-2"
-    assert tags_from_nodes.longitudo() ≡ 3
+    assert tags_from_nodes.length() ≡ 3
     assert tags_from_nodes[0] ≡ "div"
     assert tags_from_nodes[1] ≡ "button"
-    assert browser.identities_from_nodes(null).longitudo() ≡ 0
-    assert browser.tags_from_nodes(null).longitudo() ≡ 0
+    assert browser.identities_from_nodes(null).length() ≡ 0
+    assert browser.tags_from_nodes(null).length() ≡ 0
 
     # --- mismatch → diagnose + replace (never a silent bind) --------------
     const list<string> mismatch_ids ← browser.parse_identities(mismatch_present())
     const list<string> mismatch_diagnostics ← browser.hydration_diagnostics(tree_markup(), identities, mismatch_ids, mismatch_tags())
-    assert mismatch_diagnostics.longitudo() ≡ 1
+    assert mismatch_diagnostics.length() ≡ 1
     assert mismatch_diagnostics[0] ≡ "changed:tela-seg-2"
     assert browser.binding_status("tela-control", identities, mismatch_ids, tree_markup(), mismatch_tags()) ≡ "bind"
     assert browser.binding_status("tela-seg-1", identities, mismatch_ids, tree_markup(), mismatch_tags()) ≡ "bind"
@@ -283,15 +283,15 @@ main {
     # --- foreign diagnosis (a pre-existing identity absent from the View)
     const list<string> foreign_ids ← browser.parse_identities(foreign_present())
     const list<string> foreign_diagnostics ← browser.hydration_diagnostics(tree_markup(), identities, foreign_ids, foreign_tags())
-    assert foreign_diagnostics.continet("foreign:tela-pristina")
+    assert foreign_diagnostics.contains("foreign:tela-pristina")
     assert browser.binding_status("tela-control", identities, foreign_ids, tree_markup(), foreign_tags()) ≡ "bind"
 
     # --- duplicate-identity diagnosis (never a silent bind) ---------------
     const list<string> view_ids ← browser.parse_identities(tree_markup())
     const list<string> present_duplicate_ids ← present_duplicate_identities()
     const list<string> duplicate_diagnostics ← browser.hydration_diagnostics(tree_markup(), view_ids, present_duplicate_ids, duplicate_tags())
-    assert present_duplicate_ids.longitudo() ≡ 3
-    assert duplicate_diagnostics.continet("duplicate:tela-dup")
+    assert present_duplicate_ids.length() ≡ 3
+    assert duplicate_diagnostics.contains("duplicate:tela-dup")
     assert browser.binding_status("tela-dup", view_ids, present_duplicate_ids, tree_markup(), duplicate_tags()) ≡ "create"
 
     # --- replace: the declarative effect keys (behavior-design §3.2) ------

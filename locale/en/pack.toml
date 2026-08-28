@@ -309,3 +309,702 @@ module_path = ["tela"]
 kind = "function"
 canonical = "theme_css"
 surface = "theme_css"
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Declaration"
+surface = "Declaration"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "bundle"
+surface = "bundle"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Rule"
+surface = "Rule"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Bundle"
+surface = "Bundle"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Order"
+surface = "Order"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "EventName"
+surface = "EventName"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Effect"
+surface = "Effect"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Update"
+surface = "Update"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "escape"
+surface = "escape"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "space_name"
+surface = "space_name"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "serialize_ns"
+surface = "serialize_ns"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "validate_tree"
+surface = "validate_tree"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "serialize_attributes"
+surface = "serialize_attributes"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "serialize_identity"
+surface = "serialize_identity"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "serialize_view"
+surface = "serialize_view"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "core_tokens"
+surface = "core_tokens"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "token_property_name"
+surface = "token_property_name"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "token_name_valid"
+surface = "token_name_valid"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "theme_has_core_tokens"
+surface = "theme_has_core_tokens"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "theme_has_token"
+surface = "theme_has_token"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "theme_style"
+surface = "theme_style"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "order"
+surface = "order"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "deduplicated_bundles"
+surface = "deduplicated_bundles"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "in_list"
+surface = "in_list"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "dependencies_met"
+surface = "dependencies_met"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "topological_order"
+surface = "topological_order"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "unclean_style_text"
+surface = "unclean_style_text"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "style_valid"
+surface = "style_valid"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "bundle_for"
+surface = "bundle_for"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "assemble"
+surface = "assemble"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "event_name"
+surface = "event_name"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "restore"
+surface = "restore"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "direct"
+surface = "direct"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "anchor"
+surface = "anchor"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "effect_identity"
+surface = "effect_identity"
+
+[[library_members]]
+provider = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "update"
+surface = "update"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Space"
+surface = "Space"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Attribute"
+surface = "Attribute"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Property"
+surface = "Property"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Identity"
+surface = "Identity"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "View"
+surface = "View"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Declaration"
+surface = "Declaration"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Rule"
+surface = "Rule"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Style"
+surface = "Style"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Token"
+surface = "Token"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Theme"
+surface = "Theme"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Bundle"
+surface = "Bundle"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Order"
+surface = "Order"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "EventName"
+surface = "EventName"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Effect"
+surface = "Effect"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "type"
+canonical = "Update"
+surface = "Update"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "text_view"
+surface = "text_view"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "fragment_view"
+surface = "fragment_view"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "new_identity"
+surface = "new_identity"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "html_space"
+surface = "html_space"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "svg_space"
+surface = "svg_space"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "element_view"
+surface = "element_view"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "element_full"
+surface = "element_full"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "escape"
+surface = "escape"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "space_name"
+surface = "space_name"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "serialize_ns"
+surface = "serialize_ns"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "validate_tree"
+surface = "validate_tree"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "serialize_attributes"
+surface = "serialize_attributes"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "serialize_identity"
+surface = "serialize_identity"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "serialize_view"
+surface = "serialize_view"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "html_view"
+surface = "html_view"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "css"
+surface = "css"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "token"
+surface = "token"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "theme"
+surface = "theme"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "core_tokens"
+surface = "core_tokens"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "token_property_name"
+surface = "token_property_name"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "token_name_valid"
+surface = "token_name_valid"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "theme_has_core_tokens"
+surface = "theme_has_core_tokens"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "theme_has_token"
+surface = "theme_has_token"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "theme_css"
+surface = "theme_css"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "theme_style"
+surface = "theme_style"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "bundle"
+surface = "bundle"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "order"
+surface = "order"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "deduplicated_bundles"
+surface = "deduplicated_bundles"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "in_list"
+surface = "in_list"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "dependencies_met"
+surface = "dependencies_met"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "topological_order"
+surface = "topological_order"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "unclean_style_text"
+surface = "unclean_style_text"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "style_valid"
+surface = "style_valid"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "bundle_for"
+surface = "bundle_for"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "assemble"
+surface = "assemble"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "event_name"
+surface = "event_name"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "restore"
+surface = "restore"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "direct"
+surface = "direct"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "anchor"
+surface = "anchor"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "effect_identity"
+surface = "effect_identity"
+
+[[library_members]]
+provider = "package"
+package = "tela"
+module_path = ["tela"]
+kind = "function"
+canonical = "update"
+surface = "update"

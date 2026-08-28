@@ -34,12 +34,12 @@
 # Catalog identities (ref-*, form-*, tela-chart-bar) are hydration
 # keys. canary-* wrappers are app-owned data.
 
-import from "tela:tela" public * ut tela
-import from "extensionlib:extension" public * ut ext
-import from "formslib:forms" public * ut forms
-import from "tela:browser" public * ut browser
-import from "tela:reference" public * ut reference
-import from "tela:dom" public * ut dom
+import from "tela:tela" public * as tela
+import from "extensionlib:extension" public * as ext
+import from "formslib:forms" public * as forms
+import from "tela:browser" public * as browser
+import from "tela:reference" public * as reference
+import from "tela:dom" public * as dom
 
 # --- Themed panel: a div with a stable identity + accessible name; the panel
 # rule in main's style bundle keys on the identity (policy (d) seam).
@@ -177,7 +177,7 @@ fn segment_order() → list<string> {
 fn identity_index(string identity) → int {
     const list<string> ordines ← segment_order()
     var int i ← 0
-    while i < ordines.longitudo() {
+    while i < ordines.length() {
         if ordines[i] ≡ identity {
             return i
         }
@@ -188,7 +188,7 @@ fn identity_index(string identity) → int {
 
 fn wrapped_identity(int index) → string {
     const list<string> ordines ← segment_order()
-    const int longitudo ← ordines.longitudo()
+    const int longitudo ← ordines.length()
     var int i ← index
     while i < 0 {
         i ← i + longitudo
@@ -203,8 +203,8 @@ fn wrapped_identity(int index) → string {
 # assert: the extension bundle's selector appears before the forms bundle's).
 fn index_in(string text, string fragment) → int {
     var int i ← 0
-    while not (i + fragment.longitudo() > text.longitudo()) {
-        if text.sectio(i, i + fragment.longitudo()) ≡ fragment {
+    while not (i + fragment.length() > text.length()) {
+        if text.slice(i, i + fragment.length()) ≡ fragment {
             return i
         }
         i ← i + 1
@@ -258,7 +258,7 @@ fn update_control(string selected, Message message) → string {
 # segment or when the update does not change selection.
 fn announcement(reference.SegmentedProps props, string selected) → string {
     const int index ← identity_index(selected)
-    if index < props.options.longitudo() {
+    if index < props.options.length() {
         return props.options[index] + " selected"
     }
     return ""
@@ -412,20 +412,6 @@ fn form_announcement(FieldState ante, FieldState post) → string {
     return post.identity + " valid"
 }
 
-# The app-side mapping: the model state → the field props (the package's
-# FieldProps — consumable), so the ARIA/validation semantics round-trip
-# through the package's render helpers (invalid → aria-invalid="true" +
-# aria-describedby → the error identity + the error text; valid → cleared).
-fn props_from_state(string name, string label, FieldState state) → forms.FieldProps {
-    return forms.field_props(
-        name,
-        label,
-        state.value,
-        forms.invalid_state(forms.error_present(state.error)),
-        state.error
-    )
-}
-
 # Forms interactive surface: composition, model → View, and
 # mount_forms (dom.scope + browser.mount). check-forms-interactive
 # drives the scripted sequence against the tela:dom host binding.
@@ -480,7 +466,7 @@ fn forms_composition_from_state(FieldState state, bool agree, string tone) → t
         [],
         [],
         [
-            forms.field_group(props_from_state("name", "Name", state)),
+            forms.field_group(forms.field_props("name", "Name", state.value, forms.invalid_state(forms.error_present(state.error)), state.error)),
             forms.checkbox(forms.checkbox_props("agree", "Agree", bool_text(agree), "false")),
             forms.select(forms.select_props("tone", "Tone", ["Light", "Dark"], "false")),
             forms.form_live_region()
@@ -1307,125 +1293,125 @@ main {
     # --- The Stage 4 U3 three-package cascade assertions -------------------
     # The :root token layer includes the namespaced --form-* values (the
     # forms tokens flow through the kernel token rendering).
-    assert css_lumen.continet("--form-field-invalid: #dc2626")
-    assert css_lumen.continet("--form-field-valid: #16a34a")
-    assert css_lumen.continet("--form-focus: #2563eb")
+    assert css_lumen.contains("--form-field-invalid: #dc2626")
+    assert css_lumen.contains("--form-field-valid: #16a34a")
+    assert css_lumen.contains("--form-focus: #2563eb")
     # The forms component style bundle rides the cascade (keyed on the
     # family identities, referencing the --form-* tokens).
-    assert css_lumen.continet("[data-tela^='form-field-']")
-    assert css_lumen.continet("[data-tela^='form-error-']")
-    assert css_lumen.continet("[data-tela='form-live']")
-    assert css_lumen.continet("var(--form-field-invalid)")
-    assert css_lumen.continet("var(--form-focus)")
+    assert css_lumen.contains("[data-tela^='form-field-']")
+    assert css_lumen.contains("[data-tela^='form-error-']")
+    assert css_lumen.contains("[data-tela='form-live']")
+    assert css_lumen.contains("var(--form-field-invalid)")
+    assert css_lumen.contains("var(--form-focus)")
 
     # --- The Stage 5 U2 reference-catalog cascade (done_when (f)) ---------
     # The :root token layer includes the namespaced --ref-* values (the
     # catalog tokens flow through the kernel token rendering).
-    assert css_lumen.continet("--ref-layout-gap: 1rem")
-    assert css_lumen.continet("--ref-type-scale-xl: 1.5rem")
+    assert css_lumen.contains("--ref-layout-gap: 1rem")
+    assert css_lumen.contains("--ref-type-scale-xl: 1.5rem")
     # The reference component bundles ride the cascade (keyed on the ref-*
     # identities, referencing the --ref-* tokens).
-    assert css_lumen.continet("[data-tela='ref-layout-stack']")
-    assert css_lumen.continet("[data-tela='ref-layout-grid']")
-    assert css_lumen.continet("[data-tela='ref-layout-prose']")
-    assert css_lumen.continet("[data-tela='ref-typography-heading-1']")
-    assert css_lumen.continet("[data-tela='ref-typography-prose']")
-    assert css_lumen.continet("var(--ref-layout-gap)")
-    assert css_lumen.continet("var(--ref-type-scale-xl)")
-    assert css_lumen.continet("var(--ref-type-prose-line-height)")
+    assert css_lumen.contains("[data-tela='ref-layout-stack']")
+    assert css_lumen.contains("[data-tela='ref-layout-grid']")
+    assert css_lumen.contains("[data-tela='ref-layout-prose']")
+    assert css_lumen.contains("[data-tela='ref-typography-heading-1']")
+    assert css_lumen.contains("[data-tela='ref-typography-prose']")
+    assert css_lumen.contains("var(--ref-layout-gap)")
+    assert css_lumen.contains("var(--ref-type-scale-xl)")
+    assert css_lumen.contains("var(--ref-type-prose-line-height)")
 
     # --- The Stage 5 U3 reference-catalog cascade (done_when (e)) ---------
     # The :root token layer includes the ref.panel.* / ref.badge.* /
     # ref.metric.* values — the panel surface + border and the metric
     # label color reference the theme's core tokens (theme-surface
     # semantics — no hardcoded color in the token layer).
-    assert css_lumen.continet("--ref-panel-surface: var(--surface-panel)")
-    assert css_lumen.continet("--ref-panel-border: var(--border-default)")
-    assert css_lumen.continet("--ref-badge-size: 0.75rem")
-    assert css_lumen.continet("--ref-metric-label-muted: var(--text-muted)")
-    assert css_lumen.continet("--ref-metric-value-size: 1.5rem")
+    assert css_lumen.contains("--ref-panel-surface: var(--surface-panel)")
+    assert css_lumen.contains("--ref-panel-border: var(--border-default)")
+    assert css_lumen.contains("--ref-badge-size: 0.75rem")
+    assert css_lumen.contains("--ref-metric-label-muted: var(--text-muted)")
+    assert css_lumen.contains("--ref-metric-value-size: 1.5rem")
     # The U3 component bundles ride the cascade (prefix-keyed on the
     # variable-suffix identities, referencing the --ref-* tokens).
-    assert css_lumen.continet("[data-tela^='ref-panel-']")
-    assert css_lumen.continet("[data-tela^='ref-badge-']")
-    assert css_lumen.continet("[data-tela^='ref-metric-']")
-    assert css_lumen.continet("var(--ref-panel-surface)")
-    assert css_lumen.continet("var(--ref-metric-label-muted)")
+    assert css_lumen.contains("[data-tela^='ref-panel-']")
+    assert css_lumen.contains("[data-tela^='ref-badge-']")
+    assert css_lumen.contains("[data-tela^='ref-metric-']")
+    assert css_lumen.contains("var(--ref-panel-surface)")
+    assert css_lumen.contains("var(--ref-metric-label-muted)")
     # The theme-surface round trip: the panel's surface token resolves to
     # the theme's core surface.panel value in the assembled token layer
     # (the core token itself carries the resolved color).
-    assert css_lumen.continet("--surface-panel: #f9fafb")
+    assert css_lumen.contains("--surface-panel: #f9fafb")
 
     # --- The Stage 5 U4 reference-catalog cascade (done_when (e)) ---------
     # The :root token layer includes the ref.table.* values — the border +
     # caption color reference the theme's core tokens (theme-surface
     # semantics — no hardcoded color in the token layer).
-    assert css_lumen.continet("--ref-table-border: var(--border-default)")
-    assert css_lumen.continet("--ref-table-padding: 0.5rem 0.75rem")
-    assert css_lumen.continet("--ref-table-header-weight: 600")
-    assert css_lumen.continet("--ref-table-caption-muted: var(--text-muted)")
+    assert css_lumen.contains("--ref-table-border: var(--border-default)")
+    assert css_lumen.contains("--ref-table-padding: 0.5rem 0.75rem")
+    assert css_lumen.contains("--ref-table-header-weight: 600")
+    assert css_lumen.contains("--ref-table-caption-muted: var(--text-muted)")
     # The table component bundle rides the cascade (prefix-keyed on the
     # ref-table-* identities, referencing the --ref-table-* tokens).
-    assert css_lumen.continet("[data-tela^='ref-table-']")
-    assert css_lumen.continet("var(--ref-table-border)")
-    assert css_lumen.continet("var(--ref-table-caption-muted)")
+    assert css_lumen.contains("[data-tela^='ref-table-']")
+    assert css_lumen.contains("var(--ref-table-border)")
+    assert css_lumen.contains("var(--ref-table-caption-muted)")
 
     # --- The Stage 5 U5 reference-catalog cascade (done_when (e)) ---------
     # The :root token layer includes the ref.seg.* values — the border color
     # references the theme's core tokens (the selected state is SEMANTIC —
     # aria-selected — the accent border is decorative emphasis).
-    assert css_lumen.continet("--ref-seg-gap: 0.25rem")
-    assert css_lumen.continet("--ref-seg-radius: 0.375rem")
-    assert css_lumen.continet("--ref-seg-border: var(--border-default)")
-    assert css_lumen.continet("--ref-seg-selected-border: var(--accent-primary)")
+    assert css_lumen.contains("--ref-seg-gap: 0.25rem")
+    assert css_lumen.contains("--ref-seg-radius: 0.375rem")
+    assert css_lumen.contains("--ref-seg-border: var(--border-default)")
+    assert css_lumen.contains("--ref-seg-selected-border: var(--accent-primary)")
     # The segmented-control bundle rides the cascade (role-scoped rules on
     # the ref-seg-* identities, referencing the --ref-seg-* tokens).
-    assert css_lumen.continet("[data-tela^='ref-seg-'][role='radiogroup']")
-    assert css_lumen.continet("[data-tela^='ref-seg-'][role='radio']")
-    assert css_lumen.continet("var(--ref-seg-gap)")
-    assert css_lumen.continet("var(--ref-seg-selected-border)")
+    assert css_lumen.contains("[data-tela^='ref-seg-'][role='radiogroup']")
+    assert css_lumen.contains("[data-tela^='ref-seg-'][role='radio']")
+    assert css_lumen.contains("var(--ref-seg-gap)")
+    assert css_lumen.contains("var(--ref-seg-selected-border)")
 
     # --- The Stage 5 U6 reference-catalog cascade (done_when (d)) ---------
     # The :root token layer includes the ref.button.* values — the
     # color-bearing tokens reference the theme's core tokens (the primary
     # background = the accent, the primary text = the inverse surface, the
     # focus = the accent — no hardcoded color).
-    assert css_lumen.continet("--ref-button-size: 0.875rem")
-    assert css_lumen.continet("--ref-button-padding: 0.5rem 1rem")
-    assert css_lumen.continet("--ref-button-border: var(--border-default)")
-    assert css_lumen.continet("--ref-button-primary-background: var(--accent-primary)")
-    assert css_lumen.continet("--ref-button-primary-text: var(--surface-canvas)")
-    assert css_lumen.continet("--ref-button-focus: var(--accent-primary)")
-    assert css_lumen.continet("--ref-button-disabled-opacity: 0.6")
+    assert css_lumen.contains("--ref-button-size: 0.875rem")
+    assert css_lumen.contains("--ref-button-padding: 0.5rem 1rem")
+    assert css_lumen.contains("--ref-button-border: var(--border-default)")
+    assert css_lumen.contains("--ref-button-primary-background: var(--accent-primary)")
+    assert css_lumen.contains("--ref-button-primary-text: var(--surface-canvas)")
+    assert css_lumen.contains("--ref-button-focus: var(--accent-primary)")
+    assert css_lumen.contains("--ref-button-disabled-opacity: 0.6")
     # The button bundle rides the cascade: the shape rule (prefix-keyed on
     # the ref-button-* identities), the variant treatments (the
     # data-ref-variant attribute), THE VISIBLE FOCUS (:focus-visible — the
     # campaign §8 visible-focus contract), the disabled dim (:disabled).
-    assert css_lumen.continet("[data-tela^='ref-button-']")
-    assert css_lumen.continet(«[data-tela^='ref-button-'][data-ref-variant="primary"]»)
-    assert css_lumen.continet("[data-tela^='ref-button-']:focus-visible")
-    assert css_lumen.continet("[data-tela^='ref-button-']:disabled")
-    assert css_lumen.continet("var(--ref-button-focus)")
-    assert css_lumen.continet("var(--ref-button-primary-background)")
+    assert css_lumen.contains("[data-tela^='ref-button-']")
+    assert css_lumen.contains(«[data-tela^='ref-button-'][data-ref-variant="primary"]»)
+    assert css_lumen.contains("[data-tela^='ref-button-']:focus-visible")
+    assert css_lumen.contains("[data-tela^='ref-button-']:disabled")
+    assert css_lumen.contains("var(--ref-button-focus)")
+    assert css_lumen.contains("var(--ref-button-primary-background)")
 
     # --- The Stage 5 U7 reference-catalog cascade (done_when (b)) ---------
     # The :root token layer includes the form.* values — the Stage 4
     # namespaced-token surface RE-HOMED (identical names + values; the
     # catalog's field is self-sufficient — the kernel dedups against the
     # formslib tokens by name-identical-content).
-    assert css_lumen.continet("--form-field-invalid: #dc2626")
-    assert css_lumen.continet("--form-field-valid: #16a34a")
-    assert css_lumen.continet("--form-focus: #2563eb")
+    assert css_lumen.contains("--form-field-invalid: #dc2626")
+    assert css_lumen.contains("--form-field-valid: #16a34a")
+    assert css_lumen.contains("--form-focus: #2563eb")
     # The field bundle rides the cascade: the invalid border + the focus
     # ring + the error/live-region rules (keyed on the form-* identities,
     # referencing the --form-* tokens) + the native-disabled dim.
-    assert css_lumen.continet("[data-tela^='form-field-']")
-    assert css_lumen.continet("[data-tela^='form-field-']:focus")
-    assert css_lumen.continet("[data-tela^='form-error-']")
-    assert css_lumen.continet("[data-tela='form-live']")
-    assert css_lumen.continet("[data-tela^='form-field-']:disabled")
-    assert css_lumen.continet("var(--form-field-invalid)")
-    assert css_lumen.continet("var(--form-focus)")
+    assert css_lumen.contains("[data-tela^='form-field-']")
+    assert css_lumen.contains("[data-tela^='form-field-']:focus")
+    assert css_lumen.contains("[data-tela^='form-error-']")
+    assert css_lumen.contains("[data-tela='form-live']")
+    assert css_lumen.contains("[data-tela^='form-field-']:disabled")
+    assert css_lumen.contains("var(--form-field-invalid)")
+    assert css_lumen.contains("var(--form-focus)")
 
     # --- The Stage 2 fail-closed regressions re-asserted (three-package) ---
     # A cycle in the order map rejects (fail-closed — no partial cascade).
@@ -1528,7 +1514,7 @@ main {
     # by typed message-producing closures (not erased into strings). Stage 5
     # U5: the plan re-targets the reference identities (ref-seg-control-N).
     const list<EventBinding> vincula ← control_bindings()
-    assert vincula.longitudo() ≡ 3
+    assert vincula.length() ≡ 3
     # Invoke a binding's closure: click on ref-seg-control-2 → Selected.
     const Message click_msg ← vincula[1].message(tela.event_name("ref-seg-control-2"))
     match click_msg {
@@ -1696,17 +1682,17 @@ main {
     # The round trip through the package's render helper: invalid → the
     # bytes carry aria-invalid="true" + aria-describedby → the error
     # identity + the error text (the field_group association, U2).
-    const string grex_invalidum ← tela.html_view(forms.field_group(props_from_state("name", "Name", statu_invalidum))) coalesce ""
-    assert grex_invalidum.continet(«aria-invalid="true"»)
-    assert grex_invalidum.continet(«aria-describedby="form-error-name"»)
-    assert grex_invalidum.continet(">Required</div>")
+    const string grex_invalidum ← tela.html_view(forms.field_group(forms.field_props("name", "Name", statu_invalidum.value, forms.invalid_state(forms.error_present(statu_invalidum.error)), statu_invalidum.error))) coalesce ""
+    assert grex_invalidum.contains(«aria-invalid="true"»)
+    assert grex_invalidum.contains(«aria-describedby="form-error-name"»)
+    assert grex_invalidum.contains(">Required</div>")
     # A non-empty field input → valid: the error cleared (aria-invalid
     # flips "false", no describedby).
     const FieldState statu_validum ← update_field(statu_invalidum, field_text_message("form-field-name", "Ada"))
     assert statu_validum.error ≡ ""
-    const string grex_validum ← tela.html_view(forms.field_group(props_from_state("name", "Name", statu_validum))) coalesce ""
-    assert not grex_validum.continet(«aria-invalid="true"»)
-    assert not grex_validum.continet("aria-describedby")
+    const string grex_validum ← tela.html_view(forms.field_group(forms.field_props("name", "Name", statu_validum.value, forms.invalid_state(forms.error_present(statu_validum.error)), statu_validum.error))) coalesce ""
+    assert not grex_validum.contains(«aria-invalid="true"»)
+    assert not grex_validum.contains("aria-describedby")
     # The live-region policy (§1.5 extended to form validation): the
     # invalid → valid transition announces; a no-op input (same value,
     # same state) is SILENT ("" — the no-op rule).
@@ -1764,17 +1750,17 @@ main {
     # are app-owned data (canary-*).
     const string html_layout ← tela.html_view(layout_composition()) coalesce ""
     const string html_typography ← tela.html_view(typography_composition()) coalesce ""
-    assert html_layout.continet(«<div data-tela="ref-layout-stack">»)
-    assert html_layout.continet(«<div data-tela="ref-layout-grid">»)
-    assert html_layout.continet(«<div data-tela="ref-layout-prose">»)
-    assert html_layout.continet(«<div data-tela="ref-layout-grid">column onecolumn two</div>»)
-    assert html_layout.continet(«<p data-tela="ref-typography-prose">measure prose</p>»)
-    assert html_typography.continet(«<h1 data-tela="ref-typography-heading-1">Catalog title</h1>»)
-    assert html_typography.continet(«<h2 data-tela="ref-typography-heading-2">Section</h2>»)
-    assert html_typography.continet(«<p data-tela="ref-typography-prose">Prose with »)
-    assert html_typography.continet(«<strong data-tela="ref-typography-emphasis-strong">emphasis</strong>»)
-    assert html_typography.continet(«<span data-tela="ref-typography-scale-lg">lead text</span>»)
-    assert html_typography.continet(«<span data-tela="ref-typography-scale-xs">caption text</span>»)
+    assert html_layout.contains(«<div data-tela="ref-layout-stack">»)
+    assert html_layout.contains(«<div data-tela="ref-layout-grid">»)
+    assert html_layout.contains(«<div data-tela="ref-layout-prose">»)
+    assert html_layout.contains(«<div data-tela="ref-layout-grid">column onecolumn two</div>»)
+    assert html_layout.contains(«<p data-tela="ref-typography-prose">measure prose</p>»)
+    assert html_typography.contains(«<h1 data-tela="ref-typography-heading-1">Catalog title</h1>»)
+    assert html_typography.contains(«<h2 data-tela="ref-typography-heading-2">Section</h2>»)
+    assert html_typography.contains(«<p data-tela="ref-typography-prose">Prose with »)
+    assert html_typography.contains(«<strong data-tela="ref-typography-emphasis-strong">emphasis</strong>»)
+    assert html_typography.contains(«<span data-tela="ref-typography-scale-lg">lead text</span>»)
+    assert html_typography.contains(«<span data-tela="ref-typography-scale-xs">caption text</span>»)
     # The mount seam is the check-reference browser-proof surface (the
     # driver calls mount_layout/mount_typography through the app's own
     # imports AFTER installing the host DOM — main{} stays seam-free, the
@@ -1796,13 +1782,13 @@ main {
     const string html_panel ← tela.html_view(panel_composition()) coalesce ""
     const string html_badge ← tela.html_view(badge_composition()) coalesce ""
     const string html_metric ← tela.html_view(metric_composition()) coalesce ""
-    assert html_panel.continet(«<div role="region" aria-label="Status panel" data-tela="ref-panel-status">»)
-    assert html_panel.continet(«<p data-tela="ref-typography-prose">all systems operational</p>»)
-    assert html_badge.continet(«<span role="status" aria-label="New: 3 messages" data-tela="ref-badge-new">3 messages</span>»)
-    assert html_badge.continet(«<span role="status" aria-label="Ok: all checks passed" data-tela="ref-badge-ok">all checks passed</span>»)
-    assert html_metric.continet(«<dl data-tela="ref-metric-uptime"><dt>uptime</dt><dd>99.9%</dd></dl>»)
-    assert html_metric.continet(«<dl data-tela="ref-metric-requests"><dt>requests</dt><dd>12 480</dd><dd>+3.1%</dd></dl>»)
-    assert html_metric.continet(«<dl data-tela="ref-metric-error"><dt>error rate</dt><dd>0.02%</dd><dd>-0.01%</dd></dl>»)
+    assert html_panel.contains(«<div role="region" aria-label="Status panel" data-tela="ref-panel-status">»)
+    assert html_panel.contains(«<p data-tela="ref-typography-prose">all systems operational</p>»)
+    assert html_badge.contains(«<span role="status" aria-label="New: 3 messages" data-tela="ref-badge-new">3 messages</span>»)
+    assert html_badge.contains(«<span role="status" aria-label="Ok: all checks passed" data-tela="ref-badge-ok">all checks passed</span>»)
+    assert html_metric.contains(«<dl data-tela="ref-metric-uptime"><dt>uptime</dt><dd>99.9%</dd></dl>»)
+    assert html_metric.contains(«<dl data-tela="ref-metric-requests"><dt>requests</dt><dd>12 480</dd><dd>+3.1%</dd></dl>»)
+    assert html_metric.contains(«<dl data-tela="ref-metric-error"><dt>error rate</dt><dd>0.02%</dd><dd>-0.01%</dd></dl>»)
     print html_panel
     print "panel family static rendered (theme-surface container; tela-s5-u3)"
     print html_badge
@@ -1821,11 +1807,11 @@ main {
     # (root + header cells + body cells) are the stable focus targets for
     # the declared consumer-plan navigation interaction.
     const string html_table ← tela.html_view(table_composition()) coalesce ""
-    assert html_table.continet(«<div data-tela="canary-ref-table">»)
-    assert html_table.continet(«<table data-tela="ref-table-services"><caption>Services</caption>»)
-    assert html_table.continet(«<thead><tr><th scope="col" data-tela="ref-table-services-header-0">Service</th><th scope="col" data-tela="ref-table-services-header-1">Status</th></tr></thead>»)
-    assert html_table.continet(«<tbody><tr><td data-tela="ref-table-services-cell-0-0">gateway</td><td data-tela="ref-table-services-cell-0-1">ok</td></tr>»)
-    assert html_table.continet(«<td data-tela="ref-table-services-cell-2-1">caution</td>»)
+    assert html_table.contains(«<div data-tela="canary-ref-table">»)
+    assert html_table.contains(«<table data-tela="ref-table-services"><caption>Services</caption>»)
+    assert html_table.contains(«<thead><tr><th scope="col" data-tela="ref-table-services-header-0">Service</th><th scope="col" data-tela="ref-table-services-header-1">Status</th></tr></thead>»)
+    assert html_table.contains(«<tbody><tr><td data-tela="ref-table-services-cell-0-0">gateway</td><td data-tela="ref-table-services-cell-0-1">ok</td></tr>»)
+    assert html_table.contains(«<td data-tela="ref-table-services-cell-2-1">caution</td>»)
     print html_table
     print "table family static rendered (headers/rows/cells/caption; tela-s5-u4)"
     print "reference composition asserted (table family; tela-s5-u4)"
@@ -1839,11 +1825,11 @@ main {
     # the segments' role=radio + aria-selected + the roving tabindex (one
     # tab stop as a whole), the control-owned declared live region.
     const string html_seg ← tela.html_view(segmented_composition()) coalesce ""
-    assert html_seg.continet(«<div data-tela="canary-ref-seg">»)
-    assert html_seg.continet(«<div role="radiogroup" aria-label="segmented control" data-tela="ref-seg-control">»)
-    assert html_seg.continet(«<button role="radio" aria-selected="true" tabindex="0" data-tela="ref-seg-control-1">One</button>»)
-    assert html_seg.continet(«<button role="radio" aria-selected="false" tabindex="-1" data-tela="ref-seg-control-2">Two</button>»)
-    assert html_seg.continet(«<div role="status" aria-live="polite" data-tela="ref-seg-live"></div>»)
+    assert html_seg.contains(«<div data-tela="canary-ref-seg">»)
+    assert html_seg.contains(«<div role="radiogroup" aria-label="segmented control" data-tela="ref-seg-control">»)
+    assert html_seg.contains(«<button role="radio" aria-selected="true" tabindex="0" data-tela="ref-seg-control-1">One</button>»)
+    assert html_seg.contains(«<button role="radio" aria-selected="false" tabindex="-1" data-tela="ref-seg-control-2">Two</button>»)
+    assert html_seg.contains(«<div role="status" aria-live="polite" data-tela="ref-seg-live"></div>»)
     # The mount seam is the check-reference U5 browser-proof surface (the
     # driver calls mount_segmented through the app's own imports after
     # installing the host DOM — main{} stays seam-free).
@@ -1861,11 +1847,11 @@ main {
     # disabled attribute on the delete button (no activation, the state
     # exposed), the data-ref-variant treatments.
     const string html_button ← tela.html_view(button_composition()) coalesce ""
-    assert html_button.continet(«<div data-tela="canary-ref-button">»)
-    assert html_button.continet(«<button data-ref-variant="primary" data-tela="ref-button-save">Save</button>»)
-    assert html_button.continet(«<button data-ref-variant="secondary" data-tela="ref-button-cancel">Cancel</button>»)
-    assert html_button.continet(«<button aria-label="Delete permanently" disabled="" data-ref-variant="primary" data-tela="ref-button-delete">Delete</button>»)
-    assert not html_button.continet("role=")
+    assert html_button.contains(«<div data-tela="canary-ref-button">»)
+    assert html_button.contains(«<button data-ref-variant="primary" data-tela="ref-button-save">Save</button>»)
+    assert html_button.contains(«<button data-ref-variant="secondary" data-tela="ref-button-cancel">Cancel</button>»)
+    assert html_button.contains(«<button aria-label="Delete permanently" disabled="" data-ref-variant="primary" data-tela="ref-button-delete">Delete</button>»)
+    assert not html_button.contains("role=")
 
     # --- the app-typed button plan (U6 done_when (a)+(c)) — pure proof ----
     # The plan is app-typed (D1 recorded, never kernel-generic) and carried
@@ -1874,7 +1860,7 @@ main {
     # event (props.event_name = the catalog's button_event() = "click").
     assert reference.button_event() ≡ "click"
     const list<ButtonBinding> button_vincula ← button_bindings()
-    assert button_vincula.longitudo() ≡ 2
+    assert button_vincula.length() ≡ 2
     # Only the ENABLED buttons are bound (the disabled delete button
     # carries no subscription — a disabled click no-ops by construction).
     assert button_vincula[0].identity ≡ "ref-button-save"
@@ -1917,14 +1903,14 @@ main {
     # + the role=alert error node + the declared form-live live region),
     # the native disabled attribute.
     const string html_field ← tela.html_view(field_composition()) coalesce ""
-    assert html_field.continet(«<div data-tela="canary-ref-field">»)
-    assert html_field.continet(«<div data-tela="form-control-name">»)
-    assert html_field.continet(«<input type="text" aria-label="Name" aria-invalid="false" value="Ada" data-tela="form-field-name">»)
-    assert html_field.continet(«<div data-tela="form-control-email"><input type="text" aria-label="Email" aria-invalid="true" aria-describedby="form-error-email" data-tela="form-field-email">»)
-    assert html_field.continet(«<div role="alert" data-tela="form-error-email">Required</div>»)
-    assert html_field.continet(«<input type="text" aria-label="Phone" aria-invalid="false" disabled="" data-tela="form-field-phone">»)
-    assert html_field.continet(«<div role="status" aria-live="polite" data-tela="form-live"></div>»)
-    assert not html_field.continet("<form")
+    assert html_field.contains(«<div data-tela="canary-ref-field">»)
+    assert html_field.contains(«<div data-tela="form-control-name">»)
+    assert html_field.contains(«<input type="text" aria-label="Name" aria-invalid="false" value="Ada" data-tela="form-field-name">»)
+    assert html_field.contains(«<div data-tela="form-control-email"><input type="text" aria-label="Email" aria-invalid="true" aria-describedby="form-error-email" data-tela="form-field-email">»)
+    assert html_field.contains(«<div role="alert" data-tela="form-error-email">Required</div>»)
+    assert html_field.contains(«<input type="text" aria-label="Phone" aria-invalid="false" disabled="" data-tela="form-field-phone">»)
+    assert html_field.contains(«<div role="status" aria-live="polite" data-tela="form-live"></div>»)
+    assert not html_field.contains("<form")
     # The shared app-typed carriers (the U8 plan's props surface).
     assert name_field_props().value ≡ "Ada"
     assert email_field_props().error ≡ "Required"
@@ -1978,8 +1964,8 @@ main {
     assert fp4.value ≡ «Ada" and fp4.error ≡ "»
     # The update loop's view-render input: the model → the composition.
     const string html_field_plan ← tela.html_view(field_plan_composition(fp3)) coalesce ""
-    assert html_field_plan.continet(«value="Ada"»)
-    assert html_field_plan.continet(«aria-invalid="false"»)
+    assert html_field_plan.contains(«value="Ada"»)
+    assert html_field_plan.contains(«aria-invalid="false"»)
     # The mount seam is the check-reference U8 browser-proof surface (the
     # driver calls mount_field_plan through the app's own imports after
     # installing the host DOM — main{} stays seam-free).
@@ -1998,8 +1984,8 @@ main {
     assert bool_text(false) ≡ "false"
     const FieldState state_invalid ← field_state("form-field-name", "", "Required")
     const string compositio_invalida ← tela.html_view(forms_composition_from_state(state_invalid, false, "Light")) coalesce ""
-    assert compositio_invalida.continet(«aria-invalid="true"»)
-    assert compositio_invalida.continet(«aria-describedby="form-error-name"»)
-    assert compositio_invalida.continet(">Required</div>")
+    assert compositio_invalida.contains(«aria-invalid="true"»)
+    assert compositio_invalida.contains(«aria-describedby="form-error-name"»)
+    assert compositio_invalida.contains(">Required</div>")
     print "forms interactive plan surface asserted (real imports + seam mount; tela-s4-u7)"
 }

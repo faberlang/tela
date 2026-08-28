@@ -15,7 +15,7 @@ locale = "en"
 #   shape, namespace misuse, or impossible void-element structure NEVER emits
 #   markup — the serializer boundary (U3) rejects before emission.
 
-import from "tela:validate" private validate
+import from "tela:validate" validate
 
 main {
     # --- (a) Tag names: valid_tag_name --------------------------------

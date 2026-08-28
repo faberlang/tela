@@ -16,7 +16,7 @@ locale = "en"
 # The HTML renderer verb is tela.html_view (G5 workaround spelling — see
 # the tela.fab module header); css is the exact policy (b) verb.
 
-import from "tela:tela" private tela
+import from "tela:tela" tela
 
 main {
     # --- (g) text escaping: & < > escaped; quotes pass through (text set) --

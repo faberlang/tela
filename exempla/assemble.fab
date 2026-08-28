@@ -19,7 +19,7 @@ locale = "en"
 # not reserved (fix:g5 — NONE); fix:codegen001 — the Rust emit-across-imports
 # block persists, the TS lane is the proven lane.
 
-import from "tela:tela" private tela
+import from "tela:tela" tela
 
 main {
     # The base theme (full core baseline; the token layer is identical across

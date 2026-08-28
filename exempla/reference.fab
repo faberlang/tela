@@ -49,18 +49,18 @@ locale = "en"
 # pack — no collisions; the LOCALE002 advisory on the BadgeProps status
 # field — recorded).
 
-import from "tela:tela" private tela
-import from "tela:reference" private ref
+import from "tela:tela" tela
+import from "tela:reference" ref
 
 main {
     # --- layout: the stack — stacked rows --------------------------------
     # No attributes, no ARIA (pure layout grouping): the identity emits
     # after the tag; text children concatenate without a wrapper.
-    const string stack ← tela.html_view(ref.layout_stack(ref.stack_props([
+    const string stack_html ← tela.html_view(ref.layout_stack(ref.stack_props([
         tela.text_view("row one"),
         tela.text_view("row two")
     ]))) coalesce ""
-    assert stack ≡ «<div data-tela="ref-layout-stack">row onerow two</div>»
+    assert stack_html ≡ «<div data-tela="ref-layout-stack">row onerow two</div>»
 
     # --- layout: the two-column grid --------------------------------------
     const string grid ← tela.html_view(ref.layout_grid(ref.grid_props([
@@ -114,14 +114,14 @@ main {
 
     # --- the typography style bundle (the heading scale + prose) ----------
     const string css_typography ← tela.css(ref.typography_style())
-    assert css_typography.continet("[data-tela='ref-typography-heading-1'] { font-size: var(--ref-type-scale-xl); font-weight: var(--ref-type-heading-weight); margin: var(--ref-type-heading-margin); }")
-    assert css_typography.continet("[data-tela='ref-typography-heading-6'] { font-size: var(--ref-type-scale-xs); font-weight: var(--ref-type-heading-weight); margin: var(--ref-type-heading-margin); }")
-    assert css_typography.continet("[data-tela='ref-typography-prose'] { font-size: var(--ref-type-scale-md); line-height: var(--ref-type-prose-line-height); margin: var(--ref-type-prose-margin); }")
-    assert css_typography.continet("[data-tela='ref-typography-scale-xl'] { font-size: var(--ref-type-scale-xl); }")
+    assert css_typography.contains("[data-tela='ref-typography-heading-1'] { font-size: var(--ref-type-scale-xl); font-weight: var(--ref-type-heading-weight); margin: var(--ref-type-heading-margin); }")
+    assert css_typography.contains("[data-tela='ref-typography-heading-6'] { font-size: var(--ref-type-scale-xs); font-weight: var(--ref-type-heading-weight); margin: var(--ref-type-heading-margin); }")
+    assert css_typography.contains("[data-tela='ref-typography-prose'] { font-size: var(--ref-type-scale-md); line-height: var(--ref-type-prose-line-height); margin: var(--ref-type-prose-margin); }")
+    assert css_typography.contains("[data-tela='ref-typography-scale-xl'] { font-size: var(--ref-type-scale-xl); }")
     # Author order is the emission order (the heading scale descends from
     # heading-1 to heading-6; the exact first rule above pins the order).
-    assert css_typography.continet("[data-tela='ref-typography-heading-1']")
-    assert css_typography.continet("[data-tela='ref-typography-heading-6']")
+    assert css_typography.contains("[data-tela='ref-typography-heading-1']")
+    assert css_typography.contains("[data-tela='ref-typography-heading-6']")
 
     # --- the namespaced ref.* tokens (the kernel Token carrier, MF-7) -----
     assert ref.ref_layout_gap().name ≡ "ref.layout.gap"
@@ -134,14 +134,14 @@ main {
     assert tela.token_name_valid(ref.ref_layout_gap().name)
     assert tela.token_name_valid(ref.ref_type_prose_line_height().name)
     const list<tela.Token> collectio ← ref.reference_tokens()
-    assert collectio.longitudo() ≡ 46
+    assert collectio.length() ≡ 46
 
     # --- determinism: identical input → identical bytes -------------------
     const string stack_b ← tela.html_view(ref.layout_stack(ref.stack_props([
         tela.text_view("row one"),
         tela.text_view("row two")
     ]))) coalesce ""
-    assert stack_b ≡ stack
+    assert stack_b ≡ stack_html
     assert tela.css(ref.layout_style()) ≡ css_layout
 
     # =====================================================================
@@ -182,9 +182,9 @@ main {
     const string css_badge ← tela.css(ref.badge_style())
     assert css_badge ≡ "[data-tela^='ref-badge-'] { display: inline-block; font-size: var(--ref-badge-size); padding: var(--ref-badge-padding); border-radius: var(--ref-badge-radius); }\n"
     const string css_metric ← tela.css(ref.metric_style())
-    assert css_metric.continet("[data-tela^='ref-metric-'] { margin: 0; padding: 0; }")
-    assert css_metric.continet("[data-tela^='ref-metric-'] dt { font-size: var(--ref-metric-label-size); color: var(--ref-metric-label-muted); }")
-    assert css_metric.continet("[data-tela^='ref-metric-'] dd { font-size: var(--ref-metric-value-size); font-weight: var(--ref-metric-value-weight); margin: 0; }")
+    assert css_metric.contains("[data-tela^='ref-metric-'] { margin: 0; padding: 0; }")
+    assert css_metric.contains("[data-tela^='ref-metric-'] dt { font-size: var(--ref-metric-label-size); color: var(--ref-metric-label-muted); }")
+    assert css_metric.contains("[data-tela^='ref-metric-'] dd { font-size: var(--ref-metric-value-size); font-weight: var(--ref-metric-value-weight); margin: 0; }")
 
     # --- the ref.panel.* / ref.badge.* / ref.metric.* tokens --------------
     # The theme-surface semantics (no hardcoded color): the panel surface +
@@ -204,7 +204,7 @@ main {
     assert tela.token_name_valid(ref.ref_badge_radius().name)
     assert tela.token_name_valid(ref.ref_metric_value_weight().name)
     const list<tela.Token> collectio_u3 ← ref.reference_tokens()
-    assert collectio_u3.longitudo() ≡ 46
+    assert collectio_u3.length() ≡ 46
 
     # =====================================================================
     # Stage 5 U4 — the table family (the benchmark table grammar).
@@ -249,7 +249,7 @@ main {
     assert tela.token_name_valid(ref.ref_table_border().name)
     assert tela.token_name_valid(ref.ref_table_caption_muted().name)
     const list<tela.Token> collectio_u4 ← ref.reference_tokens()
-    assert collectio_u4.longitudo() ≡ 46
+    assert collectio_u4.length() ≡ 46
 
     # =====================================================================
     # Stage 5 U5 — the segmented-control family (the Stage 3 control
@@ -295,7 +295,7 @@ main {
     assert tela.token_name_valid(ref.ref_seg_gap().name)
     assert tela.token_name_valid(ref.ref_seg_selected_border().name)
     const list<tela.Token> collectio_u5 ← ref.reference_tokens()
-    assert collectio_u5.longitudo() ≡ 46
+    assert collectio_u5.length() ≡ 46
 
     # =====================================================================
     # Stage 5 U6 — the button family (the first behavior component).
@@ -325,7 +325,7 @@ main {
     assert tela.html_view(ref.button(ref.button_props("link", "Ghost", "ghost", "enabled", "click", ""))) coalesce "" ≡ «<button data-ref-variant="ghost" data-tela="ref-button-link">Ghost</button>»
     # No ARIA role duplication: the native <button> carries no role
     # attribute (the native semantics ARE the role).
-    assert not (tela.html_view(ref.button(ref.button_props("save", "Save", "primary", "enabled", "click", ""))) coalesce "").continet("role=")
+    assert not (tela.html_view(ref.button(ref.button_props("save", "Save", "primary", "enabled", "click", ""))) coalesce "").contains("role=")
     # The declared event surface (the activation event the plan binds).
     assert ref.button_event() ≡ "click"
 
@@ -362,7 +362,7 @@ main {
     assert tela.token_name_valid(ref.ref_button_primary_background().name)
     assert tela.token_name_valid(ref.ref_button_disabled_opacity().name)
     const list<tela.Token> collectio_u6 ← ref.reference_tokens()
-    assert collectio_u6.longitudo() ≡ 46
+    assert collectio_u6.length() ≡ 46
 
     # =====================================================================
     # Stage 5 U7 — the field family (the Stage 4 formslib field contract
@@ -388,7 +388,7 @@ main {
     # sequence, no entry, the state exposed to AT).
     assert tela.html_view(ref.field_input(ref.field_input_props("name", "Name", "Ada", "", "disabled"))) coalesce "" ≡ «<input type="text" aria-label="Name" aria-invalid="false" value="Ada" disabled="" data-tela="form-field-name">»
     # No ARIA role duplication: the native input carries no role attribute.
-    assert not (tela.html_view(ref.field_input(ref.field_input_props("name", "Name", "Ada", "", "enabled"))) coalesce "").continet("role=")
+    assert not (tela.html_view(ref.field_input(ref.field_input_props("name", "Name", "Ada", "", "enabled"))) coalesce "").contains("role=")
 
     # --- the error/live-region association structure ----------------------
     # The error node (role="alert", form-error-<name>) is the identity the
@@ -428,7 +428,7 @@ main {
     assert tela.token_name_valid(ref.field_valid_token().name)
     assert tela.token_name_valid(ref.field_focus_token().name)
     const list<tela.Token> collectio_u7 ← ref.reference_tokens()
-    assert collectio_u7.longitudo() ≡ 46
+    assert collectio_u7.length() ≡ 46
 
     print "reference catalog exempla ready (layout + typography + panel + badge + metric + table + segmented-control + button + field; tela-s5-u2/u3/u4/u5/u6/u7)"
 }

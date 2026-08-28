@@ -46,11 +46,12 @@
 # (the kernel carrier); consumers read fields on the call result
 # (`tela.token(ext.chart_axis_muted().name, ...).value`).
 
-import from "tela:tela" public * ut tela
+import from "tela:tela" public * as tela
 
 # --- Namespaced theme token (declared only; theme/token rendering is Stage 2)
 # The kernel `Token` carrier is the standardized token-carrier pattern.
 
+@ public
 fn chart_axis_muted() → tela.Token {
     return tela.Token { name = "chart.axis.muted", value = "#6b7280" }
 }
@@ -60,25 +61,30 @@ fn chart_axis_muted() → tela.Token {
 # different values: the two-theme proof renders the same component tree
 # under both, and only the token layer differs.
 
+@ public
 fn chart_axis_muted_dark() → tela.Token {
     return tela.Token { name = "chart.axis.muted", value = "#9ca3af" }
 }
 
+@ public
 fn chart_grid_muted() → tela.Token {
     return tela.Token { name = "chart.grid.muted", value = "#e5e7eb" }
 }
 
+@ public
 fn chart_grid_muted_dark() → tela.Token {
     return tela.Token { name = "chart.grid.muted", value = "#1f2937" }
 }
 
 # The extension's token collection (what a product assembler would collect;
 # product assembly / cascade ordering is Stage 2).
+@ public
 fn chart_tokens() → list<tela.Token> {
     return [ chart_axis_muted(), chart_grid_muted() ]
 }
 
 # The extension's dark token collection (the dark palette).
+@ public
 fn chart_tokens_dark() → list<tela.Token> {
     return [ chart_axis_muted_dark(), chart_grid_muted_dark() ]
 }
@@ -87,6 +93,7 @@ fn chart_tokens_dark() → list<tela.Token> {
 # value, returning the kernel's tela.View. Behavior stays adjacent and typed
 # (Stage 3); this benchmark is static composition only.
 
+@ public
 fn bar_meter(string label, string value, int width) → tela.View {
     # The Property below (aria-valuenow) is a browser-lane DOM property:
     # carried in the tree, NOT serialized statically (Stage 1 static
@@ -116,6 +123,7 @@ fn bar_meter(string label, string value, int width) → tela.View {
 # rule references the namespaced token as the CSS custom property
 # --chart-axis-muted (declared, not rendered — token rendering is Stage 2).
 
+@ public
 fn chart_style() → tela.Style {
     return tela.Style {
         rules = [

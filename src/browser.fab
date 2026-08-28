@@ -72,12 +72,14 @@ import from "tela:dom" public * as dom
 
 # A mounted region root handle (the region this mount owns — the scope
 # selector doubles as the region identity for scroll-anchor intent).
+@ public
 class RegionRoot {
     string identity
 }
 
 # A live subscription handle; the host maps identity → the bound
 # tela:dom subscription on the node (data-tela='identity').
+@ public
 class EventSubscription {
     string identity
     string event_name
@@ -86,6 +88,7 @@ class EventSubscription {
 # One binding-plan entry: a view identity + its hydration status.
 # status "bind" = bind the existing matching node (hydration);
 # status "create" = create/replace the node from the View.
+@ public
 class Binding {
     string identity
     string status
@@ -95,6 +98,7 @@ class Binding {
 # state (scope + root + subscriptions), current View + active Theme, the
 # render plan (markup + css), the identity index, the hydration
 # diagnostics, and the modeled focus state.
+@ public
 class Mounted {
     dom.Scope scope
     RegionRoot root
@@ -113,14 +117,17 @@ class Mounted {
 # Kernel-owned constructors (G3 posture — ordinary functions over the same
 # public values, like the Stage 1/2/3-U1 kernel constructors). The scope is
 # constructed by the CALLER via the provider seam (`dom.scope(selector)`).
+@ public
 fn region_root(string identity) → RegionRoot {
     return RegionRoot { identity = identity }
 }
 
+@ public
 fn event_subscription(string identity, string event_name) → EventSubscription {
     return EventSubscription { identity = identity, event_name = event_name }
 }
 
+@ public
 fn binding(string identity, string status) → Binding {
     return Binding { identity = identity, status = status }
 }
@@ -131,6 +138,7 @@ fn binding(string identity, string status) → Binding {
 # marker distinguishable from the string appearing mid-text.
 # ---------------------------------------------------------------------------
 
+@ public
 fn identity_marker() → string {
     return " data-tela=§"('"')
 }
@@ -143,6 +151,7 @@ fn identity_marker() → string {
 # output) — the present identity set comes from the typed snapshot.
 # ---------------------------------------------------------------------------
 
+@ public
 fn unescape(string text) → string {
     var string accum ← ""
     var int i ← 0
@@ -175,6 +184,7 @@ fn unescape(string text) → string {
     return accum
 }
 
+@ public
 fn parse_identities(string text) → list<string> {
     var list<string> identities ← empty
     var int i ← 0
@@ -210,6 +220,7 @@ fn parse_identities(string text) → list<string> {
 # The open-tag shape of the element carrying the given identity (from the
 # previous '<' to the next '>') in the VIEW markup, or null when the
 # identity is absent or the element is malformed.
+@ public
 fn element_tag(string text, string identity) → string ∪ null {
     var int i ← 0
     while i < text.length() {
@@ -268,6 +279,7 @@ fn element_tag(string text, string identity) → string ∪ null {
 # from the hydration snapshot. Tag names carry no quotes, so the
 # serializer's single-quote vs the real DOM's double-quote serialization
 # never enters the comparison (the U6 discovery's quote-style finding).
+@ public
 fn tag_name(string tag) → string {
     var string result ← ""
     var int i ← 1
@@ -286,6 +298,7 @@ fn tag_name(string tag) → string {
 }
 
 # Occurrence count of an identity in a list.
+@ public
 fn count_occurrences(list<string> collection, string name) → int {
     var int count_occurrences ← 0
     var int i ← 0
@@ -299,6 +312,7 @@ fn count_occurrences(list<string> collection, string name) → int {
 }
 
 # Distinct identities appearing more than once (the ambiguity set).
+@ public
 fn duplicate_identities(list<string> collection) → list<string> {
     var list<string> duplicates ← empty
     var int i ← 0
@@ -322,6 +336,7 @@ fn duplicate_identities(list<string> collection) → list<string> {
 # (the runtime returns null only for a null scope) narrows to empty.
 # ---------------------------------------------------------------------------
 
+@ public
 fn identities_from_nodes(list<dom.DomNode> ∪ null nodes) → list<string> {
     var list<string> result ← empty
     if nodes not is null {
@@ -334,6 +349,7 @@ fn identities_from_nodes(list<dom.DomNode> ∪ null nodes) → list<string> {
     return result
 }
 
+@ public
 fn tags_from_nodes(list<dom.DomNode> ∪ null nodes) → list<string> {
     var list<string> result ← empty
     if nodes not is null {
@@ -348,6 +364,7 @@ fn tags_from_nodes(list<dom.DomNode> ∪ null nodes) → list<string> {
 
 # The tag name for a pre-existing identity: the aligned tag-index lookup
 # ("" when the identity is absent from the present set).
+@ public
 fn tag_at(string identity, list<string> identities, list<string> tags) → string {
     var int i ← 0
     while i < identities.length() {
@@ -373,6 +390,7 @@ fn tag_at(string identity, list<string> identities, list<string> tags) → strin
 # typed tag name (from the hydration snapshot); "create" (create/replace
 # the node from the View) otherwise — including every ambiguous/mismatched
 # case (duplicated identity, out-of-shape tag, missing node).
+@ public
 fn binding_status(
     string identity,
     list<string> view_identities,
@@ -403,6 +421,7 @@ fn binding_status(
 #     the fidelity is the snapshot's tag-name surface — the landed
 #     dom.snapshot carries identity + tag name, recorded in
 #     browser-lifecycle.md).
+@ public
 fn hydration_diagnostics(
     string markup,
     list<string> view_identities,
@@ -456,6 +475,7 @@ fn hydration_diagnostics(
 # silent bind (identity-hydration.md §6).
 # ---------------------------------------------------------------------------
 
+@ public
 fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ null {
     # Fail-closed: an invalid View (html_view null), an invalid Theme
     # (theme_css null), or a null hydration snapshot (the runtime returns
@@ -528,6 +548,7 @@ fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ null
 # update result, never imperative post-update user-code calls.
 # ---------------------------------------------------------------------------
 
+@ public
 fn replace(Mounted m, tela.View view) → tela.Update ∪ null {
     if tela.html_view(view) is null then return null
     var list<tela.Effect> effects ← empty
@@ -544,6 +565,7 @@ fn replace(Mounted m, tela.View view) → tela.Update ∪ null {
 # The dispose lifecycle. Unsubscribes every active subscription and clears
 # the region. Pure marker here (the host executes the unsubscribe plan —
 # the tela:dom surface binds through the documented provider seam).
+@ public
 fn dispose(Mounted m) → void {
 }
 
@@ -551,6 +573,7 @@ fn dispose(Mounted m) → void {
 
 # Model: the pre-replacement focused identity (→ Restore on replace).
 # The host mirrors the model onto the actual DOM focus at execution.
+@ public
 fn focus_held(Mounted m, string identity) → Mounted {
     return Mounted {
         scope = m.scope,
@@ -569,6 +592,7 @@ fn focus_held(Mounted m, string identity) → Mounted {
 }
 
 # Model: a declared focus-movement target identity (→ Direct on replace).
+@ public
 fn focus_target(Mounted m, string identity) → Mounted {
     return Mounted {
         scope = m.scope,

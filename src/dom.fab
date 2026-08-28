@@ -58,6 +58,7 @@ class Element {
 # case-preserved, so SVG camel-case names (foreignObject) and HTML/SVG
 # same-local-name elements stay distinguishable; tag remains for the landed
 # consumers.
+@ public
 class DomNode {
     string identity = ""
     string tag = ""
@@ -131,34 +132,45 @@ class SubmitOptions {
     bool prevent_default = true
 }
 
+@ public
 class FetchRequest {
     string url
     string method = "GET"
     string body optional
 }
 
+@ public
 class FetchResponse {
     int status = 0
     bool ok = false
     string body = ""
 }
 
+@ public
 type EventHandler = (DomEvent) → void
 
+@ public
 type InputHandler = (Element, string) → void
 
+@ public
 type SubmitHandler = (Element) → void
 
+@ public
 type FrameHandler = (FrameState) → void
 
+@ public
 type ResizeHandler = (ResizeState) → void
 
+@ public
 type KeyboardHandler = (KeyboardState) → void
 
+@ public
 type PointerHandler = (PointerState) → void
 
+@ public
 type FocusHandler = (FocusState) → void
 
+@ public
 type PointerLockHandler = (PointerLockState) → void
 
 @ public
@@ -173,6 +185,7 @@ fn element(string selector) → Element {
 
 # Scoped query returns null when no descendant matches. Runtime binding:
 # webDomQuery(scope, selector).
+@ public
 fn query(Scope scope, string selector) → Element ∪ null {
     print scope
     print selector
@@ -189,6 +202,7 @@ fn require(Scope scope, string selector) → Element {
 
 # Scoped all returns every matching descendant. Runtime binding:
 # webDomAll(scope, selector).
+@ public
 fn all(Scope scope, string selector) → list<Element> {
     print scope
     print selector
@@ -200,6 +214,7 @@ fn all(Scope scope, string selector) → list<Element> {
 # carrying a data-tela attribute (identity + tag + canonical namespace/local
 # pair). Fail-closed on a null scope; empty list when no [data-tela] nodes
 # exist. Runtime binding: webDomSnapshot(scope).
+@ public
 fn snapshot(Scope scope) → list<DomNode> ∪ null {
     print scope
     return null
@@ -218,6 +233,7 @@ fn attr_set(Element element, string name, string value) → void {
     print value
 }
 
+@ public
 fn attr_remove(Element element, string name) → void {
     print element
     print name
@@ -235,6 +251,7 @@ fn class_remove(Element element, string class_name) → void {
     print class_name
 }
 
+@ public
 fn class_toggle(Element element, string class_name) → void {
     print element
     print class_name
@@ -248,6 +265,7 @@ fn on(Element element, string event_name, EventHandler handler) → Subscription
     return Subscription { id = 0 }
 }
 
+@ public
 fn unsubscribe(Subscription subscription) → void {
     print subscription
 }
@@ -256,16 +274,19 @@ fn unsubscribe(Subscription subscription) → void {
 # the exact `value` spelling a duplicate definition (SEM005, probe P2/P3);
 # the working spelling is `input_value` (route tela:dom.input_value →
 # webDomValue). The value READ of an Element.
+@ public
 fn input_value(Element element) → string {
     print element
     return ""
 }
 
+@ public
 fn value_set(Element element, string value) → void {
     print element
     print value
 }
 
+@ public
 fn on_input(Element element, InputHandler handler) → Subscription {
     print element
     print handler
@@ -338,6 +359,7 @@ fn request_pointer_lock(Element element) → PointerLockState {
     }
 }
 
+@ public
 fn exit_pointer_lock() → PointerLockState {
     return PointerLockState {
         supported = false,
@@ -354,11 +376,13 @@ fn on_pointer_lock(Element element, PointerLockHandler handler) → Subscription
     return Subscription { id = 0 }
 }
 
+@ public
 fn prevent_default(DomEvent event) → DomEvent {
     return DomEvent { kind = event.kind, default_prevented = true }
 }
 
 @ future
+@ public
 fn fetch_text(FetchRequest request) → FetchResponse ⇥ string {
     print request
     return FetchResponse { status = 0, ok = false, body = "" }

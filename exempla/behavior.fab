@@ -29,7 +29,7 @@ locale = "en"
 # NONE); fix:codegen001 — the Rust emit-across-imports block persists, the
 # TS lane is the proven lane.
 
-import from "tela:tela" private tela
+import from "tela:tela" tela
 
 main {
     # --- event-name construction (the typed event value) -------------------
@@ -54,13 +54,13 @@ main {
         [ tela.text_view("segment") ]
     )
     const tela.Update update ← tela.update(tree, [restore, move, anchor])
-    assert update.effects.longitudo() ≡ 3
+    assert update.effects.length() ≡ 3
     const string rendered ← tela.html_view(update.view) coalesce ""
     assert rendered ≡ "<div>segment</div>"
 
     # --- pure-carrier composition: combine effects into an update result ---
     const tela.Update combined ← tela.update(tree, [anchor, restore])
-    assert combined.effects.longitudo() ≡ 2
+    assert combined.effects.length() ≡ 2
 
     # --- the no-closure property: carriers are plain values ---------------
     # Construct, combine, read fields, render — every carrier is a plain
