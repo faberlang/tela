@@ -19,6 +19,9 @@
 #     parser + selector matcher).
 #   - Mutable fields: `var` copy of the record + `←` (SEM020).
 #   - Nullable reads: bind + `is null` guard + copy-narrow.
+#   - No `\"` string payloads (the TS emitter double-escapes them — see
+#     tela.fab escape notes): the double-quote comes from the ascii § hole
+#     ("§"('"')), the documented convention.
 
 # ---------------------------------------------------------------------------
 # Records (the fake DOM node model).
@@ -335,6 +338,7 @@ fn element_attribute_shape(FakeElement el) → string {
 # [data-tela] (non-empty identity), #id, .class, [name] / [name=value] /
 # [name='value'] / [name="value"], and bare tag equality.
 fn element_matches(FakeElement el, string selector) → bool {
+    const string q ← "§"('"')
     if selector ≡ "[data-tela]" {
         return el.data_tela ≠ ""
     }
@@ -363,7 +367,7 @@ fn element_matches(FakeElement el, string selector) → bool {
         var string attr_value ← inner.slice(eq + 1, inner.length())
         if attr_value.length() ≥ 2 {
             const string first ← attr_value.slice(0, 1)
-            if first ≡ "'" or first ≡ "\"" {
+            if first ≡ "'" or first ≡ q {
                 if attr_value.slice(attr_value.length() - 1, attr_value.length()) ≡ first {
                     attr_value ← attr_value.slice(1, attr_value.length() - 1)
                 }
@@ -555,13 +559,14 @@ fn is_void_tag(string name) → bool {
 }
 
 fn unescape_html(string text) → string {
+    const string q ← "§"('"')
     var string accum ← ""
     var int i ← 0
     while i < text.length() {
         var string fragment ← text.slice(i, i + 1)
         var int step ← 1
         if not (i + 5 > text.length()) and text.slice(i, i + 5) ≡ "&quot;" {
-            fragment ← "\""
+            fragment ← q
             step ← 5
         }
         if not (i + 5 > text.length()) and text.slice(i, i + 5) ≡ "&#39;" {
@@ -604,6 +609,7 @@ fn index_of(string text, string needle, int start) → int {
 # not open an element (name empty or a closing tag). Mirrors the shim's
 # recursive-descent parseElement.
 fn parse_element(string html, int start) → ParseResult ∪ null {
+    const string q ← "§"('"')
     var int j ← start + 1
     var string name ← ""
     var bool name_scan ← true
@@ -662,7 +668,7 @@ fn parse_element(string html, int start) → ParseResult ∪ null {
                             skipping2 ← false
                         }
                     }
-                    if j < html.length() and (html.slice(j, j + 1) ≡ "'" or html.slice(j, j + 1) ≡ "\"") {
+                    if j < html.length() and (html.slice(j, j + 1) ≡ "'" or html.slice(j, j + 1) ≡ q) {
                         const string quote ← html.slice(j, j + 1)
                         j ← j + 1
                         var string val ← ""
