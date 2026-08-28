@@ -1000,7 +1000,7 @@ fn segmented_style() → tela.Style {
                 ]
             },
             tela.Rule {
-                selector = "[data-tela^='ref-seg-'][role='radio'][aria-selected='true']",
+                selector = «[data-tela^='ref-seg-'][role='radio'][aria-selected="true"]»,
                 declarations = [
                     tela.Declaration { name = "border-color", value = "var(--ref-seg-selected-border)" }
                 ]
