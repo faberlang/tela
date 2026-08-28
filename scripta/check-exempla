@@ -1,26 +1,24 @@
 #!/usr/bin/env bash
 # tela/scripta/check-exempla — exempla surface (Stage 1 U6 + Stage 2 U5 +
 # Stage 3 U4). radix check every exempla/*.fab, then the TS lane: emit the
-# import-free kernel-side modules + assemble each exempla into ONE
-# self-contained file (single-file emits of the import-bearing exempla are
-# not self-contained — they keep `provider:module` imports and bare type
-# references), then `tsc --noEmit` (strict) AND execute the assembled file
-# under `node` (Stage 2 U5 runtime gate — residual R1 closed: assertions
-# run, so a wrong expected value or a real emitter/source defect fails the
-# check instead of being implementer-claimed). A development-time runtime
-# run in U6 surfaced a U2 defect (valida.fab's html-only name set omitted
-# `img`) — fixed by the Stage 1 closeout repair; the runtime gate now owns
-# this class of defect (the Stage 2 U5 gate caught a real U2 assemble hole:
-# components/library bundles were not rule-shape validated — fixed in the
-# U5 closeout).
+# kernel-side modules, assemble each exempla against the emitted
+# import-based module graph, then `tsc` (strict) AND execute the compiled
+# entry under `node` (Stage 2 U5 runtime gate — residual R1 closed:
+# assertions run, so a wrong expected value or a real emitter/source
+# defect fails the check instead of being implementer-claimed). A
+# development-time runtime run in U6 surfaced a U2 defect (valida.fab's
+# html-only name set omitted `img`) — fixed by the Stage 1 closeout
+# repair; the runtime gate now owns this class of defect (the Stage 2 U5
+# gate caught a real U2 assemble hole: components/library bundles were
+# not rule-shape validated — fixed in the U5 closeout).
 #
 # Stage 3 U4: the `behavior` (U1 carriers) + `browser` (U2 mount surface)
 # wiring cases are added — the `*)` default must have NO unknown cases
 # after. The `browser` case binds the AUTHORED fake DOM (Stage 5 U9 —
 # scripta/harness_dom.fab emitted to TS; the hand-written dom-shim is
-# deleted) + the relocated mount-proof driver, so the assembled browser
-# exempla executes the full mount proof under `node` (empty mount /
-# hydration / mismatch / duplicate / replace effects / dispose) — the
+# deleted) + the relocated mount-proof driver, so the browser exempla
+# executes the full mount proof under `node` (empty mount / hydration /
+# mismatch / duplicate / replace effects / dispose) — the
 # harness-assembly path.
 #
 # Stage 4 U6 (seam restoration) + web-surface-import U4 (the tela:dom
@@ -31,6 +29,21 @@
 # the scope through the provider seam (web_dom_scope); mount reads the
 # planted pre-existing markup through web_dom_snapshot (the real provider
 # route shape). fix:g4 / fix:web-dom-locale are REMOVED.
+#
+# TS-assembly redesign (cae90732): the radix TS emit is now an
+# import-based module graph — modules carry `import * as <ns> from
+# "./tela-<module>.js"` specifiers, namespace-qualified type positions
+# (tela.Theme) and namespace constructors (new tela.Style()), and
+# declare their top-level bindings WITHOUT export statements. The old
+# single-file assembly (drop the imports, flatten each module into a
+# hand-maintained const-object namespace) cannot carry those types or
+# constructors. The lane now assembles the graph AS a module graph:
+# every emitted module is placed at its specifier path with an export
+# surface collected from its emitted top-level declarations, the two
+# harness boundary seams are provided as real modules (the tela:dom
+# provider shim; the @faber/runtime display package), and tsc + node
+# resolve the imports natively (tsc bundler resolution maps the .js
+# specifiers onto the .ts sources; the compiled graph runs as ESM).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -50,7 +63,7 @@ fi
 
 RADIX_BIN="$RADIX/target/debug/radix"
 if [[ ! -x "$RADIX_BIN" ]]; then
-  (cd "$RADIX" && cargo build -q -p radix --bin radix)
+  (cd "$RADIX" && cargo build -q -p radix-cli --bin radix)
 fi
 
 export FABER_LIBRARY_HOME="${FABER_LIBRARY_HOME:-$ROOT/..}"
@@ -64,44 +77,146 @@ done
 SCRATCH="$(mktemp -d "${TMPDIR:-/tmp}/tela-u6-exempla.XXXXXX")"
 trap 'rm -rf "$SCRATCH"' EXIT
 
-# Assemble a self-contained TS file from emitted modules: drop the radix
-# header (2 lines) and every `import ... from "…"` line, then bind the
-# imported namespaces as plain const objects (the emitted modules declare
-# their top-level bindings without exports).
-strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
+# ---------------------------------------------------------------------------
+# Module-graph assembly.
+#
+# The emitted modules declare their top-level bindings without exports
+# (the emitter emits plain declarations; the consuming package layer owns
+# export wiring), and the import-free modules use the SCRIPT form of the
+# intrinsic-augmentation preamble (bare `interface Number`), which is
+# only legal in a script file. The assembly seam does both conversions:
+# wrap the bare augmentation in `declare global` and append the module's
+# export surface, collected from the emitted column-0 declarations
+# (excluding the intrinsic-augmentation interfaces themselves).
+# ---------------------------------------------------------------------------
 
-VALIDA_NS="const validate = { valid_space, valid_tag_name, valid_attribute_name, valid_name_in_space, valid_void_html, valid_void_structure };"
-TELA_NS="const tela = { html_visus, css, theme_css, theme_style, theme, token, core_tokens, token_property_name, token_name_valid, theme_has_core_tokens, theme_has_token, assemble, bundle, order, deduplicated_bundles, topological_order, style_valid, unclean_style_text, bundle_for, in_list, dependencies_met, text_view, fragment_view, new_identity, html_space, svg_space, element_view, element_full, event_name, restore, direct, anchor, update, effect_identity, Attribute, Property, Identity, Declaration, Rule, Style, Token, Theme, Bundle, Order, EventName, Update };"
-# Stage 5 U9 (the dogfooding unit): the tela:dom namespace for the browser
-# case binds the AUTHORED fake-DOM surface (scripta/harness_dom.fab emitted
-# to TS — the fake-DOM behavior is now Faber source). The bare Scope/DomNode
-# provider types are declared at the harness boundary (the browser case
-# does not assemble the emitted provider module). The old dom-shim + the
-# hand-written BROWSER_DRIVER are replaced by the emitted module + the
-# relocated mount-proof driver (see below).
-BROWSER_NS="const browser = { region_root, event_subscription, binding, parse_identities, element_tag, count_occurrences, duplicate_identities, tag_name, tag_at, identities_from_nodes, tags_from_nodes, binding_status, hydration_diagnostics, mount, replace, dispose, focus_held, focus_target };"
-# Stage 5 U2/U3/U4/U5/U6/U7: the reference catalog namespace (every
-# tela:reference export the exempla consumes — the layout + typography
-# families, U2; the panel + badge + metric families, U3; the table family,
-# U4; the segmented-control family, U5; the button family, U6; the field
-# family, U7).
-REF_NS="const ref = { layout_stack, layout_grid, layout_prose, stack_props, grid_props, layout_prose_props, typography_heading, typography_prose, typography_emphasis, typography_scale, heading_props, prose_props, emphasis_props, scale_props, clamped_level, layout_style, typography_style, panel, badge, metric, panel_props, badge_props, metric_props, panel_style, badge_style, metric_style, table, table_row, table_props, table_style, segmented_control, segmented_props, segmented_option, segmented_options, segmented_live_region, selected_text, active_tabindex, segmented_style, button, button_props, button_event, button_style, field_input, field_input_props, field_invalid, field_error_region, field_live_region, field_control, field_style, ref_layout_gap, ref_layout_prose_measure, ref_type_scale_xs, ref_type_scale_sm, ref_type_scale_md, ref_type_scale_lg, ref_type_scale_xl, ref_type_heading_weight, ref_type_heading_margin, ref_type_prose_line_height, ref_type_prose_margin, ref_panel_surface, ref_panel_border, ref_panel_radius, ref_panel_padding, ref_badge_size, ref_badge_padding, ref_badge_radius, ref_metric_label_size, ref_metric_label_muted, ref_metric_value_size, ref_metric_value_weight, ref_table_border, ref_table_padding, ref_table_header_weight, ref_table_caption_muted, ref_seg_gap, ref_seg_radius, ref_seg_size, ref_seg_padding, ref_seg_border, ref_seg_selected_border, ref_button_size, ref_button_padding, ref_button_radius, ref_button_border, ref_button_text, ref_button_primary_background, ref_button_primary_text, ref_button_secondary_background, ref_button_ghost_background, ref_button_focus, ref_button_disabled_opacity, field_invalid_token, field_valid_token, field_focus_token, reference_tokens, StackProps, GridProps, LayoutProseProps, HeadingProps, ProseProps, EmphasisProps, ScaleProps, PanelProps, BadgeProps, MetricProps, TableProps, TableRow, SegmentedProps, ButtonProps, FieldInputProps };"
+# Intrinsic-augmentation interfaces bridge the runtime-contract method
+# surface (potentia) onto the JS built-ins; they augment the global scope
+# and are never part of a module's export surface.
+INTRINSICS='Number|String|Boolean|Object|Array|Function|Symbol'
 
-# The U9 mount-proof driver glue: the browser case assembles the AUTHORED
-# fake DOM (the emitted module), the bare tela:dom provider types (the
-# exempla constructs dom.DomNode at load), and the relocated executeMountProof
-# driver (the assertion/orchestration driver — the hardening executed lane,
-# TS by split, recorded in stage-5-dogfooding.md) — the runtime gate for the
-# browser exempla's DOM-level assertions. The scope is constructed through
-# the provider seam (web_dom_scope(doc, ...)); mount reads the planted
-# pre-existing markup via web_dom_snapshot.
-BROWSER_HOST=$(cat <<'BROWSER_HOST'
+# The emitter's `est` variant check probes the runtime-contract valor tag
+# (`typeof value.__faberValorTag`) on the value's STATIC type — runtime-
+# correct (guarded object probe with a tag fallback), but strict TS
+# rejects the property access on a type that does not declare the tag.
+# The seam narrows every probe through an inline tag-carrier view: a
+# compile-time cast only, the emitted runtime expression is unchanged.
+seam_normalize() {
+  perl -pi -e 's/value\.__faberValorTag/(value as { __faberValorTag?: unknown }).__faberValorTag/g' "$1"
+}
 
-// The bare tela:dom provider types (the emitted provider module's type
-// shape — the exempla constructs dom.DomNode directly; declared at the
-// harness boundary, orchestration lane).
-class Scope { selector!: string; }
-class DomNode { identity!: string; tag!: string; }
+emit_module() { # <fab path> <scratch file name>
+  "$RADIX_BIN" emit -t ts --locale en "$1" -o "$SCRATCH/$2" >/dev/null
+  perl -0pi -e "s/^interface ($INTRINSICS) \\{\n(.*?)^\\}\n/declare global {\ninterface \$1 {\n\$2}\n}\n/ms" "$SCRATCH/$2"
+  seam_normalize "$SCRATCH/$2"
+  local names
+  names="$(grep -E '^(function|class|interface|type|const|let|var|enum) [A-Za-z_$]' "$SCRATCH/$2" \
+    | sed -E 's/^(function|class|interface|type|const|let|var|enum) ([A-Za-z_$][A-Za-z0-9_$]*).*/\2/' \
+    | sort -u \
+    | grep -vE "^($INTRINSICS)$" \
+    | paste -sd, - \
+    | sed 's/,/, /g')"
+  if [[ -n "$names" ]]; then
+    printf '\nexport { %s };\n' "$names" >> "$SCRATCH/$2"
+  else
+    printf '\nexport {};\n' >> "$SCRATCH/$2"
+  fi
+}
+
+# The library modules, at the specifier paths the emitted imports name
+# (tela-tela.js imports ./tela-validate.js; the exempla emits import
+# ./tela-<module>.js for every tela:<module> provider they consume).
+emit_module "$ROOT/src/validate.fab" "tela-validate.ts"
+emit_module "$ROOT/src/tela.fab" "tela-tela.ts"
+emit_module "$ROOT/src/browser.fab" "tela-browser.ts"
+emit_module "$ROOT/src/reference.fab" "tela-reference.ts"
+# Stage 5 U9: the AUTHORED fake DOM (Faber source -> the emitted module;
+# the browser case assembles it as the node host environment).
+emit_module "$ROOT/scripta/harness_dom.fab" "tela-harness-dom.ts"
+
+# The tela:dom provider seam at the harness boundary: the emitted provider
+# module (src/dom.fab) is deliberately NOT assembled (its class Element
+# collides with the DOM lib), so the bare provider types the browser
+# module + exempla consume (dom.Scope, dom.DomNode) are declared here and
+# dom.snapshot reads through the authored fake DOM.
+cat > "$SCRATCH/tela-dom.ts" <<'DOM_SEAM'
+// Harness boundary: the bare tela:dom provider types + the snapshot read
+// over the authored fake DOM (tela-harness-dom). The emitted provider
+// module is not assembled — its class Element collides with the DOM lib.
+import { web_dom_snapshot, type FakeNodus } from "./tela-harness-dom.js";
+
+export class Scope {
+    selector!: string;
+}
+export class DomNode {
+    identity!: string;
+    tag!: string;
+}
+export function snapshot(scope: any): Array<FakeNodus> | null {
+    return web_dom_snapshot(scope);
+}
+DOM_SEAM
+
+# The @faber/runtime display package: the emitted `print` surface imports
+# __faberDisplay from the package instead of inlining it. The exempla gate
+# prints only string carriers; the harness stand-in mirrors the package
+# contract for those (faber/runtime/typescript/index.ts is the authority).
+mkdir -p "$SCRATCH/node_modules/@faber/runtime"
+cat > "$SCRATCH/node_modules/@faber/runtime/package.json" <<'RUNTIME_PKG'
+{ "name": "@faber/runtime", "type": "module", "main": "./index.js", "types": "./index.d.ts" }
+RUNTIME_PKG
+cat > "$SCRATCH/node_modules/@faber/runtime/index.d.ts" <<'RUNTIME_DTS'
+export type FaberDisplayHint =
+  | "unknown" | "textus" | "ascii" | "numerus" | "fractus" | "bivalens"
+  | "nihil" | "vacuum" | "valor" | "instans" | "regex";
+export declare function __faberDisplay(value: any, hint?: FaberDisplayHint): string;
+RUNTIME_DTS
+cat > "$SCRATCH/node_modules/@faber/runtime/index.js" <<'RUNTIME_JS'
+// Harness stand-in for @faber/runtime (mirrors the string-carrier
+// contract; the full hint family lives in faber/runtime/typescript).
+export function __faberDisplay(value, hint = "unknown") {
+  if (value === null || value === undefined) {
+    return hint === "vacuum" ? "vacuum" : "nihil";
+  }
+  if (hint === "bivalens") {
+    return value ? "verum" : "falsum";
+  }
+  return String(value);
+}
+RUNTIME_JS
+
+# The compiled module graph runs as ESM under node.
+printf '{ "type": "module" }\n' > "$SCRATCH/package.json"
+
+# The U9 mount-proof driver glue: the browser exempla assembles the driver
+# IN ITS OWN MODULE (the driver reads the exempla's top-level fixtures and
+# its tela/browser namespace imports) and declares its harness-DOM
+# dependencies as real imports from the emitted fake-DOM module. The scope
+# is constructed through the provider seam (web_dom_scope); mount reads
+# the planted pre-existing markup via the dom.snapshot seam. The bare
+# Scope/DomNode provider types live in the tela-dom seam module; the
+# global fake-DOM installation stays at the driver boundary.
+cat > "$SCRATCH/browser-driver.ts" <<'BROWSER_DRIVER'
+
+import {
+  bind_region_subscriptions,
+  doc_focus_node,
+  doc_query_all,
+  element_attr_set,
+  element_append_child,
+  element_clear_children,
+  element_dispatch,
+  element_text,
+  execute_mount_plan,
+  fake_document,
+  fake_element,
+  fake_event,
+  parse_fragment,
+  resolve_region,
+  web_dom_scope,
+  web_dom_unsubscribe,
+} from "./tela-harness-dom.js";
+import type { FakeDocument, FakeElement, MountedLike } from "./tela-harness-dom.js";
 
 // The global installation stays at the driver boundary (hardening lane).
 const installFakeDom = (): FakeDocument => {
@@ -116,10 +231,6 @@ const installFakeDom = (): FakeDocument => {
   globalThis.fetch = () => Promise.reject(new Error("no fetch in the exempla gate"));
   return doc;
 };
-BROWSER_HOST
-)
-
-BROWSER_DRIVER=$(cat <<'BROWSER_DRIVER'
 
 interface RenovatioLike {
   view: unknown;
@@ -153,8 +264,7 @@ interface MountProofApi {
 // The Stage 3 U2 mount proof: executes the real mount/replace/dispose
 // lifecycle (emitted from browser.fab via the api) against the AUTHORED
 // fake DOM and asserts every done_when (g) DOM-level outcome. The driver
-// rides the emitted function surface (U9). Called after the Faber modules +
-// consts are in scope.
+// rides the emitted function surface (U9). Called after the modules load.
 const executeMountProof = (doc: FakeDocument, api: MountProofApi): void => {
   const assert = (cond: boolean, msg: string): void => {
     if (!cond) {
@@ -362,11 +472,6 @@ const executeMountProof = (doc: FakeDocument, api: MountProofApi): void => {
 };
 
 const doc = installFakeDom();
-// The tela:dom namespace the emitted browser mount reads (browser.fab calls
-// dom.snapshot inside mount; the scope is built through web_dom_scope).
-const dom = {
-  snapshot: ((scope: any): Array<FakeNodus> | null => web_dom_snapshot(scope)),
-};
 const domProofApi = {
   mount: browser.mount,
   replace: browser.replace,
@@ -374,7 +479,7 @@ const domProofApi = {
   focus_held: browser.focus_held,
   focus_target: browser.focus_target,
   scope: (selector: string): any => web_dom_scope(doc, selector),
-  html_visus: tela.html_visus,
+  html_visus: tela.html_view,
   effect_identity: tela.effect_identity,
   tree: control_tree,
   extended_tree: extended_control_tree,
@@ -388,133 +493,41 @@ const domProofApi = {
 };
 executeMountProof(doc, domProofApi);
 BROWSER_DRIVER
-)
 
-# printf (not echo) so the driver's backtick/template content is verbatim.
-printf '%s' "$BROWSER_HOST" > "$SCRATCH/browser-host.ts"
-printf '%s' "$BROWSER_DRIVER" > "$SCRATCH/browser-driver.ts"
-
-echo "check-exempla: TS lane (emit + assemble + tsc --noEmit + node runtime gate)"
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/validate.fab" -o "$SCRATCH/valida.ts" >/dev/null
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela.ts" >/dev/null
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/browser.fab" -o "$SCRATCH/browser.ts" >/dev/null
-# Stage 5 U2: the reference catalog module (the exempla/reference wiring
-# case consumes it through the tela:reference package interface).
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/reference.fab" -o "$SCRATCH/reference.ts" >/dev/null
-# Stage 5 U9: the AUTHORED fake DOM (Faber source -> the emitted module;
-# the browser case assembles it in place of the deleted dom-shim).
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/scripta/harness_dom.fab" -o "$SCRATCH/harness_dom.ts" >/dev/null
-# The emitted harness_dom module is self-contained (no imports) and emits
-# NO FaberDisplay preamble (the authored surface uses no display helpers);
-# plain header strip is the whole strip.
-strip_hdom() { sed '1,2d' "$1"; }
-
+echo "check-exempla: TS lane (emit + module-graph assembly + tsc + node runtime gate)"
 for f in "$ROOT"/exempla/*.fab; do
   name="$(basename "$f" .fab)"
-  # Emit the exempla to a name-suffixed scratch file: exempla/browser.fab
-  # emits `browser.ts` too, which must not clobber the browser module emit.
-  "$RADIX_BIN" emit -t ts --locale en "$f" -o "$SCRATCH/${name}-exempla.ts" >/dev/null
+  # Emit the exempla to its own module file: exempla/browser.fab emits
+  # ./tela-*.js imports too, which must not clobber the library modules.
+  "$RADIX_BIN" emit -t ts --locale en "$f" -o "$SCRATCH/exempla-$name.ts" >/dev/null
+  seam_normalize "$SCRATCH/exempla-$name.ts"
   case "$name" in
-    validation)
-      # exempla/validation.fab imports tela:validate
-      {
-        strip "$SCRATCH/valida.ts"
-        echo "$VALIDA_NS"
-        strip "$SCRATCH/validation-exempla.ts"
-      } > "$SCRATCH/${name}-joined.ts"
-      ;;
-    serializer)
-      # exempla/serializer.fab imports tela:tela (which imports tela:validate)
-      {
-        strip "$SCRATCH/valida.ts"
-        echo "$VALIDA_NS"
-        strip "$SCRATCH/tela.ts"
-        echo "$TELA_NS"
-        strip "$SCRATCH/serializer-exempla.ts"
-      } > "$SCRATCH/${name}-joined.ts"
-      ;;
-    thema)
-      # exempla/theme.fab imports tela:tela (Stage 2 U1 theme/token surface)
-      {
-        strip "$SCRATCH/valida.ts"
-        echo "$VALIDA_NS"
-        strip "$SCRATCH/tela.ts"
-        echo "$TELA_NS"
-        strip "$SCRATCH/thema-exempla.ts"
-      } > "$SCRATCH/${name}-joined.ts"
-      ;;
-    assemble)
-      # exempla/assemble.fab imports tela:tela (Stage 2 U2 assembly surface)
-      {
-        strip "$SCRATCH/valida.ts"
-        echo "$VALIDA_NS"
-        strip "$SCRATCH/tela.ts"
-        echo "$TELA_NS"
-        strip "$SCRATCH/assemble-exempla.ts"
-      } > "$SCRATCH/${name}-joined.ts"
-      ;;
-    behavior)
-      # exempla/behavior.fab imports tela:tela (Stage 3 U1 behavior carriers)
-      {
-        strip "$SCRATCH/valida.ts"
-        echo "$VALIDA_NS"
-        strip "$SCRATCH/tela.ts"
-        echo "$TELA_NS"
-        strip "$SCRATCH/behavior-exempla.ts"
-      } > "$SCRATCH/${name}-joined.ts"
-      ;;
     browser)
-      # exempla/browser.fab imports tela:tela + tela:browser + tela:dom. The
-      # AUTHORED fake DOM (Stage 5 U9 — scripta/harness_dom.fab emitted to
-      # TS) provides the node host environment; the bare Scope/DomNode
-      # provider types + installFakeDom live at the harness boundary
-      # (BROWSER_HOST); the relocated mount-proof driver (BROWSER_DRIVER)
-      # executes the FULL mount proof under node — mount reads the planted
-      # pre-existing markup through the authored web_dom_snapshot (the real
-      # provider route shape).
-      {
-        strip "$SCRATCH/valida.ts"
-        echo "$VALIDA_NS"
-        strip "$SCRATCH/tela.ts"
-        echo "$TELA_NS"
-        strip "$SCRATCH/browser.ts"
-        echo "$BROWSER_NS"
-        strip_hdom "$SCRATCH/harness_dom.ts"
-        # The bare provider types precede the exempla so its `class DomNode`
-        # declarations are in scope before the exempla's `new DomNode()`.
-        cat "$SCRATCH/browser-host.ts"
-        strip "$SCRATCH/browser-exempla.ts"
-        echo ""
-        cat "$SCRATCH/browser-driver.ts"
-      } > "$SCRATCH/${name}-joined.ts"
+      # exempla/browser.fab imports tela:tela + tela:browser + tela:dom.
+      # The driver rides IN the exempla module (it reads the exempla's
+      # top-level fixtures + namespace imports); its harness-DOM surface
+      # arrives as real imports from the emitted fake-DOM module; dom.*
+      # resolves through the tela-dom seam module.
+      cat "$SCRATCH/browser-driver.ts" >> "$SCRATCH/exempla-$name.ts"
       ;;
-    reference)
-      # exempla/reference.fab imports tela:tela + tela:reference (Stage 5
-      # U2/U3/U4/U5/U6/U7 — the catalog: layout + typography + panel +
-      # badge + metric + table + segmented-control + button + field).
-      {
-        strip "$SCRATCH/valida.ts"
-        echo "$VALIDA_NS"
-        strip "$SCRATCH/tela.ts"
-        echo "$TELA_NS"
-        strip "$SCRATCH/reference.ts"
-        echo "$REF_NS"
-        strip "$SCRATCH/reference-exempla.ts"
-      } > "$SCRATCH/${name}-joined.ts"
+    validation|serializer|thema|assemble|behavior|reference)
+      # The exempla emit's import graph (tela:validate / tela:tela /
+      # tela:reference) resolves against the assembled library modules.
       ;;
     *)
       echo "check-exempla: exempla module ${name} has no assembly wiring (add it)" >&2
       exit 1
       ;;
   esac
-  joined="$SCRATCH/${name}-joined.ts"
-  echo "check-exempla: ${name}: tsc --noEmit"
-  tsc --noEmit --strict --target ES2020 --module ESNext --moduleResolution bundler --skipLibCheck "$joined"
+  joined="$SCRATCH/exempla-$name.ts"
+  echo "check-exempla: ${name}: tsc (module-graph typecheck + emit)"
+  rm -rf "$SCRATCH/dist"
+  tsc --strict --target ES2020 --module ESNext --moduleResolution bundler --skipLibCheck --outDir "$SCRATCH/dist" "$joined"
   # Stage 2 U5 runtime gate (residual R1 closed): the assembled exempla
   # EXECUTES under node — every `assert` runs, so a wrong expectation or a
   # real source/emitter defect fails the check (node exit != 0).
   echo "check-exempla: ${name}: node (runtime gate — assertions execute)"
-  node "$joined" >/dev/null
+  node "$SCRATCH/dist/exempla-$name.js" >/dev/null
 done
 
 echo "check-exempla: green"
