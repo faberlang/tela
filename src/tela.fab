@@ -557,20 +557,12 @@ fn token_name_valid(string name) → bool {
 @ public
 fn theme_has_core_tokens(Theme theme) → bool {
     const list<string> core ← core_tokens()
-    var int i ← 0
-    while i < core.length() {
-        if not theme_has_token(theme, core[i]) then return false
-        i ← i + 1
-    }
-    return true
+    return core.all(string t ∴ theme_has_token(theme, t))
 }
 
 @ public
 fn theme_has_token(Theme theme, string name) → bool {
-    for from theme.tokens const token {
-        if token.name ≡ name then return true
-    }
-    return false
+    return theme.tokens.any(Token t ∴ t.name ≡ name)
 }
 
 # Public theme renderer verb (policy (b)): emits the token layer as one
