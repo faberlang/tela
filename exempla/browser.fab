@@ -64,6 +64,19 @@ fn theme_probe() → tela.Theme {
     ])
 }
 
+# A segmented-control child with the stable identity and visible label carried
+# by the caller. Both control fixtures use the same child shape.
+fn control_segment(string identity, string label) → tela.View {
+    return tela.element_full(
+        tela.new_identity(identity),
+        tela.html_space(),
+        "button",
+        [ tela.Attribute { name = "class", value = "seg" } ],
+        [],
+        [ tela.text_view(label) ]
+    )
+}
+
 # A segmented-control-shaped View over the data-tela seam: a group div with
 # two segment buttons. The driver mounts this View onto a scope.
 fn control_tree() → tela.View {
@@ -74,22 +87,8 @@ fn control_tree() → tela.View {
         [],
         [],
         [
-            tela.element_full(
-                tela.new_identity("tela-seg-1"),
-                tela.html_space(),
-                "button",
-                [ tela.Attribute { name = "class", value = "seg" } ],
-                [],
-                [ tela.text_view("One") ]
-            ),
-            tela.element_full(
-                tela.new_identity("tela-seg-2"),
-                tela.html_space(),
-                "button",
-                [ tela.Attribute { name = "class", value = "seg" } ],
-                [],
-                [ tela.text_view("Two") ]
-            )
+            control_segment("tela-seg-1", "One"),
+            control_segment("tela-seg-2", "Two")
         ]
     )
 }
@@ -103,30 +102,9 @@ fn extended_control_tree() → tela.View {
         [],
         [],
         [
-            tela.element_full(
-                tela.new_identity("tela-seg-1"),
-                tela.html_space(),
-                "button",
-                [ tela.Attribute { name = "class", value = "seg" } ],
-                [],
-                [ tela.text_view("One") ]
-            ),
-            tela.element_full(
-                tela.new_identity("tela-seg-2"),
-                tela.html_space(),
-                "button",
-                [ tela.Attribute { name = "class", value = "seg" } ],
-                [],
-                [ tela.text_view("Two") ]
-            ),
-            tela.element_full(
-                tela.new_identity("tela-seg-3"),
-                tela.html_space(),
-                "button",
-                [ tela.Attribute { name = "class", value = "seg" } ],
-                [],
-                [ tela.text_view("Three") ]
-            )
+            control_segment("tela-seg-1", "One"),
+            control_segment("tela-seg-2", "Two"),
+            control_segment("tela-seg-3", "Three")
         ]
     )
 }
