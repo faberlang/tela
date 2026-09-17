@@ -2,17 +2,8 @@
 #
 # Stage 3 U2 (browser-mount) + Stage 4 U6 (seam restoration) +
 # web-surface-import U4 (browser-flip-harness-rewire, the tela:dom flip).
-# The host seam is tela:dom (tela-owned — the en conversion of the faber-web
-# DOM contract, web-import-u1; the old la `web:dom` provider dependency has
-# left tela/src at this boundary). The flip renames the seam type references:
-# `dom.Nodus` → `dom.DomNode`, `.identitas` → `.identity` (DELIVERY §5.2).
-# This module consumes tela:dom DIRECTLY through the documented host seam —
-# the spec-locked shape `mount(dom.Scope, View, Theme)` per
-# browser-lifecycle.md §1. The WARN014 export-skip predicates are
-# re-verified live (never assumed); the opaque fallback carriers + the
-# harness-level webDom* binding posture are REMOVED — the marker records
-# flip to removed in browser-lifecycle.md §11 (grep-verified: no live
-# marker site in tela/src).
+# The host seam is tela:dom (tela-owned), consumed DIRECTLY — the spec-locked
+# shape `mount(dom.Scope, View, Theme)` per browser-lifecycle.md §1.
 #
 # MODULE SHAPE (locked):
 #   - FLAT: public signatures reference tela:tela types + the tela:dom seam
@@ -35,19 +26,13 @@
 #     discovery's quote-style finding resolved at the comparison level).
 #
 # fix:<id> markers:
-#   (the web:dom locale-gap workaround — REMOVED by cds-u5 + the U4 flip;
-#   the WARN014 export-skip workaround — REMOVED by cds-u6; both marker rows
-#   flip to removed in browser-lifecycle.md §11 — grep-verified: no live
-#   marker site remains in tela/src).
-#   fix:codegen001 — PARTIAL: the provider-module locale-propagation half
-#     is fixed (cds-u5); browser.fab remains ts-only because tela:dom is
-#     ts-only (Rust emit of a tela:dom-importing module is doubly out) —
-#     recorded, never the gate.
+#   fix:codegen001 — browser.fab is ts-only because tela:dom is ts-only
+#     (Rust emit of a tela:dom-importing module is doubly out) — recorded,
+#     never the gate.
 #   fix:prim-nullable — RESOLVED for the narrowed-list case (nn-u3b,
 #     radix 255c4c8cf): `if nodes not is null { … }` flow-narrows the
 #     union binding, so `nodes.length()` / `nodes[i].identity` call
-#     directly on the narrowed receiver — the `certain` non-null copy
-#     carrier is REMOVED (nn-revert-2). Remaining surface: a primitive
+#     directly on the narrowed receiver. Remaining surface: a primitive
 #     `T ∪ null` const/var annotation and a `!` unwrap of a primitive
 #     nullable still do not parse in named fn bodies (PARSE030/PARSE001);
 #     workaround kept at the mount sites (`coalesce ""` on the null-checked

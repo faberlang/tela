@@ -26,9 +26,7 @@ fi
 
 # The tela package reads English (faber.toml `[reader] locale = "en"`); the
 # radix CLI defaults to Latin, so the en reader locale is passed explicitly
-# with `--locale en`. (triga's scripta scripts still pass the renamed
-# `--locale-pack` spelling; the current radix 0.80.0 binary resolves the
-# reader pack from `--locale en` — noted in stage-1-determinism.md.)
+# with `--locale en`.
 
 echo "check-compile: kernel + validation + reference + dom + canvas2d + web modules (container library home)"
 export FABER_LIBRARY_HOME="${FABER_LIBRARY_HOME:-$ROOT/..}"
