@@ -29,10 +29,10 @@ Stage 1 capstone:
   installed `~/.cargo/bin/radix` (0.78.0) predates the corpus sugar; not
   representative.
 - **Locale flag note:** the tela/triga packages read English (`faber.toml`
-  `[reader] locale = "en"`); the current radix 0.80.0 binary takes the reader
-  locale as **`--locale en`**. triga's `scripta/` scripts still pass the
-  renamed `--locale-pack <FILE>` spelling (it errors with a "similar argument
-  exists" tip on 0.80.0); the tela harnesses use `--locale en` directly.
+  `[reader] locale = "en"`); the radix CLI takes the reader locale as
+  **`--locale en`** (observed in-tree: `radix/crates/radix/Cargo.toml`
+  `version = "0.84.0"`; clap `--locale` in `radix-cli`). tela harnesses and
+  current triga `scripta/` both pass `--locale en` directly.
 - Cargo discipline: Rust-lane cargo runs in scratch dirs OUTSIDE the shared
   workspace (`mktemp` under `${TMPDIR:-/tmp}`); no workspace suites.
 - The TS lane needs `node` (runtime) and `tsc` (typecheck) on PATH.
