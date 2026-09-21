@@ -567,14 +567,17 @@ fn theme_has_token(Theme theme, string name) → bool {
 
 # Public theme renderer verb (policy (b)): emits the token layer as one
 # :root Rule through the existing css(Style) serializer. Fail-closed:
-# missing required core token, invalid token name, or duplicate token
-# identity with different content → null (no output). Deterministic bytes
-# over author order.
+# missing required core token, invalid token name, duplicate token identity
+# with different content, or invalid rule shape (style_valid — the emitted
+# layer lives inside a raw-text style block) → null (no output).
+# Deterministic bytes over author order.
 @ public
 fn theme_css(Theme theme) → string ∪ null {
     const Style ∪ null style_result ← theme_style(theme)
     if style_result is null then return null
-    return css(Style { rules = style_result!.rules })
+    const Style tokens ← Style { rules = style_result!.rules }
+    if not style_valid(tokens) then return null
+    return css(tokens)
 }
 
 # Token-layer builder shared by theme_css and the product assembler (U2):
@@ -779,7 +782,10 @@ fn topological_order(list<Order> orders, list<string> identities) → list<strin
 }
 
 # CSS-structure-breaking characters in selector / property / value text make
-# the emitted rule invalid — fail-closed before emission.
+# the emitted rule invalid — fail-closed before emission. The reject list is
+# HTML-context-aware: emitted CSS is installed inside a raw-text style block,
+# where any end-tag opener "</" can close the block ("</style>", any case)
+# and escape into markup.
 @ public
 fn unclean_style_text(string text) → bool {
     var int i ← 0
@@ -789,13 +795,18 @@ fn unclean_style_text(string text) → bool {
         if c ≡ "}" then return true
         if c ≡ ";" then return true
         if c ≡ "\n" then return true
+        if c ≡ "<" {
+            if i + 1 < text.length() {
+                if text.slice(i + 1, i + 2) ≡ "/" then return true
+            }
+        }
         i ← i + 1
     }
     return false
 }
 
-# Fail-closed rule/declaration shape: non-empty selector / property / value
-# and no CSS-structure-breaking characters.
+# Fail-closed rule/declaration shape: non-empty selector / property / value,
+# no CSS-structure-breaking characters, and no HTML end-tag opener.
 @ public
 fn style_valid(Style style) → bool {
     for from style.rules const rule {
@@ -833,10 +844,13 @@ fn assemble(
     list<Bundle> bundles,
     Bundle ∪ null applicatio
 ) → Style ∪ null {
-    # tela.tokens — the rendered :root token layer (fail-closed).
+    # tela.tokens — the rendered :root token layer (fail-closed: validity
+    # like every other layer — the emitted layer lives inside a raw-text
+    # style block).
     const Style ∪ null tokens_result ← theme_style(theme)
     if tokens_result is null then return null
     const Style tokens ← Style { rules = tokens_result!.rules }
+    if not style_valid(tokens) then return null
 
     # tela.reset — validity only (emission order handled below); v1 ships no
     # reset by default, so the layer emits only when a bundle is provided.

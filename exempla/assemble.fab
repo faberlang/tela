@@ -181,6 +181,46 @@ main {
     const tela.Style ∪ null invalid_result ← tela.assemble(solaris, null, [malum], [], [], null)
     assert invalid_result ≡ null
 
+    # --- (S-H1) HTML-context injection rejection (fail-closed) ------------
+    # A declaration value carrying the raw-text style-close sequence has no
+    # { } ; \n, so the structural checks alone cannot see it — the value
+    # check must (emitted CSS lives inside a <style> block; any "</" can
+    # close it).
+    const tela.Bundle veneficum ← tela.bundle("veneficum", tela.Style {
+        rules = [
+            tela.Rule {
+                selector = ".panel",
+                declarations = [
+                    tela.Declaration {
+                        name = "color",
+                        value = "red</style><script>alert(1)</script><style>a:b"
+                    }
+                ]
+            }
+        ]
+    })
+    assert tela.unclean_style_text("red</style><script>alert(1)</script><style>a:b")
+    const tela.Style ∪ null veneficum_result ← tela.assemble(solaris, null, [veneficum], [], [], null)
+    assert veneficum_result ≡ null
+
+    # --- (S-H1 regression) ordinary declarations still pass ----------------
+    # A slash-bearing font shorthand and a css-function value contain no
+    # end-tag opener — still valid, still emitted unchanged.
+    const tela.Bundle legitimum ← tela.bundle("legitimum", tela.Style {
+        rules = [
+            tela.Rule {
+                selector = ".prose",
+                declarations = [
+                    tela.Declaration { name = "font", value = "12px/1.5 sans-serif" },
+                    tela.Declaration { name = "color", value = "rgba(15, 23, 42, 0.8)" }
+                ]
+            }
+        ]
+    })
+    const tela.Style ∪ null legitimum_result ← tela.assemble(solaris, null, [legitimum], [], [], null)
+    const string legitimum_css ← tela.css(tela.Style { rules = legitimum_result!.rules }) coalesce ""
+    assert legitimum_css ≡ tokens_css + ".prose { font: 12px/1.5 sans-serif; color: rgba(15, 23, 42, 0.8); }\n"
+
     # --- (d) duplicate token identity with different content rejects ------
     const tela.Theme gemina ← tela.theme("gemina", [
         tela.token("surface.canvas", "#ffffff"),

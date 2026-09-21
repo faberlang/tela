@@ -85,6 +85,41 @@ main {
     const string ∪ null mala_result ← tela.theme_css(mala)
     assert mala_result ≡ null
 
+    # --- (S-H1) a token value carrying the style-close sequence rejects ----
+    # No { } ; \n — only the HTML-context end-tag opener — so the structural
+    # predicate alone cannot see it; the style_valid gate on the token layer
+    # must (theme_css output is installed inside a <style> block).
+    const tela.Theme venefica ← tela.theme("venefica", [
+        tela.token("surface.canvas", "#ffffff"),
+        tela.token("surface.panel", "#f9fafb"),
+        tela.token("text.primary", "#111827"),
+        tela.token("text.muted", "#6b7280"),
+        tela.token("border.default", "#e5e7eb"),
+        tela.token("accent.primary", "#2563eb"),
+        tela.token("state.positive", "#16a34a"),
+        tela.token("state.caution", "#d97706"),
+        tela.token("evil.value", "red</style><script>alert(1)</script><style>a:b")
+    ])
+    const string ∪ null venefica_result ← tela.theme_css(venefica)
+    assert venefica_result ≡ null
+
+    # --- (S-H1 regression) slash-bearing ordinary values still render ------
+    # A font-shorthand token value keeps its slash — no end-tag opener, so
+    # the value stays valid and renders unchanged.
+    const tela.Theme legitima ← tela.theme("legitima", [
+        tela.token("surface.canvas", "#ffffff"),
+        tela.token("surface.panel", "#f9fafb"),
+        tela.token("text.primary", "#111827"),
+        tela.token("text.muted", "#6b7280"),
+        tela.token("border.default", "#e5e7eb"),
+        tela.token("accent.primary", "#2563eb"),
+        tela.token("state.positive", "#16a34a"),
+        tela.token("state.caution", "#d97706"),
+        tela.token("type.body", "12px/1.5 sans-serif")
+    ])
+    const string legitima_css ← tela.theme_css(legitima) coalesce ""
+    assert legitima_css ≡ ":root { --surface-canvas: #ffffff; --surface-panel: #f9fafb; --text-primary: #111827; --text-muted: #6b7280; --border-default: #e5e7eb; --accent-primary: #2563eb; --state-positive: #16a34a; --state-caution: #d97706; --type-body: 12px/1.5 sans-serif; }\n"
+
     # --- (f) two materially different themes resolve against the same tree --
     # Dark palette: different values for the same token names (incl. the
     # namespaced extension token). Same component tree by construction —
