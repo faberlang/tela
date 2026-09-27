@@ -115,29 +115,29 @@ import from "tela:tela" public * as tela
 # node; aria-describedby → form-error-<name> when invalid).
 @ public
 class FieldProps {
-    string name
-    string label
-    string value
-    string invalid
-    string error
+    var string name
+    var string label
+    var string value
+    var string invalid
+    var string error
 }
 
 # The select props (option list; aria-invalid + aria-describedby surface).
 @ public
 class SelectProps {
-    string name
-    string label
-    list<string> options
-    string invalid
+    var string name
+    var string label
+    var list<string> options
+    var string invalid
 }
 
 # The checkbox props. `selected` = "true"/"false" (aria-checked).
 @ public
 class CheckboxProps {
-    string name
-    string label
-    string selected
-    string invalid
+    var string name
+    var string label
+    var string selected
+    var string invalid
 }
 
 # Props constructors — ordinary functions returning local classes, keeping

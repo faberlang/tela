@@ -30,7 +30,7 @@
 # The class-list set. Set semantics (presence + insertion-ordered
 # read-back) backed by a tabula — see fix:copia-iteration.
 class FakeClassList {
-    tabula<string, bool> classes = empty
+    var tabula<string, bool> classes = empty
 
     # The runtime-contract method bridge (faber-web runtime/dom.ts —
     # webDomClassAdd/Remove/Toggle call the classList method surface).
@@ -52,43 +52,43 @@ class FakeClassList {
 # the webDom* handler-typed bindings read. default_prevented mirrors the
 # shim's mutable flag.
 class FakeEvent {
-    string kind
-    bool default_prevented = false
-    string key = ""
-    string code = ""
-    bool repeat = false
-    bool alt_key = false
-    bool ctrl_key = false
-    bool shift_key = false
-    bool meta_key = false
-    int client_x = 0
-    int client_y = 0
-    int movement_x = 0
-    int movement_y = 0
-    int button = 0
-    bool primary = false
+    var string kind
+    var bool default_prevented = false
+    var string key = ""
+    var string code = ""
+    var bool repeat = false
+    var bool alt_key = false
+    var bool ctrl_key = false
+    var bool shift_key = false
+    var bool meta_key = false
+    var int client_x = 0
+    var int client_y = 0
+    var int movement_x = 0
+    var int movement_y = 0
+    var int button = 0
+    var bool primary = false
 }
 
 # The fake element. The shim's getters (textContent, dataTela) become
 # functions over the record (element_text / element_text_set / the
 # maintained data_tela field); the mutable maps stay tabula/list fields.
 class FakeElement {
-    list<FakeElement> children = empty
-    FakeElement ∪ null parent = null
+    var list<FakeElement> children = empty
+    var FakeElement ∪ null parent = null
     # The runtime contract reads `tagName` (webDomSnapshot -> el.tagName);
     # the field is spelled tagName so the emitted class satisfies it.
-    string tagName = ""
-    string value = ""
-    FakeClassList class_list
+    var string tagName = ""
+    var string value = ""
+    var FakeClassList class_list
     # The parsed data-tela identity ("" when the node carries none) —
     # maintained by element_attr_set / element_attr_remove.
-    string data_tela = ""
+    var string data_tela = ""
     # Hydration stamp: "original" when the node was bound (not recreated).
-    string token = ""
-    tabula<string, string> attrs = empty
+    var string token = ""
+    var tabula<string, string> attrs = empty
     # Listener sets per event kind (Set-dedup via contains() before append).
-    tabula<string, list<(FakeEvent) → void>> listeners = empty
-    string own_text = ""
+    var tabula<string, list<(FakeEvent) → void>> listeners = empty
+    var string own_text = ""
 
     # Runtime-contract methods: webDomSnapshot reads getAttribute + tagName
     # on every data-tela descendant; webDomScope/webDomQuery read
@@ -108,11 +108,11 @@ class FakeElement {
 # the subscription registry (the shim's module-global activeSubscriptions
 # lives on the document — the explicit-parameter posture).
 class FakeDocument {
-    list<FakeElement> children = empty
-    FakeElement body
-    FakeElement ∪ null active_element = null
-    int next_subscription_id = 1
-    tabula<int, SubscriptionRecord> active_subscriptions = empty
+    var list<FakeElement> children = empty
+    var FakeElement body
+    var FakeElement ∪ null active_element = null
+    var int next_subscription_id = 1
+    var tabula<int, SubscriptionRecord> active_subscriptions = empty
 
     # The runtime-contract method bridge (webDomScope reads
     # document.querySelector; webDomSnapshot reads scope.root.querySelectorAll
@@ -127,79 +127,79 @@ class FakeDocument {
 
 # The webDom* scope (root + selector) — the runtime's WebDomScope shape.
 class FakeScope {
-    FakeElement root
-    string selector
+    var FakeElement root
+    var string selector
 }
 
 # The webDom* subscription handle — an id into the document registry.
 class FakeSubscription {
-    int id
+    var int id
 }
 
 # The typed hydration snapshot node (identity + tag name per data-tela
 # descendant) — the dom.DomNode equivalent (web-surface-import U4: the
 # en surface field spelling, renamed from identitas).
 class FakeNodus {
-    string identity
-    string tag
+    var string identity
+    var string tag
 }
 
 # The registry record: the listener + the element to remove it from.
 class SubscriptionRecord {
-    FakeElement element
-    string event_name
-    (FakeEvent) → void handler
+    var FakeElement element
+    var string event_name
+    var (FakeEvent) → void handler
 }
 
 # The bounded-parser result (a parsed node + the next scan position).
 class ParseResult {
-    FakeElement node
-    int next
+    var FakeElement node
+    var int next
 }
 
 # The binding-plan carrier shapes (the shim's MountedLike surface).
 class BindingLike {
-    string identity
-    string status
+    var string identity
+    var string status
 }
 class SubscriptionLike {
-    string identity
-    string event_name
+    var string identity
+    var string event_name
 }
 class MountedLike {
-    string markup
-    list<BindingLike> bindings
-    list<SubscriptionLike> subscriptions
-    list<string> identities
-    list<string> diagnostics = empty
+    var string markup
+    var list<BindingLike> bindings
+    var list<SubscriptionLike> subscriptions
+    var list<string> identities
+    var list<string> diagnostics = empty
 }
 
 # The handler-state carriers (the keyboard/pointer/focus states the
 # handler-typed bindings produce).
 class FakeKeyboardState {
-    string kind
-    string key
-    string code
-    bool repeat
-    bool alt
-    bool ctrl
-    bool shift
-    bool meta
+    var string kind
+    var string key
+    var string code
+    var bool repeat
+    var bool alt
+    var bool ctrl
+    var bool shift
+    var bool meta
 }
 class FakePointerState {
-    string kind
-    int x
-    int y
-    int movement_x
-    int movement_y
-    int button
-    bool primary
+    var string kind
+    var int x
+    var int y
+    var int movement_x
+    var int movement_y
+    var int button
+    var bool primary
 }
 class FakeFocusState {
-    bool focused
+    var bool focused
 }
 class FakeSubmitOptions {
-    bool prevent_default = true
+    var bool prevent_default = true
 }
 
 # ---------------------------------------------------------------------------

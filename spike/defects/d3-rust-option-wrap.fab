@@ -22,7 +22,7 @@ locale = "en"
 # routes non-null identity through it. See stage-0-branch-a-b-evidence.md.
 
 class Identitas {
-    string valor
+    var string valor
 }
 
 union U {

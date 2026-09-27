@@ -19,7 +19,7 @@
 # back) would retire the work-around; out of scope for Stage 5.
 
 class FakeElement {
-    string tag
+    var string tag
 }
 
 fn collect_text(copia<string> xs) → list<string> {

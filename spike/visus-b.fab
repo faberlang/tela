@@ -37,26 +37,26 @@ enum Spatium {
 
 # Attributum: serialized attribute — an (nomen, valor) pair emitted into the tag.
 class Attributum {
-    string nomen
-    string valor
+    var string nomen
+    var string valor
 }
 
 # Proprietas: DOM property (value, checked, selection), modeled separately from
 # serialized attributes because their semantics differ.
 class Proprietas {
-    string nomen
-    string valor
+    var string nomen
+    var string valor
 }
 
 # Identitas: stable identity. Explicit typed field — never inferred from array
 # position. Serialized in one documented hydration-ready form (data-tela).
 class Identitas {
-    string valor
+    var string valor
 }
 
 # Eventum: event descriptor (e.g. "click", "input").
 class Eventum {
-    string nomen
+    var string nomen
 }
 
 # Visus: the recursive tagged union at the center of the protocol. Closure-free
@@ -84,9 +84,9 @@ union AppNuntius {
 # Adjacent behavior plan: an event binding carrying a message-producing closure,
 # keyed to a stable node identity (Identitas.valor) for the hydration plan.
 class Vinculum {
-    string identitas
-    string eventus
-    (Eventum) → AppNuntius nuntius
+    var string identitas
+    var string eventus
+    var (Eventum) → AppNuntius nuntius
 }
 
 # ---------------------------------------------------------------------------
@@ -240,17 +240,17 @@ fn seri_visus(Visus v) → string {
 
 # Spike-quality structured CSS: selector + declarations; typed constructors.
 class Declaratio {
-    string nomen
-    string valor
+    var string nomen
+    var string valor
 }
 
 class Regula {
-    string selector
-    list<Declaratio> declarationes
+    var string selector
+    var list<Declaratio> declarationes
 }
 
 class Stilum {
-    list<Regula> regulae
+    var list<Regula> regulae
 }
 
 fn seri_css(Stilum stilum) → string {
