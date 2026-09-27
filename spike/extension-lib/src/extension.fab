@@ -47,7 +47,7 @@ class Identitas {
 
 union Visus {
     Elementum {
-        Identitas ∪ null identitas
+        Identitas ∪ none identitas
         Spatium spatium
         string nomen_tag
         list<Attributum> attributa
@@ -90,7 +90,7 @@ fn fragmentum_view(list<Visus> liberi) → Visus {
 
 # Typed stable identity via the nullable field (U3 D3 workaround: route the
 # non-null identity through the nullable type).
-fn nova_identitas(string v) → Identitas ∪ null {
+fn nova_identitas(string v) → Identitas ∪ none {
     return Identitas { valor = v }
 }
 
@@ -120,7 +120,7 @@ fn elementum_view(Spatium spatium, string nomen_tag, list<Visus> liberi) → Vis
 # properties. Cross-module variant construction does not resolve (gap G3), so
 # consumers reach the full Elementum through this constructor.
 fn elementum_omne(
-    Identitas ∪ null identitas,
+    Identitas ∪ none identitas,
     Spatium spatium,
     string nomen_tag,
     list<Attributum> attributa,

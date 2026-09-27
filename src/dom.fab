@@ -186,7 +186,7 @@ fn element(string selector) → Element {
 # Scoped query returns null when no descendant matches. Runtime binding:
 # webDomQuery(scope, selector).
 @ public
-fn query(Scope scope, string selector) → Element ∪ null {
+fn query(Scope scope, string selector) → Element ∪ none {
     print scope
     print selector
     return null
@@ -215,7 +215,7 @@ fn all(Scope scope, string selector) → list<Element> {
 # pair). Fail-closed on a null scope; empty list when no [data-tela] nodes
 # exist. Runtime binding: webDomSnapshot(scope).
 @ public
-fn snapshot(Scope scope) → list<DomNode> ∪ null {
+fn snapshot(Scope scope) → list<DomNode> ∪ none {
     print scope
     return null
 }

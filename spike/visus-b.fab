@@ -63,7 +63,7 @@ class Eventum {
 # (Branch B): behavior lives in the adjacent plan, not inside view values.
 union Visus {
     Elementum {
-        Identitas ∪ null identitas
+        Identitas ∪ none identitas
         Spatium spatium
         string nomen_tag
         list<Attributum> attributa
@@ -151,7 +151,7 @@ fn contator_app(int model) → Visus {
 # returns Identitas ∪ null: direct non-null construction into a nullable union
 # field is a known Rust-emission defect (Some() wrap missing — minimized repro
 # in stage-0-branch-a-b-evidence.md §4).
-fn nova_identitas(string v) → Identitas ∪ null {
+fn nova_identitas(string v) → Identitas ∪ none {
     return Identitas { valor = v }
 }
 
@@ -190,9 +190,9 @@ fn seri_proprietates(list<Proprietas> proprietates) → string {
     return accum
 }
 
-fn seri_identitas(Identitas ∪ null identitas) → string {
+fn seri_identitas(Identitas ∪ none identitas) → string {
     match identitas {
-        case null {
+        case none {
             return ""
         }
         default {

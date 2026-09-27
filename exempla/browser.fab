@@ -238,7 +238,7 @@ main {
     const dom.DomNode control_node ← dom.DomNode { identity = "tela-control", tag = "div" }
     const dom.DomNode seg1_node ← dom.DomNode { identity = "tela-seg-1", tag = "button" }
     const dom.DomNode seg2_node ← dom.DomNode { identity = "tela-seg-2", tag = "button" }
-    const list<dom.DomNode> ∪ null hydration_nodes ← [control_node, seg1_node, seg2_node]
+    const list<dom.DomNode> ∪ none hydration_nodes ← [control_node, seg1_node, seg2_node]
     const list<string> ids_from_nodes ← browser.identities_from_nodes(hydration_nodes)
     const list<string> tags_from_nodes ← browser.tags_from_nodes(hydration_nodes)
     assert ids_from_nodes.length() ≡ 3

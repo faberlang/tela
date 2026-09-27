@@ -206,7 +206,7 @@ fn parse_identities(string text) → list<string> {
 # previous '<' to the next '>') in the VIEW markup, or null when the
 # identity is absent or the element is malformed.
 @ public
-fn element_tag(string text, string identity) → string ∪ null {
+fn element_tag(string text, string identity) → string ∪ none {
     var int i ← 0
     while i < text.length() {
         if not (i + 12 > text.length()) and text.slice(i, i + 12) ≡ identity_marker() {
@@ -322,9 +322,9 @@ fn duplicate_identities(list<string> collection) → list<string> {
 # ---------------------------------------------------------------------------
 
 @ public
-fn identities_from_nodes(list<dom.DomNode> ∪ null nodes) → list<string> {
+fn identities_from_nodes(list<dom.DomNode> ∪ none nodes) → list<string> {
     var list<string> result ← empty
-    if nodes not is null {
+    if nodes not is none {
         var int i ← 0
         while i < nodes.length() {
             result.append(nodes[i].identity)
@@ -335,9 +335,9 @@ fn identities_from_nodes(list<dom.DomNode> ∪ null nodes) → list<string> {
 }
 
 @ public
-fn tags_from_nodes(list<dom.DomNode> ∪ null nodes) → list<string> {
+fn tags_from_nodes(list<dom.DomNode> ∪ none nodes) → list<string> {
     var list<string> result ← empty
-    if nodes not is null {
+    if nodes not is none {
         var int i ← 0
         while i < nodes.length() {
             result.append(nodes[i].tag)
@@ -461,15 +461,15 @@ fn hydration_diagnostics(
 # ---------------------------------------------------------------------------
 
 @ public
-fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ null {
+fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ none {
     # Fail-closed: an invalid View (html_view null), an invalid Theme
     # (theme_css null), or a null hydration snapshot (the runtime returns
     # null only for a null scope) never mounts — no partial region. The
     # nullable checks run against the call / the bound nullable
     # (fix:prim-nullable workaround).
-    if tela.html_view(view) is null then return null
+    if tela.html_view(view) is none then return null
     const string markup ← tela.html_view(view) coalesce ""
-    if tela.theme_css(theme) is null then return null
+    if tela.theme_css(theme) is none then return null
     const string css ← tela.theme_css(theme) coalesce ""
 
     const list<string> view_identities ← parse_identities(markup)
@@ -478,8 +478,8 @@ fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ null
     # provider's snapshot per data-tela descendant → the parallel string
     # lists the policy fns consume. The Scope.textus_praesens carrier is
     # GONE — the pre-existing state is READ from the DOM, never carried.
-    const list<dom.DomNode> ∪ null nodes ← dom.snapshot(scope)
-    if nodes is null then return null
+    const list<dom.DomNode> ∪ none nodes ← dom.snapshot(scope)
+    if nodes is none then return null
     const list<string> present_identities ← identities_from_nodes(nodes)
     const list<string> present_tags ← tags_from_nodes(nodes)
 
@@ -534,8 +534,8 @@ fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ null
 # ---------------------------------------------------------------------------
 
 @ public
-fn replace(Mounted m, tela.View view) → tela.Update ∪ null {
-    if tela.html_view(view) is null then return null
+fn replace(Mounted m, tela.View view) → tela.Update ∪ none {
+    if tela.html_view(view) is none then return null
     var list<tela.Effect> effects ← empty
     if not (m.focused_identity ≡ "") {
         effects.append(tela.restore(m.focused_identity))

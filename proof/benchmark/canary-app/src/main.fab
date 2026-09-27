@@ -479,7 +479,7 @@ fn forms_composition_from_state(FieldState state, bool agree, string tone) → t
 # tela-owned; the cds-u5/u6 conditions at the app boundary). The
 # driver (the node host) calls this; the pre-existing hydration state is
 # read via dom.snapshot inside mount.
-fn mount_forms(string selector) → browser.Mounted ∪ null {
+fn mount_forms(string selector) → browser.Mounted ∪ none {
     const dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, forms_composition(), forms_theme())
 }
@@ -615,12 +615,12 @@ fn typography_composition() → tela.View {
 }
 
 # check-reference mount seams (dom.scope + browser.mount).
-fn mount_layout(string selector) → browser.Mounted ∪ null {
+fn mount_layout(string selector) → browser.Mounted ∪ none {
     const dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, layout_composition(), reference_theme())
 }
 
-fn mount_typography(string selector) → browser.Mounted ∪ null {
+fn mount_typography(string selector) → browser.Mounted ∪ none {
     const dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, typography_composition(), reference_theme())
 }
@@ -682,17 +682,17 @@ fn metric_composition() → tela.View {
 }
 
 # check-reference mount seams.
-fn mount_panel(string selector) → browser.Mounted ∪ null {
+fn mount_panel(string selector) → browser.Mounted ∪ none {
     const dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, panel_composition(), reference_theme())
 }
 
-fn mount_badge(string selector) → browser.Mounted ∪ null {
+fn mount_badge(string selector) → browser.Mounted ∪ none {
     const dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, badge_composition(), reference_theme())
 }
 
-fn mount_metric(string selector) → browser.Mounted ∪ null {
+fn mount_metric(string selector) → browser.Mounted ∪ none {
     const dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, metric_composition(), reference_theme())
 }
@@ -725,7 +725,7 @@ fn table_composition() → tela.View {
 }
 
 # check-reference mount seam.
-fn mount_table(string selector) → browser.Mounted ∪ null {
+fn mount_table(string selector) → browser.Mounted ∪ none {
     const dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, table_composition(), reference_theme())
 }
@@ -747,7 +747,7 @@ fn segmented_composition() → tela.View {
 }
 
 # check-reference mount seam.
-fn mount_segmented(string selector) → browser.Mounted ∪ null {
+fn mount_segmented(string selector) → browser.Mounted ∪ none {
     const dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, segmented_composition(), reference_theme())
 }
@@ -866,7 +866,7 @@ fn button_composition() → tela.View {
 }
 
 # check-reference mount seam.
-fn mount_button(string selector) → browser.Mounted ∪ null {
+fn mount_button(string selector) → browser.Mounted ∪ none {
     const dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, button_composition(), reference_theme())
 }
@@ -915,7 +915,7 @@ fn field_composition() → tela.View {
 }
 
 # check-reference mount seam.
-fn mount_field(string selector) → browser.Mounted ∪ null {
+fn mount_field(string selector) → browser.Mounted ∪ none {
     const dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, field_composition(), reference_theme())
 }
@@ -1035,7 +1035,7 @@ fn field_plan_composition(FieldPlanState name_state) → tela.View {
 }
 
 # check-reference mount seam.
-fn mount_field_plan(string selector) → browser.Mounted ∪ null {
+fn mount_field_plan(string selector) → browser.Mounted ∪ none {
     const dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, field_plan_composition(field_plan_state("name", "Name", "", "")), reference_theme())
 }
@@ -1260,7 +1260,7 @@ main {
     # extensionlib and formslib depend on nothing (tela is the shared base),
     # so the kernel's topological tie-break (stable package identity) orders
     # extensionlib before formslib — the documented cascade order.
-    const tela.Style ∪ null cascade_lumen_result ← tela.assemble(
+    const tela.Style ∪ none cascade_lumen_result ← tela.assemble(
         lumen,
         null,
         [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle, ref_table_bundle, ref_seg_bundle, ref_button_bundle, ref_field_bundle],
@@ -1268,7 +1268,7 @@ main {
         [ext_bundle, forms_bundle],
         app_bundle
     )
-    const tela.Style ∪ null cascade_tenebrae_result ← tela.assemble(
+    const tela.Style ∪ none cascade_tenebrae_result ← tela.assemble(
         tenebrae,
         null,
         [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle, ref_table_bundle, ref_seg_bundle, ref_button_bundle, ref_field_bundle],
@@ -1415,7 +1415,7 @@ main {
 
     # --- The Stage 2 fail-closed regressions re-asserted (three-package) ---
     # A cycle in the order map rejects (fail-closed — no partial cascade).
-    const tela.Style ∪ null cycle_result ← tela.assemble(
+    const tela.Style ∪ none cycle_result ← tela.assemble(
         lumen,
         null,
         [],
@@ -1439,7 +1439,7 @@ main {
             ]
         }
     )
-    const tela.Style ∪ null duplicate_result ← tela.assemble(
+    const tela.Style ∪ none duplicate_result ← tela.assemble(
         lumen,
         null,
         [],
@@ -1462,7 +1462,7 @@ main {
             ]
         }
     )
-    const tela.Style ∪ null malum_result ← tela.assemble(
+    const tela.Style ∪ none malum_result ← tela.assemble(
         lumen,
         null,
         [],
@@ -1978,7 +1978,7 @@ main {
     # sequence executes under check-forms-interactive (the documented
     # tela:dom host binding).
     const tela.View compositio ← forms_composition()
-    assert tela.html_view(compositio) not is null
+    assert tela.html_view(compositio) not is none
     assert tela.html_view(compositio) coalesce "" ≡ «<div data-tela="forma"><div data-tela="form-control-name"><input type="text" aria-label="Name" aria-invalid="false" data-tela="form-field-name"><div role="alert" data-tela="form-error-name"></div></div><input type="checkbox" aria-label="Agree" aria-checked="false" aria-invalid="false" data-tela="form-checkbox-agree"><select aria-label="Tone" aria-invalid="false" data-tela="form-select-tone"><option>Light</option><option>Dark</option></select><div role="status" aria-live="polite" data-tela="form-live"></div></div>»
     assert bool_text(true) ≡ "true"
     assert bool_text(false) ≡ "false"

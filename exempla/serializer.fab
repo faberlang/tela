@@ -84,16 +84,16 @@ main {
     # output at all) when any U2 lexical/namespace/void check fails — never
     # partial markup.
     # Void element carrying children is an impossible structure.
-    const string ∪ null bad_void ← tela.html_view(tela.element_view(tela.html_space(), "br", [ tela.text_view("x") ]))
+    const string ∪ none bad_void ← tela.html_view(tela.element_view(tela.html_space(), "br", [ tela.text_view("x") ]))
     assert bad_void ≡ null
     # Markup delimiter in a tag name fails the lexical tag predicate.
-    const string ∪ null bad_tag ← tela.html_view(tela.element_view(tela.html_space(), "di<v", []))
+    const string ∪ none bad_tag ← tela.html_view(tela.element_view(tela.html_space(), "di<v", []))
     assert bad_tag ≡ null
     # SVG-only name under the html context is namespace misuse.
-    const string ∪ null bad_ns ← tela.html_view(tela.element_view(tela.html_space(), "circle", []))
+    const string ∪ none bad_ns ← tela.html_view(tela.element_view(tela.html_space(), "circle", []))
     assert bad_ns ≡ null
     # '=' in an attribute name fails the lexical attribute predicate.
-    const string ∪ null bad_attr ← tela.html_view(tela.element_full(
+    const string ∪ none bad_attr ← tela.html_view(tela.element_full(
         null,
         tela.html_space(),
         "div",
@@ -103,7 +103,7 @@ main {
     ))
     assert bad_attr ≡ null
     # A nested invalid element rejects the WHOLE tree — no partial output.
-    const string ∪ null bad_nested ← tela.html_view(tela.fragment_view([
+    const string ∪ none bad_nested ← tela.html_view(tela.fragment_view([
         tela.text_view("ok"),
         tela.element_view(tela.html_space(), "img", [ tela.text_view("nope") ])
     ]))
@@ -133,11 +133,11 @@ main {
     # --- (f) determinism: identical input → identical bytes ---------------
     const string css_b ← tela.css(style)
     assert css_b ≡ css_out
-    const string ∪ null det_arbor ← tela.html_view(tela.element_view(tela.html_space(), "x-metric", [
+    const string ∪ none det_arbor ← tela.html_view(tela.element_view(tela.html_space(), "x-metric", [
         tela.text_view("value"),
         tela.element_view(tela.html_space(), "x-bar", [ tela.text_view("fill") ])
     ]))
-    const string ∪ null det_b ← tela.html_view(tela.element_view(tela.html_space(), "x-metric", [
+    const string ∪ none det_b ← tela.html_view(tela.element_view(tela.html_space(), "x-metric", [
         tela.text_view("value"),
         tela.element_view(tela.html_space(), "x-bar", [ tela.text_view("fill") ])
     ]))

@@ -66,7 +66,7 @@ main {
         tela.token("accent.primary", "#2563eb"),
         tela.token("state.positive", "#16a34a")
     ])
-    const string ∪ null carens_result ← tela.theme_css(carens)
+    const string ∪ none carens_result ← tela.theme_css(carens)
     assert carens_result ≡ null
 
     # --- (f) invalid token name rejects (fail-closed) ----------------------
@@ -82,7 +82,7 @@ main {
         tela.token("state.caution", "#d97706"),
         tela.token("bad name", "#000000")
     ])
-    const string ∪ null mala_result ← tela.theme_css(mala)
+    const string ∪ none mala_result ← tela.theme_css(mala)
     assert mala_result ≡ null
 
     # --- (S-H1) a token value carrying the style-close sequence rejects ----
@@ -100,7 +100,7 @@ main {
         tela.token("state.caution", "#d97706"),
         tela.token("evil.value", "red</style><script>alert(1)</script><style>a:b")
     ])
-    const string ∪ null venefica_result ← tela.theme_css(venefica)
+    const string ∪ none venefica_result ← tela.theme_css(venefica)
     assert venefica_result ≡ null
 
     # --- (S-H1 regression) slash-bearing ordinary values still render ------

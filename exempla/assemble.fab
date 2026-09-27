@@ -45,7 +45,7 @@ main {
             }
         ]
     })
-    const tela.Style ∪ null dedup_result ← tela.assemble(solaris, null, [panel, panel], [], [], null)
+    const tela.Style ∪ none dedup_result ← tela.assemble(solaris, null, [panel, panel], [], [], null)
     assert not (dedup_result ≡ null)
     const string dedup_css ← tela.css(tela.Style { rules = dedup_result!.rules }) coalesce ""
     assert dedup_css ≡ tokens_css + ".panel { color: var(--text-primary); }\n"
@@ -67,7 +67,7 @@ main {
             }
         ]
     })
-    const tela.Style ∪ null topo_result ← tela.assemble(
+    const tela.Style ∪ none topo_result ← tela.assemble(
         solaris,
         null,
         [],
@@ -95,7 +95,7 @@ main {
             }
         ]
     })
-    const tela.Style ∪ null tie_result ← tela.assemble(
+    const tela.Style ∪ none tie_result ← tela.assemble(
         solaris,
         null,
         [],
@@ -107,7 +107,7 @@ main {
     assert tie_css ≡ tokens_css + ".alpha { color: blue; }\n.zeta { color: red; }\n"
 
     # --- (f) cycle rejection (fail-closed) --------------------------------
-    const tela.Style ∪ null cycle_result ← tela.assemble(
+    const tela.Style ∪ none cycle_result ← tela.assemble(
         solaris,
         null,
         [],
@@ -126,7 +126,7 @@ main {
             }
         ]
     })
-    const tela.Style ∪ null conflict_result ← tela.assemble(solaris, null, [panel, panel_altera], [], [], null)
+    const tela.Style ∪ none conflict_result ← tela.assemble(solaris, null, [panel, panel_altera], [], [], null)
     assert conflict_result ≡ null
 
     # --- (f) cascade layer order WITH a reset bundle ----------------------
@@ -146,7 +146,7 @@ main {
             }
         ]
     })
-    const tela.Style ∪ null full_result ← tela.assemble(
+    const tela.Style ∪ none full_result ← tela.assemble(
         solaris,
         reset,
         [panel],
@@ -158,7 +158,7 @@ main {
     assert full_css ≡ "* { margin: 0; }\n" + tokens_css + ".panel { color: var(--text-primary); }\n.b { display: block; }\n.a { display: grid; }\n.app { gap: 1rem; }\n"
 
     # --- (f) cascade layer order WITHOUT a reset bundle -------------------
-    const tela.Style ∪ null no_reset_result ← tela.assemble(
+    const tela.Style ∪ none no_reset_result ← tela.assemble(
         solaris,
         null,
         [panel],
@@ -178,7 +178,7 @@ main {
             }
         ]
     })
-    const tela.Style ∪ null invalid_result ← tela.assemble(solaris, null, [malum], [], [], null)
+    const tela.Style ∪ none invalid_result ← tela.assemble(solaris, null, [malum], [], [], null)
     assert invalid_result ≡ null
 
     # --- (S-H1) HTML-context injection rejection (fail-closed) ------------
@@ -200,7 +200,7 @@ main {
         ]
     })
     assert tela.unclean_style_text("red</style><script>alert(1)</script><style>a:b")
-    const tela.Style ∪ null veneficum_result ← tela.assemble(solaris, null, [veneficum], [], [], null)
+    const tela.Style ∪ none veneficum_result ← tela.assemble(solaris, null, [veneficum], [], [], null)
     assert veneficum_result ≡ null
 
     # --- (S-H1 regression) ordinary declarations still pass ----------------
@@ -217,7 +217,7 @@ main {
             }
         ]
     })
-    const tela.Style ∪ null legitimum_result ← tela.assemble(solaris, null, [legitimum], [], [], null)
+    const tela.Style ∪ none legitimum_result ← tela.assemble(solaris, null, [legitimum], [], [], null)
     const string legitimum_css ← tela.css(tela.Style { rules = legitimum_result!.rules }) coalesce ""
     assert legitimum_css ≡ tokens_css + ".prose { font: 12px/1.5 sans-serif; color: rgba(15, 23, 42, 0.8); }\n"
 
@@ -233,6 +233,6 @@ main {
         tela.token("state.caution", "#d97706"),
         tela.token("state.caution", "#000000")
     ])
-    const tela.Style ∪ null token_dup_result ← tela.assemble(gemina, null, [], [], [], null)
+    const tela.Style ∪ none token_dup_result ← tela.assemble(gemina, null, [], [], [], null)
     assert token_dup_result ≡ null
 }
