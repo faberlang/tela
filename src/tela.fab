@@ -121,8 +121,8 @@ enum Space {
 # the tag.
 @ public
 class Attribute {
-    string name
-    string value
+    var string name
+    var string value
 }
 
 # Property: DOM property (value, checked, selection), modeled separately
@@ -130,8 +130,8 @@ class Attribute {
 # the tree; not serialized into static HTML in Stage 1 (browser lane).
 @ public
 class Property {
-    string name
-    string value
+    var string name
+    var string value
 }
 
 # Identity: stable identity. Explicit typed field — never inferred from
@@ -139,7 +139,7 @@ class Property {
 # (data-tela) by the U3 serializer.
 @ public
 class Identity {
-    string value
+    var string value
 }
 
 # View: the recursive tagged union at the center of the protocol.
@@ -425,19 +425,19 @@ fn html_view(View v) → string ∪ null {
 
 @ public
 class Declaration {
-    string name
-    string value
+    var string name
+    var string value
 }
 
 @ public
 class Rule {
-    string selector
-    list<Declaration> declarations
+    var string selector
+    var list<Declaration> declarations
 }
 
 @ public
 class Style {
-    list<Rule> rules
+    var list<Rule> rules
 }
 
 @ public
@@ -490,8 +490,8 @@ fn css(Style style) → string {
 # shape).
 @ public
 class Token {
-    string name
-    string value
+    var string name
+    var string value
 }
 
 # Theme: a named theme — a token collection over the core baseline. Two
@@ -499,8 +499,8 @@ class Token {
 # (campaign §5; variants are tokens, not new machinery).
 @ public
 class Theme {
-    string name
-    list<Token> tokens
+    var string name
+    var list<Token> tokens
 }
 
 # Kernel-owned constructors (G3 posture — ordinary functions over the same
@@ -672,16 +672,16 @@ fn theme_style(Theme theme) → Style ∪ null {
 # tie-break basis).
 @ public
 class Bundle {
-    string identity
-    Style style
+    var string identity
+    var Style style
 }
 
 # One package-order entry: package identity + its dependency identities.
 # The explicit package-order map — stdlib-only, no import introspection.
 @ public
 class Order {
-    string identity
-    list<string> depends
+    var string identity
+    var list<string> depends
 }
 
 # Kernel-owned constructors (G3 posture).
@@ -974,7 +974,7 @@ fn assemble(
 # spelling). Closure-free: an event carries a name, not behavior.
 @ public
 class EventName {
-    string name
+    var string name
 }
 
 # Effect: the declarative host effects from behavior-design §3.2 — exactly
@@ -996,8 +996,8 @@ union Effect {
 # replacement.
 @ public
 class Update {
-    View view
-    list<Effect> effects
+    var View view
+    var list<Effect> effects
 }
 
 # Kernel-owned constructors (G3 posture — ordinary functions over the same

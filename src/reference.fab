@@ -88,7 +88,7 @@ import from "tela:tela" public * as tela
 
 @ public
 class StackProps {
-    list<tela.View> children
+    var list<tela.View> children
 }
 
 @ public
@@ -110,7 +110,7 @@ fn layout_stack(StackProps props) → tela.View {
 
 @ public
 class GridProps {
-    list<tela.View> columns
+    var list<tela.View> columns
 }
 
 @ public
@@ -133,7 +133,7 @@ fn layout_grid(GridProps props) → tela.View {
 
 @ public
 class LayoutProseProps {
-    list<tela.View> children
+    var list<tela.View> children
 }
 
 @ public
@@ -159,8 +159,8 @@ fn layout_prose(LayoutProseProps props) → tela.View {
 
 @ public
 class HeadingProps {
-    int level
-    string text
+    var int level
+    var string text
 }
 
 @ public
@@ -191,7 +191,7 @@ fn typography_heading(HeadingProps props) → tela.View {
 
 @ public
 class ProseProps {
-    list<tela.View> children
+    var list<tela.View> children
 }
 
 @ public
@@ -213,8 +213,8 @@ fn typography_prose(ProseProps props) → tela.View {
 
 @ public
 class EmphasisProps {
-    string kind
-    string text
+    var string kind
+    var string text
 }
 
 @ public
@@ -236,8 +236,8 @@ fn typography_emphasis(EmphasisProps props) → tela.View {
 
 @ public
 class ScaleProps {
-    string step
-    string text
+    var string step
+    var string text
 }
 
 @ public
@@ -263,9 +263,9 @@ fn typography_scale(ScaleProps props) → tela.View {
 
 @ public
 class PanelProps {
-    string name
-    string title
-    list<tela.View> children
+    var string name
+    var string title
+    var list<tela.View> children
 }
 
 @ public
@@ -297,9 +297,9 @@ fn panel(PanelProps props) → tela.View {
 
 @ public
 class BadgeProps {
-    string name
-    string status
-    string text
+    var string name
+    var string status
+    var string text
 }
 
 @ public
@@ -328,10 +328,10 @@ fn badge(BadgeProps props) → tela.View {
 
 @ public
 class MetricProps {
-    string name
-    string label
-    string value
-    string delta
+    var string name
+    var string label
+    var string value
+    var string delta
 }
 
 @ public
@@ -364,7 +364,7 @@ fn metric(MetricProps props) → tela.View {
 
 @ public
 class TableRow {
-    list<string> cells
+    var list<string> cells
 }
 
 @ public
@@ -374,10 +374,10 @@ fn table_row(list<string> cells) → TableRow {
 
 @ public
 class TableProps {
-    string name
-    string caption
-    list<string> headers
-    list<TableRow> rows
+    var string name
+    var string caption
+    var list<string> headers
+    var list<TableRow> rows
 }
 
 @ public
@@ -474,10 +474,10 @@ fn table(TableProps props) → tela.View {
 
 @ public
 class SegmentedProps {
-    string name
-    string label
-    list<string> options
-    string selected
+    var string name
+    var string label
+    var list<string> options
+    var string selected
 }
 
 @ public
@@ -565,12 +565,12 @@ fn segmented_control(SegmentedProps props) → tela.View {
 
 @ public
 class ButtonProps {
-    string name
-    string label
-    string variant
-    string state
-    string event_name
-    string aria_label
+    var string name
+    var string label
+    var string variant
+    var string state
+    var string event_name
+    var string aria_label
 }
 
 # fix:g6-value-position — variant as a constructor VALUE fails PARSE001.
@@ -618,11 +618,11 @@ fn button(ButtonProps props) → tela.View {
 
 @ public
 class FieldInputProps {
-    string name
-    string label
-    string value
-    string error
-    string disabled
+    var string name
+    var string label
+    var string value
+    var string error
+    var string disabled
 }
 
 @ public

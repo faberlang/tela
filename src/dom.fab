@@ -44,12 +44,12 @@
 
 @ public
 class Scope {
-    string selector = ""
+    var string selector = ""
 }
 
 @ public
 class Element {
-    string selector = ""
+    var string selector = ""
 }
 
 # Hydration snapshot node: the identity set of the scoped root — one DomNode
@@ -60,90 +60,90 @@ class Element {
 # consumers.
 @ public
 class DomNode {
-    string identity = ""
-    string tag = ""
-    string namespace = ""
-    string local = ""
+    var string identity = ""
+    var string tag = ""
+    var string namespace = ""
+    var string local = ""
 }
 
 @ public
 class DomEvent {
-    string kind = ""
-    bool default_prevented = false
+    var string kind = ""
+    var bool default_prevented = false
 }
 
 @ public
 class FrameState {
-    int frame = 0
-    f32 time_ms = 0.0
-    f32 delta_ms = 0.0
+    var int frame = 0
+    var f32 time_ms = 0.0
+    var f32 delta_ms = 0.0
 }
 
 @ public
 class ResizeState {
-    int width = 0
-    int height = 0
-    f32 device_pixel_ratio = 1.0
+    var int width = 0
+    var int height = 0
+    var f32 device_pixel_ratio = 1.0
 }
 
 @ public
 class KeyboardState {
-    string kind = ""
-    string key = ""
-    string code = ""
-    bool repeat = false
-    bool alt = false
-    bool ctrl = false
-    bool shift = false
-    bool meta = false
+    var string kind = ""
+    var string key = ""
+    var string code = ""
+    var bool repeat = false
+    var bool alt = false
+    var bool ctrl = false
+    var bool shift = false
+    var bool meta = false
 }
 
 @ public
 class PointerState {
-    string kind = ""
-    f32 x = 0.0
-    f32 y = 0.0
-    f32 movement_x = 0.0
-    f32 movement_y = 0.0
-    int button = 0
-    bool primary = false
+    var string kind = ""
+    var f32 x = 0.0
+    var f32 y = 0.0
+    var f32 movement_x = 0.0
+    var f32 movement_y = 0.0
+    var int button = 0
+    var bool primary = false
 }
 
 @ public
 class FocusState {
-    bool focused = false
+    var bool focused = false
 }
 
 @ public
 class PointerLockState {
-    bool supported = false
-    bool locked = false
-    bool denied = false
-    bool target_matches = false
+    var bool supported = false
+    var bool locked = false
+    var bool denied = false
+    var bool target_matches = false
 }
 
 @ public
 class Subscription {
-    int id = 0
+    var int id = 0
 }
 
 @ public
 class SubmitOptions {
-    bool prevent_default = true
+    var bool prevent_default = true
 }
 
 @ public
 class FetchRequest {
-    string url
-    string method = "GET"
-    string body optional
+    var string url
+    var string method = "GET"
+    var string body optional
 }
 
 @ public
 class FetchResponse {
-    int status = 0
-    bool ok = false
-    string body = ""
+    var int status = 0
+    var bool ok = false
+    var string body = ""
 }
 
 @ public

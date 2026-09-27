@@ -18,5 +18,5 @@
 @ public
 @ annotatio { target = fn }
 class WebController {
-    string selector
+    var string selector
 }

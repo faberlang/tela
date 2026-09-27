@@ -59,15 +59,15 @@ import from "tela:dom" public * as dom
 # selector doubles as the region identity for scroll-anchor intent).
 @ public
 class RegionRoot {
-    string identity
+    var string identity
 }
 
 # A live subscription handle; the host maps identity → the bound
 # tela:dom subscription on the node (data-tela='identity').
 @ public
 class EventSubscription {
-    string identity
-    string event_name
+    var string identity
+    var string event_name
 }
 
 # One binding-plan entry: a view identity + its hydration status.
@@ -75,8 +75,8 @@ class EventSubscription {
 # status "create" = create/replace the node from the View.
 @ public
 class Binding {
-    string identity
-    string status
+    var string identity
+    var string status
 }
 
 # Mounted — the mount state carrier (delivery U2 done_when (b)): host
@@ -85,18 +85,18 @@ class Binding {
 # diagnostics, and the modeled focus state.
 @ public
 class Mounted {
-    dom.Scope scope
-    RegionRoot root
-    tela.View view
-    tela.Theme theme
-    string markup
-    string css_text
-    list<string> identities
-    list<string> diagnostics
-    list<Binding> bindings
-    list<EventSubscription> subscriptions
-    string focused_identity
-    string target_identity
+    var dom.Scope scope
+    var RegionRoot root
+    var tela.View view
+    var tela.Theme theme
+    var string markup
+    var string css_text
+    var list<string> identities
+    var list<string> diagnostics
+    var list<Binding> bindings
+    var list<EventSubscription> subscriptions
+    var string focused_identity
+    var string target_identity
 }
 
 # Kernel-owned constructors (G3 posture — ordinary functions over the same
