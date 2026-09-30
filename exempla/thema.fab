@@ -4,7 +4,6 @@ kind = "concept"
 category = "library"
 locale = "en"
 +++
-
 # tela/exempla/theme.fab — Stage 2 U1 exempla for the theme/token protocol
 # in src/tela.fab. Covers every U1 done_when (f) case: a token renders as
 # --chart-axis-muted: #6b7280 under :root; a dotted-path → dashed mapping
@@ -22,17 +21,7 @@ import from "tela:tela" tela
 
 main {
     # --- light palette: core baseline + the namespaced extension token -----
-    const tela.Theme lumen ← tela.theme("lumen", [
-        tela.token("surface.canvas", "#ffffff"),
-        tela.token("surface.panel", "#f9fafb"),
-        tela.token("text.primary", "#111827"),
-        tela.token("text.muted", "#6b7280"),
-        tela.token("border.default", "#e5e7eb"),
-        tela.token("accent.primary", "#2563eb"),
-        tela.token("state.positive", "#16a34a"),
-        tela.token("state.caution", "#d97706"),
-        tela.token("chart.axis.muted", "#6b7280")
-    ])
+    const tela.Theme lumen ← tela.theme("lumen", [tela.token("surface.canvas", "#ffffff"), tela.token("surface.panel", "#f9fafb"), tela.token("text.primary", "#111827"), tela.token("text.muted", "#6b7280"), tela.token("border.default", "#e5e7eb"), tela.token("accent.primary", "#2563eb"), tela.token("state.positive", "#16a34a"), tela.token("state.caution", "#d97706"), tela.token("chart.axis.muted", "#6b7280")])
 
     # --- (f) a token renders as --chart-axis-muted under :root -------------
     # Multi-dot path (chart.axis.muted) → the dashed custom property
@@ -41,47 +30,19 @@ main {
     assert lumen_css ≡ ":root { --surface-canvas: #ffffff; --surface-panel: #f9fafb; --text-primary: #111827; --text-muted: #6b7280; --border-default: #e5e7eb; --accent-primary: #2563eb; --state-positive: #16a34a; --state-caution: #d97706; --chart-axis-muted: #6b7280; }\n"
 
     # --- (f) a dotted-path → dashed mapping edge (deeper dotted path) ------
-    const tela.Theme alta ← tela.theme("alta", [
-        tela.token("surface.canvas", "#ffffff"),
-        tela.token("surface.panel", "#f9fafb"),
-        tela.token("text.primary", "#111827"),
-        tela.token("text.muted", "#6b7280"),
-        tela.token("border.default", "#e5e7eb"),
-        tela.token("accent.primary", "#2563eb"),
-        tela.token("state.positive", "#16a34a"),
-        tela.token("state.caution", "#d97706"),
-        tela.token("form.field.invalid", "#dc2626")
-    ])
+    const tela.Theme alta ← tela.theme("alta", [tela.token("surface.canvas", "#ffffff"), tela.token("surface.panel", "#f9fafb"), tela.token("text.primary", "#111827"), tela.token("text.muted", "#6b7280"), tela.token("border.default", "#e5e7eb"), tela.token("accent.primary", "#2563eb"), tela.token("state.positive", "#16a34a"), tela.token("state.caution", "#d97706"), tela.token("form.field.invalid", "#dc2626")])
     const string alta_css ← tela.theme_css(alta) coalesce ""
     assert alta_css ≡ ":root { --surface-canvas: #ffffff; --surface-panel: #f9fafb; --text-primary: #111827; --text-muted: #6b7280; --border-default: #e5e7eb; --accent-primary: #2563eb; --state-positive: #16a34a; --state-caution: #d97706; --form-field-invalid: #dc2626; }\n"
 
     # --- (f) missing required core token rejects (fail-closed) -------------
     # The core baseline requires state.caution; this theme omits it.
-    const tela.Theme carens ← tela.theme("carens", [
-        tela.token("surface.canvas", "#ffffff"),
-        tela.token("surface.panel", "#f9fafb"),
-        tela.token("text.primary", "#111827"),
-        tela.token("text.muted", "#6b7280"),
-        tela.token("border.default", "#e5e7eb"),
-        tela.token("accent.primary", "#2563eb"),
-        tela.token("state.positive", "#16a34a")
-    ])
+    const tela.Theme carens ← tela.theme("carens", [tela.token("surface.canvas", "#ffffff"), tela.token("surface.panel", "#f9fafb"), tela.token("text.primary", "#111827"), tela.token("text.muted", "#6b7280"), tela.token("border.default", "#e5e7eb"), tela.token("accent.primary", "#2563eb"), tela.token("state.positive", "#16a34a")])
     const string ∪ none carens_result ← tela.theme_css(carens)
     assert carens_result ≡ null
 
     # --- (f) invalid token name rejects (fail-closed) ----------------------
     # A whitespace-containing name fails the lexical predicate.
-    const tela.Theme mala ← tela.theme("mala", [
-        tela.token("surface.canvas", "#ffffff"),
-        tela.token("surface.panel", "#f9fafb"),
-        tela.token("text.primary", "#111827"),
-        tela.token("text.muted", "#6b7280"),
-        tela.token("border.default", "#e5e7eb"),
-        tela.token("accent.primary", "#2563eb"),
-        tela.token("state.positive", "#16a34a"),
-        tela.token("state.caution", "#d97706"),
-        tela.token("bad name", "#000000")
-    ])
+    const tela.Theme mala ← tela.theme("mala", [tela.token("surface.canvas", "#ffffff"), tela.token("surface.panel", "#f9fafb"), tela.token("text.primary", "#111827"), tela.token("text.muted", "#6b7280"), tela.token("border.default", "#e5e7eb"), tela.token("accent.primary", "#2563eb"), tela.token("state.positive", "#16a34a"), tela.token("state.caution", "#d97706"), tela.token("bad name", "#000000")])
     const string ∪ none mala_result ← tela.theme_css(mala)
     assert mala_result ≡ null
 
@@ -89,34 +50,14 @@ main {
     # No { } ; \n — only the HTML-context end-tag opener — so the structural
     # predicate alone cannot see it; the style_valid gate on the token layer
     # must (theme_css output is installed inside a <style> block).
-    const tela.Theme venefica ← tela.theme("venefica", [
-        tela.token("surface.canvas", "#ffffff"),
-        tela.token("surface.panel", "#f9fafb"),
-        tela.token("text.primary", "#111827"),
-        tela.token("text.muted", "#6b7280"),
-        tela.token("border.default", "#e5e7eb"),
-        tela.token("accent.primary", "#2563eb"),
-        tela.token("state.positive", "#16a34a"),
-        tela.token("state.caution", "#d97706"),
-        tela.token("evil.value", "red</style><script>alert(1)</script><style>a:b")
-    ])
+    const tela.Theme venefica ← tela.theme("venefica", [tela.token("surface.canvas", "#ffffff"), tela.token("surface.panel", "#f9fafb"), tela.token("text.primary", "#111827"), tela.token("text.muted", "#6b7280"), tela.token("border.default", "#e5e7eb"), tela.token("accent.primary", "#2563eb"), tela.token("state.positive", "#16a34a"), tela.token("state.caution", "#d97706"), tela.token("evil.value", "red</style><script>alert(1)</script><style>a:b")])
     const string ∪ none venefica_result ← tela.theme_css(venefica)
     assert venefica_result ≡ null
 
     # --- (S-H1 regression) slash-bearing ordinary values still render ------
     # A font-shorthand token value keeps its slash — no end-tag opener, so
     # the value stays valid and renders unchanged.
-    const tela.Theme legitima ← tela.theme("legitima", [
-        tela.token("surface.canvas", "#ffffff"),
-        tela.token("surface.panel", "#f9fafb"),
-        tela.token("text.primary", "#111827"),
-        tela.token("text.muted", "#6b7280"),
-        tela.token("border.default", "#e5e7eb"),
-        tela.token("accent.primary", "#2563eb"),
-        tela.token("state.positive", "#16a34a"),
-        tela.token("state.caution", "#d97706"),
-        tela.token("type.body", "12px/1.5 sans-serif")
-    ])
+    const tela.Theme legitima ← tela.theme("legitima", [tela.token("surface.canvas", "#ffffff"), tela.token("surface.panel", "#f9fafb"), tela.token("text.primary", "#111827"), tela.token("text.muted", "#6b7280"), tela.token("border.default", "#e5e7eb"), tela.token("accent.primary", "#2563eb"), tela.token("state.positive", "#16a34a"), tela.token("state.caution", "#d97706"), tela.token("type.body", "12px/1.5 sans-serif")])
     const string legitima_css ← tela.theme_css(legitima) coalesce ""
     assert legitima_css ≡ ":root { --surface-canvas: #ffffff; --surface-panel: #f9fafb; --text-primary: #111827; --text-muted: #6b7280; --border-default: #e5e7eb; --accent-primary: #2563eb; --state-positive: #16a34a; --state-caution: #d97706; --type-body: 12px/1.5 sans-serif; }\n"
 
@@ -125,17 +66,7 @@ main {
     # namespaced extension token). Same component tree by construction —
     # themes supply values, not markup (campaign §5); U3 owns the
     # byte-identical-HTML proof.
-    const tela.Theme tenebrae ← tela.theme("tenebrae", [
-        tela.token("surface.canvas", "#0f172a"),
-        tela.token("surface.panel", "#1e293b"),
-        tela.token("text.primary", "#f8fafc"),
-        tela.token("text.muted", "#94a3b8"),
-        tela.token("border.default", "#334155"),
-        tela.token("accent.primary", "#3b82f6"),
-        tela.token("state.positive", "#22c55e"),
-        tela.token("state.caution", "#f59e0b"),
-        tela.token("chart.axis.muted", "#9ca3af")
-    ])
+    const tela.Theme tenebrae ← tela.theme("tenebrae", [tela.token("surface.canvas", "#0f172a"), tela.token("surface.panel", "#1e293b"), tela.token("text.primary", "#f8fafc"), tela.token("text.muted", "#94a3b8"), tela.token("border.default", "#334155"), tela.token("accent.primary", "#3b82f6"), tela.token("state.positive", "#22c55e"), tela.token("state.caution", "#f59e0b"), tela.token("chart.axis.muted", "#9ca3af")])
     const string tenebrae_css ← tela.theme_css(tenebrae) coalesce ""
     assert tenebrae_css ≡ ":root { --surface-canvas: #0f172a; --surface-panel: #1e293b; --text-primary: #f8fafc; --text-muted: #94a3b8; --border-default: #334155; --accent-primary: #3b82f6; --state-positive: #22c55e; --state-caution: #f59e0b; --chart-axis-muted: #9ca3af; }\n"
     assert tenebrae_css ≠ lumen_css

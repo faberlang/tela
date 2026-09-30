@@ -4,7 +4,6 @@ kind = "concept"
 category = "library"
 locale = "en"
 +++
-
 # tela/exempla/assemble.fab — Stage 2 U2 exempla for product assembly +
 # cascade ordering in src/tela.fab. Covers every U2 done_when (f) case:
 # bundle dedup (two identical bundles → one); topo order (a depends-on-b →
@@ -24,160 +23,53 @@ import from "tela:tela" tela
 main {
     # The base theme (full core baseline; the token layer is identical across
     # every assembly below).
-    const tela.Theme solaris ← tela.theme("solaris", [
-        tela.token("surface.canvas", "#ffffff"),
-        tela.token("surface.panel", "#f9fafb"),
-        tela.token("text.primary", "#111827"),
-        tela.token("text.muted", "#6b7280"),
-        tela.token("border.default", "#e5e7eb"),
-        tela.token("accent.primary", "#2563eb"),
-        tela.token("state.positive", "#16a34a"),
-        tela.token("state.caution", "#d97706")
-    ])
+    const tela.Theme solaris ← tela.theme("solaris", [tela.token("surface.canvas", "#ffffff"), tela.token("surface.panel", "#f9fafb"), tela.token("text.primary", "#111827"), tela.token("text.muted", "#6b7280"), tela.token("border.default", "#e5e7eb"), tela.token("accent.primary", "#2563eb"), tela.token("state.positive", "#16a34a"), tela.token("state.caution", "#d97706")])
     const string tokens_css ← ":root { --surface-canvas: #ffffff; --surface-panel: #f9fafb; --text-primary: #111827; --text-muted: #6b7280; --border-default: #e5e7eb; --accent-primary: #2563eb; --state-positive: #16a34a; --state-caution: #d97706; }\n"
 
     # --- (f) bundle dedup: two identical bundles → one --------------------
-    const tela.Bundle panel ← tela.bundle("panel", tela.Style {
-        rules = [
-            tela.Rule {
-                selector = ".panel",
-                declarations = [ tela.Declaration { name = "color", value = "var(--text-primary)" } ]
-            }
-        ]
-    })
+    const tela.Bundle panel ← tela.bundle("panel", tela.Style { rules = [tela.Rule { selector = ".panel", declarations = [tela.Declaration { name = "color", value = "var(--text-primary)" }] }] })
     const tela.Style ∪ none dedup_result ← tela.assemble(solaris, null, [panel, panel], [], [], null)
     assert not (dedup_result ≡ null)
     const string dedup_css ← tela.css(tela.Style { rules = dedup_result!.rules }) coalesce ""
     assert dedup_css ≡ tokens_css + ".panel { color: var(--text-primary); }\n"
 
     # --- (f) topo order: a depends-on-b → b precedes a --------------------
-    const tela.Bundle lib_a ← tela.bundle("a", tela.Style {
-        rules = [
-            tela.Rule {
-                selector = ".a",
-                declarations = [ tela.Declaration { name = "display", value = "grid" } ]
-            }
-        ]
-    })
-    const tela.Bundle lib_b ← tela.bundle("b", tela.Style {
-        rules = [
-            tela.Rule {
-                selector = ".b",
-                declarations = [ tela.Declaration { name = "display", value = "block" } ]
-            }
-        ]
-    })
-    const tela.Style ∪ none topo_result ← tela.assemble(
-        solaris,
-        null,
-        [],
-        [ tela.order("a", ["b"]), tela.order("b", []) ],
-        [lib_a, lib_b],
-        null
-    )
+    const tela.Bundle lib_a ← tela.bundle("a", tela.Style { rules = [tela.Rule { selector = ".a", declarations = [tela.Declaration { name = "display", value = "grid" }] }] })
+    const tela.Bundle lib_b ← tela.bundle("b", tela.Style { rules = [tela.Rule { selector = ".b", declarations = [tela.Declaration { name = "display", value = "block" }] }] })
+    const tela.Style ∪ none topo_result ← tela.assemble(solaris, null, [], [tela.order("a", ["b"]), tela.order("b", [])], [lib_a, lib_b], null)
     const string topo_css ← tela.css(tela.Style { rules = topo_result!.rules }) coalesce ""
     assert topo_css ≡ tokens_css + ".b { display: block; }\n.a { display: grid; }\n"
 
     # --- (f) tie-break: unrelated packages ordered by stable identity -----
-    const tela.Bundle lib_zeta ← tela.bundle("zeta", tela.Style {
-        rules = [
-            tela.Rule {
-                selector = ".zeta",
-                declarations = [ tela.Declaration { name = "color", value = "red" } ]
-            }
-        ]
-    })
-    const tela.Bundle lib_alpha ← tela.bundle("alpha", tela.Style {
-        rules = [
-            tela.Rule {
-                selector = ".alpha",
-                declarations = [ tela.Declaration { name = "color", value = "blue" } ]
-            }
-        ]
-    })
-    const tela.Style ∪ none tie_result ← tela.assemble(
-        solaris,
-        null,
-        [],
-        [ tela.order("zeta", []), tela.order("alpha", []) ],
-        [lib_zeta, lib_alpha],
-        null
-    )
+    const tela.Bundle lib_zeta ← tela.bundle("zeta", tela.Style { rules = [tela.Rule { selector = ".zeta", declarations = [tela.Declaration { name = "color", value = "red" }] }] })
+    const tela.Bundle lib_alpha ← tela.bundle("alpha", tela.Style { rules = [tela.Rule { selector = ".alpha", declarations = [tela.Declaration { name = "color", value = "blue" }] }] })
+    const tela.Style ∪ none tie_result ← tela.assemble(solaris, null, [], [tela.order("zeta", []), tela.order("alpha", [])], [lib_zeta, lib_alpha], null)
     const string tie_css ← tela.css(tela.Style { rules = tie_result!.rules }) coalesce ""
     assert tie_css ≡ tokens_css + ".alpha { color: blue; }\n.zeta { color: red; }\n"
 
     # --- (f) cycle rejection (fail-closed) --------------------------------
-    const tela.Style ∪ none cycle_result ← tela.assemble(
-        solaris,
-        null,
-        [],
-        [ tela.order("a", ["b"]), tela.order("b", ["a"]) ],
-        [lib_a, lib_b],
-        null
-    )
+    const tela.Style ∪ none cycle_result ← tela.assemble(solaris, null, [], [tela.order("a", ["b"]), tela.order("b", ["a"])], [lib_a, lib_b], null)
     assert cycle_result ≡ null
 
     # --- (f) duplicate-identity-different-content rejection ---------------
-    const tela.Bundle panel_altera ← tela.bundle("panel", tela.Style {
-        rules = [
-            tela.Rule {
-                selector = ".panel",
-                declarations = [ tela.Declaration { name = "color", value = "blue" } ]
-            }
-        ]
-    })
+    const tela.Bundle panel_altera ← tela.bundle("panel", tela.Style { rules = [tela.Rule { selector = ".panel", declarations = [tela.Declaration { name = "color", value = "blue" }] }] })
     const tela.Style ∪ none conflict_result ← tela.assemble(solaris, null, [panel, panel_altera], [], [], null)
     assert conflict_result ≡ null
 
     # --- (f) cascade layer order WITH a reset bundle ----------------------
-    const tela.Style reset ← tela.Style {
-        rules = [
-            tela.Rule {
-                selector = "*",
-                declarations = [ tela.Declaration { name = "margin", value = "0" } ]
-            }
-        ]
-    }
-    const tela.Bundle app ← tela.bundle("app", tela.Style {
-        rules = [
-            tela.Rule {
-                selector = ".app",
-                declarations = [ tela.Declaration { name = "gap", value = "1rem" } ]
-            }
-        ]
-    })
-    const tela.Style ∪ none full_result ← tela.assemble(
-        solaris,
-        reset,
-        [panel],
-        [ tela.order("a", ["b"]), tela.order("b", []) ],
-        [lib_a, lib_b],
-        app
-    )
+    const tela.Style reset ← tela.Style { rules = [tela.Rule { selector = "*", declarations = [tela.Declaration { name = "margin", value = "0" }] }] }
+    const tela.Bundle app ← tela.bundle("app", tela.Style { rules = [tela.Rule { selector = ".app", declarations = [tela.Declaration { name = "gap", value = "1rem" }] }] })
+    const tela.Style ∪ none full_result ← tela.assemble(solaris, reset, [panel], [tela.order("a", ["b"]), tela.order("b", [])], [lib_a, lib_b], app)
     const string full_css ← tela.css(tela.Style { rules = full_result!.rules }) coalesce ""
     assert full_css ≡ "* { margin: 0; }\n" + tokens_css + ".panel { color: var(--text-primary); }\n.b { display: block; }\n.a { display: grid; }\n.app { gap: 1rem; }\n"
 
     # --- (f) cascade layer order WITHOUT a reset bundle -------------------
-    const tela.Style ∪ none no_reset_result ← tela.assemble(
-        solaris,
-        null,
-        [panel],
-        [ tela.order("a", ["b"]), tela.order("b", []) ],
-        [lib_a, lib_b],
-        app
-    )
+    const tela.Style ∪ none no_reset_result ← tela.assemble(solaris, null, [panel], [tela.order("a", ["b"]), tela.order("b", [])], [lib_a, lib_b], app)
     const string no_reset_css ← tela.css(tela.Style { rules = no_reset_result!.rules }) coalesce ""
     assert no_reset_css ≡ tokens_css + ".panel { color: var(--text-primary); }\n.b { display: block; }\n.a { display: grid; }\n.app { gap: 1rem; }\n"
 
     # --- (f) invalid rule rejection (empty selector) ----------------------
-    const tela.Bundle malum ← tela.bundle("malum", tela.Style {
-        rules = [
-            tela.Rule {
-                selector = "",
-                declarations = [ tela.Declaration { name = "color", value = "red" } ]
-            }
-        ]
-    })
+    const tela.Bundle malum ← tela.bundle("malum", tela.Style { rules = [tela.Rule { selector = "", declarations = [tela.Declaration { name = "color", value = "red" }] }] })
     const tela.Style ∪ none invalid_result ← tela.assemble(solaris, null, [malum], [], [], null)
     assert invalid_result ≡ null
 
@@ -186,19 +78,7 @@ main {
     # { } ; \n, so the structural checks alone cannot see it — the value
     # check must (emitted CSS lives inside a <style> block; any "</" can
     # close it).
-    const tela.Bundle veneficum ← tela.bundle("veneficum", tela.Style {
-        rules = [
-            tela.Rule {
-                selector = ".panel",
-                declarations = [
-                    tela.Declaration {
-                        name = "color",
-                        value = "red</style><script>alert(1)</script><style>a:b"
-                    }
-                ]
-            }
-        ]
-    })
+    const tela.Bundle veneficum ← tela.bundle("veneficum", tela.Style { rules = [tela.Rule { selector = ".panel", declarations = [tela.Declaration { name = "color", value = "red</style><script>alert(1)</script><style>a:b" }] }] })
     assert tela.unclean_style_text("red</style><script>alert(1)</script><style>a:b")
     const tela.Style ∪ none veneficum_result ← tela.assemble(solaris, null, [veneficum], [], [], null)
     assert veneficum_result ≡ null
@@ -206,33 +86,13 @@ main {
     # --- (S-H1 regression) ordinary declarations still pass ----------------
     # A slash-bearing font shorthand and a css-function value contain no
     # end-tag opener — still valid, still emitted unchanged.
-    const tela.Bundle legitimum ← tela.bundle("legitimum", tela.Style {
-        rules = [
-            tela.Rule {
-                selector = ".prose",
-                declarations = [
-                    tela.Declaration { name = "font", value = "12px/1.5 sans-serif" },
-                    tela.Declaration { name = "color", value = "rgba(15, 23, 42, 0.8)" }
-                ]
-            }
-        ]
-    })
+    const tela.Bundle legitimum ← tela.bundle("legitimum", tela.Style { rules = [tela.Rule { selector = ".prose", declarations = [tela.Declaration { name = "font", value = "12px/1.5 sans-serif" }, tela.Declaration { name = "color", value = "rgba(15, 23, 42, 0.8)" }] }] })
     const tela.Style ∪ none legitimum_result ← tela.assemble(solaris, null, [legitimum], [], [], null)
     const string legitimum_css ← tela.css(tela.Style { rules = legitimum_result!.rules }) coalesce ""
     assert legitimum_css ≡ tokens_css + ".prose { font: 12px/1.5 sans-serif; color: rgba(15, 23, 42, 0.8); }\n"
 
     # --- (d) duplicate token identity with different content rejects ------
-    const tela.Theme gemina ← tela.theme("gemina", [
-        tela.token("surface.canvas", "#ffffff"),
-        tela.token("surface.panel", "#f9fafb"),
-        tela.token("text.primary", "#111827"),
-        tela.token("text.muted", "#6b7280"),
-        tela.token("border.default", "#e5e7eb"),
-        tela.token("accent.primary", "#2563eb"),
-        tela.token("state.positive", "#16a34a"),
-        tela.token("state.caution", "#d97706"),
-        tela.token("state.caution", "#000000")
-    ])
+    const tela.Theme gemina ← tela.theme("gemina", [tela.token("surface.canvas", "#ffffff"), tela.token("surface.panel", "#f9fafb"), tela.token("text.primary", "#111827"), tela.token("text.muted", "#6b7280"), tela.token("border.default", "#e5e7eb"), tela.token("accent.primary", "#2563eb"), tela.token("state.positive", "#16a34a"), tela.token("state.caution", "#d97706"), tela.token("state.caution", "#000000")])
     const tela.Style ∪ none token_dup_result ← tela.assemble(gemina, null, [], [], [], null)
     assert token_dup_result ≡ null
 }

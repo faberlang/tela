@@ -155,8 +155,12 @@ union View {
         list<Property> properties
         list<View> children
     },
-    TextNode { string value },
-    Fragment { list<View> children }
+    TextNode {
+        string value
+    },
+    Fragment {
+        list<View> children
+    }
 }
 
 # ---------------------------------------------------------------------------
@@ -201,36 +205,15 @@ fn svg_space() → Space {
 # Open-element shorthand: no identity, no attributes.
 @ public
 fn element_view(Space space, string tag_name, list<View> children) → View {
-    return variant ElementNode {
-        identity = null,
-        space = space,
-        tag_name = tag_name,
-        attributes = [],
-        properties = [],
-        children = children
-    } ∷ View
+    return variant ElementNode { identity = null, space = space, tag_name = tag_name, attributes = [], properties = [], children = children } ∷ View
 }
 
 # Full open-element constructor: identity + serialized attributes + DOM
 # properties. Cross-module variant construction does not resolve (gap G3),
 # so consumers reach the full ElementNode through this constructor.
 @ public
-fn element_full(
-    Identity ∪ none identity,
-    Space space,
-    string tag_name,
-    list<Attribute> attributes,
-    list<Property> properties,
-    list<View> children
-) → View {
-    return variant ElementNode {
-        identity = identity,
-        space = space,
-        tag_name = tag_name,
-        attributes = attributes,
-        properties = properties,
-        children = children
-    } ∷ View
+fn element_full(Identity ∪ none identity, Space space, string tag_name, list<Attribute> attributes, list<Property> properties, list<View> children) → View {
+    return variant ElementNode { identity = identity, space = space, tag_name = tag_name, attributes = attributes, properties = properties, children = children } ∷ View
 }
 
 # ---------------------------------------------------------------------------
@@ -246,7 +229,7 @@ fn element_full(
 fn escape(string s, bool in_attribute) → string {
     var string accum ← ""
     var int i ← 0
-    while i < s.length() {
+    while i ≺ s.length() {
         const string c ← s.slice(i, i + 1)
         # Sequential independent ifs (NOT an elif chain): the TS emitter
         # compiles elif chains whose bodies are single-statement assignments
@@ -260,16 +243,24 @@ fn escape(string s, bool in_attribute) → string {
         # borrowing c below (E0382 — second NEW emitter observation,
         # escalated to the radix lane); "" + c emits a borrowing format!.
         var string fragment ← "" + c
-        if c ≡ "&" then fragment ← "&amp;"
-        if c ≡ "<" then fragment ← "&lt;"
-        if c ≡ ">" then fragment ← "&gt;"
+        if c ≡ "&" {
+            fragment ← "&amp;"
+        }
+        if c ≡ "<" {
+            fragment ← "&lt;"
+        }
+        if c ≡ ">" {
+            fragment ← "&gt;"
+        }
         # The quote comparison spells the double-quote via ascii-literal
         # interpolation ("§"('"')) rather than the \" escape: the TS emitter
         # double-escapes a `\"` string payload (emits `\\\"` → runtime
         # backslash+quote), so a bare-quote comparison written as "\"" never
         # matches at runtime (NEW emitter observation, escalated to the radix
         # lane; probe escape on in-tree radix 0.80.0, 2026-08-09).
-        if in_attribute and c ≡ "§"('"') then fragment ← "&quot;"
+        if in_attribute and c ≡ "§"('"') {
+            fragment ← "&quot;"
+        }
         accum ← accum + fragment
         i ← i + 1
     }
@@ -332,7 +323,7 @@ fn validate_tree(View v) → bool {
             for from attributes const attr {
                 if not validate.valid_attribute_name(attr.name) then return false
             }
-            const bool has_children ← children.length() > 0
+            const bool has_children ← children.length() ≻ 0
             if not validate.valid_void_structure(tag_name, has_children) then return false
             for from children const child {
                 if not validate_tree(child) then return false
@@ -369,7 +360,7 @@ fn serialize_identity(Identity ∪ none identity) → string {
         case none {
             return ""
         }
-        default {
+        case _ {
             const string q ← "§"('"')
             return " data-tela=" + q + escape(identity?.value coalesce "", true) + q
         }
@@ -518,13 +509,7 @@ fn theme(string name, list<Token> tokens) → Theme {
 # The core token baseline — the required token set a theme must cover.
 @ public
 fn core_tokens() → list<string> {
-    return [
-        "surface.canvas", "surface.panel",
-        "text.primary", "text.muted",
-        "border.default",
-        "accent.primary",
-        "state.positive", "state.caution"
-    ]
+    return ["surface.canvas", "surface.panel", "text.primary", "text.muted", "border.default", "accent.primary", "state.positive", "state.caution"]
 }
 
 # Dotted path → CSS custom property: `--` + name with `.` → `-`.
@@ -534,10 +519,14 @@ fn core_tokens() → list<string> {
 fn token_property_name(string name) → string {
     var string accum ← "--"
     var int i ← 0
-    while i < name.length() {
+    while i ≺ name.length() {
         const string c ← name.slice(i, i + 1)
-        if c ≡ "." then accum ← accum + "-"
-        if c ≠ "." then accum ← accum + c
+        if c ≡ "." {
+            accum ← accum + "-"
+        }
+        if c ≠ "." {
+            accum ← accum + c
+        }
         i ← i + 1
     }
     return accum
@@ -591,12 +580,12 @@ fn theme_style(Theme theme) → Style ∪ none {
     if not theme_has_core_tokens(theme) then return null
     var list<Declaration> declarations ← empty
     var int i ← 0
-    while i < theme.tokens.length() {
+    while i ≺ theme.tokens.length() {
         const Token token ← theme.tokens[i]
         if not token_name_valid(token.name) then return null
         var bool duplicate ← false
         var int j ← 0
-        while j < i {
+        while j ≺ i {
             const Token prior ← theme.tokens[j]
             if prior.name ≡ token.name {
                 if prior.value ≠ token.value then return null
@@ -605,18 +594,11 @@ fn theme_style(Theme theme) → Style ∪ none {
             j ← j + 1
         }
         if not duplicate {
-            declarations.append(Declaration {
-                name = token_property_name(token.name),
-                value = token.value
-            })
+            declarations.append(Declaration { name = token_property_name(token.name), value = token.value })
         }
         i ← i + 1
     }
-    return Style {
-        rules = [
-            Rule { selector = ":root", declarations = declarations }
-        ]
-    }
+    return Style { rules = [Rule { selector = ":root", declarations = declarations }] }
 }
 
 # ---------------------------------------------------------------------------
@@ -702,11 +684,11 @@ fn order(string identity, list<string> depends) → Order {
 fn deduplicated_bundles(list<Bundle> bundles) → list<Bundle> ∪ none {
     var list<Bundle> unique ← empty
     var int i ← 0
-    while i < bundles.length() {
+    while i ≺ bundles.length() {
         const Bundle bundle ← bundles[i]
         var bool duplicate ← false
         var int j ← 0
-        while j < i {
+        while j ≺ i {
             const Bundle prior ← bundles[j]
             if prior.identity ≡ bundle.identity {
                 if css(prior.style) ≠ css(bundle.style) then return null
@@ -714,7 +696,9 @@ fn deduplicated_bundles(list<Bundle> bundles) → list<Bundle> ∪ none {
             }
             j ← j + 1
         }
-        if not duplicate then unique.append(bundle)
+        if not duplicate {
+            unique.append(bundle)
+        }
         i ← i + 1
     }
     return unique
@@ -735,11 +719,11 @@ fn in_list(list<string> collection, string name) → bool {
 @ public
 fn dependencies_met(list<Order> orders, string identity, list<string> placed) → bool {
     var int i ← 0
-    while i < orders.length() {
+    while i ≺ orders.length() {
         const Order order ← orders[i]
         if order.identity ≡ identity {
             var int j ← 0
-            while j < order.depends.length() {
+            while j ≺ order.depends.length() {
                 if not in_list(placed, order.depends[j]) then return false
                 j ← j + 1
             }
@@ -759,11 +743,13 @@ fn dependencies_met(list<Order> orders, string identity, list<string> placed) �
 fn topological_order(list<Order> orders, list<string> identities) → list<string> ∪ none {
     var list<string> ordered ← empty
     var list<string> remaining ← identities
-    while remaining.length() > 0 {
+    while remaining.length() ≻ 0 {
         var list<string> ready ← empty
         var int i ← 0
-        while i < remaining.length() {
-            if dependencies_met(orders, remaining[i], ordered) then ready.append(remaining[i])
+        while i ≺ remaining.length() {
+            if dependencies_met(orders, remaining[i], ordered) {
+                ready.append(remaining[i])
+            }
             i ← i + 1
         }
         if ready.length() ≡ 0 then return null
@@ -772,8 +758,10 @@ fn topological_order(list<Order> orders, list<string> identities) → list<strin
         ordered.append(chosen)
         var list<string> next ← empty
         var int j ← 0
-        while j < remaining.length() {
-            if remaining[j] ≠ chosen then next.append(remaining[j])
+        while j ≺ remaining.length() {
+            if remaining[j] ≠ chosen {
+                next.append(remaining[j])
+            }
             j ← j + 1
         }
         remaining ← next
@@ -789,14 +777,14 @@ fn topological_order(list<Order> orders, list<string> identities) → list<strin
 @ public
 fn unclean_style_text(string text) → bool {
     var int i ← 0
-    while i < text.length() {
+    while i ≺ text.length() {
         const string c ← text.slice(i, i + 1)
         if c ≡ "{" then return true
         if c ≡ "}" then return true
         if c ≡ ";" then return true
         if c ≡ "\n" then return true
         if c ≡ "<" {
-            if i + 1 < text.length() {
+            if i + 1 ≺ text.length() {
                 if text.slice(i + 1, i + 2) ≡ "/" then return true
             }
         }
@@ -836,14 +824,7 @@ fn bundle_for(string identity, list<Bundle> bundles) → Style ∪ none {
 # grouped in cascade-layer order. Fail-closed (no output on any reject).
 # Deterministic bytes over the explicit inputs.
 @ public
-fn assemble(
-    Theme theme,
-    Style ∪ none reset,
-    list<Bundle> components,
-    list<Order> orders,
-    list<Bundle> bundles,
-    Bundle ∪ none applicatio
-) → Style ∪ none {
+fn assemble(Theme theme, Style ∪ none reset, list<Bundle> components, list<Order> orders, list<Bundle> bundles, Bundle ∪ none applicatio) → Style ∪ none {
     # tela.tokens — the rendered :root token layer (fail-closed: validity
     # like every other layer — the emitted layer lives inside a raw-text
     # style block).
@@ -864,7 +845,7 @@ fn assemble(
     const list<Bundle> empty_components ← empty
     const list<Bundle> final_components ← unique_components coalesce empty_components
     var int ci ← 0
-    while ci < final_components.length() {
+    while ci ≺ final_components.length() {
         if not style_valid(final_components[ci].style) then return null
         ci ← ci + 1
     }
@@ -876,13 +857,13 @@ fn assemble(
     const list<Bundle> empty_bundles ← empty
     const list<Bundle> final_bundles ← unique_bundles coalesce empty_bundles
     var int li ← 0
-    while li < final_bundles.length() {
+    while li ≺ final_bundles.length() {
         if not style_valid(final_bundles[li].style) then return null
         li ← li + 1
     }
     var list<string> identities ← empty
     var int m ← 0
-    while m < final_bundles.length() {
+    while m ≺ final_bundles.length() {
         identities.append(final_bundles[m].identity)
         m ← m + 1
     }
@@ -907,14 +888,14 @@ fn assemble(
         rules.append(rule)
     }
     var int idx ← 0
-    while idx < final_components.length() {
+    while idx ≺ final_components.length() {
         for from final_components[idx].style.rules const rule {
             rules.append(rule)
         }
         idx ← idx + 1
     }
     var int ord ← 0
-    while ord < libraries.length() {
+    while ord ≺ libraries.length() {
         const Style ∪ none style ← bundle_for(libraries[ord], final_bundles)
         if style is none then return null
         for from style!.rules const rule {
@@ -986,9 +967,15 @@ class EventName {
 #   Anchor   — scroll anchoring: scroll-preservation intent for the region.
 @ public
 union Effect {
-    Restore { string identity },
-    Direct { string identity },
-    Anchor { string identity }
+    Restore {
+        string identity
+    },
+    Direct {
+        string identity
+    },
+    Anchor {
+        string identity
+    }
 }
 
 # Update: the update result `replace` carries (behavior-design §3) — the
