@@ -5,9 +5,10 @@ edition = "2026"
 
 [paths]
 source = "src"
+entry = "main.fab"
 
 [build]
-kind = "app"
+kind = "bin"
 
 [reader]
 locale = "en"
