@@ -1542,7 +1542,8 @@ main {
     const string post_arrow ← update_control(post, arrow_msg)
     assert post_arrow ≡ post
     # Home/End move focus to first/last (Moved); Space/Enter select.
-    match key_message("ref-seg-control-3", "Home") {
+    const Message home_msg ← key_message("ref-seg-control-3", "Home")
+    match home_msg {
         case Moved const identity {
             assert identity ≡ "ref-seg-control-1"
         }
@@ -1550,7 +1551,8 @@ main {
             assert false
         }
     }
-    match key_message("ref-seg-control-1", "End") {
+    const Message end_msg ← key_message("ref-seg-control-1", "End")
+    match end_msg {
         case Moved const identity {
             assert identity ≡ "ref-seg-control-3"
         }
@@ -1558,7 +1560,8 @@ main {
             assert false
         }
     }
-    match key_message("ref-seg-control-2", "Space") {
+    const Message space_msg ← key_message("ref-seg-control-2", "Space")
+    match space_msg {
         case Selected const identity {
             assert identity ≡ "ref-seg-control-2"
         }
