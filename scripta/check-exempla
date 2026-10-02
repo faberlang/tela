@@ -157,32 +157,74 @@ export function snapshot(scope: any): Array<FakeNodus> | null {
 }
 DOM_SEAM
 
-# The @faber/runtime display package: the emitted `print` surface imports
-# __faberDisplay from the package instead of inlining it. The exempla gate
-# prints only string carriers; the harness stand-in mirrors the package
-# contract for those (faber/runtime/typescript/index.ts is the authority).
+# The @faber/runtime namespaces: the emitted `print` surface imports
+# `{ display }` from the package and calls `display.value` instead of inlining
+# the family, and integer arithmetic imports `{ exact }` and calls
+# `exact.add`, `exact.store`, ... The exempla gate prints only string carriers,
+# so `display` is a harness stand-in mirroring that contract
+# (faber/runtime/typescript/display.ts is the authority); `exact` computes real
+# values the assertions read, so it is the package's own module, re-exported
+# from its source (faber/runtime/typescript/exact.ts) and type-declared here.
+RUNTIME_TS="${FABER_RUNTIME_TS:-$ROOT/../faber/runtime/typescript}"
+if [[ ! -f "$RUNTIME_TS/exact.ts" ]]; then
+  echo "check-exempla: missing faber runtime package at $RUNTIME_TS (set FABER_RUNTIME_TS)" >&2
+  exit 1
+fi
+RUNTIME_TS="$(cd "$RUNTIME_TS" && pwd)"
 mkdir -p "$SCRATCH/node_modules/@faber/runtime"
 cat > "$SCRATCH/node_modules/@faber/runtime/package.json" <<'RUNTIME_PKG'
 { "name": "@faber/runtime", "type": "module", "main": "./index.js", "types": "./index.d.ts" }
 RUNTIME_PKG
 cat > "$SCRATCH/node_modules/@faber/runtime/index.d.ts" <<'RUNTIME_DTS'
-export type FaberDisplayHint =
+export type DisplayHint =
   | "unknown" | "textus" | "ascii" | "numerus" | "fractus" | "bivalens"
   | "nihil" | "vacuum" | "valor" | "instans" | "regex";
-export declare function __faberDisplay(value: any, hint?: FaberDisplayHint): string;
+export declare const display: {
+  value(value: any, hint?: DisplayHint): string;
+};
+export declare const exact: {
+  chk(v: number): number;
+  add(a: number, b: number): number;
+  sub(a: number, b: number): number;
+  mul(a: number, b: number): number;
+  div(a: number, b: number): number;
+  mod(a: number, b: number): number;
+  shl(a: number, n: number): number;
+  shr(a: number, n: number): number;
+  floatRem(a: number, b: number): number;
+  neg(a: number): number;
+  not(a: number): number;
+  abs(a: number): number;
+  pow(base: number, exponent: number): number;
+  hi(a: number): number;
+  lo(a: number): number;
+  join(hi: number, lo: number): number;
+  and(a: number, b: number): number;
+  or(a: number, b: number): number;
+  xor(a: number, b: number): number;
+  store(v: number, lo: number, hi: number, ty: string, pos: string, extra: string): number;
+  clamp(v: number, lo: number, hi: number): number;
+  wrap(v: number, bits: number, signed: boolean): number;
+  trueDiv(a: number, b: number): number;
+  trueDivF32(a: number, b: number): number;
+};
 RUNTIME_DTS
-cat > "$SCRATCH/node_modules/@faber/runtime/index.js" <<'RUNTIME_JS'
-// Harness stand-in for @faber/runtime (mirrors the string-carrier
-// contract; the full hint family lives in faber/runtime/typescript).
-export function __faberDisplay(value, hint = "unknown") {
-  if (value === null || value === undefined) {
-    return hint === "vacuum" ? "vacuum" : "nihil";
-  }
-  if (hint === "bivalens") {
-    return value ? "verum" : "falsum";
-  }
-  return String(value);
-}
+cat > "$SCRATCH/node_modules/@faber/runtime/index.js" <<RUNTIME_JS
+// Harness stand-in for @faber/runtime: \`display\` mirrors the string-carrier
+// contract (the full hint family lives in faber/runtime/typescript); \`exact\`
+// is the package's own module, loaded from its source (Node strips the types).
+export * as exact from "$RUNTIME_TS/exact.ts";
+export const display = {
+  value(value, hint = "unknown") {
+    if (value === null || value === undefined) {
+      return hint === "vacuum" ? "vacuum" : "nihil";
+    }
+    if (hint === "bivalens") {
+      return value ? "verum" : "falsum";
+    }
+    return String(value);
+  },
+};
 RUNTIME_JS
 
 # The compiled module graph runs as ESM under node.

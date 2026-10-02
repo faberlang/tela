@@ -79,10 +79,10 @@ echo "check-forms-proof: TS emit valida / tela / forms / browser / dom / exempla
 # plain const objects (the emitted modules declare their top-level bindings
 # without exports).
 strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
-# The emitted tela:dom provider module's preamble (FaberDisplayHint + the
-# __faberDisplay helpers) and its `Element` genus are renamed so they do not
-# collide with the tela module's own preamble / the DOM lib's `Element`.
-strip_dom() { sed '1,2d' "$1" | grep -v '^import .* from "' | sed -e 's/\bFaberResult\b/FaberResultDom/g' -e 's/\bFaberDisplayHint\b/FaberDisplayHintDom/g' -e 's/\b__faberDisplayFractus\b/__faberDisplayDomFractus/g' -e 's/\b__faberDisplayList\b/__faberDisplayDomList/g' -e 's/\b__faberDisplayTensor\b/__faberDisplayDomTensor/g' -e 's/\b__faberDisplaySparsa\b/__faberDisplayDomSparsa/g' -e 's/\b__faberDisplayMap\b/__faberDisplayDomMap/g' -e 's/\b__faberDisplayValor\b/__faberDisplayDomValor/g' -e 's/\b__faberDisplayTaggedValor\b/__faberDisplayDomTaggedValor/g' -e 's/\b__faberDisplay\b/__faberDisplayDom/g' -e 's/\bElement\b/DomElement/g'; }
+# The emitted tela:dom provider module's `Result` preamble and its `Element`
+# genus are renamed so they do not collide with the tela module's own preamble
+# / the DOM lib's `Element`.
+strip_dom() { sed '1,2d' "$1" | grep -v '^import .* from "' | sed -e 's/\bFaberResult\b/FaberResultDom/g' -e 's/\bElement\b/DomElement/g'; }
 
 VALIDA_NS="const validate = { valid_space, valid_tag_name, valid_attribute_name, valid_name_in_space, valid_void_html, valid_void_structure };"
 TELA_NS="const tela = { html_visus, css, theme_css, theme_style, theme, token, core_tokens, token_property_name, token_name_valid, theme_has_core_tokens, theme_has_token, assemble, bundle, order, deduplicated_bundles, topological_order, style_valid, unclean_style_text, bundle_for, in_list, dependencies_met, text_view, fragment_view, new_identity, html_space, svg_space, element_view, element_full, event_name, restore, direct, anchor, update, effect_identity, Attribute, Property, Identity, Declaration, Rule, Style, Token, Theme, Bundle, Order, EventName, Update };"

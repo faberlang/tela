@@ -78,10 +78,10 @@ strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
 # NO FaberDisplay preamble (the authored surface uses no display helpers);
 # plain header strip is the whole strip.
 strip_hdom() { sed '1,2d' "$1"; }
-# The emitted tela:dom provider module's preamble (FaberDisplayHint + the
-# __faberDisplay helpers) and its `Element` genus are renamed so they do not
-# collide with the tela module's own preamble / the DOM lib's `Element`.
-strip_dom() { sed '1,2d' "$1" | grep -v '^import .* from "' | sed -e 's/\bFaberResult\b/FaberResultDom/g' -e 's/\bFaberDisplayHint\b/FaberDisplayHintDom/g' -e 's/\b__faberDisplayFractus\b/__faberDisplayDomFractus/g' -e 's/\b__faberDisplayList\b/__faberDisplayDomList/g' -e 's/\b__faberDisplayTensor\b/__faberDisplayDomTensor/g' -e 's/\b__faberDisplaySparsa\b/__faberDisplayDomSparsa/g' -e 's/\b__faberDisplayMap\b/__faberDisplayDomMap/g' -e 's/\b__faberDisplayValor\b/__faberDisplayDomValor/g' -e 's/\b__faberDisplayTaggedValor\b/__faberDisplayDomTaggedValor/g' -e 's/\b__faberDisplay\b/__faberDisplayDom/g' -e 's/\bElement\b/DomElement/g'; }
+# The emitted tela:dom provider module's `Result` preamble and its `Element`
+# genus are renamed so they do not collide with the tela module's own preamble
+# / the DOM lib's `Element`.
+strip_dom() { sed '1,2d' "$1" | grep -v '^import .* from "' | sed -e 's/\bFaberResult\b/FaberResultDom/g' -e 's/\bElement\b/DomElement/g'; }
 # The host runtime: tela's ACTUAL runtime/dom.ts implementation,
 # included verbatim (export keywords stripped). tsc type-checks it here
 # against the DOM lib (its own source typing); node runs it against the

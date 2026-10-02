@@ -202,7 +202,7 @@ strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
 # The emitted tela:dom provider module's preamble + `Element` genus are
 # renamed so they do not collide with the tela module's own preamble / the
 # DOM lib's `Element`.
-strip_dom() { sed '1,2d' "$1" | grep -v '^import .* from "' | sed -e 's/\bFaberResult\b/FaberResultDom/g' -e 's/\bFaberDisplayHint\b/FaberDisplayHintDom/g' -e 's/\b__faberDisplayFractus\b/__faberDisplayDomFractus/g' -e 's/\b__faberDisplayList\b/__faberDisplayDomList/g' -e 's/\b__faberDisplayTensor\b/__faberDisplayDomTensor/g' -e 's/\b__faberDisplaySparsa\b/__faberDisplayDomSparsa/g' -e 's/\b__faberDisplayMap\b/__faberDisplayDomMap/g' -e 's/\b__faberDisplayValor\b/__faberDisplayDomValor/g' -e 's/\b__faberDisplayTaggedValor\b/__faberDisplayDomTaggedValor/g' -e 's/\b__faberDisplay\b/__faberDisplayDom/g' -e 's/\bElement\b/DomElement/g'; }
+strip_dom() { sed '1,2d' "$1" | grep -v '^import .* from "' | sed -e 's/\bFaberResult\b/FaberResultDom/g' -e 's/\bElement\b/DomElement/g'; }
 {
   strip "$SCRATCH/valida.ts"
   echo "const validate = { valid_space, valid_tag_name, valid_attribute_name, valid_name_in_space, valid_void_html, valid_void_structure };"
