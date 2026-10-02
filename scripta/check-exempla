@@ -157,32 +157,37 @@ export function snapshot(scope: any): Array<FakeNodus> | null {
 }
 DOM_SEAM
 
-# The @faber/runtime display package: the emitted `print` surface imports
-# __faberDisplay from the package instead of inlining it. The exempla gate
-# prints only string carriers; the harness stand-in mirrors the package
-# contract for those (faber/runtime/typescript/index.ts is the authority).
+# The @faber/runtime display namespace: the emitted `print` surface imports
+# `{ display }` from the package and calls `display.value` instead of inlining
+# the family. The exempla gate prints only string carriers; the harness
+# stand-in mirrors the package contract for those
+# (faber/runtime/typescript/display.ts is the authority).
 mkdir -p "$SCRATCH/node_modules/@faber/runtime"
 cat > "$SCRATCH/node_modules/@faber/runtime/package.json" <<'RUNTIME_PKG'
 { "name": "@faber/runtime", "type": "module", "main": "./index.js", "types": "./index.d.ts" }
 RUNTIME_PKG
 cat > "$SCRATCH/node_modules/@faber/runtime/index.d.ts" <<'RUNTIME_DTS'
-export type FaberDisplayHint =
+export type DisplayHint =
   | "unknown" | "textus" | "ascii" | "numerus" | "fractus" | "bivalens"
   | "nihil" | "vacuum" | "valor" | "instans" | "regex";
-export declare function __faberDisplay(value: any, hint?: FaberDisplayHint): string;
+export declare const display: {
+  value(value: any, hint?: DisplayHint): string;
+};
 RUNTIME_DTS
 cat > "$SCRATCH/node_modules/@faber/runtime/index.js" <<'RUNTIME_JS'
 // Harness stand-in for @faber/runtime (mirrors the string-carrier
 // contract; the full hint family lives in faber/runtime/typescript).
-export function __faberDisplay(value, hint = "unknown") {
-  if (value === null || value === undefined) {
-    return hint === "vacuum" ? "vacuum" : "nihil";
-  }
-  if (hint === "bivalens") {
-    return value ? "verum" : "falsum";
-  }
-  return String(value);
-}
+export const display = {
+  value(value, hint = "unknown") {
+    if (value === null || value === undefined) {
+      return hint === "vacuum" ? "vacuum" : "nihil";
+    }
+    if (hint === "bivalens") {
+      return value ? "verum" : "falsum";
+    }
+    return String(value);
+  },
+};
 RUNTIME_JS
 
 # The compiled module graph runs as ESM under node.
