@@ -2,11 +2,15 @@
 locale = "en"
 +++
 
-# Cross-package consumer of tela:dom. Every live-used symbol from
-# examples/triga-drift-city, examples/triga-budapest, and
-# examples/hello-voxel is referenced here so an unmarked export is SEM006.
-# Handler fns are named, not invoked: importers still emit the recorded
-# WARN014 skip on the 9 `dom.on*` handler-typed exports.
+# Cross-package consumer of the EXPORTED SUBSET of the live-used tela:dom
+# surface in examples/triga-drift-city, examples/triga-budapest, and
+# examples/hello-voxel. Handler implementations and state types are named here.
+# The nine handler registration fns are checked as KNOWN-ABSENT in
+# known-absent.fab, not claimed as consumable through the file interface.
+# G4 authority: src/dom.fab, fix:g4: "the 9 `dom.on*` WARN014 skips are
+# RECORDED"; they are "read through the documented host binding at the
+# harness boundary (the DOM_NS assembly)". See also AGENTS.md, Stage 3
+# "Export and workaround state". This is a limitation, not API retirement.
 
 import from "tela:dom" public * as dom
 
@@ -61,14 +65,6 @@ fn probe_live_surface() → list<dom.Subscription> {
     print handle_lock
     print handle_submit
     print handle_event
-    print dom.on_frame
-    print dom.on_resize
-    print dom.on_keyboard
-    print dom.on_pointer
-    print dom.on_focus
-    print dom.on_pointer_lock
-    print dom.on_submit
-    print dom.on
     dom.text_set(root, "ok")
     dom.attr_set(root, "data-ok", "1")
     dom.class_add(root, "ready")

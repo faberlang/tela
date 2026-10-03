@@ -1,0 +1,26 @@
++++
+locale = "en"
++++
+
+# Negative cross-package consumer: these live APIs are NOT exported by the
+# current file interface. G4 authority: src/dom.fab, fix:g4: "the 9 `dom.on*`
+# WARN014 skips are RECORDED"; consumed through "the documented host binding
+# at the harness boundary (the DOM_NS assembly)", not through this interface.
+# Current WARN014 reason: NominalTypeUnsupported { kind: Struct } in the
+# handler signatures. SEM004 reports type 'ignotum' and each field below.
+# check-dom-export requires exactly these nine type_has_no_field errors.
+# Exposing ANY one of them makes the gate red until this claim is updated.
+
+import from "tela:dom" public * as dom
+
+main {
+    print dom.on_frame
+    print dom.on_resize
+    print dom.on_keyboard
+    print dom.on_pointer
+    print dom.on_focus
+    print dom.on_pointer_lock
+    print dom.on_submit
+    print dom.on
+    print dom.on_input
+}
