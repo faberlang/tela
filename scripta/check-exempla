@@ -178,7 +178,13 @@ RUNTIME_PKG
 cat > "$SCRATCH/node_modules/@faber/runtime/index.d.ts" <<'RUNTIME_DTS'
 export type DisplayHint =
   | "unknown" | "textus" | "ascii" | "numerus" | "fractus" | "bivalens"
-  | "nihil" | "vacuum" | "valor" | "instans" | "regex";
+  | "nihil" | "vacuum" | "valor" | "instans" | "regex"
+  | { kind: "nullable"; inner: DisplayHint }
+  | { kind: "lista"; element: DisplayHint }
+  | { kind: "tensor"; element: DisplayHint }
+  | { kind: "sparsa"; element: DisplayHint }
+  | { kind: "map"; key: DisplayHint; value: DisplayHint }
+  | { kind: "set"; element: DisplayHint };
 export declare const display: {
   value(value: any, hint?: DisplayHint): string;
 };

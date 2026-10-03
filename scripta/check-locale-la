@@ -93,18 +93,23 @@ expect_codes "$PROOF/invented-members.fab" "SEM002.qualified_type_not_exported"
 echo "check-locale-la: negative missing English export"
 expect_codes "$PROOF/absent-member.fab" "SEM004.namespace_missing_export"
 
+# Emit keeps the canonical English member names (radix contract, recorded in
+# the radix lane's `proof(locale): Latin consumer imports English tela via
+# canonical members`), so the emitted symbol is `html_view` even though the
+# call site reads `html_visus`. The surface projection itself is proven by the
+# positive `expect_ok` checks above.
 echo "check-locale-la: emit rust"
 if ! rust_out="$("$RADIX_BIN" emit -t rust --locale la "$PROOF/latin-consumer.fab" 2>&1)"; then
     echo "$rust_out" >&2
     echo "check-locale-la: rust emit failed" >&2
     exit 1
 fi
-if ! grep -q "html_visus" <<<"$rust_out"; then
+if ! grep -q "html_view" <<<"$rust_out"; then
     echo "$rust_out" >&2
-    echo "check-locale-la: rust emit missing html_visus" >&2
+    echo "check-locale-la: rust emit missing html_view" >&2
     exit 1
 fi
-echo "check-locale-la: rust emit contains html_visus"
+echo "check-locale-la: rust emit contains html_view"
 
 echo "check-locale-la: emit ts"
 if ! ts_out="$("$RADIX_BIN" emit -t ts --locale la "$PROOF/latin-consumer.fab" 2>&1)"; then
@@ -112,12 +117,12 @@ if ! ts_out="$("$RADIX_BIN" emit -t ts --locale la "$PROOF/latin-consumer.fab" 2
     echo "check-locale-la: ts emit failed" >&2
     exit 1
 fi
-if ! grep -q "html_visus" <<<"$ts_out"; then
+if ! grep -q "html_view" <<<"$ts_out"; then
     echo "$ts_out" >&2
-    echo "check-locale-la: ts emit missing html_visus" >&2
+    echo "check-locale-la: ts emit missing html_view" >&2
     exit 1
 fi
-echo "check-locale-la: ts emit contains html_visus"
+echo "check-locale-la: ts emit contains html_view"
 
 if [[ -n "${FABER_BIN:-}" && -x "${FABER_BIN}" ]]; then
     :

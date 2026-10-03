@@ -392,21 +392,26 @@ fn element_query_selector(FakeElement el, string selector) → FakeElement ∪ n
 }
 
 fn element_query_all(FakeElement el, string selector) → list<FakeElement> {
-    var list<FakeElement> out ← empty
-    query_all_into(el.children, selector, out)
-    return out
+    return query_all_into(el.children, selector)
 }
 
-fn query_all_into(list<FakeElement> children, string selector, list<FakeElement> out) → void {
+fn query_all_into(list<FakeElement> children, string selector) → list<FakeElement> {
+    var list<FakeElement> out ← empty
     var int i ← 0
     while i < children.length() {
         const FakeElement child ← children[i]
         if element_matches(child, selector) {
-            out.append(child)
+            out ← out.added(child)
         }
-        query_all_into(child.children, selector, out)
+        const list<FakeElement> tail ← query_all_into(child.children, selector)
+        var int j ← 0
+        while j < tail.length() {
+            out ← out.added(tail[j])
+            j ← j + 1
+        }
         i ← i + 1
     }
+    return out
 }
 
 fn element_append_child(FakeElement parent, FakeElement child) → void {
@@ -518,9 +523,7 @@ fn doc_query_selector(FakeDocument doc, string selector) → FakeElement ∪ non
 }
 
 fn doc_query_all(FakeDocument doc, string selector) → list<FakeElement> {
-    var list<FakeElement> out ← empty
-    query_all_into(doc.children, selector, out)
-    return out
+    return query_all_into(doc.children, selector)
 }
 
 # Build a region root for a selector (e.g. "#root") under the body.

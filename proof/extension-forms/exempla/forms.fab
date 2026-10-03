@@ -25,8 +25,8 @@ locale = "en"
 # fix:snapshot-name-collision, fix:codegen001). fix:g4 — REMOVED (the U0
 # probe re-verified exempla-mode consumption green).
 
-import from "formslib:forms" public * ut forms
-import from "tela:tela" public * ut tela
+import from "formslib:forms" public * as forms
+import from "tela:tela" public * as tela
 
 main {
     # --- field (text input) — form-field-<name> -------------------------
@@ -38,9 +38,9 @@ main {
     assert campo_invalid_html ≡ «<input type="text" aria-label="Name" aria-invalid="true" aria-describedby="form-error-name" value="Ada" data-tela="form-field-name">»
     # The ARIA structure (inside the bytes): the invalid surface + the
     # describedby association.
-    assert campo_invalid_html.continet(«aria-invalid="true"»)
-    assert campo_invalid_html.continet(«aria-describedby="form-error-name"»)
-    assert not campo_html.continet("aria-describedby")
+    assert campo_invalid_html.contains(«aria-invalid="true"»)
+    assert campo_invalid_html.contains(«aria-describedby="form-error-name"»)
+    assert not campo_html.contains("aria-describedby")
 
     # --- checkbox — form-checkbox-<name> (aria-checked) -----------------
     const string boxum_selectum_html ← tela.html_view(forms.checkbox(forms.checkbox_props("agree", "Agree", "true", "false"))) coalesce ""
@@ -71,10 +71,10 @@ main {
     assert grex_invalid_html ≡ «<div data-tela="form-control-name"><input type="text" aria-label="Name" aria-invalid="true" aria-describedby="form-error-name" data-tela="form-field-name"><div role="alert" data-tela="form-error-name">Required</div></div>»
 
     # --- deterministic identity scheme (data-tela values) ----------------
-    assert campo_html.continet(«data-tela="form-field-name"»)
-    assert boxum_selectum_html.continet(«data-tela="form-checkbox-agree"»)
-    assert selectum_html.continet(«data-tela="form-select-tone"»)
-    assert error_html.continet(«data-tela="form-error-name"»)
-    assert regio_viva_html.continet(«data-tela="form-live"»)
-    assert grex_html.continet(«data-tela="form-control-name"»)
+    assert campo_html.contains(«data-tela="form-field-name"»)
+    assert boxum_selectum_html.contains(«data-tela="form-checkbox-agree"»)
+    assert selectum_html.contains(«data-tela="form-select-tone"»)
+    assert error_html.contains(«data-tela="form-error-name"»)
+    assert regio_viva_html.contains(«data-tela="form-live"»)
+    assert grex_html.contains(«data-tela="form-control-name"»)
 }
