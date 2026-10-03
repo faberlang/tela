@@ -53,6 +53,22 @@ fn probe_live_surface() → list<dom.Subscription> {
     print opts
     print lock
     print requested
+    print handle_frame
+    print handle_resize
+    print handle_key
+    print handle_pointer
+    print handle_focus
+    print handle_lock
+    print handle_submit
+    print handle_event
+    print dom.on_frame
+    print dom.on_resize
+    print dom.on_keyboard
+    print dom.on_pointer
+    print dom.on_focus
+    print dom.on_pointer_lock
+    print dom.on_submit
+    print dom.on
     dom.text_set(root, "ok")
     dom.attr_set(root, "data-ok", "1")
     dom.class_add(root, "ready")
