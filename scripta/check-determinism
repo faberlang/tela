@@ -90,8 +90,8 @@
 #     Rust-lane capture must equal the TS-lane capture (sha equality) and
 #     the Rust primary path activates automatically — no harness change.
 #   Fallback (TS-lane composition, the proven lane): emit valida/tela/
-#     extension/main, assemble into ONE self-contained file (single-module
-#     shape, no runtime imports), run twice, byte-compare.
+#     extension/forms/main as a module graph, compile the composition twice
+#     independently, run each compilation, and byte-compare their output.
 #   TS lane analog: double-emit the kernel and byte-compare the emitted
 #     files; tsc --noEmit on the assembled composition.
 set -euo pipefail
@@ -117,7 +117,7 @@ fi
 
 RADIX_BIN="$RADIX/target/debug/radix"
 if [[ ! -x "$RADIX_BIN" ]]; then
-  (cd "$RADIX" && cargo build -q -p radix --bin radix)
+  (cd "$RADIX" && cargo build -q -p radix-cli --bin radix)
 fi
 
 sha256() {
@@ -268,9 +268,16 @@ export declare const exact: {
   trueDivF32(a: number, b: number): number;
 };
 RUNTIME_DTS
-cat > "$SCRATCH/node_modules/@faber/runtime/index.js" <<'RUNTIME_JS'
-// Harness stand-in for @faber/runtime (string carriers only; the full hint
-// family lives in faber/runtime/typescript/display.ts).
+RUNTIME_TS="${FABER_RUNTIME_TS:-$ROOT/../faber/runtime/typescript}"
+if [[ ! -f "$RUNTIME_TS/exact.ts" ]]; then
+  echo "check-determinism: missing faber runtime package at $RUNTIME_TS (set FABER_RUNTIME_TS)" >&2
+  exit 1
+fi
+RUNTIME_TS="$(cd "$RUNTIME_TS" && pwd)"
+cat > "$SCRATCH/node_modules/@faber/runtime/index.js" <<RUNTIME_JS
+// exact is the authoritative Faber runtime module. Only display is a
+// string-carrier harness shim; it is not involved in arithmetic assertions.
+export * as exact from "$RUNTIME_TS/exact.ts";
 export const display = {
   value(value, hint = "unknown") {
     if (value === null || value === undefined) {
@@ -281,16 +288,6 @@ export const display = {
     }
     return String(value);
   },
-};
-export const exact = {
-  chk: (v) => v, add: (a, b) => a + b, sub: (a, b) => a - b, mul: (a, b) => a * b,
-  div: (a, b) => Math.trunc(a / b), mod: (a, b) => a % b,
-  shl: (a, n) => a * 2 ** n, shr: (a, n) => Math.floor(a / 2 ** n),
-  floatRem: (a, b) => a % b, neg: (a) => -a, not: (a) => ~a, abs: (a) => Math.abs(a),
-  pow: (base, exponent) => base ** exponent, hi: () => 0, lo: () => 0,
-  join: (hi) => hi, and: (a, b) => a & b, or: (a, b) => a | b, xor: (a, b) => a ^ b,
-  store: (v) => v, clamp: (v, lo, hi) => Math.min(Math.max(v, lo), hi),
-  wrap: (v) => v, trueDiv: (a, b) => a / b, trueDivF32: (a, b) => a / b,
 };
 RUNTIME_JS
 printf '{ "type": "module" }\n' > "$SCRATCH/package.json"
@@ -310,10 +307,12 @@ if ! cmp -s "$SCRATCH/forms-ident-1.ts" "$SCRATCH/forms-ident-2.ts"; then
 fi
 
 if [[ "$RUST_RUN_OK" -ne 1 ]]; then
-  echo "TS lane: compiling + running the assembled composition (build 1/2)"
-  tsc --strict --target ES2020 --module ESNext --moduleResolution bundler --skipLibCheck --outDir "$SCRATCH/dist" "$SCRATCH/main.ts"
-  node "$SCRATCH/dist/main.js" > "$BUILD/static-1.txt" 2>&1
-  node "$SCRATCH/dist/main.js" > "$BUILD/static-2.txt" 2>&1
+  echo "TS lane: independently compiling + running the assembled composition (build 1/2)"
+  tsc --strict --target ES2020 --module ESNext --moduleResolution bundler --skipLibCheck --outDir "$SCRATCH/dist-1" "$SCRATCH/main.ts"
+  node "$SCRATCH/dist-1/main.js" > "$BUILD/static-1.txt" 2>&1
+  echo "TS lane: independently compiling + running the assembled composition (build 2/2)"
+  tsc --strict --target ES2020 --module ESNext --moduleResolution bundler --skipLibCheck --outDir "$SCRATCH/dist-2" "$SCRATCH/main.ts"
+  node "$SCRATCH/dist-2/main.js" > "$BUILD/static-2.txt" 2>&1
 fi
 
 # ---- fail-closed byte comparison -----------------------------------------
@@ -331,4 +330,4 @@ H2="$(sha256 "$BUILD/static-2.txt")"
 } > "$BUILD/hashes.txt"
 cat "$BUILD/hashes.txt"
 
-echo "check-determinism: green (byte-identical double build; build/ has the evidence)"
+echo "check-determinism: green (byte-identical output from two independent TS compilations; build/ has the evidence)"

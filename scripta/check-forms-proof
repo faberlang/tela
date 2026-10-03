@@ -8,11 +8,9 @@
 #      `+++` frontmatter), and the consumer (canary-app) under the
 #      benchmark libhome.
 #   2. TS lane A — the PACKAGE EXEMPLA GATE: emit valida/tela/forms + the
-#      exempla, assemble ONE self-contained file (strip + namespace
-#      bindings — the check-exempla mechanics), `tsc --noEmit`, then
-#      `node` — the exempla's byte-exact static + ARIA assertions EXECUTE
-#      (fail-closed: any assertion failure or non-zero exit FAILS the
-#      check).
+#      exempla into the TS module graph, then `tsc` + `node` — the exempla's
+#      byte-exact static + ARIA assertions EXECUTE (fail-closed: any assertion
+#      failure or non-zero exit FAILS the check).
 #   3. TS lane B — the CONSUMER ASSEMBLY GATE: emit valida/tela/extension/
 #      forms/main, assemble, `tsc --noEmit`, then `node` — the three-
 #      package assembly + ordering + dedup + fail-closed regressions + the
@@ -44,7 +42,7 @@ fi
 
 RADIX_BIN="$RADIX/target/debug/radix"
 if [[ ! -x "$RADIX_BIN" ]]; then
-  (cd "$RADIX" && cargo build -q -p radix --bin radix)
+  (cd "$RADIX" && cargo build -q -p radix-cli --bin radix)
 fi
 
 export FABER_LIBRARY_HOME="$ROOT/proof/benchmark/libhome"
@@ -110,9 +108,27 @@ export type DisplayHint =
 export declare const display: { value(value: any, hint?: DisplayHint): string };
 export declare const exact: { chk(v: number): number; add(a: number, b: number): number; sub(a: number, b: number): number; mul(a: number, b: number): number; div(a: number, b: number): number; mod(a: number, b: number): number; shl(a: number, n: number): number; shr(a: number, n: number): number; floatRem(a: number, b: number): number; neg(a: number): number; not(a: number): number; abs(a: number): number; pow(base: number, exponent: number): number; hi(a: number): number; lo(a: number): number; join(hi: number, lo: number): number; and(a: number, b: number): number; or(a: number, b: number): number; xor(a: number, b: number): number; store(v: number, lo: number, hi: number, ty: string, pos: string, extra: string): number; clamp(v: number, lo: number, hi: number): number; wrap(v: number, bits: number, signed: boolean): number; trueDiv(a: number, b: number): number; trueDivF32(a: number, b: number): number };
 RUNTIME_DTS
-cat > "$SCRATCH/node_modules/@faber/runtime/index.js" <<'RUNTIME_JS'
-export const display = { value(value, hint = "unknown") { if (value === null || value === undefined) { return hint === "vacuum" ? "vacuum" : "nihil"; } if (hint === "bivalens") { return value ? "verum" : "falsum"; } return String(value); } };
-export const exact = { chk: (v) => v, add: (a, b) => a + b, sub: (a, b) => a - b, mul: (a, b) => a * b, div: (a, b) => Math.trunc(a / b), mod: (a, b) => a % b, shl: (a, n) => a * 2 ** n, shr: (a, n) => Math.floor(a / 2 ** n), floatRem: (a, b) => a % b, neg: (a) => -a, not: (a) => ~a, abs: (a) => Math.abs(a), pow: (b, e) => b ** e, hi: () => 0, lo: () => 0, join: (h) => h, and: (a, b) => a & b, or: (a, b) => a | b, xor: (a, b) => a ^ b, store: (v) => v, clamp: (v, lo, hi) => Math.min(Math.max(v, lo), hi), wrap: (v) => v, trueDiv: (a, b) => a / b, trueDivF32: (a, b) => a / b };
+RUNTIME_TS="${FABER_RUNTIME_TS:-$ROOT/../faber/runtime/typescript}"
+if [[ ! -f "$RUNTIME_TS/exact.ts" ]]; then
+  echo "check-forms-proof: missing faber runtime package at $RUNTIME_TS (set FABER_RUNTIME_TS)" >&2
+  exit 1
+fi
+RUNTIME_TS="$(cd "$RUNTIME_TS" && pwd)"
+cat > "$SCRATCH/node_modules/@faber/runtime/index.js" <<RUNTIME_JS
+// exact is the authoritative Faber runtime module. Only display is a
+// string-carrier harness shim; it is not involved in arithmetic assertions.
+export * as exact from "$RUNTIME_TS/exact.ts";
+export const display = {
+  value(value, hint = "unknown") {
+    if (value === null || value === undefined) {
+      return hint === "vacuum" ? "vacuum" : "nihil";
+    }
+    if (hint === "bivalens") {
+      return value ? "verum" : "falsum";
+    }
+    return String(value);
+  },
+};
 RUNTIME_JS
 printf '{ "type": "module" }\n' > "$SCRATCH/package.json"
 
