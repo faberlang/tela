@@ -132,9 +132,9 @@ union Message {
 # EventBinding-shaped binding: one event subscription keyed to a stable node
 # identity, carrying a typed message-producing closure (Branch B plan).
 class EventBinding {
-    string identity
-    string event_name
-    (tela.EventName) → Message message
+    var string identity
+    var string event_name
+    var (tela.EventName) → Message message
 }
 
 fn selected(string identity) → Message {
@@ -220,10 +220,10 @@ fn index_in(string text, string fragment) → int {
 # single tab stop leaves as a unit (§1.3).
 fn key_message(string focused_identity, string clavis) → Message {
     const int index ← identity_index(focused_identity)
-    if clavis ≡ «ArrowRight" or clavis ≡ "ArrowDown» {
+    if clavis ≡ "ArrowRight" or clavis ≡ "ArrowDown" {
         return moved(wrapped_identity(index + 1))
     }
-    if clavis ≡ «ArrowLeft" or clavis ≡ "ArrowUp» {
+    if clavis ≡ "ArrowLeft" or clavis ≡ "ArrowUp" {
         return moved(wrapped_identity(index - 1))
     }
     if clavis ≡ "Home" {
@@ -232,7 +232,7 @@ fn key_message(string focused_identity, string clavis) → Message {
     if clavis ≡ "End" {
         return moved(wrapped_identity(-1))
     }
-    if clavis ≡ «Space" or clavis ≡ "Enter» {
+    if clavis ≡ "Space" or clavis ≡ "Enter" {
         return selected(focused_identity)
     }
     return moved(focused_identity)
@@ -298,17 +298,17 @@ union FormMessage {
 # message-producing closure. The event spellings come from the package's
 # contract constants (forms.eventus_* — the G4-safe string surface).
 class FormBinding {
-    string identity
-    string event_name
-    (tela.EventName) → FormMessage message
+    var string identity
+    var string event_name
+    var (tela.EventName) → FormMessage message
 }
 
 # The form model — the app-side validation state for one field identity
 # (error "" = valid; the error text is the invalid → aria-invalid source).
 class FieldState {
-    string identity
-    string value
-    string error
+    var string identity
+    var string value
+    var string error
 }
 
 # Message-producing helpers (the closure bodies).
@@ -784,17 +784,17 @@ union ButtonMessage {
 # message-producing closure. The event name is the props' declared
 # activation event (the event surface).
 class ButtonBinding {
-    string identity
-    string event_name
-    (tela.EventName) → ButtonMessage message
+    var string identity
+    var string event_name
+    var (tela.EventName) → ButtonMessage message
 }
 
 # The button model — the app-side activation state (the press count + the
 # last activated identity; the proof's consequence tracker — the button
 # itself is stateless, the consequence is the app's).
 class ButtonState {
-    int presses
-    string last
+    var int presses
+    var string last
 }
 
 fn button_state(int presses, string last) → ButtonState {
@@ -939,18 +939,18 @@ union FieldMessage {
 # U5/U6 pattern): one input subscription keyed to a stable node identity,
 # bound to the catalog's declared input event.
 class FieldBinding {
-    string identity
-    string event_name
+    var string identity
+    var string event_name
 }
 
 # The field model — the app-side validation state for ONE catalog field
 # (name + label + value + error; the error is the validation source —
 # the catalog's static mapping derives aria-invalid from it).
 class FieldPlanState {
-    string name
-    string label
-    string value
-    string error
+    var string name
+    var string label
+    var string value
+    var string error
 }
 
 fn field_plan_state(string name, string label, string value, string error) → FieldPlanState {
@@ -1388,7 +1388,7 @@ main {
     # data-ref-variant attribute), THE VISIBLE FOCUS (:focus-visible — the
     # campaign §8 visible-focus contract), the disabled dim (:disabled).
     assert css_lumen.contains("[data-tela^='ref-button-']")
-    assert css_lumen.contains(«[data-tela^='ref-button-'][data-ref-variant="primary"]»)
+    assert css_lumen.contains(«[data-tela^='ref-button-'][data-ref-variant='primary']»)
     assert css_lumen.contains("[data-tela^='ref-button-']:focus-visible")
     assert css_lumen.contains("[data-tela^='ref-button-']:disabled")
     assert css_lumen.contains("var(--ref-button-focus)")
@@ -1952,7 +1952,7 @@ main {
     const FieldPlanState fp0 ← field_plan_state("name", "Name", "", "")
     const FieldMessage fmsg ← field_text("form-field-name", "Ada")
     const FieldPlanState fp1 ← update_field_plan(fp0, fmsg)
-    assert fp1.value ≡ «Ada" and fp1.error ≡ "»
+    assert fp1.value ≡ "Ada" and fp1.error ≡ ""
     assert field_plan_announcement(fp0, fp1) ≡ "form-field-name valid"
     const FieldMessage fmsg2 ← field_text("form-field-name", "")
     const FieldPlanState fp2 ← update_field_plan(fp1, fmsg2)
@@ -1964,7 +1964,7 @@ main {
     assert field_plan_announcement(fp2, fp3) ≡ "form-field-name valid"
     const FieldMessage fmsg4 ← field_text("form-field-email", "x")
     const FieldPlanState fp4 ← update_field_plan(fp3, fmsg4)
-    assert fp4.value ≡ «Ada" and fp4.error ≡ "»
+    assert fp4.value ≡ "Ada" and fp4.error ≡ ""
     # The update loop's view-render input: the model → the composition.
     const string html_field_plan ← tela.html_view(field_plan_composition(fp3)) coalesce ""
     assert html_field_plan.contains(«value="Ada"»)

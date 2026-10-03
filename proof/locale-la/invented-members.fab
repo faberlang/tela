@@ -5,7 +5,7 @@ locale = "la"
 # Negative: invented Latin names are not in locale/la/pack.toml.
 # Expected: SEM002.qualified_type_not_exported (or SEM004).
 
-importa ex "tela:tela" privata * ut tela
+importa ex "tela:tela" * ut tela
 
 functio probe() → textus {
     fixum tela.Visum visus ← tela.textus_ping("salve")

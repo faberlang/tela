@@ -5,7 +5,7 @@ locale = "la"
 # Negative: a missing export fails after the namespace resolves.
 # Expected: SEM004.namespace_missing_export.
 
-importa ex "tela:tela" privata * ut tela
+importa ex "tela:tela" * ut tela
 
 functio probe() → textus {
     fixum tela.View visus ← tela.text_view("salve")

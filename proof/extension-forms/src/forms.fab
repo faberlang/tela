@@ -163,15 +163,15 @@ fn checkbox_props(string name, string label, string selected, string invalid) �
 
 @ public
 fn field(FieldProps props) → tela.View {
-    var list<tela.Attribute> attributes ← vacua
-    attributes.appende(tela.Attribute { name = "type", value = "text" })
-    attributes.appende(tela.Attribute { name = "aria-label", value = props.label })
-    attributes.appende(tela.Attribute { name = "aria-invalid", value = props.invalid })
+    var list<tela.Attribute> attributes ← empty
+    attributes.append(tela.Attribute { name = "type", value = "text" })
+    attributes.append(tela.Attribute { name = "aria-label", value = props.label })
+    attributes.append(tela.Attribute { name = "aria-invalid", value = props.invalid })
     if props.invalid ≡ "true" {
-        attributes.appende(tela.Attribute { name = "aria-describedby", value = "form-error-" + props.name })
+        attributes.append(tela.Attribute { name = "aria-describedby", value = "form-error-" + props.name })
     }
     if not (props.value ≡ "") {
-        attributes.appende(tela.Attribute { name = "value", value = props.value })
+        attributes.append(tela.Attribute { name = "value", value = props.value })
     }
     return tela.element_full(
         tela.new_identity("form-field-" + props.name),
@@ -189,13 +189,13 @@ fn field(FieldProps props) → tela.View {
 
 @ public
 fn checkbox(CheckboxProps props) → tela.View {
-    var list<tela.Attribute> attributes ← vacua
-    attributes.appende(tela.Attribute { name = "type", value = "checkbox" })
-    attributes.appende(tela.Attribute { name = "aria-label", value = props.label })
-    attributes.appende(tela.Attribute { name = "aria-checked", value = props.selected })
-    attributes.appende(tela.Attribute { name = "aria-invalid", value = props.invalid })
+    var list<tela.Attribute> attributes ← empty
+    attributes.append(tela.Attribute { name = "type", value = "checkbox" })
+    attributes.append(tela.Attribute { name = "aria-label", value = props.label })
+    attributes.append(tela.Attribute { name = "aria-checked", value = props.selected })
+    attributes.append(tela.Attribute { name = "aria-invalid", value = props.invalid })
     if props.invalid ≡ "true" {
-        attributes.appende(tela.Attribute { name = "aria-describedby", value = "form-error-" + props.name })
+        attributes.append(tela.Attribute { name = "aria-describedby", value = "form-error-" + props.name })
     }
     return tela.element_full(
         tela.new_identity("form-checkbox-" + props.name),
@@ -213,16 +213,16 @@ fn checkbox(CheckboxProps props) → tela.View {
 
 @ public
 fn select(SelectProps props) → tela.View {
-    var list<tela.Attribute> attributes ← vacua
-    attributes.appende(tela.Attribute { name = "aria-label", value = props.label })
-    attributes.appende(tela.Attribute { name = "aria-invalid", value = props.invalid })
+    var list<tela.Attribute> attributes ← empty
+    attributes.append(tela.Attribute { name = "aria-label", value = props.label })
+    attributes.append(tela.Attribute { name = "aria-invalid", value = props.invalid })
     if props.invalid ≡ "true" {
-        attributes.appende(tela.Attribute { name = "aria-describedby", value = "form-error-" + props.name })
+        attributes.append(tela.Attribute { name = "aria-describedby", value = "form-error-" + props.name })
     }
-    var list<tela.View> children ← vacua
+    var list<tela.View> children ← empty
     var int i ← 0
-    while i < props.options.longitudo() {
-        children.appende(tela.element_view(tela.html_space(), "option", [ tela.text_view(props.options[i]) ]))
+    while i < props.options.length() {
+        children.append(tela.element_view(tela.html_space(), "option", [ tela.text_view(props.options[i]) ]))
         i ← i + 1
     }
     return tela.element_full(
@@ -244,9 +244,9 @@ fn select(SelectProps props) → tela.View {
 # (the association structure is stable — the group always carries it).
 @ public
 fn error_region(string name, string text) → tela.View {
-    var list<tela.View> children ← vacua
+    var list<tela.View> children ← empty
     if not (text ≡ "") {
-        children.appende(tela.text_view(text))
+        children.append(tela.text_view(text))
     }
     return tela.element_full(
         tela.new_identity("form-error-" + name),
@@ -280,9 +280,9 @@ fn form_live_region() → tela.View {
 # form-error-<name> when invalid) + its error node under form-control-<name>.
 @ public
 fn field_group(FieldProps props) → tela.View {
-    var list<tela.View> children ← vacua
-    children.appende(field(props))
-    children.appende(error_region(props.name, props.error))
+    var list<tela.View> children ← empty
+    children.append(field(props))
+    children.append(error_region(props.name, props.error))
     return tela.element_full(
         tela.new_identity("form-control-" + props.name),
         tela.html_space(),

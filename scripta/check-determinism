@@ -145,15 +145,23 @@ version = "0.0.0"
 edition = "2021"
 
 [dependencies]
-faber = { package = "faber-runtime", path = "$ROOT/../faber/runtime/rust" }
+faber = { path = "$ROOT/../faber/runtime/rust" }
 
 [workspace]
 EOF
   echo "Rust path: emitting + cargo run (build 1/2)"
-  (cd "$CRATE" && cargo run -q) > "$BUILD/static-1.txt" 2>&1
-  (cd "$CRATE" && cargo run -q) > "$BUILD/static-2.txt" 2>&1
-  RUST_RUN_OK=1
-  echo "Rust path: green (composition built twice via scratch cargo run)"
+  if (cd "$CRATE" && cargo run -q) > "$BUILD/static-1.txt" 2>&1 \
+    && (cd "$CRATE" && cargo run -q) > "$BUILD/static-2.txt" 2>&1; then
+    RUST_RUN_OK=1
+    echo "Rust path: green (composition built twice via scratch cargo run)"
+  else
+    BLOCK_REASON="$(grep -m1 'error\[' "$BUILD/static-1.txt" || tail -1 "$BUILD/static-1.txt")"
+    echo "Rust path: BLOCKED at cargo — ${BLOCK_REASON}"
+    echo "  (the emitted Rust does not compile under the runtime crate; the"
+    echo "  recorded codegen defect class. Falling back to the proven TS-lane"
+    echo "  composition lane per spec U6 (e); the determinism gate is NOT"
+    echo "  weakened.)"
+  fi
 else
   BLOCK_REASON="$(grep -m1 'error\[' "$SCRATCH/rust-emit.log" || tail -1 "$SCRATCH/rust-emit.log")"
   echo "Rust path: BLOCKED — ${BLOCK_REASON}"
@@ -165,71 +173,147 @@ else
 fi
 
 # ---- TS-lane composition lane (proven fallback; U5 evidence shape) -------
-echo "TS lane: emitting valida / tela / extension / forms / browser / dom / main"
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/validate.fab" -o "$SCRATCH/valida.ts" >/dev/null
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela.ts" >/dev/null
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/extension-lib/src/extension.fab" -o "$SCRATCH/extension.ts" >/dev/null
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms.ts" >/dev/null
+# The radix TS emit is an import-based module graph: emitted modules carry
+# `import * as <ns> from "./tela-<module>.js"` specifiers and
+# namespace-qualified type positions (tela.View). The lane assembles the
+# graph AS a module graph — every emitted module is placed at its specifier
+# path with an export surface collected from its emitted top-level
+# declarations, and the @faber/runtime package seam is provided as a real
+# module. (The former single-file const-object flattening cannot carry the
+# emitted namespace-qualified types or constructors.)
+echo "TS lane: emitting the module graph (valida/tela/browser/reference/dom + extension/formslib + main)"
+
+INTRINSICS='Number|String|Boolean|Object|Array|Function|Symbol'
+# The emitter's est-variant probe reads `value.__faberValorTag` on the static
+# type; strict TS rejects the property access on a type that does not declare
+# it. The seam narrows through an inline tag-carrier view (compile-time cast
+# only; the emitted runtime expression is unchanged).
+seam_normalize() {
+  perl -pi -e 's/value\.__faberValorTag/(value as { __faberValorTag?: unknown }).__faberValorTag/g' "$1"
+}
+emit_module() { # <fab path> <specifier file name>
+  "$RADIX_BIN" emit -t ts --locale en "$1" -o "$SCRATCH/$2" >/dev/null
+  # Intrinsic-augmentation interfaces are script-only; wrap in `declare global`.
+  perl -0pi -e "s/^interface ($INTRINSICS) \\{\n(.*?)^\\}\n/declare global {\ninterface \$1 {\n\$2}\n}\n/ms" "$SCRATCH/$2"
+  seam_normalize "$SCRATCH/$2"
+  local names
+  names="$(grep -E '^(function|class|interface|type|const|let|var|enum) [A-Za-z_$]' "$SCRATCH/$2" \
+    | sed -E 's/^(function|class|interface|type|const|let|var|enum) ([A-Za-z_$][A-Za-z0-9_$]*).*/\2/' \
+    | sort -u \
+    | grep -vE "^($INTRINSICS)$" \
+    | paste -sd, - \
+    | sed 's/,/, /g')"
+  if [[ -n "$names" ]]; then
+    printf '\nexport { %s };\n' "$names" >> "$SCRATCH/$2"
+  else
+    printf '\nexport {};\n' >> "$SCRATCH/$2"
+  fi
+}
+
+emit_module "$ROOT/src/validate.fab" "tela-validate.ts"
+emit_module "$ROOT/src/tela.fab" "tela-tela.ts"
+emit_module "$ROOT/src/browser.fab" "tela-browser.ts"
+emit_module "$ROOT/src/reference.fab" "tela-reference.ts"
+emit_module "$ROOT/src/dom.fab" "tela-dom.ts"
+emit_module "$ROOT/proof/benchmark/extension-lib/src/extension.fab" "extensionlib-extension.ts"
+emit_module "$ROOT/proof/extension-forms/src/forms.fab" "formslib-forms.ts"
 "$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab" -o "$SCRATCH/main.ts" >/dev/null
-# Stage 4 U7: the canary-app imports tela:browser + tela:dom (the real
-# seam — web-surface-import U4 re-points it from faber-web's web:dom).
-# The composition assembly binds the browser module + the emitted tela:dom
-# provider module (types + inert stubs — the main IIFE never calls the seam
-# at load here).
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/browser.fab" -o "$SCRATCH/browser.ts" >/dev/null
-# Stage 5 U9: the reference catalog module (the canary's runner
-# references tela:reference — the pre-existing staleness that left this
-# gate RED since U5 is repaired at this boundary).
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/reference.fab" -o "$SCRATCH/reference.ts" >/dev/null
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/dom.fab" -o "$SCRATCH/dom.ts" >/dev/null
+
+# The @faber/runtime package seam: the emitted modules import
+# `{ display, exact }` from the package instead of inlining the family.
+# `display` mirrors the string-carrier contract (the full hint family is
+# authoritative at faber/runtime/typescript/display.ts); `exact` is the
+# package's own arithmetic module, stood in here.
+mkdir -p "$SCRATCH/node_modules/@faber/runtime"
+cat > "$SCRATCH/node_modules/@faber/runtime/package.json" <<'RUNTIME_PKG'
+{ "name": "@faber/runtime", "type": "module", "main": "./index.js", "types": "./index.d.ts" }
+RUNTIME_PKG
+cat > "$SCRATCH/node_modules/@faber/runtime/index.d.ts" <<'RUNTIME_DTS'
+export type DisplayHint =
+  | "unknown" | "textus" | "ascii" | "numerus" | "fractus" | "bivalens"
+  | "nihil" | "vacuum" | "valor" | "instans" | "regex"
+  | { kind: "nullable"; inner: DisplayHint }
+  | { kind: "lista"; element: DisplayHint }
+  | { kind: "tensor"; element: DisplayHint }
+  | { kind: "sparsa"; element: DisplayHint }
+  | { kind: "map"; key: DisplayHint; value: DisplayHint }
+  | { kind: "set"; element: DisplayHint };
+export declare const display: {
+  value(value: any, hint?: DisplayHint): string;
+};
+export declare const exact: {
+  chk(v: number): number;
+  add(a: number, b: number): number;
+  sub(a: number, b: number): number;
+  mul(a: number, b: number): number;
+  div(a: number, b: number): number;
+  mod(a: number, b: number): number;
+  shl(a: number, n: number): number;
+  shr(a: number, n: number): number;
+  floatRem(a: number, b: number): number;
+  neg(a: number): number;
+  not(a: number): number;
+  abs(a: number): number;
+  pow(base: number, exponent: number): number;
+  hi(a: number): number;
+  lo(a: number): number;
+  join(hi: number, lo: number): number;
+  and(a: number, b: number): number;
+  or(a: number, b: number): number;
+  xor(a: number, b: number): number;
+  store(v: number, lo: number, hi: number, ty: string, pos: string, extra: string): number;
+  clamp(v: number, lo: number, hi: number): number;
+  wrap(v: number, bits: number, signed: boolean): number;
+  trueDiv(a: number, b: number): number;
+  trueDivF32(a: number, b: number): number;
+};
+RUNTIME_DTS
+cat > "$SCRATCH/node_modules/@faber/runtime/index.js" <<'RUNTIME_JS'
+// Harness stand-in for @faber/runtime (string carriers only; the full hint
+// family lives in faber/runtime/typescript/display.ts).
+export const display = {
+  value(value, hint = "unknown") {
+    if (value === null || value === undefined) {
+      return hint === "vacuum" ? "vacuum" : "nihil";
+    }
+    if (hint === "bivalens") {
+      return value ? "verum" : "falsum";
+    }
+    return String(value);
+  },
+};
+export const exact = {
+  chk: (v) => v, add: (a, b) => a + b, sub: (a, b) => a - b, mul: (a, b) => a * b,
+  div: (a, b) => Math.trunc(a / b), mod: (a, b) => a % b,
+  shl: (a, n) => a * 2 ** n, shr: (a, n) => Math.floor(a / 2 ** n),
+  floatRem: (a, b) => a % b, neg: (a) => -a, not: (a) => ~a, abs: (a) => Math.abs(a),
+  pow: (base, exponent) => base ** exponent, hi: () => 0, lo: () => 0,
+  join: (hi) => hi, and: (a, b) => a & b, or: (a, b) => a | b, xor: (a, b) => a ^ b,
+  store: (v) => v, clamp: (v, lo, hi) => Math.min(Math.max(v, lo), hi),
+  wrap: (v) => v, trueDiv: (a, b) => a / b, trueDivF32: (a, b) => a / b,
+};
+RUNTIME_JS
+printf '{ "type": "module" }\n' > "$SCRATCH/package.json"
 
 echo "TS lane: double-emit byte-identity (kernel + forms package)"
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela-b.ts" >/dev/null
-if ! cmp -s "$SCRATCH/tela.ts" "$SCRATCH/tela-b.ts"; then
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela-ident-1.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela-ident-2.ts" >/dev/null
+if ! cmp -s "$SCRATCH/tela-ident-1.ts" "$SCRATCH/tela-ident-2.ts"; then
   echo "FAIL: double-emit of the kernel is not byte-identical" >&2
   exit 1
 fi
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms-b.ts" >/dev/null
-if ! cmp -s "$SCRATCH/forms.ts" "$SCRATCH/forms-b.ts"; then
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms-ident-1.ts" >/dev/null
+"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms-ident-2.ts" >/dev/null
+if ! cmp -s "$SCRATCH/forms-ident-1.ts" "$SCRATCH/forms-ident-2.ts"; then
   echo "FAIL: double-emit of the forms package is not byte-identical" >&2
   exit 1
 fi
 
-# Assemble into one self-contained file (single-module shape, no runtime
-# imports): drop the radix header (2 lines) and import lines, bind the
-# imported namespaces as const objects.
-strip() { sed '1,2d' "$1" | grep -v '^import .* from "'; }
-# The emitted tela:dom provider module's preamble + `Element` genus are
-# renamed so they do not collide with the tela module's own preamble / the
-# DOM lib's `Element`.
-strip_dom() { sed '1,2d' "$1" | grep -v '^import .* from "' | sed -e 's/\bFaberResult\b/FaberResultDom/g' -e 's/\bElement\b/DomElement/g'; }
-{
-  strip "$SCRATCH/valida.ts"
-  echo "const validate = { valid_space, valid_tag_name, valid_attribute_name, valid_name_in_space, valid_void_html, valid_void_structure };"
-  strip "$SCRATCH/tela.ts"
-  echo "const tela = { html_visus, css, theme_css, theme_style, theme, token, core_tokens, token_property_name, token_name_valid, theme_has_core_tokens, theme_has_token, assemble, bundle, order, deduplicated_bundles, topological_order, style_valid, unclean_style_text, bundle_for, in_list, dependencies_met, text_view, fragment_view, new_identity, html_space, svg_space, element_view, element_full, event_name, restore, direct, anchor, update, effect_identity, Attribute, Property, Identity, Declaration, Rule, Style, Token, Theme, Bundle, Order, EventName, Update };"
-  strip_dom "$SCRATCH/dom.ts"
-  # The tela:dom stub surface: the en module renames the value READ fn to
-  # `input_value` (fix:sem005-renamed — the en type keyword `value`), so
-  # the DOM_NS const binds the en spelling (the `value` route key is gone
-  # with the la module; the emitted main never calls it at load).
-  echo "const dom = { scope, query, require, all, snapshot, text_set, attr_set, attr_remove, class_add, class_remove, class_toggle, on, unsubscribe, input_value, value_set, on_input, on_submit, on_frame, on_resize, on_keyboard, on_pointer, on_focus, pointer_lock_state, request_pointer_lock, exit_pointer_lock, on_pointer_lock, prevent_default, fetch_text };"
-  strip "$SCRATCH/browser.ts"
-  echo "const browser = { region_root, event_subscription, binding, parse_identities, element_tag, count_occurrences, duplicate_identities, tag_name, tag_at, identities_from_nodes, tags_from_nodes, binding_status, hydration_diagnostics, mount, replace, dispose, focus_held, focus_target };"
-  strip "$SCRATCH/extension.ts"
-  echo "const ext = { chart_axis_muted, chart_axis_muted_dark, chart_grid_muted, chart_grid_muted_dark, chart_tokens, chart_tokens_dark, bar_meter, chart_style };"
-  strip "$SCRATCH/forms.ts"
-  echo "const forms = { field_props, checkbox_props, select_props, field, checkbox, select, error_region, form_live_region, field_group, form_field_invalid, form_field_valid, form_focus, form_tokens, form_style, field_event, change_event, submit_event, click_event, invalid_state, error_present };"
-  strip "$SCRATCH/reference.ts"
-  echo "const ref = { layout_stack, layout_grid, layout_prose, stack_props, grid_props, layout_prose_props, typography_heading, typography_prose, typography_emphasis, typography_scale, heading_props, prose_props, emphasis_props, scale_props, clamped_level, layout_style, typography_style, panel, badge, metric, panel_props, badge_props, metric_props, panel_style, badge_style, metric_style, table, table_row, table_props, table_style, segmented_control, segmented_props, segmented_option, segmented_options, segmented_live_region, selected_text, active_tabindex, segmented_style, button, button_props, button_event, button_style, field_input, field_input_props, field_invalid, field_error_region, field_live_region, field_control, field_style, field_input_event, field_error_for_value, field_announcement, ref_layout_gap, ref_layout_prose_measure, ref_type_scale_xs, ref_type_scale_sm, ref_type_scale_md, ref_type_scale_lg, ref_type_scale_xl, ref_type_heading_weight, ref_type_heading_margin, ref_type_prose_line_height, ref_type_prose_margin, ref_panel_surface, ref_panel_border, ref_panel_radius, ref_panel_padding, ref_badge_size, ref_badge_padding, ref_badge_radius, ref_metric_label_size, ref_metric_label_muted, ref_metric_value_size, ref_metric_value_weight, ref_table_border, ref_table_padding, ref_table_header_weight, ref_table_caption_muted, ref_seg_gap, ref_seg_radius, ref_seg_size, ref_seg_padding, ref_seg_border, ref_seg_selected_border, ref_button_size, ref_button_padding, ref_button_radius, ref_button_border, ref_button_text, ref_button_primary_background, ref_button_primary_text, ref_button_secondary_background, ref_button_ghost_background, ref_button_focus, ref_button_disabled_opacity, field_invalid_token, field_valid_token, field_focus_token, reference_tokens, StackProps, GridProps, LayoutProseProps, HeadingProps, ProseProps, EmphasisProps, ScaleProps, PanelProps, BadgeProps, MetricProps, TableProps, TableRow, SegmentedProps, ButtonProps, FieldInputProps };"
-  echo "const reference = ref;"
-  strip "$SCRATCH/main.ts"
-} > "$SCRATCH/composition.ts"
-
 if [[ "$RUST_RUN_OK" -ne 1 ]]; then
-  echo "TS lane: running the assembled composition (build 1/2)"
-  node "$SCRATCH/composition.ts" > "$BUILD/static-1.txt" 2>&1
-  node "$SCRATCH/composition.ts" > "$BUILD/static-2.txt" 2>&1
+  echo "TS lane: compiling + running the assembled composition (build 1/2)"
+  tsc --strict --target ES2020 --module ESNext --moduleResolution bundler --skipLibCheck --outDir "$SCRATCH/dist" "$SCRATCH/main.ts"
+  node "$SCRATCH/dist/main.js" > "$BUILD/static-1.txt" 2>&1
+  node "$SCRATCH/dist/main.js" > "$BUILD/static-2.txt" 2>&1
 fi
 
 # ---- fail-closed byte comparison -----------------------------------------
@@ -246,8 +330,5 @@ H2="$(sha256 "$BUILD/static-2.txt")"
   echo "byte-identical: yes"
 } > "$BUILD/hashes.txt"
 cat "$BUILD/hashes.txt"
-
-echo "TS lane: tsc --noEmit on the assembled composition"
-tsc --noEmit --strict --target ES2020 --module ESNext --moduleResolution bundler --skipLibCheck "$SCRATCH/composition.ts"
 
 echo "check-determinism: green (byte-identical double build; build/ has the evidence)"
