@@ -177,7 +177,7 @@ fn segment_order() → list<string> {
 fn identity_index(string identity) → int {
     const list<string> ordines ← segment_order()
     var int i ← 0
-    while i < ordines.length() {
+    while i ≺ ordines.length() {
         if ordines[i] ≡ identity {
             return i
         }
@@ -190,7 +190,7 @@ fn wrapped_identity(int index) → string {
     const list<string> ordines ← segment_order()
     const int longitudo ← ordines.length()
     var int i ← index
-    while i < 0 {
+    while i ≺ 0 {
         i ← i + longitudo
     }
     while i ≥ longitudo {
@@ -203,7 +203,7 @@ fn wrapped_identity(int index) → string {
 # assert: the extension bundle's selector appears before the forms bundle's).
 fn index_in(string text, string fragment) → int {
     var int i ← 0
-    while not (i + fragment.length() > text.length()) {
+    while not (i + fragment.length() ≻ text.length()) {
         if text.slice(i, i + fragment.length()) ≡ fragment {
             return i
         }
@@ -258,7 +258,7 @@ fn update_control(string selected, Message message) → string {
 # segment or when the update does not change selection.
 fn announcement(reference.SegmentedProps props, string selected) → string {
     const int index ← identity_index(selected)
-    if index < props.options.length() {
+    if index ≺ props.options.length() {
         return props.options[index] + " selected"
     }
     return ""
@@ -1496,7 +1496,7 @@ main {
     # ordering assert must probe a formslib-only selector.
     const int ext_index ← index_in(css_lumen, "[data-tela='tela-chart-bar']")
     const int forms_index ← index_in(css_lumen, "[data-tela^='form-checkbox-']")
-    assert ext_index < forms_index
+    assert ext_index ≺ forms_index
 
     # --- The Stage 3 static half (U3 done_when (a)) ------------------------
     # The segmented control renders deterministically through html_view:

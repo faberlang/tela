@@ -86,7 +86,7 @@ fn valid_tag_name(string name) → bool {
     # the covering form a future need would admit; the explicit loop stays
     # until then.
     var int i ← 1
-    while i < name.length() {
+    while i ≺ name.length() {
         const string ch ← name.slice(i, i + 1)
         if not tag_chars.contains(ch) then return false
         i ← i + 1
@@ -107,7 +107,7 @@ fn valid_attribute_name(string name) → bool {
     # the list<T>-receiver all/any surface; stays until a text-family twin
     # is admitted.
     var int i ← 0
-    while i < name.length() {
+    while i ≺ name.length() {
         const string ch ← name.slice(i, i + 1)
         if not attr_chars.contains(ch) then return false
         i ← i + 1

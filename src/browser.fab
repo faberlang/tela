@@ -140,26 +140,26 @@ fn identity_marker() → string {
 fn unescape(string text) → string {
     var string accum ← ""
     var int i ← 0
-    while i < text.length() {
+    while i ≺ text.length() {
         var string fragment ← text.slice(i, i + 1)
         var int step ← 1
-        if not (i + 5 > text.length()) and text.slice(i, i + 5) ≡ "&quot;" {
+        if not (i + 5 ≻ text.length()) and text.slice(i, i + 5) ≡ "&quot;" {
             fragment ← "§"('"')
             step ← 5
         }
-        if not (i + 5 > text.length()) and text.slice(i, i + 5) ≡ "&#39;" {
+        if not (i + 5 ≻ text.length()) and text.slice(i, i + 5) ≡ "&#39;" {
             fragment ← "'"
             step ← 5
         }
-        if not (i + 4 > text.length()) and text.slice(i, i + 4) ≡ "&amp;" {
+        if not (i + 4 ≻ text.length()) and text.slice(i, i + 4) ≡ "&amp;" {
             fragment ← "&"
             step ← 4
         }
-        if not (i + 4 > text.length()) and text.slice(i, i + 4) ≡ "&lt;" {
+        if not (i + 4 ≻ text.length()) and text.slice(i, i + 4) ≡ "&lt;" {
             fragment ← "<"
             step ← 4
         }
-        if not (i + 4 > text.length()) and text.slice(i, i + 4) ≡ "&gt;" {
+        if not (i + 4 ≻ text.length()) and text.slice(i, i + 4) ≡ "&gt;" {
             fragment ← ">"
             step ← 4
         }
@@ -173,12 +173,12 @@ fn unescape(string text) → string {
 fn parse_identities(string text) → list<string> {
     var list<string> identities ← empty
     var int i ← 0
-    while i < text.length() {
-        if not (i + 12 > text.length()) and text.slice(i, i + 12) ≡ identity_marker() {
+    while i ≺ text.length() {
+        if not (i + 12 ≻ text.length()) and text.slice(i, i + 12) ≡ identity_marker() {
             var string raw ← ""
             var int j ← i + 12
             var bool terminated ← false
-            while j < text.length() and not terminated {
+            while j ≺ text.length() and not terminated {
                 const string ch ← text.slice(j, j + 1)
                 if ch ≡ "§"('"') {
                     terminated ← true
@@ -208,12 +208,12 @@ fn parse_identities(string text) → list<string> {
 @ public
 fn element_tag(string text, string identity) → string ∪ none {
     var int i ← 0
-    while i < text.length() {
-        if not (i + 12 > text.length()) and text.slice(i, i + 12) ≡ identity_marker() {
+    while i ≺ text.length() {
+        if not (i + 12 ≻ text.length()) and text.slice(i, i + 12) ≡ identity_marker() {
             var string raw ← ""
             var int j ← i + 12
             var bool terminated ← false
-            while j < text.length() and not terminated {
+            while j ≺ text.length() and not terminated {
                 const string ch ← text.slice(j, j + 1)
                 if ch ≡ "§"('"') {
                     terminated ← true
@@ -226,7 +226,7 @@ fn element_tag(string text, string identity) → string ∪ none {
             if terminated and unescape(raw) ≡ identity {
                 var int a ← i
                 var bool found ← false
-                while a > 0 and not found {
+                while a ≻ 0 and not found {
                     const string ch ← text.slice(a - 1, a)
                     if ch ≡ "<" {
                         found ← true
@@ -237,7 +237,7 @@ fn element_tag(string text, string identity) → string ∪ none {
                 }
                 var int b ← j
                 var bool closed ← false
-                while b < text.length() and not closed {
+                while b ≺ text.length() and not closed {
                     const string ch ← text.slice(b, b + 1)
                     if ch ≡ ">" {
                         closed ← true
@@ -269,7 +269,7 @@ fn tag_name(string tag) → string {
     var string result ← ""
     var int i ← 1
     var bool finished ← false
-    while i < tag.length() and not finished {
+    while i ≺ tag.length() and not finished {
         const string ch ← tag.slice(i, i + 1)
         if ch ≡ " " or ch ≡ ">" {
             finished ← true
@@ -287,7 +287,7 @@ fn tag_name(string tag) → string {
 fn count_occurrences(list<string> collection, string name) → int {
     var int count_occurrences ← 0
     var int i ← 0
-    while i < collection.length() {
+    while i ≺ collection.length() {
         if collection[i] ≡ name {
             count_occurrences ← count_occurrences + 1
         }
@@ -301,9 +301,9 @@ fn count_occurrences(list<string> collection, string name) → int {
 fn duplicate_identities(list<string> collection) → list<string> {
     var list<string> duplicates ← empty
     var int i ← 0
-    while i < collection.length() {
+    while i ≺ collection.length() {
         const string identity ← collection[i]
-        if count_occurrences(collection, identity) > 1 and not duplicates.contains(identity) {
+        if count_occurrences(collection, identity) ≻ 1 and not duplicates.contains(identity) {
             duplicates.append(identity)
         }
         i ← i + 1
@@ -326,7 +326,7 @@ fn identities_from_nodes(list<dom.DomNode> ∪ none nodes) → list<string> {
     var list<string> result ← empty
     if nodes not is none {
         var int i ← 0
-        while i < nodes.length() {
+        while i ≺ nodes.length() {
             result.append(nodes[i].identity)
             i ← i + 1
         }
@@ -339,7 +339,7 @@ fn tags_from_nodes(list<dom.DomNode> ∪ none nodes) → list<string> {
     var list<string> result ← empty
     if nodes not is none {
         var int i ← 0
-        while i < nodes.length() {
+        while i ≺ nodes.length() {
             result.append(nodes[i].tag)
             i ← i + 1
         }
@@ -352,7 +352,7 @@ fn tags_from_nodes(list<dom.DomNode> ∪ none nodes) → list<string> {
 @ public
 fn tag_at(string identity, list<string> identities, list<string> tags) → string {
     var int i ← 0
-    while i < identities.length() {
+    while i ≺ identities.length() {
         if identities[i] ≡ identity {
             return tags[i]
         }
@@ -416,18 +416,18 @@ fn hydration_diagnostics(
     var list<string> diagnostics ← empty
     const list<string> duplicate_view ← duplicate_identities(view_identities)
     var int di ← 0
-    while di < duplicate_view.length() {
+    while di ≺ duplicate_view.length() {
         diagnostics.append("duplicate:" + duplicate_view[di])
         di ← di + 1
     }
     const list<string> duplicate_present ← duplicate_identities(present_identities)
     var int dj ← 0
-    while dj < duplicate_present.length() {
+    while dj ≺ duplicate_present.length() {
         diagnostics.append("duplicate:" + duplicate_present[dj])
         dj ← dj + 1
     }
     var int ek ← 0
-    while ek < present_identities.length() {
+    while ek ≺ present_identities.length() {
         const string identity ← present_identities[ek]
         if not view_identities.contains(identity) {
             diagnostics.append("foreign:" + identity)
@@ -435,7 +435,7 @@ fn hydration_diagnostics(
         ek ← ek + 1
     }
     var int mi ← 0
-    while mi < view_identities.length() {
+    while mi ≺ view_identities.length() {
         const string identity ← view_identities[mi]
         if count_occurrences(present_identities, identity) ≡ 1 and count_occurrences(view_identities, identity) ≡ 1 {
             const string tag_view ← tag_name(element_tag(markup, identity) coalesce "")
@@ -490,7 +490,7 @@ fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ none
     # Binding plan: per View identity in order (binding_status decides).
     var list<Binding> bindings ← empty
     var int li ← 0
-    while li < view_identities.length() {
+    while li ≺ view_identities.length() {
         const string status ← binding_status(view_identities[li], view_identities, present_identities, markup, present_tags)
         bindings.append(binding(view_identities[li], status))
         li ← li + 1
@@ -501,7 +501,7 @@ fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ none
     # host binds a tela:dom on(node, "tela:binding") per descriptor.
     var list<EventSubscription> subscriptions ← empty
     var int sub ← 0
-    while sub < view_identities.length() {
+    while sub ≺ view_identities.length() {
         subscriptions.append(event_subscription(view_identities[sub], "tela:binding"))
         sub ← sub + 1
     }

@@ -221,7 +221,7 @@ fn select(SelectProps props) → tela.View {
     }
     var list<tela.View> children ← empty
     var int i ← 0
-    while i < props.options.length() {
+    while i ≺ props.options.length() {
         children.append(tela.element_view(tela.html_space(), "option", [ tela.text_view(props.options[i]) ]))
         i ← i + 1
     }

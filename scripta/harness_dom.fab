@@ -277,7 +277,7 @@ fn element_text(FakeElement el) → string {
     }
     var string accum ← el.own_text
     var int i ← 0
-    while i < el.children.length() {
+    while i ≺ el.children.length() {
         accum ← accum + element_text(el.children[i])
         i ← i + 1
     }
@@ -323,7 +323,7 @@ fn element_attribute_shape(FakeElement el) → string {
     var string accum ← ""
     const list<string> names ← el.attrs.keys()
     var int i ← 0
-    while i < names.length() {
+    while i ≺ names.length() {
         const string ∪ none maybe_value ← el.attrs.get(names[i])
         if maybe_value not is none {
             const string value ← maybe_value
@@ -342,7 +342,7 @@ fn element_matches(FakeElement el, string selector) → bool {
     if selector ≡ "[data-tela]" {
         return el.data_tela ≠ ""
     }
-    if selector.length() > 0 and selector.slice(0, 1) ≡ "#" {
+    if selector.length() ≻ 0 and selector.slice(0, 1) ≡ "#" {
         const string ∪ none id ← element_attr_get(el, "id")
         if id not is none {
             const string certain ← id
@@ -350,13 +350,13 @@ fn element_matches(FakeElement el, string selector) → bool {
         }
         return false
     }
-    if selector.length() > 0 and selector.slice(0, 1) ≡ "." {
+    if selector.length() ≻ 0 and selector.slice(0, 1) ≡ "." {
         return class_list_has(el.class_list, selector.slice(1, selector.length()))
     }
     if selector.length() ≥ 2 and selector.slice(0, 1) ≡ "[" and selector.slice(selector.length() - 1, selector.length()) ≡ "]" {
         const string inner ← selector.slice(1, selector.length() - 1)
         const int eq ← index_of(inner, "=", 0)
-        if eq < 0 {
+        if eq ≺ 0 {
             return element_attr_has(el, inner)
         }
         var string name ← inner.slice(0, eq)
@@ -398,14 +398,14 @@ fn element_query_all(FakeElement el, string selector) → list<FakeElement> {
 fn query_all_into(list<FakeElement> children, string selector) → list<FakeElement> {
     var list<FakeElement> out ← empty
     var int i ← 0
-    while i < children.length() {
+    while i ≺ children.length() {
         const FakeElement child ← children[i]
         if element_matches(child, selector) {
             out ← out.added(child)
         }
         const list<FakeElement> tail ← query_all_into(child.children, selector)
         var int j ← 0
-        while j < tail.length() {
+        while j ≺ tail.length() {
             out ← out.added(tail[j])
             j ← j + 1
         }
@@ -427,7 +427,7 @@ fn element_remove(FakeElement child) → void {
         const FakeElement certain ← parent
         var list<FakeElement> kept ← empty
         var int i ← 0
-        while i < certain.children.length() {
+        while i ≺ certain.children.length() {
             if certain.children[i] ≠ child {
                 kept.append(certain.children[i])
             }
@@ -469,7 +469,7 @@ fn element_remove_listener(FakeElement el, string kind, (FakeEvent) → void han
             var FakeElement e ← el
             var list<(FakeEvent) → void> kept ← empty
             var int i ← 0
-            while i < handlers.length() {
+            while i ≺ handlers.length() {
                 if handlers[i] ≠ handler {
                     kept.append(handlers[i])
                 }
@@ -486,7 +486,7 @@ fn element_dispatch(FakeElement el, FakeEvent event) → bool {
         if maybe not is none {
             const list<(FakeEvent) → void> handlers ← maybe
             var int i ← 0
-            while i < handlers.length() {
+            while i ≺ handlers.length() {
                 const (FakeEvent) → void h ← handlers[i]
                 h(event)
                 i ← i + 1
@@ -565,26 +565,26 @@ fn unescape_html(string text) → string {
     const string q ← "§"('"')
     var string accum ← ""
     var int i ← 0
-    while i < text.length() {
+    while i ≺ text.length() {
         var string fragment ← text.slice(i, i + 1)
         var int step ← 1
-        if not (i + 5 > text.length()) and text.slice(i, i + 5) ≡ "&quot;" {
+        if not (i + 5 ≻ text.length()) and text.slice(i, i + 5) ≡ "&quot;" {
             fragment ← q
             step ← 5
         }
-        if not (i + 5 > text.length()) and text.slice(i, i + 5) ≡ "&#39;" {
+        if not (i + 5 ≻ text.length()) and text.slice(i, i + 5) ≡ "&#39;" {
             fragment ← "'"
             step ← 5
         }
-        if not (i + 4 > text.length()) and text.slice(i, i + 4) ≡ "&amp;" {
+        if not (i + 4 ≻ text.length()) and text.slice(i, i + 4) ≡ "&amp;" {
             fragment ← "&"
             step ← 4
         }
-        if not (i + 4 > text.length()) and text.slice(i, i + 4) ≡ "&lt;" {
+        if not (i + 4 ≻ text.length()) and text.slice(i, i + 4) ≡ "&lt;" {
             fragment ← "<"
             step ← 4
         }
-        if not (i + 4 > text.length()) and text.slice(i, i + 4) ≡ "&gt;" {
+        if not (i + 4 ≻ text.length()) and text.slice(i, i + 4) ≡ "&gt;" {
             fragment ← ">"
             step ← 4
         }
@@ -616,7 +616,7 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
     var int j ← start + 1
     var string name ← ""
     var bool name_scan ← true
-    while j < html.length() and name_scan {
+    while j ≺ html.length() and name_scan {
         const string ch ← html.slice(j, j + 1)
         if ch ≡ " " or ch ≡ ">" {
             name_scan ← false
@@ -634,7 +634,7 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
     const FakeElement node ← fake_element(name)
     # Attribute scan (single/double-quoted or bare values; boolean attrs).
     var bool in_tag ← true
-    while j < html.length() and in_tag {
+    while j ≺ html.length() and in_tag {
         if html.slice(j, j + 1) ≡ ">" {
             j ← j + 1
             in_tag ← false
@@ -644,7 +644,7 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
             } else {
                 var string attr_name ← ""
                 var bool reading_name ← true
-                while j < html.length() and reading_name {
+                while j ≺ html.length() and reading_name {
                     const string ch ← html.slice(j, j + 1)
                     if ch ≡ "=" or ch ≡ ">" or ch ≡ " " {
                         reading_name ← false
@@ -654,29 +654,29 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
                     }
                 }
                 var bool skipping ← true
-                while j < html.length() and skipping {
+                while j ≺ html.length() and skipping {
                     if html.slice(j, j + 1) ≡ " " {
                         j ← j + 1
                     } else {
                         skipping ← false
                     }
                 }
-                if j < html.length() and html.slice(j, j + 1) ≡ "=" {
+                if j ≺ html.length() and html.slice(j, j + 1) ≡ "=" {
                     j ← j + 1
                     var bool skipping2 ← true
-                    while j < html.length() and skipping2 {
+                    while j ≺ html.length() and skipping2 {
                         if html.slice(j, j + 1) ≡ " " {
                             j ← j + 1
                         } else {
                             skipping2 ← false
                         }
                     }
-                    if j < html.length() and (html.slice(j, j + 1) ≡ "'" or html.slice(j, j + 1) ≡ q) {
+                    if j ≺ html.length() and (html.slice(j, j + 1) ≡ "'" or html.slice(j, j + 1) ≡ q) {
                         const string quote ← html.slice(j, j + 1)
                         j ← j + 1
                         var string val ← ""
                         var bool reading_val ← true
-                        while j < html.length() and reading_val {
+                        while j ≺ html.length() and reading_val {
                             const string ch ← html.slice(j, j + 1)
                             if ch ≡ quote {
                                 reading_val ← false
@@ -690,7 +690,7 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
                     } else {
                         var string val ← ""
                         var bool reading_bare ← true
-                        while j < html.length() and reading_bare {
+                        while j ≺ html.length() and reading_bare {
                             const string ch ← html.slice(j, j + 1)
                             if ch ≡ " " or ch ≡ ">" {
                                 reading_bare ← false
@@ -711,7 +711,7 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
         return ParseResult { node = node, next = j }
     }
     var bool closed ← false
-    while j < html.length() and not closed {
+    while j ≺ html.length() and not closed {
         if j + name.length() + 3 ≤ html.length() and html.slice(j, j + name.length() + 3) ≡ "</" + name + ">" {
             j ← j + name.length() + 3
             closed ← true
@@ -727,15 +727,15 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
                 }
             } else {
                 const int end ← index_of(html, "<", j)
-                if end < 0 {
+                if end ≺ 0 {
                     const string text ← html.slice(j, html.length())
-                    if text.length() > 0 {
+                    if text.length() ≻ 0 {
                         element_append_child(node, make_text_node(text))
                     }
                     j ← html.length()
                 } else {
                     const string text ← html.slice(j, end)
-                    if text.length() > 0 {
+                    if text.length() ≻ 0 {
                         element_append_child(node, make_text_node(text))
                     }
                     j ← end
@@ -750,7 +750,7 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
 fn parse_fragment(string html) → list<FakeElement> {
     var list<FakeElement> nodes ← empty
     var int i ← 0
-    while i < html.length() {
+    while i ≺ html.length() {
         if html.slice(i, i + 1) ≡ "<" {
             const ParseResult ∪ none parsed ← parse_element(html, i)
             if parsed not is none {
@@ -762,15 +762,15 @@ fn parse_fragment(string html) → list<FakeElement> {
             }
         } else {
             const int end ← index_of(html, "<", i)
-            if end < 0 {
+            if end ≺ 0 {
                 const string text ← html.slice(i, html.length())
-                if text.length() > 0 {
+                if text.length() ≻ 0 {
                     nodes.append(make_text_node(text))
                 }
                 i ← html.length()
             } else {
                 const string text ← html.slice(i, end)
-                if text.length() > 0 {
+                if text.length() ≻ 0 {
                     nodes.append(make_text_node(text))
                 }
                 i ← end
@@ -832,7 +832,7 @@ fn web_dom_snapshot(FakeScope ∪ none scope) → list<FakeNodus> ∪ none {
     const list<FakeElement> nodes ← element_query_all(certain.root, "[data-tela]")
     var list<FakeNodus> out ← empty
     var int i ← 0
-    while i < nodes.length() {
+    while i ≺ nodes.length() {
         out.append(FakeNodus { identity = nodes[i].data_tela, tag = nodes[i].tagName.lowercase() })
         i ← i + 1
     }
@@ -929,7 +929,7 @@ fn web_dom_prevent_default(FakeEvent event) → FakeEvent {
 
 fn find_child_by_identity(list<FakeElement> children, string identity) → FakeElement ∪ none {
     var int i ← 0
-    while i < children.length() {
+    while i ≺ children.length() {
         if children[i].data_tela ≡ identity {
             return children[i]
         }
@@ -944,7 +944,7 @@ fn stamp_subtree(FakeElement node, string token) → void {
         n.token ← token
     }
     var int i ← 0
-    while i < node.children.length() {
+    while i ≺ node.children.length() {
         stamp_subtree(node.children[i], token)
         i ← i + 1
     }
@@ -971,7 +971,7 @@ fn clone_node(FakeElement node) → FakeElement {
     c.data_tela ← node.data_tela
     const list<string> names ← node.attrs.keys()
     var int i ← 0
-    while i < names.length() {
+    while i ≺ names.length() {
         const string ∪ none maybe_value ← node.attrs.get(names[i])
         if maybe_value not is none {
             const string value ← maybe_value
@@ -981,13 +981,13 @@ fn clone_node(FakeElement node) → FakeElement {
     }
     const list<string> class_names ← class_list_names(node.class_list)
     var int j ← 0
-    while j < class_names.length() {
+    while j ≺ class_names.length() {
         class_list_add(copy.class_list, class_names[j])
         j ← j + 1
     }
     c.token ← node.token
     var int k ← 0
-    while k < node.children.length() {
+    while k ≺ node.children.length() {
         element_append_child(copy, clone_node(node.children[k]))
         k ← k + 1
     }
@@ -998,7 +998,7 @@ fn find_match(list<FakeElement> children, string t_id, int k) → FakeElement �
     if t_id ≠ "" {
         return find_child_by_identity(children, t_id)
     }
-    if k < children.length() {
+    if k ≺ children.length() {
         return children[k]
     }
     return null
@@ -1014,7 +1014,7 @@ fn find_match(list<FakeElement> children, string t_id, int k) → FakeElement �
 fn sync_region(FakeElement parent, list<FakeElement> target, tabula<string, string> plan, bool stamp) → void {
     var list<FakeElement> rebuilt ← empty
     var int k ← 0
-    while k < target.length() {
+    while k ≺ target.length() {
         const FakeElement t ← target[k]
         const string t_id ← t.data_tela
         const FakeElement ∪ none match ← find_match(parent.children, t_id, k)
@@ -1064,7 +1064,7 @@ fn execute_mount_plan(FakeDocument doc, string selector, MountedLike mounted, bo
     const list<FakeElement> target ← parse_fragment(mounted.markup)
     var tabula<string, string> plan ← empty
     var int i ← 0
-    while i < mounted.bindings.length() {
+    while i ≺ mounted.bindings.length() {
         plan.put(mounted.bindings[i].identity, mounted.bindings[i].status)
         i ← i + 1
     }
@@ -1077,7 +1077,7 @@ fn bind_region_subscriptions(FakeDocument doc, string selector, MountedLike moun
     const list<FakeElement> nodes ← element_query_all(root, "[data-tela]")
     var list<FakeSubscription> subs ← empty
     var int i ← 0
-    while i < mounted.subscriptions.length() {
+    while i ≺ mounted.subscriptions.length() {
         const FakeElement ∪ none node ← find_child_by_identity(nodes, mounted.subscriptions[i].identity)
         if node not is none {
             const FakeElement certain ← node

@@ -171,8 +171,8 @@ fn heading_props(int level, string text) → HeadingProps {
 # Fail-safe 1..6 — h0/h7 never emit (exempla-asserted).
 @ public
 fn clamped_level(int level) → int {
-    if level < 1 then return 1
-    if level > 6 then return 6
+    if level ≺ 1 then return 1
+    if level ≻ 6 then return 6
     return level
 }
 
@@ -390,7 +390,7 @@ fn table_props(string name, string caption, list<string> headers, list<TableRow>
 fn table_header_cells(string name, list<string> headers) → list<tela.View> {
     var list<tela.View> cells ← empty
     var int i ← 0
-    while i < headers.length() {
+    while i ≺ headers.length() {
         cells.append(tela.element_full(
             tela.new_identity("ref-table-" + name + "-header-" + "§"(i)),
             tela.html_space(),
@@ -409,7 +409,7 @@ fn table_header_cells(string name, list<string> headers) → list<tela.View> {
 fn table_body_cells(string name, int row, list<string> cells) → list<tela.View> {
     var list<tela.View> tds ← empty
     var int i ← 0
-    while i < cells.length() {
+    while i ≺ cells.length() {
         tds.append(tela.element_full(
             tela.new_identity("ref-table-" + name + "-cell-" + "§"(row) + "-" + "§"(i)),
             tela.html_space(),
@@ -444,7 +444,7 @@ fn table(TableProps props) → tela.View {
     ))
     var list<tela.View> body_rows ← empty
     var int r ← 0
-    while r < props.rows.length() {
+    while r ≺ props.rows.length() {
         const TableRow row ← props.rows[r]
         body_rows.append(tela.element_view(
             tela.html_space(),
