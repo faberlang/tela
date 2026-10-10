@@ -524,7 +524,7 @@ fn token_property_name(string name) → string {
         if c ≡ "." {
             accum ← accum + "-"
         }
-        if c ≠ "." {
+        if c ≢ "." {
             accum ← accum + c
         }
         i ← i + 1
@@ -588,7 +588,7 @@ fn theme_style(Theme theme) → Style ∪ none {
         while j ≺ i {
             const Token prior ← theme.tokens[j]
             if prior.name ≡ token.name {
-                if prior.value ≠ token.value then return null
+                if prior.value ≢ token.value then return null
                 duplicate ← true
             }
             j ← j + 1
@@ -691,7 +691,7 @@ fn deduplicated_bundles(list<Bundle> bundles) → list<Bundle> ∪ none {
         while j ≺ i {
             const Bundle prior ← bundles[j]
             if prior.identity ≡ bundle.identity {
-                if css(prior.style) ≠ css(bundle.style) then return null
+                if css(prior.style) ≢ css(bundle.style) then return null
                 duplicate ← true
             }
             j ← j + 1
@@ -759,7 +759,7 @@ fn topological_order(list<Order> orders, list<string> identities) → list<strin
         var list<string> next ← empty
         var int j ← 0
         while j ≺ remaining.length() {
-            if remaining[j] ≠ chosen {
+            if remaining[j] ≢ chosen {
                 next.append(remaining[j])
             }
             j ← j + 1

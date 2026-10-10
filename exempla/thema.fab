@@ -69,5 +69,5 @@ main {
     const tela.Theme tenebrae ← tela.theme("tenebrae", [tela.token("surface.canvas", "#0f172a"), tela.token("surface.panel", "#1e293b"), tela.token("text.primary", "#f8fafc"), tela.token("text.muted", "#94a3b8"), tela.token("border.default", "#334155"), tela.token("accent.primary", "#3b82f6"), tela.token("state.positive", "#22c55e"), tela.token("state.caution", "#f59e0b"), tela.token("chart.axis.muted", "#9ca3af")])
     const string tenebrae_css ← tela.theme_css(tenebrae) coalesce ""
     assert tenebrae_css ≡ ":root { --surface-canvas: #0f172a; --surface-panel: #1e293b; --text-primary: #f8fafc; --text-muted: #94a3b8; --border-default: #334155; --accent-primary: #3b82f6; --state-positive: #22c55e; --state-caution: #f59e0b; --chart-axis-muted: #9ca3af; }\n"
-    assert tenebrae_css ≠ lumen_css
+    assert tenebrae_css ≢ lumen_css
 }

@@ -440,7 +440,7 @@ fn hydration_diagnostics(
         if count_occurrences(present_identities, identity) ≡ 1 and count_occurrences(view_identities, identity) ≡ 1 {
             const string tag_view ← tag_name(element_tag(markup, identity) coalesce "")
             const string present_tag ← tag_at(identity, present_identities, present_tags)
-            if not (tag_view ≡ "") and not (present_tag ≡ "") and tag_view ≠ present_tag {
+            if not (tag_view ≡ "") and not (present_tag ≡ "") and tag_view ≢ present_tag {
                 diagnostics.append("changed:" + identity)
             }
         }

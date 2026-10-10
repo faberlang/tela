@@ -288,7 +288,7 @@ fn element_text(FakeElement el) → string {
 fn element_text_set(FakeElement el, string value) → void {
     var FakeElement e ← el
     e.own_text ← value
-    if e.tagName ≠ "#text" {
+    if e.tagName ≢ "#text" {
         e.children ← empty
     }
 }
@@ -340,7 +340,7 @@ fn element_attribute_shape(FakeElement el) → string {
 fn element_matches(FakeElement el, string selector) → bool {
     const string q ← "§"('"')
     if selector ≡ "[data-tela]" {
-        return el.data_tela ≠ ""
+        return el.data_tela ≢ ""
     }
     if selector.length() ≻ 0 and selector.slice(0, 1) ≡ "#" {
         const string ∪ none id ← element_attr_get(el, "id")
@@ -428,7 +428,7 @@ fn element_remove(FakeElement child) → void {
         var list<FakeElement> kept ← empty
         var int i ← 0
         while i ≺ certain.children.length() {
-            if certain.children[i] ≠ child {
+            if certain.children[i] ≢ child {
                 kept.append(certain.children[i])
             }
             i ← i + 1
@@ -470,7 +470,7 @@ fn element_remove_listener(FakeElement el, string kind, (FakeEvent) → void han
             var list<(FakeEvent) → void> kept ← empty
             var int i ← 0
             while i ≺ handlers.length() {
-                if handlers[i] ≠ handler {
+                if handlers[i] ≢ handler {
                     kept.append(handlers[i])
                 }
                 i ← i + 1
@@ -939,7 +939,7 @@ fn find_child_by_identity(list<FakeElement> children, string identity) → FakeE
 }
 
 fn stamp_subtree(FakeElement node, string token) → void {
-    if node.data_tela ≠ "" {
+    if node.data_tela ≢ "" {
         var FakeElement n ← node
         n.token ← token
     }
@@ -951,7 +951,7 @@ fn stamp_subtree(FakeElement node, string token) → void {
 }
 
 fn open_tag_equals(FakeElement a, FakeElement b) → bool {
-    if a.tagName ≠ b.tagName {
+    if a.tagName ≢ b.tagName {
         return false
     }
     if a.tagName ≡ "#text" {
@@ -995,7 +995,7 @@ fn clone_node(FakeElement node) → FakeElement {
 }
 
 fn find_match(list<FakeElement> children, string t_id, int k) → FakeElement ∪ none {
-    if t_id ≠ "" {
+    if t_id ≢ "" {
         return find_child_by_identity(children, t_id)
     }
     if k ≺ children.length() {
@@ -1019,7 +1019,7 @@ fn sync_region(FakeElement parent, list<FakeElement> target, tabula<string, stri
         const string t_id ← t.data_tela
         const FakeElement ∪ none match ← find_match(parent.children, t_id, k)
         var string status ← "create"
-        if t_id ≠ "" and plan.has(t_id) {
+        if t_id ≢ "" and plan.has(t_id) {
             const string ∪ none s ← plan.get(t_id)
             if s not is none {
                 const string certain ← s

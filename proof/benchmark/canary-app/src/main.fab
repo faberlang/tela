@@ -1288,7 +1288,7 @@ main {
     const string html_b ← tela.html_view(tree) coalesce ""
     assert html_a ≡ html_b
     # The two theme token layers differ materially.
-    assert css_lumen ≠ css_tenebrae
+    assert css_lumen ≢ css_tenebrae
 
     # --- The Stage 4 U3 three-package cascade assertions -------------------
     # The :root token layer includes the namespaced --form-* values (the
