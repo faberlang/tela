@@ -33,19 +33,19 @@ enum Spatium {
 
 @ public
 class Attributum {
-    var string nomen
-    var string valor
+    mut string nomen
+    mut string valor
 }
 
 @ public
 class Proprietas {
-    var string nomen
-    var string valor
+    mut string nomen
+    mut string valor
 }
 
 @ public
 class Identitas {
-    var string valor
+    mut string valor
 }
 
 @ public
@@ -64,25 +64,25 @@ union Visus {
 
 @ public
 class Declaratio {
-    var string nomen
-    var string valor
+    mut string nomen
+    mut string valor
 }
 
 @ public
 class Regula {
-    var string selector
-    var list<Declaratio> declarationes
+    mut string selector
+    mut list<Declaratio> declarationes
 }
 
 @ public
 class Stilum {
-    var list<Regula> regulae
+    mut list<Regula> regulae
 }
 
 @ public
 class Scopulum {
-    var string nomen
-    var string valor
+    mut string nomen
+    mut string valor
 }
 
 # --- Standard constructors over the same public view values (campaign §3:

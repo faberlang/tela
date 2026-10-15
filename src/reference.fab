@@ -88,7 +88,7 @@ import from "tela:tela" public * as tela
 
 @ public
 class StackProps {
-    var list<tela.View> children
+    mut list<tela.View> children
 }
 
 @ public
@@ -110,7 +110,7 @@ fn layout_stack(StackProps props) → tela.View {
 
 @ public
 class GridProps {
-    var list<tela.View> columns
+    mut list<tela.View> columns
 }
 
 @ public
@@ -133,7 +133,7 @@ fn layout_grid(GridProps props) → tela.View {
 
 @ public
 class LayoutProseProps {
-    var list<tela.View> children
+    mut list<tela.View> children
 }
 
 @ public
@@ -159,8 +159,8 @@ fn layout_prose(LayoutProseProps props) → tela.View {
 
 @ public
 class HeadingProps {
-    var int level
-    var string text
+    mut int level
+    mut string text
 }
 
 @ public
@@ -178,7 +178,7 @@ fn clamped_level(int level) → int {
 
 @ public
 fn typography_heading(HeadingProps props) → tela.View {
-    const int level ← clamped_level(props.level)
+    let int level ← clamped_level(props.level)
     return tela.element_full(
         tela.new_identity("ref-typography-heading-" + "§"(level)),
         tela.html_space(),
@@ -191,7 +191,7 @@ fn typography_heading(HeadingProps props) → tela.View {
 
 @ public
 class ProseProps {
-    var list<tela.View> children
+    mut list<tela.View> children
 }
 
 @ public
@@ -213,8 +213,8 @@ fn typography_prose(ProseProps props) → tela.View {
 
 @ public
 class EmphasisProps {
-    var string kind
-    var string text
+    mut string kind
+    mut string text
 }
 
 @ public
@@ -236,8 +236,8 @@ fn typography_emphasis(EmphasisProps props) → tela.View {
 
 @ public
 class ScaleProps {
-    var string step
-    var string text
+    mut string step
+    mut string text
 }
 
 @ public
@@ -263,9 +263,9 @@ fn typography_scale(ScaleProps props) → tela.View {
 
 @ public
 class PanelProps {
-    var string name
-    var string title
-    var list<tela.View> children
+    mut string name
+    mut string title
+    mut list<tela.View> children
 }
 
 @ public
@@ -275,7 +275,7 @@ fn panel_props(string name, string title, list<tela.View> children) → PanelPro
 
 @ public
 fn panel(PanelProps props) → tela.View {
-    var list<tela.Attribute> attributes ← [
+    mut list<tela.Attribute> attributes ← [
         tela.Attribute { name = "role", value = "region" }
     ]
     if not (props.title ≡ "") {
@@ -297,9 +297,9 @@ fn panel(PanelProps props) → tela.View {
 
 @ public
 class BadgeProps {
-    var string name
-    var string status
-    var string text
+    mut string name
+    mut string status
+    mut string text
 }
 
 @ public
@@ -328,10 +328,10 @@ fn badge(BadgeProps props) → tela.View {
 
 @ public
 class MetricProps {
-    var string name
-    var string label
-    var string value
-    var string delta
+    mut string name
+    mut string label
+    mut string value
+    mut string delta
 }
 
 @ public
@@ -341,7 +341,7 @@ fn metric_props(string name, string label, string value, string delta) → Metri
 
 @ public
 fn metric(MetricProps props) → tela.View {
-    var list<tela.View> children ← [
+    mut list<tela.View> children ← [
         tela.element_view(tela.html_space(), "dt", [ tela.text_view(props.label) ]),
         tela.element_view(tela.html_space(), "dd", [ tela.text_view(props.value) ])
     ]
@@ -364,7 +364,7 @@ fn metric(MetricProps props) → tela.View {
 
 @ public
 class TableRow {
-    var list<string> cells
+    mut list<string> cells
 }
 
 @ public
@@ -374,10 +374,10 @@ fn table_row(list<string> cells) → TableRow {
 
 @ public
 class TableProps {
-    var string name
-    var string caption
-    var list<string> headers
-    var list<TableRow> rows
+    mut string name
+    mut string caption
+    mut list<string> headers
+    mut list<TableRow> rows
 }
 
 @ public
@@ -388,8 +388,8 @@ fn table_props(string name, string caption, list<string> headers, list<TableRow>
 # 0-based identities ref-table-<name>-header-<i>; native th scope=col.
 @ public
 fn table_header_cells(string name, list<string> headers) → list<tela.View> {
-    var list<tela.View> cells ← empty
-    var int i ← 0
+    mut list<tela.View> cells ← empty
+    mut int i ← 0
     while i ≺ headers.length() {
         cells.append(tela.element_full(
             tela.new_identity("ref-table-" + name + "-header-" + "§"(i)),
@@ -407,8 +407,8 @@ fn table_header_cells(string name, list<string> headers) → list<tela.View> {
 # 0-based identities ref-table-<name>-cell-<r>-<c>.
 @ public
 fn table_body_cells(string name, int row, list<string> cells) → list<tela.View> {
-    var list<tela.View> tds ← empty
-    var int i ← 0
+    mut list<tela.View> tds ← empty
+    mut int i ← 0
     while i ≺ cells.length() {
         tds.append(tela.element_full(
             tela.new_identity("ref-table-" + name + "-cell-" + "§"(row) + "-" + "§"(i)),
@@ -425,7 +425,7 @@ fn table_body_cells(string name, int row, list<string> cells) → list<tela.View
 
 @ public
 fn table(TableProps props) → tela.View {
-    var list<tela.View> children ← empty
+    mut list<tela.View> children ← empty
     if not (props.caption ≡ "") {
         children.append(tela.element_view(
             tela.html_space(),
@@ -442,10 +442,10 @@ fn table(TableProps props) → tela.View {
             table_header_cells(props.name, props.headers)
         ) ]
     ))
-    var list<tela.View> body_rows ← empty
-    var int r ← 0
+    mut list<tela.View> body_rows ← empty
+    mut int r ← 0
     while r ≺ props.rows.length() {
-        const TableRow row ← props.rows[r]
+        let TableRow row ← props.rows[r]
         body_rows.append(tela.element_view(
             tela.html_space(),
             "tr",
@@ -474,10 +474,10 @@ fn table(TableProps props) → tela.View {
 
 @ public
 class SegmentedProps {
-    var string name
-    var string label
-    var list<string> options
-    var string selected
+    mut string name
+    mut string label
+    mut list<string> options
+    mut string selected
 }
 
 @ public
@@ -531,12 +531,12 @@ fn segmented_live_region() → tela.View {
 # 1-based identities ref-seg-<name>-1..N, then the singleton live region.
 @ public
 fn segmented_options(SegmentedProps props) → list<tela.View> {
-    var list<tela.View> options ← empty
-    var int i ← 1
+    mut list<tela.View> options ← empty
+    mut int i ← 1
     while i ≤ props.options.length() {
-        const string identity ← "ref-seg-" + props.name + "-" + "§"(i)
-        const string option ← props.options[i - 1]
-        const bool selected ← identity ≡ props.selected
+        let string identity ← "ref-seg-" + props.name + "-" + "§"(i)
+        let string option ← props.options[i - 1]
+        let bool selected ← identity ≡ props.selected
         options.append(segmented_option(identity, option, active_tabindex(selected), selected_text(selected)))
         i ← i + 1
     }
@@ -565,12 +565,12 @@ fn segmented_control(SegmentedProps props) → tela.View {
 
 @ public
 class ButtonProps {
-    var string name
-    var string label
-    var string variant
-    var string state
-    var string event_name
-    var string aria_label
+    mut string name
+    mut string label
+    mut string variant
+    mut string state
+    mut string event_name
+    mut string aria_label
 }
 
 # fix:g6-value-position — variant as a constructor VALUE fails PARSE001.
@@ -594,7 +594,7 @@ fn button_event() → string {
 # Attribute author order: aria-label? → disabled? → data-ref-variant → data-tela.
 @ public
 fn button(ButtonProps props) → tela.View {
-    var list<tela.Attribute> attributes ← empty
+    mut list<tela.Attribute> attributes ← empty
     if not (props.aria_label ≡ "") {
         attributes.append(tela.Attribute { name = "aria-label", value = props.aria_label })
     }
@@ -618,11 +618,11 @@ fn button(ButtonProps props) → tela.View {
 
 @ public
 class FieldInputProps {
-    var string name
-    var string label
-    var string value
-    var string error
-    var string disabled
+    mut string name
+    mut string label
+    mut string value
+    mut string error
+    mut string disabled
 }
 
 @ public
@@ -646,7 +646,7 @@ fn field_invalid(FieldInputProps props) → string {
 # Attribute author order: type → aria-label → aria-invalid → describedby? → value? → disabled? → data-tela.
 @ public
 fn field_input(FieldInputProps props) → tela.View {
-    var list<tela.Attribute> attributes ← empty
+    mut list<tela.Attribute> attributes ← empty
     attributes.append(tela.Attribute { name = "type", value = "text" })
     attributes.append(tela.Attribute { name = "aria-label", value = props.label })
     attributes.append(tela.Attribute { name = "aria-invalid", value = field_invalid(props) })
@@ -672,7 +672,7 @@ fn field_input(FieldInputProps props) → tela.View {
 # Empty error still emits the node so the association structure stays stable.
 @ public
 fn field_error_region(string name, string error) → tela.View {
-    var list<tela.View> children ← empty
+    mut list<tela.View> children ← empty
     if not (error ≡ "") {
         children.append(tela.text_view(error))
     }
@@ -703,7 +703,7 @@ fn field_live_region() → tela.View {
 
 @ public
 fn field_control(FieldInputProps props) → tela.View {
-    var list<tela.View> children ← empty
+    mut list<tela.View> children ← empty
     children.append(field_input(props))
     children.append(field_error_region(props.name, props.error))
     return tela.element_full(

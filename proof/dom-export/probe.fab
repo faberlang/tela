@@ -47,12 +47,12 @@ fn handle_event(dom.DomEvent event) → void {
 }
 
 fn probe_live_surface() → list<dom.Subscription> {
-    const dom.Scope made ← dom.scope("#probe")
-    const dom.Element extra ← dom.element(".extra")
-    const dom.Element root ← dom.require(made, ".root")
-    const dom.SubmitOptions opts ← dom.SubmitOptions { prevent_default = true }
-    const dom.PointerLockState lock ← dom.pointer_lock_state(root)
-    const dom.PointerLockState requested ← dom.request_pointer_lock(root)
+    let dom.Scope made ← dom.scope("#probe")
+    let dom.Element extra ← dom.element(".extra")
+    let dom.Element root ← dom.require(made, ".root")
+    let dom.SubmitOptions opts ← dom.SubmitOptions { prevent_default = true }
+    let dom.PointerLockState lock ← dom.pointer_lock_state(root)
+    let dom.PointerLockState requested ← dom.request_pointer_lock(root)
     print extra
     print opts
     print lock
@@ -69,7 +69,7 @@ fn probe_live_surface() → list<dom.Subscription> {
     dom.attr_set(root, "data-ok", "1")
     dom.class_add(root, "ready")
     dom.class_remove(root, "pending")
-    const list<dom.Subscription> empty ← empty
+    let list<dom.Subscription> empty ← empty
     return empty
 }
 

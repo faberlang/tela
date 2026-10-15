@@ -121,8 +121,8 @@ enum Space {
 # the tag.
 @ public
 class Attribute {
-    var string name
-    var string value
+    mut string name
+    mut string value
 }
 
 # Property: DOM property (value, checked, selection), modeled separately
@@ -130,8 +130,8 @@ class Attribute {
 # the tree; not serialized into static HTML in Stage 1 (browser lane).
 @ public
 class Property {
-    var string name
-    var string value
+    mut string name
+    mut string value
 }
 
 # Identity: stable identity. Explicit typed field — never inferred from
@@ -139,7 +139,7 @@ class Property {
 # (data-tela) by the U3 serializer.
 @ public
 class Identity {
-    var string value
+    mut string value
 }
 
 # View: the recursive tagged union at the center of the protocol.
@@ -227,10 +227,10 @@ fn element_full(Identity ∪ none identity, Space space, string tag_name, list<A
 
 @ public
 fn escape(string s, bool in_attribute) → string {
-    var string accum ← ""
-    var int i ← 0
+    mut string accum ← ""
+    mut int i ← 0
     while i ≺ s.length() {
-        const string c ← s.slice(i, i + 1)
+        let string c ← s.slice(i, i + 1)
         # Sequential independent ifs (NOT an elif chain): the TS emitter
         # compiles elif chains whose bodies are single-statement assignments
         # into a returned conditional expression (undefined at runtime — a
@@ -242,7 +242,7 @@ fn escape(string s, bool in_attribute) → string {
         # String into a local via `let mut fragment: String = c;` while still
         # borrowing c below (E0382 — second NEW emitter observation,
         # escalated to the radix lane); "" + c emits a borrowing format!.
-        var string fragment ← "" + c
+        mut string fragment ← "" + c
         if c ≡ "&" {
             fragment ← "&amp;"
         }
@@ -294,7 +294,7 @@ fn serialize_ns(Space space) → string {
             return ""
         }
         case Space.svg {
-            const string q ← "§"('"')
+            let string q ← "§"('"')
             return " xmlns=" + q + "http://www.w3.org/2000/svg" + q
         }
     }
@@ -307,25 +307,25 @@ fn serialize_ns(Space space) → string {
 @ public
 fn validate_tree(View v) → bool {
     match v {
-        case TextNode const value {
+        case TextNode let value {
             return true
         }
-        case Fragment const children {
-            for from children const child {
+        case Fragment let children {
+            for from children let child {
                 if not validate_tree(child) then return false
             }
             return true
         }
-        case ElementNode const identity, space, tag_name, attributes, properties, children {
-            const string space_text ← space_name(space)
+        case ElementNode let identity, space, tag_name, attributes, properties, children {
+            let string space_text ← space_name(space)
             if not validate.valid_space(space_text) then return false
             if not validate.valid_name_in_space(tag_name, space_text) then return false
-            for from attributes const attr {
+            for from attributes let attr {
                 if not validate.valid_attribute_name(attr.name) then return false
             }
-            const bool has_children ← children.length() ≻ 0
+            let bool has_children ← children.length() ≻ 0
             if not validate.valid_void_structure(tag_name, has_children) then return false
-            for from children const child {
+            for from children let child {
                 if not validate_tree(child) then return false
             }
             return true
@@ -343,9 +343,9 @@ fn validate_tree(View v) → bool {
 # and Faber string syntax). The value is escaped through the attribute set.
 @ public
 fn serialize_attributes(list<Attribute> attributes) → string {
-    const string q ← "§"('"')
-    var string accum ← ""
-    for from attributes const attr {
+    let string q ← "§"('"')
+    mut string accum ← ""
+    for from attributes let attr {
         accum ← accum + " " + attr.name + "=" + q + escape(attr.value, true) + q
     }
     return accum
@@ -361,7 +361,7 @@ fn serialize_identity(Identity ∪ none identity) → string {
             return ""
         }
         case _ {
-            const string q ← "§"('"')
+            let string q ← "§"('"')
             return " data-tela=" + q + escape(identity?.value coalesce "", true) + q
         }
     }
@@ -370,25 +370,25 @@ fn serialize_identity(Identity ∪ none identity) → string {
 @ public
 fn serialize_view(View v) → string {
     match v {
-        case TextNode const value {
+        case TextNode let value {
             return escape(value, false)
         }
-        case Fragment const children {
-            var string accum ← ""
-            for from children const child {
+        case Fragment let children {
+            mut string accum ← ""
+            for from children let child {
                 accum ← accum + serialize_view(child)
             }
             return accum
         }
-        case ElementNode const identity, space, tag_name, attributes, properties, children {
-            var string accum ← "<" + tag_name
+        case ElementNode let identity, space, tag_name, attributes, properties, children {
+            mut string accum ← "<" + tag_name
             accum ← accum + serialize_ns(space)
             accum ← accum + serialize_attributes(attributes)
             accum ← accum + serialize_identity(identity)
             # Property are carried but NOT serialized into static HTML
             # (Stage 1 static posture; browser-lane DOM properties).
-            var string inner ← ""
-            for from children const child {
+            mut string inner ← ""
+            for from children let child {
                 inner ← inner + serialize_view(child)
             }
             if validate.valid_void_html(tag_name) then return accum + ">"
@@ -416,27 +416,27 @@ fn html_view(View v) → string ∪ none {
 
 @ public
 class Declaration {
-    var string name
-    var string value
+    mut string name
+    mut string value
 }
 
 @ public
 class Rule {
-    var string selector
-    var list<Declaration> declarations
+    mut string selector
+    mut list<Declaration> declarations
 }
 
 @ public
 class Style {
-    var list<Rule> rules
+    mut list<Rule> rules
 }
 
 @ public
 fn css(Style style) → string {
-    var string accum ← ""
-    for from style.rules const rule {
+    mut string accum ← ""
+    for from style.rules let rule {
         accum ← accum + rule.selector + " { "
-        for from rule.declarations const decl {
+        for from rule.declarations let decl {
             accum ← accum + decl.name + ": " + decl.value + "; "
         }
         accum ← accum + "}\n"
@@ -481,8 +481,8 @@ fn css(Style style) → string {
 # shape).
 @ public
 class Token {
-    var string name
-    var string value
+    mut string name
+    mut string value
 }
 
 # Theme: a named theme — a token collection over the core baseline. Two
@@ -490,8 +490,8 @@ class Token {
 # (campaign §5; variants are tokens, not new machinery).
 @ public
 class Theme {
-    var string name
-    var list<Token> tokens
+    mut string name
+    mut list<Token> tokens
 }
 
 # Kernel-owned constructors (G3 posture — ordinary functions over the same
@@ -517,10 +517,10 @@ fn core_tokens() → list<string> {
 # TS-emitter-safe pattern from escape).
 @ public
 fn token_property_name(string name) → string {
-    var string accum ← "--"
-    var int i ← 0
+    mut string accum ← "--"
+    mut int i ← 0
     while i ≺ name.length() {
-        const string c ← name.slice(i, i + 1)
+        let string c ← name.slice(i, i + 1)
         if c ≡ "." {
             accum ← accum + "-"
         }
@@ -545,7 +545,7 @@ fn token_name_valid(string name) → bool {
 # the theme's token collection.
 @ public
 fn theme_has_core_tokens(Theme theme) → bool {
-    const list<string> core ← core_tokens()
+    let list<string> core ← core_tokens()
     return core.all(string t ∴ theme_has_token(theme, t))
 }
 
@@ -562,9 +562,9 @@ fn theme_has_token(Theme theme, string name) → bool {
 # Deterministic bytes over author order.
 @ public
 fn theme_css(Theme theme) → string ∪ none {
-    const Style ∪ none style_result ← theme_style(theme)
+    let Style ∪ none style_result ← theme_style(theme)
     if style_result is none then return null
-    const Style tokens ← Style { rules = style_result!.rules }
+    let Style tokens ← Style { rules = style_result!.rules }
     if not style_valid(tokens) then return null
     return css(tokens)
 }
@@ -578,15 +578,15 @@ fn theme_css(Theme theme) → string ∪ none {
 @ public
 fn theme_style(Theme theme) → Style ∪ none {
     if not theme_has_core_tokens(theme) then return null
-    var list<Declaration> declarations ← empty
-    var int i ← 0
+    mut list<Declaration> declarations ← empty
+    mut int i ← 0
     while i ≺ theme.tokens.length() {
-        const Token token ← theme.tokens[i]
+        let Token token ← theme.tokens[i]
         if not token_name_valid(token.name) then return null
-        var bool duplicate ← false
-        var int j ← 0
+        mut bool duplicate ← false
+        mut int j ← 0
         while j ≺ i {
-            const Token prior ← theme.tokens[j]
+            let Token prior ← theme.tokens[j]
             if prior.name ≡ token.name {
                 if prior.value ≢ token.value then return null
                 duplicate ← true
@@ -654,16 +654,16 @@ fn theme_style(Theme theme) → Style ∪ none {
 # tie-break basis).
 @ public
 class Bundle {
-    var string identity
-    var Style style
+    mut string identity
+    mut Style style
 }
 
 # One package-order entry: package identity + its dependency identities.
 # The explicit package-order map — stdlib-only, no import introspection.
 @ public
 class Order {
-    var string identity
-    var list<string> depends
+    mut string identity
+    mut list<string> depends
 }
 
 # Kernel-owned constructors (G3 posture).
@@ -682,14 +682,14 @@ fn order(string identity, list<string> depends) → Order {
 # → null (fail-closed).
 @ public
 fn deduplicated_bundles(list<Bundle> bundles) → list<Bundle> ∪ none {
-    var list<Bundle> unique ← empty
-    var int i ← 0
+    mut list<Bundle> unique ← empty
+    mut int i ← 0
     while i ≺ bundles.length() {
-        const Bundle bundle ← bundles[i]
-        var bool duplicate ← false
-        var int j ← 0
+        let Bundle bundle ← bundles[i]
+        mut bool duplicate ← false
+        mut int j ← 0
         while j ≺ i {
-            const Bundle prior ← bundles[j]
+            let Bundle prior ← bundles[j]
             if prior.identity ≡ bundle.identity {
                 if css(prior.style) ≢ css(bundle.style) then return null
                 duplicate ← true
@@ -707,7 +707,7 @@ fn deduplicated_bundles(list<Bundle> bundles) → list<Bundle> ∪ none {
 # Set membership over a string list.
 @ public
 fn in_list(list<string> collection, string name) → bool {
-    for from collection const item {
+    for from collection let item {
         if item ≡ name then return true
     }
     return false
@@ -718,11 +718,11 @@ fn in_list(list<string> collection, string name) → bool {
 # are unknowable) — the topo fails closed.
 @ public
 fn dependencies_met(list<Order> orders, string identity, list<string> placed) → bool {
-    var int i ← 0
+    mut int i ← 0
     while i ≺ orders.length() {
-        const Order order ← orders[i]
+        let Order order ← orders[i]
         if order.identity ≡ identity {
-            var int j ← 0
+            mut int j ← 0
             while j ≺ order.depends.length() {
                 if not in_list(placed, order.depends[j]) then return false
                 j ← j + 1
@@ -741,11 +741,11 @@ fn dependencies_met(list<Order> orders, string identity, list<string> placed) �
 # identities remain) or an unresolvable dependency → null (fail-closed).
 @ public
 fn topological_order(list<Order> orders, list<string> identities) → list<string> ∪ none {
-    var list<string> ordered ← empty
-    var list<string> remaining ← copy identities
+    mut list<string> ordered ← empty
+    mut list<string> remaining ← copy identities
     while remaining.length() ≻ 0 {
-        var list<string> ready ← empty
-        var int i ← 0
+        mut list<string> ready ← empty
+        mut int i ← 0
         while i ≺ remaining.length() {
             if dependencies_met(orders, remaining[i], ordered) {
                 ready.append(remaining[i])
@@ -754,10 +754,10 @@ fn topological_order(list<Order> orders, list<string> identities) → list<strin
         }
         if ready.length() ≡ 0 then return null
         ready ← ready.sorted()
-        const string chosen ← ready[0]
+        let string chosen ← ready[0]
         ordered.append(chosen)
-        var list<string> next ← empty
-        var int j ← 0
+        mut list<string> next ← empty
+        mut int j ← 0
         while j ≺ remaining.length() {
             if remaining[j] ≢ chosen {
                 next.append(remaining[j])
@@ -776,9 +776,9 @@ fn topological_order(list<Order> orders, list<string> identities) → list<strin
 # and escape into markup.
 @ public
 fn unclean_style_text(string text) → bool {
-    var int i ← 0
+    mut int i ← 0
     while i ≺ text.length() {
-        const string c ← text.slice(i, i + 1)
+        let string c ← text.slice(i, i + 1)
         if c ≡ "{" then return true
         if c ≡ "}" then return true
         if c ≡ ";" then return true
@@ -797,10 +797,10 @@ fn unclean_style_text(string text) → bool {
 # no CSS-structure-breaking characters, and no HTML end-tag opener.
 @ public
 fn style_valid(Style style) → bool {
-    for from style.rules const rule {
+    for from style.rules let rule {
         if rule.selector.length() ≡ 0 then return false
         if unclean_style_text(rule.selector) then return false
-        for from rule.declarations const decl {
+        for from rule.declarations let decl {
             if decl.name.length() ≡ 0 then return false
             if decl.value.length() ≡ 0 then return false
             if unclean_style_text(decl.name) then return false
@@ -814,7 +814,7 @@ fn style_valid(Style style) → bool {
 # lookup). Unknown identity → null (the topo already failed closed).
 @ public
 fn bundle_for(string identity, list<Bundle> bundles) → Style ∪ none {
-    for from bundles const bundle {
+    for from bundles let bundle {
         if bundle.identity ≡ identity then return bundle.style
     }
     return null
@@ -828,9 +828,9 @@ fn assemble(Theme theme, Style ∪ none reset, list<Bundle> components, list<Ord
     # tela.tokens — the rendered :root token layer (fail-closed: validity
     # like every other layer — the emitted layer lives inside a raw-text
     # style block).
-    const Style ∪ none tokens_result ← theme_style(theme)
+    let Style ∪ none tokens_result ← theme_style(theme)
     if tokens_result is none then return null
-    const Style tokens ← Style { rules = tokens_result!.rules }
+    let Style tokens ← Style { rules = tokens_result!.rules }
     if not style_valid(tokens) then return null
 
     # tela.reset — validity only (emission order handled below); v1 ships no
@@ -840,11 +840,11 @@ fn assemble(Theme theme, Style ∪ none reset, list<Bundle> components, list<Ord
     }
 
     # tela.components — dedup + fail-closed rule shape, input order.
-    const list<Bundle> ∪ none unique_components ← deduplicated_bundles(components)
+    let list<Bundle> ∪ none unique_components ← deduplicated_bundles(components)
     if unique_components is none then return null
-    const list<Bundle> empty_components ← empty
-    const list<Bundle> final_components ← unique_components coalesce empty_components
-    var int ci ← 0
+    let list<Bundle> empty_components ← empty
+    let list<Bundle> final_components ← unique_components coalesce empty_components
+    mut int ci ← 0
     while ci ≺ final_components.length() {
         if not style_valid(final_components[ci].style) then return null
         ci ← ci + 1
@@ -852,25 +852,25 @@ fn assemble(Theme theme, Style ∪ none reset, list<Bundle> components, list<Ord
 
     # Library packages — dedup, rule shape, then topo order over the explicit
     # orders map (every bundle identity must appear in orders).
-    const list<Bundle> ∪ none unique_bundles ← deduplicated_bundles(bundles)
+    let list<Bundle> ∪ none unique_bundles ← deduplicated_bundles(bundles)
     if unique_bundles is none then return null
-    const list<Bundle> empty_bundles ← empty
-    const list<Bundle> final_bundles ← unique_bundles coalesce empty_bundles
-    var int li ← 0
+    let list<Bundle> empty_bundles ← empty
+    let list<Bundle> final_bundles ← unique_bundles coalesce empty_bundles
+    mut int li ← 0
     while li ≺ final_bundles.length() {
         if not style_valid(final_bundles[li].style) then return null
         li ← li + 1
     }
-    var list<string> identities ← empty
-    var int m ← 0
+    mut list<string> identities ← empty
+    mut int m ← 0
     while m ≺ final_bundles.length() {
         identities.append(final_bundles[m].identity)
         m ← m + 1
     }
-    const list<string> ∪ none libraries_result ← topological_order(orders, identities)
+    let list<string> ∪ none libraries_result ← topological_order(orders, identities)
     if libraries_result is none then return null
-    const list<string> empty_libraries ← empty
-    const list<string> libraries ← libraries_result coalesce empty_libraries
+    let list<string> empty_libraries ← empty
+    let list<string> libraries ← libraries_result coalesce empty_libraries
 
     # tela.applicatio — the last layer; validity only.
     if applicatio not is none {
@@ -878,33 +878,33 @@ fn assemble(Theme theme, Style ∪ none reset, list<Bundle> components, list<Ord
     }
 
     # Assemble the ordered Style — layer order IS emission order.
-    var list<Rule> rules ← empty
+    mut list<Rule> rules ← empty
     if reset not is none {
-        for from reset!.rules const rule {
+        for from reset!.rules let rule {
             rules.append(rule)
         }
     }
-    for from tokens.rules const rule {
+    for from tokens.rules let rule {
         rules.append(rule)
     }
-    var int idx ← 0
+    mut int idx ← 0
     while idx ≺ final_components.length() {
-        for from final_components[idx].style.rules const rule {
+        for from final_components[idx].style.rules let rule {
             rules.append(rule)
         }
         idx ← idx + 1
     }
-    var int ord ← 0
+    mut int ord ← 0
     while ord ≺ libraries.length() {
-        const Style ∪ none style ← bundle_for(libraries[ord], final_bundles)
+        let Style ∪ none style ← bundle_for(libraries[ord], final_bundles)
         if style is none then return null
-        for from style!.rules const rule {
+        for from style!.rules let rule {
             rules.append(rule)
         }
         ord ← ord + 1
     }
     if applicatio not is none {
-        for from applicatio!.style.rules const rule {
+        for from applicatio!.style.rules let rule {
             rules.append(rule)
         }
     }
@@ -955,7 +955,7 @@ fn assemble(Theme theme, Style ∪ none reset, list<Bundle> components, list<Ord
 # spelling). Closure-free: an event carries a name, not behavior.
 @ public
 class EventName {
-    var string name
+    mut string name
 }
 
 # Effect: the declarative host effects from behavior-design §3.2 — exactly
@@ -983,8 +983,8 @@ union Effect {
 # replacement.
 @ public
 class Update {
-    var View view
-    var list<Effect> effects
+    mut View view
+    mut list<Effect> effects
 }
 
 # Kernel-owned constructors (G3 posture — ordinary functions over the same
@@ -1020,13 +1020,13 @@ fn anchor(string identity) → Effect {
 @ public
 fn effect_identity(Effect effects) → string {
     match effects {
-        case Restore const identity {
+        case Restore let identity {
             return identity
         }
-        case Direct const identity {
+        case Direct let identity {
             return identity
         }
-        case Anchor const identity {
+        case Anchor let identity {
             return identity
         }
     }

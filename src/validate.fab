@@ -64,8 +64,8 @@
 
 @ public
 fn in_group(string name, string group) → bool {
-    const string group_bounded ← " " + group + " "
-    const string name_bounded ← " " + name + " "
+    let string group_bounded ← " " + group + " "
+    let string name_bounded ← " " + name + " "
     return group_bounded.contains(name_bounded)
 }
 
@@ -75,19 +75,19 @@ fn in_group(string name, string group) → bool {
 
 @ public
 fn valid_tag_name(string name) → bool {
-    const string letters ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    const string tag_chars ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_."
+    let string letters ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    let string tag_chars ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_."
     if name.length() ≡ 0 then return false
-    const string first_char ← name.slice(0, 1)
+    let string first_char ← name.slice(0, 1)
     if not letters.contains(first_char) then return false
     # Stay-with-reason (list-predicate-twins LPT-7): string-char fold over
     # the indexed string (per-char slice) — outside the LPT-1 all/any
     # surface, which admits list<T> receivers only. The text-family fold is
     # the covering form a future need would admit; the explicit loop stays
     # until then.
-    var int i ← 1
+    mut int i ← 1
     while i ≺ name.length() {
-        const string ch ← name.slice(i, i + 1)
+        let string ch ← name.slice(i, i + 1)
         if not tag_chars.contains(ch) then return false
         i ← i + 1
     }
@@ -100,15 +100,15 @@ fn valid_tag_name(string name) → bool {
 
 @ public
 fn valid_attribute_name(string name) → bool {
-    const string attr_chars ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.:"
+    let string attr_chars ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.:"
     if name.length() ≡ 0 then return false
     # Stay-with-reason (list-predicate-twins LPT-7): same class as
     # valid_tag_name — string-char fold over the indexed string, outside
     # the list<T>-receiver all/any surface; stays until a text-family twin
     # is admitted.
-    var int i ← 0
+    mut int i ← 0
     while i ≺ name.length() {
-        const string ch ← name.slice(i, i + 1)
+        let string ch ← name.slice(i, i + 1)
         if not attr_chars.contains(ch) then return false
         i ← i + 1
     }
@@ -132,8 +132,8 @@ fn valid_space(string space) → bool {
 # namespace context fails closed.
 @ public
 fn valid_name_in_space(string name, string space) → bool {
-    const string svg_only_names ← "svg g defs symbol use path rect circle ellipse line polyline polygon text tspan textPath foreignObject image linearGradient radialGradient stop clipPath mask pattern marker view switch metadata animate animateTransform animateMotion set mpath"
-    const string html_only_names ← "div span p br hr wbr h1 h2 h3 h4 h5 h6 ul ol li dl dt dd table thead tbody tfoot tr td th caption colgroup form input button select option optgroup textarea label fieldset legend datalist output progress meter section article header footer nav main aside figure figcaption blockquote pre code em strong small sub sup mark time abbr address cite b i u s del ins q kbd samp var img iframe video audio canvas template dialog details summary picture source track map area link meta menu"
+    let string svg_only_names ← "svg g defs symbol use path rect circle ellipse line polyline polygon text tspan textPath foreignObject image linearGradient radialGradient stop clipPath mask pattern marker view switch metadata animate animateTransform animateMotion set mpath"
+    let string html_only_names ← "div span p br hr wbr h1 h2 h3 h4 h5 h6 ul ol li dl dt dd table thead tbody tfoot tr td th caption colgroup form input button select option optgroup textarea label fieldset legend datalist output progress meter section article header footer nav main aside figure figcaption blockquote pre code em strong small sub sup mark time abbr address cite b i u s del ins q kbd samp var img iframe video audio canvas template dialog details summary picture source track map area link meta menu"
     if not valid_tag_name(name) then return false
     if space ≡ "html" {
         if in_group(name, svg_only_names) then return false
@@ -149,7 +149,7 @@ fn valid_name_in_space(string name, string space) → bool {
 # HTML void-element set membership (exact HTML spec set).
 @ public
 fn valid_void_html(string name) → bool {
-    const string void_html_names ← "area base br col embed hr img input link meta param source track wbr"
+    let string void_html_names ← "area base br col embed hr img input link meta param source track wbr"
     return in_group(name, void_html_names)
 }
 

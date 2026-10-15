@@ -25,8 +25,8 @@ import from "extensionlib:extension" public * as ext
 # Themed panel: a div with a stable identity and an accessible name; the panel
 # rule in main's style bundle keys on the identity.
 fn panelum(list<ext.Visus> liberi) → ext.Visus {
-    const list<ext.Attributum> aria ← [ ext.Attributum { nomen = "aria-label", valor = "metric panel" } ]
-    const list<ext.Proprietas> no_props ← []
+    let list<ext.Attributum> aria ← [ ext.Attributum { nomen = "aria-label", valor = "metric panel" } ]
+    let list<ext.Proprietas> no_props ← []
     return ext.elementum_omne(
         ext.nova_identitas("canary-panelum"),
         ext.html_spatium(),
@@ -51,18 +51,18 @@ fn metrica_tabula() → ext.Visus {
 
 main {
     # Extension custom helper: horizontal bar meter with label + textual value.
-    const ext.Visus bar ← ext.bar_metrum("throughput", "7.4 Mbps", 74)
+    let ext.Visus bar ← ext.bar_metrum("throughput", "7.4 Mbps", 74)
 
     # Assembled arbor: panel > (two-column metric table, horizontal bar meter).
-    const _ arbor ← panelum([
+    let arbor ← panelum([
         metrica_tabula(),
         bar
     ])
 
     # Extension style + namespaced token contribution (declared only).
-    const ext.Scopulum axis_muted ← ext.chart_axis_muted()
-    const _ chart_stilum ← ext.chart_stilum()
-    const _ app_stilum ← ext.Stilum {
+    let ext.Scopulum axis_muted ← ext.chart_axis_muted()
+    let chart_stilum ← ext.chart_stilum()
+    let app_stilum ← ext.Stilum {
         regulae = [
             ext.Regula {
                 selector = "[data-tela='canary-panelum']",
@@ -77,6 +77,6 @@ main {
 
     # Structural assertion: the namespaced token is declared by the extension
     # and referenced by both style bundles.
-    const string token_nomen ← axis_muted.nomen
+    let string token_nomen ← axis_muted.nomen
     print "canary assembled (token " + token_nomen + ")"
 }

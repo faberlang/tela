@@ -30,7 +30,7 @@
 # The class-list set. Set semantics (presence + insertion-ordered
 # read-back) backed by a tabula — see fix:copia-iteration.
 class FakeClassList {
-    var map<string, bool> classes = empty
+    mut map<string, bool> classes = empty
 
     # The runtime-contract method bridge (faber-web runtime/dom.ts —
     # webDomClassAdd/Remove/Toggle call the classList method surface).
@@ -52,43 +52,43 @@ class FakeClassList {
 # the webDom* handler-typed bindings read. default_prevented mirrors the
 # shim's mutable flag.
 class FakeEvent {
-    var string kind
-    var bool default_prevented = false
-    var string key = ""
-    var string code = ""
-    var bool repeat = false
-    var bool alt_key = false
-    var bool ctrl_key = false
-    var bool shift_key = false
-    var bool meta_key = false
-    var int client_x = 0
-    var int client_y = 0
-    var int movement_x = 0
-    var int movement_y = 0
-    var int button = 0
-    var bool primary = false
+    mut string kind
+    mut bool default_prevented = false
+    mut string key = ""
+    mut string code = ""
+    mut bool repeat = false
+    mut bool alt_key = false
+    mut bool ctrl_key = false
+    mut bool shift_key = false
+    mut bool meta_key = false
+    mut int client_x = 0
+    mut int client_y = 0
+    mut int movement_x = 0
+    mut int movement_y = 0
+    mut int button = 0
+    mut bool primary = false
 }
 
 # The fake element. The shim's getters (textContent, dataTela) become
 # functions over the record (element_text / element_text_set / the
 # maintained data_tela field); the mutable maps stay tabula/list fields.
 class FakeElement {
-    var list<FakeElement> children = empty
-    var FakeElement ∪ none parent = null
+    mut list<FakeElement> children = empty
+    mut FakeElement ∪ none parent = null
     # The runtime contract reads `tagName` (webDomSnapshot -> el.tagName);
     # the field is spelled tagName so the emitted class satisfies it.
-    var string tagName = ""
-    var string value = ""
-    var FakeClassList class_list
+    mut string tagName = ""
+    mut string value = ""
+    mut FakeClassList class_list
     # The parsed data-tela identity ("" when the node carries none) —
     # maintained by element_attr_set / element_attr_remove.
-    var string data_tela = ""
+    mut string data_tela = ""
     # Hydration stamp: "original" when the node was bound (not recreated).
-    var string token = ""
-    var map<string, string> attrs = empty
+    mut string token = ""
+    mut map<string, string> attrs = empty
     # Listener sets per event kind (Set-dedup via contains() before append).
-    var map<string, list<(FakeEvent) → void>> listeners = empty
-    var string own_text = ""
+    mut map<string, list<(FakeEvent) → void>> listeners = empty
+    mut string own_text = ""
 
     # Runtime-contract methods: webDomSnapshot reads getAttribute + tagName
     # on every data-tela descendant; webDomScope/webDomQuery read
@@ -108,11 +108,11 @@ class FakeElement {
 # the subscription registry (the shim's module-global activeSubscriptions
 # lives on the document — the explicit-parameter posture).
 class FakeDocument {
-    var list<FakeElement> children = empty
-    var FakeElement body
-    var FakeElement ∪ none active_element = null
-    var int next_subscription_id = 1
-    var map<int, SubscriptionRecord> active_subscriptions = empty
+    mut list<FakeElement> children = empty
+    mut FakeElement body
+    mut FakeElement ∪ none active_element = null
+    mut int next_subscription_id = 1
+    mut map<int, SubscriptionRecord> active_subscriptions = empty
 
     # The runtime-contract method bridge (webDomScope reads
     # document.querySelector; webDomSnapshot reads scope.root.querySelectorAll
@@ -127,79 +127,79 @@ class FakeDocument {
 
 # The webDom* scope (root + selector) — the runtime's WebDomScope shape.
 class FakeScope {
-    var FakeElement root
-    var string selector
+    mut FakeElement root
+    mut string selector
 }
 
 # The webDom* subscription handle — an id into the document registry.
 class FakeSubscription {
-    var int id
+    mut int id
 }
 
 # The typed hydration snapshot node (identity + tag name per data-tela
 # descendant) — the dom.DomNode equivalent (web-surface-import U4: the
 # en surface field spelling, renamed from identitas).
 class FakeNodus {
-    var string identity
-    var string tag
+    mut string identity
+    mut string tag
 }
 
 # The registry record: the listener + the element to remove it from.
 class SubscriptionRecord {
-    var FakeElement element
-    var string event_name
-    var (FakeEvent) → void handler
+    mut FakeElement element
+    mut string event_name
+    mut (FakeEvent) → void handler
 }
 
 # The bounded-parser result (a parsed node + the next scan position).
 class ParseResult {
-    var FakeElement node
-    var int next
+    mut FakeElement node
+    mut int next
 }
 
 # The binding-plan carrier shapes (the shim's MountedLike surface).
 class BindingLike {
-    var string identity
-    var string status
+    mut string identity
+    mut string status
 }
 class SubscriptionLike {
-    var string identity
-    var string event_name
+    mut string identity
+    mut string event_name
 }
 class MountedLike {
-    var string markup
-    var list<BindingLike> bindings
-    var list<SubscriptionLike> subscriptions
-    var list<string> identities
-    var list<string> diagnostics = empty
+    mut string markup
+    mut list<BindingLike> bindings
+    mut list<SubscriptionLike> subscriptions
+    mut list<string> identities
+    mut list<string> diagnostics = empty
 }
 
 # The handler-state carriers (the keyboard/pointer/focus states the
 # handler-typed bindings produce).
 class FakeKeyboardState {
-    var string kind
-    var string key
-    var string code
-    var bool repeat
-    var bool alt
-    var bool ctrl
-    var bool shift
-    var bool meta
+    mut string kind
+    mut string key
+    mut string code
+    mut bool repeat
+    mut bool alt
+    mut bool ctrl
+    mut bool shift
+    mut bool meta
 }
 class FakePointerState {
-    var string kind
-    var int x
-    var int y
-    var int movement_x
-    var int movement_y
-    var int button
-    var bool primary
+    mut string kind
+    mut int x
+    mut int y
+    mut int movement_x
+    mut int movement_y
+    mut int button
+    mut bool primary
 }
 class FakeFocusState {
-    var bool focused
+    mut bool focused
 }
 class FakeSubmitOptions {
-    var bool prevent_default = true
+    mut bool prevent_default = true
 }
 
 # ---------------------------------------------------------------------------
@@ -263,7 +263,7 @@ fn fake_element(string tag) → FakeElement {
 }
 
 fn make_text_node(string text) → FakeElement {
-    var FakeElement node ← fake_element("#text")
+    mut FakeElement node ← fake_element("#text")
     element_text_set(mut node, text)
     return node
 }
@@ -274,8 +274,8 @@ fn element_text(FakeElement el) → string {
     if el.tagName ≡ "#text" {
         return el.own_text
     }
-    var string accum ← el.own_text
-    var int i ← 0
+    mut string accum ← el.own_text
+    mut int i ← 0
     while i ≺ el.children.length() {
         accum ← accum + element_text(el.children[i])
         i ← i + 1
@@ -316,13 +316,13 @@ fn element_attr_has(FakeElement el, string name) → bool {
 
 # Serialized attribute shape (insertion order) — the open-tag compare.
 fn element_attribute_shape(FakeElement el) → string {
-    var string accum ← ""
-    const list<string> names ← el.attrs.keys()
-    var int i ← 0
+    mut string accum ← ""
+    let list<string> names ← el.attrs.keys()
+    mut int i ← 0
     while i ≺ names.length() {
-        const string ∪ none maybe_value ← el.attrs.get(names[i])
+        let string ∪ none maybe_value ← el.attrs.get(names[i])
         if maybe_value not is none {
-            const string value ← maybe_value
+            let string value ← maybe_value
             accum ← accum + " " + names[i] + "='" + value + "'"
         }
         i ← i + 1
@@ -334,14 +334,14 @@ fn element_attribute_shape(FakeElement el) → string {
 # [data-tela] (non-empty identity), #id, .class, [name] / [name=value] /
 # [name='value'] / [name="value"], and bare tag equality.
 fn element_matches(FakeElement el, string selector) → bool {
-    const string q ← "§"('"')
+    let string q ← "§"('"')
     if selector ≡ "[data-tela]" {
         return el.data_tela ≢ ""
     }
     if selector.length() ≻ 0 and selector.slice(0, 1) ≡ "#" {
-        const string ∪ none id ← element_attr_get(el, "id")
+        let string ∪ none id ← element_attr_get(el, "id")
         if id not is none {
-            const string certain ← id
+            let string certain ← id
             return certain ≡ selector.slice(1, selector.length())
         }
         return false
@@ -350,28 +350,28 @@ fn element_matches(FakeElement el, string selector) → bool {
         return class_list_has(el.class_list, selector.slice(1, selector.length()))
     }
     if selector.length() ≥ 2 and selector.slice(0, 1) ≡ "[" and selector.slice(selector.length() - 1, selector.length()) ≡ "]" {
-        const string inner ← selector.slice(1, selector.length() - 1)
-        const int eq ← index_of(inner, "=", 0)
+        let string inner ← selector.slice(1, selector.length() - 1)
+        let int eq ← index_of(inner, "=", 0)
         if eq ≺ 0 {
             return element_attr_has(el, inner)
         }
-        var string name ← inner.slice(0, eq)
+        mut string name ← inner.slice(0, eq)
         # fix:codegen002 — the TS emitter rejects equality comparisons whose
         # RHS variable is named `value` (a codegen helper-name collision;
         # minimized repro tela/spike/defects/d5-rhs-value-equality.fab). The
         # local is spelled attr_value in this module.
-        var string attr_value ← inner.slice(eq + 1, inner.length())
+        mut string attr_value ← inner.slice(eq + 1, inner.length())
         if attr_value.length() ≥ 2 {
-            const string first ← attr_value.slice(0, 1)
+            let string first ← attr_value.slice(0, 1)
             if first ≡ "'" or first ≡ q {
                 if attr_value.slice(attr_value.length() - 1, attr_value.length()) ≡ first {
                     attr_value ← attr_value.slice(1, attr_value.length() - 1)
                 }
             }
         }
-        const string ∪ none actual ← element_attr_get(el, name)
+        let string ∪ none actual ← element_attr_get(el, name)
         if actual not is none {
-            const string certain ← actual
+            let string certain ← actual
             return certain ≡ attr_value
         }
         return false
@@ -380,7 +380,7 @@ fn element_matches(FakeElement el, string selector) → bool {
 }
 
 fn element_query_selector(FakeElement el, string selector) → FakeElement ∪ none {
-    const list<FakeElement> all ← element_query_all(el, selector)
+    let list<FakeElement> all ← element_query_all(el, selector)
     if all.length() ≡ 0 {
         return null
     }
@@ -392,15 +392,15 @@ fn element_query_all(FakeElement el, string selector) → list<FakeElement> {
 }
 
 fn query_all_into(list<FakeElement> children, string selector) → list<FakeElement> {
-    var list<FakeElement> out ← empty
-    var int i ← 0
+    mut list<FakeElement> out ← empty
+    mut int i ← 0
     while i ≺ children.length() {
-        const FakeElement child ← children[i]
+        let FakeElement child ← children[i]
         if element_matches(child, selector) {
             out ← out.added(child)
         }
-        const list<FakeElement> tail ← query_all_into(child.children, selector)
-        var int j ← 0
+        let list<FakeElement> tail ← query_all_into(child.children, selector)
+        mut int j ← 0
         while j ≺ tail.length() {
             out ← out.added(tail[j])
             j ← j + 1
@@ -416,14 +416,14 @@ fn element_append_child(FakeElement parent, mut FakeElement child) → void {
 }
 
 fn element_remove(mut FakeElement child) → void {
-    var FakeElement ∪ none parent ← child.parent
+    mut FakeElement ∪ none parent ← child.parent
     if parent not is none {
-        var FakeElement certain ← parent
-        var list<FakeElement> kept ← empty
+        mut FakeElement certain ← parent
+        mut list<FakeElement> kept ← empty
         # A `mut` parameter does not compare against an element (SEM010);
         # the const name is the same node, so the identity test reads it.
-        const FakeElement removed ← child
-        var int i ← 0
+        let FakeElement removed ← child
+        mut int i ← 0
         while i ≺ certain.children.length() {
             if certain.children[i] ≢ removed {
                 kept.append(certain.children[i])
@@ -443,9 +443,9 @@ fn element_add_listener(FakeElement el, string kind, (FakeEvent) → void handle
     if not el.listeners.has(kind) {
         el.listeners.put(kind, empty)
     }
-    const list<(FakeEvent) → void> ∪ none maybe ← el.listeners.get(kind)
+    let list<(FakeEvent) → void> ∪ none maybe ← el.listeners.get(kind)
     if maybe not is none {
-        var list<(FakeEvent) → void> handlers ← copy maybe
+        mut list<(FakeEvent) → void> handlers ← copy maybe
         # Set-dedup the same handler (fix:copia-iteration: contains()
         # stands in for copia membership).
         if not handlers.contains(handler) {
@@ -457,11 +457,11 @@ fn element_add_listener(FakeElement el, string kind, (FakeEvent) → void handle
 
 fn element_remove_listener(FakeElement el, string kind, (FakeEvent) → void handler) → void {
     if el.listeners.has(kind) {
-        const list<(FakeEvent) → void> ∪ none maybe ← el.listeners.get(kind)
+        let list<(FakeEvent) → void> ∪ none maybe ← el.listeners.get(kind)
         if maybe not is none {
-            const list<(FakeEvent) → void> handlers ← maybe
-            var list<(FakeEvent) → void> kept ← empty
-            var int i ← 0
+            let list<(FakeEvent) → void> handlers ← maybe
+            mut list<(FakeEvent) → void> kept ← empty
+            mut int i ← 0
             while i ≺ handlers.length() {
                 if handlers[i] ≢ handler {
                     kept.append(handlers[i])
@@ -475,12 +475,12 @@ fn element_remove_listener(FakeElement el, string kind, (FakeEvent) → void han
 
 fn element_dispatch(FakeElement el, FakeEvent event) → bool {
     if el.listeners.has(event.kind) {
-        const list<(FakeEvent) → void> ∪ none maybe ← el.listeners.get(event.kind)
+        let list<(FakeEvent) → void> ∪ none maybe ← el.listeners.get(event.kind)
         if maybe not is none {
-            const list<(FakeEvent) → void> handlers ← maybe
-            var int i ← 0
+            let list<(FakeEvent) → void> handlers ← maybe
+            mut int i ← 0
             while i ≺ handlers.length() {
-                const (FakeEvent) → void h ← handlers[i]
+                let (FakeEvent) → void h ← handlers[i]
                 h(event)
                 i ← i + 1
             }
@@ -494,7 +494,7 @@ fn element_dispatch(FakeElement el, FakeEvent event) → bool {
 # ---------------------------------------------------------------------------
 
 fn fake_document() → FakeDocument {
-    const FakeElement body ← fake_element("body")
+    let FakeElement body ← fake_element("body")
     return FakeDocument { body = body, children = [body] }
 }
 
@@ -507,7 +507,7 @@ fn doc_focus_node(mut FakeDocument doc, FakeElement ∪ none node) → void {
 }
 
 fn doc_query_selector(FakeDocument doc, string selector) → FakeElement ∪ none {
-    const list<FakeElement> all ← doc_query_all(doc, selector)
+    let list<FakeElement> all ← doc_query_all(doc, selector)
     if all.length() ≡ 0 {
         return null
     }
@@ -520,12 +520,12 @@ fn doc_query_all(FakeDocument doc, string selector) → list<FakeElement> {
 
 # Build a region root for a selector (e.g. "#root") under the body.
 fn resolve_region(FakeDocument doc, string selector) → FakeElement {
-    const FakeElement ∪ none existing ← doc_query_selector(doc, selector)
+    let FakeElement ∪ none existing ← doc_query_selector(doc, selector)
     if existing not is none {
-        const FakeElement certain ← existing
+        let FakeElement certain ← existing
         return certain
     }
-    var FakeElement region ← fake_element("div")
+    mut FakeElement region ← fake_element("div")
     element_attr_set(mut region, "id", selector.slice(1, selector.length()))
     element_append_child(doc.body, mut region)
     return region
@@ -554,12 +554,12 @@ fn is_void_tag(string name) → bool {
 }
 
 fn unescape_html(string text) → string {
-    const string q ← "§"('"')
-    var string accum ← ""
-    var int i ← 0
+    let string q ← "§"('"')
+    mut string accum ← ""
+    mut int i ← 0
     while i ≺ text.length() {
-        var string fragment ← text.slice(i, i + 1)
-        var int step ← 1
+        mut string fragment ← text.slice(i, i + 1)
+        mut int step ← 1
         if not (i + 5 ≻ text.length()) and text.slice(i, i + 5) ≡ "&quot;" {
             fragment ← q
             step ← 5
@@ -590,7 +590,7 @@ fn index_of(string text, string needle, int start) → int {
     if needle.length() ≡ 0 {
         return start
     }
-    var int i ← start
+    mut int i ← start
     while i ≤ text.length() - needle.length() {
         if text.slice(i, i + needle.length()) ≡ needle {
             return i
@@ -604,12 +604,12 @@ fn index_of(string text, string needle, int start) → int {
 # not open an element (name empty or a closing tag). Mirrors the shim's
 # recursive-descent parseElement.
 fn parse_element(string html, int start) → ParseResult ∪ none {
-    const string q ← "§"('"')
-    var int j ← start + 1
-    var string name ← ""
-    var bool name_scan ← true
+    let string q ← "§"('"')
+    mut int j ← start + 1
+    mut string name ← ""
+    mut bool name_scan ← true
     while j ≺ html.length() and name_scan {
-        const string ch ← html.slice(j, j + 1)
+        let string ch ← html.slice(j, j + 1)
         if ch ≡ " " or ch ≡ ">" {
             name_scan ← false
         } else {
@@ -623,9 +623,9 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
     if name.slice(0, 1) ≡ "/" {
         return null
     }
-    var FakeElement node ← fake_element(name)
+    mut FakeElement node ← fake_element(name)
     # Attribute scan (single/double-quoted or bare values; boolean attrs).
-    var bool in_tag ← true
+    mut bool in_tag ← true
     while j ≺ html.length() and in_tag {
         if html.slice(j, j + 1) ≡ ">" {
             j ← j + 1
@@ -634,10 +634,10 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
             if html.slice(j, j + 1) ≡ " " {
                 j ← j + 1
             } else {
-                var string attr_name ← ""
-                var bool reading_name ← true
+                mut string attr_name ← ""
+                mut bool reading_name ← true
                 while j ≺ html.length() and reading_name {
-                    const string ch ← html.slice(j, j + 1)
+                    let string ch ← html.slice(j, j + 1)
                     if ch ≡ "=" or ch ≡ ">" or ch ≡ " " {
                         reading_name ← false
                     } else {
@@ -645,7 +645,7 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
                         j ← j + 1
                     }
                 }
-                var bool skipping ← true
+                mut bool skipping ← true
                 while j ≺ html.length() and skipping {
                     if html.slice(j, j + 1) ≡ " " {
                         j ← j + 1
@@ -655,7 +655,7 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
                 }
                 if j ≺ html.length() and html.slice(j, j + 1) ≡ "=" {
                     j ← j + 1
-                    var bool skipping2 ← true
+                    mut bool skipping2 ← true
                     while j ≺ html.length() and skipping2 {
                         if html.slice(j, j + 1) ≡ " " {
                             j ← j + 1
@@ -664,12 +664,12 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
                         }
                     }
                     if j ≺ html.length() and (html.slice(j, j + 1) ≡ "'" or html.slice(j, j + 1) ≡ q) {
-                        const string quote ← html.slice(j, j + 1)
+                        let string quote ← html.slice(j, j + 1)
                         j ← j + 1
-                        var string val ← ""
-                        var bool reading_val ← true
+                        mut string val ← ""
+                        mut bool reading_val ← true
                         while j ≺ html.length() and reading_val {
-                            const string ch ← html.slice(j, j + 1)
+                            let string ch ← html.slice(j, j + 1)
                             if ch ≡ quote {
                                 reading_val ← false
                             }
@@ -680,10 +680,10 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
                         }
                         element_attr_set(mut node, attr_name, unescape_html(val))
                     } else {
-                        var string val ← ""
-                        var bool reading_bare ← true
+                        mut string val ← ""
+                        mut bool reading_bare ← true
                         while j ≺ html.length() and reading_bare {
-                            const string ch ← html.slice(j, j + 1)
+                            let string ch ← html.slice(j, j + 1)
                             if ch ≡ " " or ch ≡ ">" {
                                 reading_bare ← false
                             } else {
@@ -702,34 +702,34 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
     if is_void_tag(name) {
         return ParseResult { node = node, next = j }
     }
-    var bool closed ← false
+    mut bool closed ← false
     while j ≺ html.length() and not closed {
         if j + name.length() + 3 ≤ html.length() and html.slice(j, j + name.length() + 3) ≡ "</" + name + ">" {
             j ← j + name.length() + 3
             closed ← true
         } else {
             if html.slice(j, j + 1) ≡ "<" {
-                var ParseResult ∪ none child ← parse_element(html, j)
+                mut ParseResult ∪ none child ← parse_element(html, j)
                 if child not is none {
-                    var ParseResult certain ← child
+                    mut ParseResult certain ← child
                     element_append_child(node, mut certain.node)
                     j ← certain.next
                 } else {
                     j ← j + 1
                 }
             } else {
-                const int end ← index_of(html, "<", j)
+                let int end ← index_of(html, "<", j)
                 if end ≺ 0 {
-                    const string text ← html.slice(j, html.length())
+                    let string text ← html.slice(j, html.length())
                     if text.length() ≻ 0 {
-                        var FakeElement text_node ← make_text_node(text)
+                        mut FakeElement text_node ← make_text_node(text)
                         element_append_child(node, mut text_node)
                     }
                     j ← html.length()
                 } else {
-                    const string text ← html.slice(j, end)
+                    let string text ← html.slice(j, end)
                     if text.length() ≻ 0 {
-                        var FakeElement text_node ← make_text_node(text)
+                        mut FakeElement text_node ← make_text_node(text)
                         element_append_child(node, mut text_node)
                     }
                     j ← end
@@ -742,28 +742,28 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
 
 # Parse a serializer-shaped markup string into top-level nodes.
 fn parse_fragment(string html) → list<FakeElement> {
-    var list<FakeElement> nodes ← empty
-    var int i ← 0
+    mut list<FakeElement> nodes ← empty
+    mut int i ← 0
     while i ≺ html.length() {
         if html.slice(i, i + 1) ≡ "<" {
-            const ParseResult ∪ none parsed ← parse_element(html, i)
+            let ParseResult ∪ none parsed ← parse_element(html, i)
             if parsed not is none {
-                const ParseResult certain ← parsed
+                let ParseResult certain ← parsed
                 nodes.append(certain.node)
                 i ← certain.next
             } else {
                 i ← i + 1
             }
         } else {
-            const int end ← index_of(html, "<", i)
+            let int end ← index_of(html, "<", i)
             if end ≺ 0 {
-                const string text ← html.slice(i, html.length())
+                let string text ← html.slice(i, html.length())
                 if text.length() ≻ 0 {
                     nodes.append(make_text_node(text))
                 }
                 i ← html.length()
             } else {
-                const string text ← html.slice(i, end)
+                let string text ← html.slice(i, end)
                 if text.length() ≻ 0 {
                     nodes.append(make_text_node(text))
                 }
@@ -780,9 +780,9 @@ fn parse_fragment(string html) → list<FakeElement> {
 # ---------------------------------------------------------------------------
 
 fn scoped_require(FakeDocument doc, string selector) → FakeElement {
-    const FakeElement ∪ none element ← doc_query_selector(doc, selector)
+    let FakeElement ∪ none element ← doc_query_selector(doc, selector)
     if element not is none {
-        const FakeElement certain ← element
+        let FakeElement certain ← element
         return certain
     }
     panic "dom-shim: required selector not found: " + selector
@@ -795,7 +795,7 @@ fn web_dom_scope(FakeDocument doc, string selector) → FakeScope {
         # scope rooted at the body is query-equivalent for the harness.
         return FakeScope { root = doc.body, selector = selector }
     }
-    const FakeElement root ← scoped_require(doc, selector)
+    let FakeElement root ← scoped_require(doc, selector)
     return FakeScope { root = root, selector = selector }
 }
 
@@ -804,9 +804,9 @@ fn web_dom_query(FakeScope scope, string selector) → FakeElement ∪ none {
 }
 
 fn web_dom_require(FakeScope scope, string selector) → FakeElement {
-    const FakeElement ∪ none element ← element_query_selector(scope.root, selector)
+    let FakeElement ∪ none element ← element_query_selector(scope.root, selector)
     if element not is none {
-        const FakeElement certain ← element
+        let FakeElement certain ← element
         return certain
     }
     panic "dom-shim: required selector not found: " + selector
@@ -822,10 +822,10 @@ fn web_dom_snapshot(FakeScope ∪ none scope) → list<FakeNodus> ∪ none {
     if scope is none {
         return null
     }
-    const FakeScope certain ← scope
-    const list<FakeElement> nodes ← element_query_all(certain.root, "[data-tela]")
-    var list<FakeNodus> out ← empty
-    var int i ← 0
+    let FakeScope certain ← scope
+    let list<FakeElement> nodes ← element_query_all(certain.root, "[data-tela]")
+    mut list<FakeNodus> out ← empty
+    mut int i ← 0
     while i ≺ nodes.length() {
         out.append(FakeNodus { identity = nodes[i].data_tela, tag = nodes[i].tagName.lowercase() })
         i ← i + 1
@@ -865,9 +865,9 @@ fn web_dom_on(mut FakeDocument doc, FakeElement element, string event_name, (Fak
 }
 
 fn web_dom_unsubscribe(FakeDocument doc, FakeSubscription subscription) → void {
-    const SubscriptionRecord ∪ none record ← doc.active_subscriptions.get(subscription.id)
+    let SubscriptionRecord ∪ none record ← doc.active_subscriptions.get(subscription.id)
     if record not is none {
-        const SubscriptionRecord certain ← record
+        let SubscriptionRecord certain ← record
         element_remove_listener(certain.element, certain.event_name, certain.handler)
     }
     doc.active_subscriptions.delete(subscription.id)
@@ -905,8 +905,8 @@ fn web_dom_on_pointer(mut FakeDocument doc, FakeElement element, string event_na
 }
 
 fn web_dom_on_focus(mut FakeDocument doc, FakeElement element, string event_name, (FakeFocusState) → void handler) → FakeSubscription {
-    const bool focused ← doc_has_focus(doc)
-    const FakeSubscription subscription ← web_dom_on(mut doc, element, event_name, FakeEvent event → void ∴ handler(FakeFocusState { focused = focused }))
+    let bool focused ← doc_has_focus(doc)
+    let FakeSubscription subscription ← web_dom_on(mut doc, element, event_name, FakeEvent event → void ∴ handler(FakeFocusState { focused = focused }))
     handler(FakeFocusState { focused = focused })
     return subscription
 }
@@ -920,7 +920,7 @@ fn web_dom_prevent_default(mut FakeEvent event) → FakeEvent {
 # ---------------------------------------------------------------------------
 
 fn find_child_by_identity(list<FakeElement> children, string identity) → FakeElement ∪ none {
-    var int i ← 0
+    mut int i ← 0
     while i ≺ children.length() {
         if children[i].data_tela ≡ identity {
             return children[i]
@@ -934,7 +934,7 @@ fn stamp_subtree(mut FakeElement node, string token) → void {
     if node.data_tela ≢ "" {
         node.token ← token
     }
-    var int i ← 0
+    mut int i ← 0
     while i ≺ node.children.length() {
         stamp_subtree(mut node.children[i], token)
         i ← i + 1
@@ -952,33 +952,33 @@ fn open_tag_equals(FakeElement a, FakeElement b) → bool {
 }
 
 fn clone_node(FakeElement node) → FakeElement {
-    var FakeElement clone ← fake_element(node.tagName)
+    mut FakeElement clone ← fake_element(node.tagName)
     if node.tagName ≡ "#text" {
         element_text_set(mut clone, element_text(node))
         return clone
     }
     clone.value ← node.value
     clone.data_tela ← node.data_tela
-    const list<string> names ← node.attrs.keys()
-    var int i ← 0
+    let list<string> names ← node.attrs.keys()
+    mut int i ← 0
     while i ≺ names.length() {
-        const string ∪ none maybe_value ← node.attrs.get(names[i])
+        let string ∪ none maybe_value ← node.attrs.get(names[i])
         if maybe_value not is none {
-            const string value ← maybe_value
+            let string value ← maybe_value
             element_attr_set(mut clone, names[i], value)
         }
         i ← i + 1
     }
-    const list<string> class_names ← class_list_names(node.class_list)
-    var int j ← 0
+    let list<string> class_names ← class_list_names(node.class_list)
+    mut int j ← 0
     while j ≺ class_names.length() {
         class_list_add(clone.class_list, class_names[j])
         j ← j + 1
     }
     clone.token ← node.token
-    var int k ← 0
+    mut int k ← 0
     while k ≺ node.children.length() {
-        var FakeElement kid ← clone_node(node.children[k])
+        mut FakeElement kid ← clone_node(node.children[k])
         element_append_child(clone, mut kid)
         k ← k + 1
     }
@@ -1003,22 +1003,22 @@ fn find_match(list<FakeElement> children, string t_id, int k) → FakeElement �
 # the same result when the target order matches the present order, which
 # holds for the proof corpus; recorded).
 fn sync_region(mut FakeElement parent, list<FakeElement> target, map<string, string> plan, bool stamp) → void {
-    var list<FakeElement> rebuilt ← empty
-    var int k ← 0
+    mut list<FakeElement> rebuilt ← empty
+    mut int k ← 0
     while k ≺ target.length() {
-        const FakeElement t ← target[k]
-        const string t_id ← t.data_tela
-        var FakeElement ∪ none match ← find_match(parent.children, t_id, k)
-        var string status ← "create"
+        let FakeElement t ← target[k]
+        let string t_id ← t.data_tela
+        mut FakeElement ∪ none match ← find_match(parent.children, t_id, k)
+        mut string status ← "create"
         if t_id ≢ "" and plan.has(t_id) {
-            const string ∪ none s ← plan.get(t_id)
+            let string ∪ none s ← plan.get(t_id)
             if s not is none {
-                const string certain ← s
+                let string certain ← s
                 status ← certain
             }
         }
         if match not is none {
-            var FakeElement certain_match ← match
+            mut FakeElement certain_match ← match
             if status ≡ "bind" and open_tag_equals(certain_match, t) {
                 if stamp {
                     certain_match.token ← "original"
@@ -1026,14 +1026,14 @@ fn sync_region(mut FakeElement parent, list<FakeElement> target, map<string, str
                 sync_region(mut certain_match, t.children, plan, stamp)
                 rebuilt.append(certain_match)
             } else {
-                var FakeElement fresh ← clone_node(t)
+                mut FakeElement fresh ← clone_node(t)
                 if stamp {
                     stamp_subtree(mut fresh, "fresh")
                 }
                 rebuilt.append(fresh)
             }
         } else {
-            var FakeElement fresh ← clone_node(t)
+            mut FakeElement fresh ← clone_node(t)
             if stamp {
                 stamp_subtree(mut fresh, "fresh")
             }
@@ -1049,10 +1049,10 @@ fn sync_region(mut FakeElement parent, list<FakeElement> target, map<string, str
 # the existing matching node (stamped "original" when `stamp` is set);
 # "create" identities are created/replaced from the View.
 fn execute_mount_plan(FakeDocument doc, string selector, MountedLike mounted, bool stamp) → void {
-    var FakeElement root ← resolve_region(doc, selector)
-    const list<FakeElement> target ← parse_fragment(mounted.markup)
-    var map<string, string> plan ← empty
-    var int i ← 0
+    mut FakeElement root ← resolve_region(doc, selector)
+    let list<FakeElement> target ← parse_fragment(mounted.markup)
+    mut map<string, string> plan ← empty
+    mut int i ← 0
     while i ≺ mounted.bindings.length() {
         plan.put(mounted.bindings[i].identity, mounted.bindings[i].status)
         i ← i + 1
@@ -1062,14 +1062,14 @@ fn execute_mount_plan(FakeDocument doc, string selector, MountedLike mounted, bo
 
 # Bind a webDom subscription per Mounted descriptor onto the identity node.
 fn bind_region_subscriptions(mut FakeDocument doc, string selector, MountedLike mounted, (FakeEvent) → void handler) → list<FakeSubscription> {
-    const FakeElement root ← resolve_region(doc, selector)
-    const list<FakeElement> nodes ← element_query_all(root, "[data-tela]")
-    var list<FakeSubscription> subs ← empty
-    var int i ← 0
+    let FakeElement root ← resolve_region(doc, selector)
+    let list<FakeElement> nodes ← element_query_all(root, "[data-tela]")
+    mut list<FakeSubscription> subs ← empty
+    mut int i ← 0
     while i ≺ mounted.subscriptions.length() {
-        const FakeElement ∪ none node ← find_child_by_identity(nodes, mounted.subscriptions[i].identity)
+        let FakeElement ∪ none node ← find_child_by_identity(nodes, mounted.subscriptions[i].identity)
         if node not is none {
-            const FakeElement certain ← node
+            let FakeElement certain ← node
             subs.append(web_dom_on(mut doc, certain, mounted.subscriptions[i].event_name, handler))
         } else {
             panic "dom-shim: subscription target missing: " + mounted.subscriptions[i].identity

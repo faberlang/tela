@@ -85,8 +85,8 @@ fn badge_props(string label, string tone) → BadgeProps {
 # The → tela.View component fns (union-returning exports over imported
 # sibling types — the post-g4 consumable surface).
 fn panel(PanelProps props) → tela.View {
-    var list<tela.View> children ← vacua
-    var int i ← 0
+    mut list<tela.View> children ← vacua
+    mut int i ← 0
     while i < props.rows.longitudo() {
         children.appende(tela.element_view(tela.html_space(), "p", [ tela.text_view(props.rows[i]) ]))
         i ← i + 1
@@ -144,7 +144,7 @@ import from "tela:tela" public * ut tela
 import from "reference:reference" public * ut ref
 
 main {
-    const tela.View tree ← tela.element_full(
+    let tela.View tree ← tela.element_full(
         tela.new_identity("probe-root"),
         tela.html_space(),
         "div",
@@ -155,14 +155,14 @@ main {
             ref.badge(ref.badge_props("live", "positive"))
         ]
     )
-    const string html ← tela.html_visus(tree) coalesce ""
+    let string html ← tela.html_visus(tree) coalesce ""
     assert html.continet("data-tela='ref-panel-probe'")
     assert html.continet("data-tela='ref-badge-probe'")
     assert html.continet("role='status'")
     assert html.continet(">one</p>")
-    const tela.Style style ← ref.probe_style()
+    let tela.Style style ← ref.probe_style()
     assert style.rules.longitudo() ≡ 1
-    const tela.Token token ← ref.probe_token()
+    let tela.Token token ← ref.probe_token()
     assert token.name ≡ "ref.panel.surface"
     assert token.value ≡ "#f9fafb"
     print html
@@ -231,15 +231,15 @@ fn fake_node(string tag_name, string identity, string text) → FakeNode {
 # The bounded parser shape: scan the markup for the identity marker (the
 # serializer's emission form) and collect the identities in document order.
 fn scan_identities(string markup) → list<string> {
-    var list<string> identities ← vacua
-    var int i ← 0
+    mut list<string> identities ← vacua
+    mut int i ← 0
     while i < markup.longitudo() {
         if markup.sectio(i, i + 12) ≡ " data-tela='" {
-            var string raw ← ""
-            var int j ← i + 12
-            var bool terminated ← false
+            mut string raw ← ""
+            mut int j ← i + 12
+            mut bool terminated ← false
             while j < markup.longitudo() and not terminated {
-                const string ch ← markup.sectio(j, j + 1)
+                let string ch ← markup.sectio(j, j + 1)
                 if ch ≡ "'" {
                     terminated ← true
                 }
@@ -266,10 +266,10 @@ fn scan_identities(string markup) → list<string> {
 # binding — the harness driver passes the webDom* surface) + tabula/copia
 # state over the records.
 fn execute_mount_plan(FakeDocument doc, (FakeNode) → void handler, list<string> identities) → int {
-    var int count ← 0
-    var int i ← 0
+    mut int count ← 0
+    mut int i ← 0
     while i < identities.longitudo() {
-        const FakeNode node ← fake_node("div", identities[i], "")
+        let FakeNode node ← fake_node("div", identities[i], "")
         doc.roots.appende(node)
         handler(node)
         count ← count + 1
@@ -279,8 +279,8 @@ fn execute_mount_plan(FakeDocument doc, (FakeNode) → void handler, list<string
 }
 
 fn count_identities(list<string> collection, string identity) → int {
-    var int count ← 0
-    var int i ← 0
+    mut int count ← 0
+    mut int i ← 0
     while i < collection.longitudo() {
         if collection[i] ≡ identity {
             count ← count + 1

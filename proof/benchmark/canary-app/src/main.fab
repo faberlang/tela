@@ -132,9 +132,9 @@ union Message {
 # EventBinding-shaped binding: one event subscription keyed to a stable node
 # identity, carrying a typed message-producing closure (Branch B plan).
 class EventBinding {
-    var string identity
-    var string event_name
-    var (tela.EventName) → Message message
+    mut string identity
+    mut string event_name
+    mut (tela.EventName) → Message message
 }
 
 fn selected(string identity) → Message {
@@ -175,8 +175,8 @@ fn segment_order() → list<string> {
 }
 
 fn identity_index(string identity) → int {
-    const list<string> ordines ← segment_order()
-    var int i ← 0
+    let list<string> ordines ← segment_order()
+    mut int i ← 0
     while i ≺ ordines.length() {
         if ordines[i] ≡ identity {
             return i
@@ -187,9 +187,9 @@ fn identity_index(string identity) → int {
 }
 
 fn wrapped_identity(int index) → string {
-    const list<string> ordines ← segment_order()
-    const int longitudo ← ordines.length()
-    var int i ← index
+    let list<string> ordines ← segment_order()
+    let int longitudo ← ordines.length()
+    mut int i ← index
     while i ≺ 0 {
         i ← i + longitudo
     }
@@ -202,7 +202,7 @@ fn wrapped_identity(int index) → string {
 # First-occurrence index of a fragment in a string (the cascade-ordering
 # assert: the extension bundle's selector appears before the forms bundle's).
 fn index_in(string text, string fragment) → int {
-    var int i ← 0
+    mut int i ← 0
     while not (i + fragment.length() ≻ text.length()) {
         if text.slice(i, i + fragment.length()) ≡ fragment {
             return i
@@ -219,7 +219,7 @@ fn index_in(string text, string fragment) → int {
 # no-op (Moved to the same identity). Tab is unhandled — the control's
 # single tab stop leaves as a unit (§1.3).
 fn key_message(string focused_identity, string clavis) → Message {
-    const int index ← identity_index(focused_identity)
+    let int index ← identity_index(focused_identity)
     if clavis ≡ "ArrowRight" or clavis ≡ "ArrowDown" {
         return moved(wrapped_identity(index + 1))
     }
@@ -243,10 +243,10 @@ fn key_message(string focused_identity, string clavis) → Message {
 # only, live-region-silent per §1.5).
 fn update_control(string selected, Message message) → string {
     match message {
-        case Selected const identity {
+        case Selected let identity {
             return identity
         }
-        case Moved const identity {
+        case Moved let identity {
             return selected
         }
     }
@@ -257,7 +257,7 @@ fn update_control(string selected, Message message) → string {
 # changes — silent when a click/keypress lands on the already-selected
 # segment or when the update does not change selection.
 fn announcement(reference.SegmentedProps props, string selected) → string {
-    const int index ← identity_index(selected)
+    let int index ← identity_index(selected)
     if index ≺ props.options.length() {
         return props.options[index] + " selected"
     }
@@ -298,17 +298,17 @@ union FormMessage {
 # message-producing closure. The event spellings come from the package's
 # contract constants (forms.eventus_* — the G4-safe string surface).
 class FormBinding {
-    var string identity
-    var string event_name
-    var (tela.EventName) → FormMessage message
+    mut string identity
+    mut string event_name
+    mut (tela.EventName) → FormMessage message
 }
 
 # The form model — the app-side validation state for one field identity
 # (error "" = valid; the error text is the invalid → aria-invalid source).
 class FieldState {
-    var string identity
-    var string value
-    var string error
+    mut string identity
+    mut string value
+    mut string error
 }
 
 # Message-producing helpers (the closure bodies).
@@ -375,22 +375,22 @@ fn field_state(string identity, string value, string error) → FieldState {
 # valid (the no-op rule: a state-unchanging update is silent downstream).
 fn update_field(FieldState state, FormMessage message) → FieldState {
     match message {
-        case FieldText const identity, value {
+        case FieldText let identity, value {
             if value ≡ "" {
                 return field_state(identity, value, "Required")
             }
             return field_state(identity, value, "")
         }
-        case CheckboxToggle const identity, selected {
+        case CheckboxToggle let identity, selected {
             if selected {
                 return field_state(identity, "true", "")
             }
             return field_state(identity, "false", "")
         }
-        case SelectChange const identity, selected {
+        case SelectChange let identity, selected {
             return field_state(identity, selected, "")
         }
-        case Submit const identity {
+        case Submit let identity {
             if state.value ≡ "" {
                 return field_state(identity, state.value, "Required")
             }
@@ -480,7 +480,7 @@ fn forms_composition_from_state(FieldState state, bool agree, string tone) → t
 # driver (the node host) calls this; the pre-existing hydration state is
 # read via dom.snapshot inside mount.
 fn mount_forms(string selector) → browser.Mounted ∪ none {
-    const dom.Scope scope ← dom.scope(selector)
+    let dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, forms_composition(), forms_theme())
 }
 
@@ -616,12 +616,12 @@ fn typography_composition() → tela.View {
 
 # check-reference mount seams (dom.scope + browser.mount).
 fn mount_layout(string selector) → browser.Mounted ∪ none {
-    const dom.Scope scope ← dom.scope(selector)
+    let dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, layout_composition(), reference_theme())
 }
 
 fn mount_typography(string selector) → browser.Mounted ∪ none {
-    const dom.Scope scope ← dom.scope(selector)
+    let dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, typography_composition(), reference_theme())
 }
 
@@ -683,17 +683,17 @@ fn metric_composition() → tela.View {
 
 # check-reference mount seams.
 fn mount_panel(string selector) → browser.Mounted ∪ none {
-    const dom.Scope scope ← dom.scope(selector)
+    let dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, panel_composition(), reference_theme())
 }
 
 fn mount_badge(string selector) → browser.Mounted ∪ none {
-    const dom.Scope scope ← dom.scope(selector)
+    let dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, badge_composition(), reference_theme())
 }
 
 fn mount_metric(string selector) → browser.Mounted ∪ none {
-    const dom.Scope scope ← dom.scope(selector)
+    let dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, metric_composition(), reference_theme())
 }
 
@@ -726,7 +726,7 @@ fn table_composition() → tela.View {
 
 # check-reference mount seam.
 fn mount_table(string selector) → browser.Mounted ∪ none {
-    const dom.Scope scope ← dom.scope(selector)
+    let dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, table_composition(), reference_theme())
 }
 
@@ -748,7 +748,7 @@ fn segmented_composition() → tela.View {
 
 # check-reference mount seam.
 fn mount_segmented(string selector) → browser.Mounted ∪ none {
-    const dom.Scope scope ← dom.scope(selector)
+    let dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, segmented_composition(), reference_theme())
 }
 
@@ -784,17 +784,17 @@ union ButtonMessage {
 # message-producing closure. The event name is the props' declared
 # activation event (the event surface).
 class ButtonBinding {
-    var string identity
-    var string event_name
-    var (tela.EventName) → ButtonMessage message
+    mut string identity
+    mut string event_name
+    mut (tela.EventName) → ButtonMessage message
 }
 
 # The button model — the app-side activation state (the press count + the
 # last activated identity; the proof's consequence tracker — the button
 # itself is stateless, the consequence is the app's).
 class ButtonState {
-    var int presses
-    var string last
+    mut int presses
+    mut string last
 }
 
 fn button_state(int presses, string last) → ButtonState {
@@ -840,7 +840,7 @@ fn button_order() → list<string> {
 # activated identity.
 fn update_button(ButtonState state, ButtonMessage message) → ButtonState {
     match message {
-        case Pressed const identity {
+        case Pressed let identity {
             return button_state(state.presses + 1, identity)
         }
     }
@@ -867,7 +867,7 @@ fn button_composition() → tela.View {
 
 # check-reference mount seam.
 fn mount_button(string selector) → browser.Mounted ∪ none {
-    const dom.Scope scope ← dom.scope(selector)
+    let dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, button_composition(), reference_theme())
 }
 
@@ -916,7 +916,7 @@ fn field_composition() → tela.View {
 
 # check-reference mount seam.
 fn mount_field(string selector) → browser.Mounted ∪ none {
-    const dom.Scope scope ← dom.scope(selector)
+    let dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, field_composition(), reference_theme())
 }
 
@@ -939,18 +939,18 @@ union FieldMessage {
 # U5/U6 pattern): one input subscription keyed to a stable node identity,
 # bound to the catalog's declared input event.
 class FieldBinding {
-    var string identity
-    var string event_name
+    mut string identity
+    mut string event_name
 }
 
 # The field model — the app-side validation state for ONE catalog field
 # (name + label + value + error; the error is the validation source —
 # the catalog's static mapping derives aria-invalid from it).
 class FieldPlanState {
-    var string name
-    var string label
-    var string value
-    var string error
+    mut string name
+    mut string label
+    mut string value
+    mut string error
 }
 
 fn field_plan_state(string name, string label, string value, string error) → FieldPlanState {
@@ -997,7 +997,7 @@ fn field_plan_bindings() → list<FieldBinding> {
 # its state — the silent no-op rule downstream).
 fn update_field_plan(FieldPlanState state, FieldMessage message) → FieldPlanState {
     match message {
-        case FieldInput const identity, value {
+        case FieldInput let identity, value {
             if not (identity ≡ "form-field-" + state.name) {
                 return state
             }
@@ -1036,7 +1036,7 @@ fn field_plan_composition(FieldPlanState name_state) → tela.View {
 
 # check-reference mount seam.
 fn mount_field_plan(string selector) → browser.Mounted ∪ none {
-    const dom.Scope scope ← dom.scope(selector)
+    let dom.Scope scope ← dom.scope(selector)
     return browser.mount(scope, field_plan_composition(field_plan_state("name", "Name", "", "")), reference_theme())
 }
 
@@ -1044,15 +1044,15 @@ main {
     # G4 seam attempt (recorded in the evidence record): ext.bar_meter
     # resolves to WARN014 export-skip; the app composes the meter with tela
     # constructors (documented workaround).
-    const tela.View bar ← bar_meter_app("throughput", "7.4 Mbps", 74)
+    let tela.View bar ← bar_meter_app("throughput", "7.4 Mbps", 74)
 
     # --- Assembled tree: panel > (two-column metric table, bar meter,
     # segmented control) — the control renders statically alongside the
     # Stage 1/2 composition (shared source: the same component function
     # that mounts interactively).
-    const reference.SegmentedProps props ← control_props()
-    const tela.View control ← reference.segmented_control(props)
-    const tela.View tree ← app_panel([
+    let reference.SegmentedProps props ← control_props()
+    let tela.View control ← reference.segmented_control(props)
+    let tela.View tree ← app_panel([
         metric_table(),
         bar,
         control
@@ -1067,7 +1067,7 @@ main {
     # the field family's form.* tokens join too (identical names + values
     # to the formslib tokens — the kernel dedups by name-identical-content;
     # the catalog's field is self-sufficient).
-    const tela.Theme lumen ← tela.theme("lumen", [
+    let tela.Theme lumen ← tela.theme("lumen", [
         tela.token("surface.canvas", "#ffffff"),
         tela.token("surface.panel", "#f9fafb"),
         tela.token("text.primary", "#111827"),
@@ -1128,7 +1128,7 @@ main {
         reference.field_valid_token(),
         reference.field_focus_token()
     ])
-    const tela.Theme tenebrae ← tela.theme("tenebrae", [
+    let tela.Theme tenebrae ← tela.theme("tenebrae", [
         tela.token("surface.canvas", "#0f172a"),
         tela.token("surface.panel", "#1e293b"),
         tela.token("text.primary", "#f8fafc"),
@@ -1191,56 +1191,56 @@ main {
     ])
 
     # --- App + extension style bundles (identical under both themes) -------
-    const tela.Style ext_stilum ← ext.chart_style()
-    const tela.Bundle ext_bundle ← tela.bundle("extensionlib", ext_stilum)
+    let tela.Style ext_stilum ← ext.chart_style()
+    let tela.Bundle ext_bundle ← tela.bundle("extensionlib", ext_stilum)
 
     # --- The formslib component style bundle (the three-package input) -----
     # Class-returning (→ tela.Style) — consumable from the consumer today
     # (the stage-1 §3 evidence); the identity "formslib" is the package's
     # assembly-identity entry (the order map declares it app-side).
-    const tela.Style forms_stilum ← forms.form_style()
-    const tela.Bundle forms_bundle ← tela.bundle("formslib", forms_stilum)
+    let tela.Style forms_stilum ← forms.form_style()
+    let tela.Bundle forms_bundle ← tela.bundle("formslib", forms_stilum)
 
     # --- The reference catalog's component style bundles (Stage 5 U2/U3) --
     # The component layer (input order): rules keyed on the ref-* identities,
     # referencing the --ref-* tokens (the layout + typography bundles, U2;
     # the panel + badge + metric bundles, U3 — prefix-keyed on the
     # variable-suffix identities).
-    const tela.Style ref_layout_stilum ← reference.layout_style()
-    const tela.Bundle ref_layout_bundle ← tela.bundle("reference-layout", ref_layout_stilum)
-    const tela.Style ref_typography_stilum ← reference.typography_style()
-    const tela.Bundle ref_typography_bundle ← tela.bundle("reference-typography", ref_typography_stilum)
-    const tela.Style ref_panel_stilum ← reference.panel_style()
-    const tela.Bundle ref_panel_bundle ← tela.bundle("reference-panel", ref_panel_stilum)
-    const tela.Style ref_badge_stilum ← reference.badge_style()
-    const tela.Bundle ref_badge_bundle ← tela.bundle("reference-badge", ref_badge_stilum)
-    const tela.Style ref_metric_stilum ← reference.metric_style()
-    const tela.Bundle ref_metric_bundle ← tela.bundle("reference-metric", ref_metric_stilum)
+    let tela.Style ref_layout_stilum ← reference.layout_style()
+    let tela.Bundle ref_layout_bundle ← tela.bundle("reference-layout", ref_layout_stilum)
+    let tela.Style ref_typography_stilum ← reference.typography_style()
+    let tela.Bundle ref_typography_bundle ← tela.bundle("reference-typography", ref_typography_stilum)
+    let tela.Style ref_panel_stilum ← reference.panel_style()
+    let tela.Bundle ref_panel_bundle ← tela.bundle("reference-panel", ref_panel_stilum)
+    let tela.Style ref_badge_stilum ← reference.badge_style()
+    let tela.Bundle ref_badge_bundle ← tela.bundle("reference-badge", ref_badge_stilum)
+    let tela.Style ref_metric_stilum ← reference.metric_style()
+    let tela.Bundle ref_metric_bundle ← tela.bundle("reference-metric", ref_metric_stilum)
     # Stage 5 U4: the table bundle (prefix-keyed on the ref-table-*
     # identities, referencing the --ref-table-* tokens).
-    const tela.Style ref_table_stilum ← reference.table_style()
-    const tela.Bundle ref_table_bundle ← tela.bundle("reference-table", ref_table_stilum)
+    let tela.Style ref_table_stilum ← reference.table_style()
+    let tela.Bundle ref_table_bundle ← tela.bundle("reference-table", ref_table_stilum)
     # Stage 5 U5: the segmented-control bundle (the ref-seg-* identities —
     # the group's flex layout + the segments' shaping + the selected-state
     # accent border, all referencing the --ref-seg-* tokens).
-    const tela.Style ref_seg_stilum ← reference.segmented_style()
-    const tela.Bundle ref_seg_bundle ← tela.bundle("reference-seg", ref_seg_stilum)
+    let tela.Style ref_seg_stilum ← reference.segmented_style()
+    let tela.Bundle ref_seg_bundle ← tela.bundle("reference-seg", ref_seg_stilum)
     # Stage 5 U6: the button bundle (the ref-button-* identities — the
     # shape + the variant treatments + the visible-focus :focus-visible
     # rule + the native-disabled dim, referencing the --ref-button-*
     # tokens).
-    const tela.Style ref_button_stilum ← reference.button_style()
-    const tela.Bundle ref_button_bundle ← tela.bundle("reference-button", ref_button_stilum)
+    let tela.Style ref_button_stilum ← reference.button_style()
+    let tela.Bundle ref_button_bundle ← tela.bundle("reference-button", ref_button_stilum)
     # Stage 5 U7: the field bundle (the form-* identities — the invalid
     # border + the focus ring + the error/live-region rules + the
     # native-disabled dim, referencing the --form-* tokens).
-    const tela.Style ref_field_stilum ← reference.field_style()
-    const tela.Bundle ref_field_bundle ← tela.bundle("reference-field", ref_field_stilum)
+    let tela.Style ref_field_stilum ← reference.field_style()
+    let tela.Bundle ref_field_bundle ← tela.bundle("reference-field", ref_field_stilum)
 
     # App style bundle: the panel rule (the segmented-control rule was
     # app-owned in Stage 3; the control's styles now ride the reference
     # segmented bundle — Stage 5 U5 re-home).
-    const tela.Style app_stilum ← tela.Style {
+    let tela.Style app_stilum ← tela.Style {
         rules = [
             tela.Rule {
                 selector = "[data-tela='canary-panelum']",
@@ -1252,7 +1252,7 @@ main {
             }
         ]
     }
-    const tela.Bundle app_bundle ← tela.bundle("canary-app", app_stilum)
+    let tela.Bundle app_bundle ← tela.bundle("canary-app", app_stilum)
 
     # --- Full cascade under each theme (assemble: tokens -> extensionlib ->
     # formslib -> canary-app; the token layer + the library bundles are the
@@ -1260,7 +1260,7 @@ main {
     # extensionlib and formslib depend on nothing (tela is the shared base),
     # so the kernel's topological tie-break (stable package identity) orders
     # extensionlib before formslib — the documented cascade order.
-    const tela.Style ∪ none cascade_lumen_result ← tela.assemble(
+    let tela.Style ∪ none cascade_lumen_result ← tela.assemble(
         lumen,
         null,
         [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle, ref_table_bundle, ref_seg_bundle, ref_button_bundle, ref_field_bundle],
@@ -1268,7 +1268,7 @@ main {
         [ext_bundle, forms_bundle],
         app_bundle
     )
-    const tela.Style ∪ none cascade_tenebrae_result ← tela.assemble(
+    let tela.Style ∪ none cascade_tenebrae_result ← tela.assemble(
         tenebrae,
         null,
         [ref_layout_bundle, ref_typography_bundle, ref_panel_bundle, ref_badge_bundle, ref_metric_bundle, ref_table_bundle, ref_seg_bundle, ref_button_bundle, ref_field_bundle],
@@ -1278,14 +1278,14 @@ main {
     )
     assert not (cascade_lumen_result ≡ null)
     assert not (cascade_tenebrae_result ≡ null)
-    const string css_lumen ← tela.css(tela.Style { rules = cascade_lumen_result!.rules }) coalesce ""
-    const string css_tenebrae ← tela.css(tela.Style { rules = cascade_tenebrae_result!.rules }) coalesce ""
+    let string css_lumen ← tela.css(tela.Style { rules = cascade_lumen_result!.rules }) coalesce ""
+    let string css_tenebrae ← tela.css(tela.Style { rules = cascade_tenebrae_result!.rules }) coalesce ""
 
     # --- The Stage 2 campaign gate proof (bullets 1 + 2) -------------------
     # HTML is theme-independent: the same tree renders byte-identically
     # (themes supply values, not markup).
-    const string html_a ← tela.html_view(tree) coalesce ""
-    const string html_b ← tela.html_view(tree) coalesce ""
+    let string html_a ← tela.html_view(tree) coalesce ""
+    let string html_b ← tela.html_view(tree) coalesce ""
     assert html_a ≡ html_b
     # The two theme token layers differ materially.
     assert css_lumen ≢ css_tenebrae
@@ -1415,7 +1415,7 @@ main {
 
     # --- The Stage 2 fail-closed regressions re-asserted (three-package) ---
     # A cycle in the order map rejects (fail-closed — no partial cascade).
-    const tela.Style ∪ none cycle_result ← tela.assemble(
+    let tela.Style ∪ none cycle_result ← tela.assemble(
         lumen,
         null,
         [],
@@ -1426,7 +1426,7 @@ main {
     assert cycle_result ≡ null
     # Duplicate package identity with different content rejects (dedup by
     # stable identity — fail-closed, the Stage 2 contract).
-    const tela.Bundle forms_bundle_altera ← tela.bundle(
+    let tela.Bundle forms_bundle_altera ← tela.bundle(
         "formslib",
         tela.Style {
             rules = [
@@ -1439,7 +1439,7 @@ main {
             ]
         }
     )
-    const tela.Style ∪ none duplicate_result ← tela.assemble(
+    let tela.Style ∪ none duplicate_result ← tela.assemble(
         lumen,
         null,
         [],
@@ -1449,7 +1449,7 @@ main {
     )
     assert duplicate_result ≡ null
     # Invalid output (an empty-selector rule) rejects (fail-closed).
-    const tela.Bundle malum_bundle ← tela.bundle(
+    let tela.Bundle malum_bundle ← tela.bundle(
         "mala",
         tela.Style {
             rules = [
@@ -1462,7 +1462,7 @@ main {
             ]
         }
     )
-    const tela.Style ∪ none malum_result ← tela.assemble(
+    let tela.Style ∪ none malum_result ← tela.assemble(
         lumen,
         null,
         [],
@@ -1480,7 +1480,7 @@ main {
     # rendered bytes are IDENTICAL to the pre-route output (the helpers
     # were exactly `tela.html_view(fn(...))`), so the determinism sha is
     # unaffected by the re-route.
-    const string forma_composita ←
+    let string forma_composita ←
         tela.html_view(forms.field(forms.field_props("name", "Name", "", "false", ""))) coalesce "" +
         tela.html_view(forms.checkbox(forms.checkbox_props("agree", "Agree", "true", "false"))) coalesce "" +
         tela.html_view(forms.select(forms.select_props("tone", "Tone", ["Light", "Dark"], "false"))) coalesce "" +
@@ -1494,8 +1494,8 @@ main {
     # [data-tela^='form-field-'] rule in the COMPONENT layer (which
     # precedes the library layer in the cascade order) — the library-layer
     # ordering assert must probe a formslib-only selector.
-    const int ext_index ← index_in(css_lumen, "[data-tela='tela-chart-bar']")
-    const int forms_index ← index_in(css_lumen, "[data-tela^='form-checkbox-']")
+    let int ext_index ← index_in(css_lumen, "[data-tela='tela-chart-bar']")
+    let int forms_index ← index_in(css_lumen, "[data-tela^='form-checkbox-']")
     assert ext_index ≺ forms_index
 
     # --- The Stage 3 static half (U3 done_when (a)) ------------------------
@@ -1504,7 +1504,7 @@ main {
     # + the roving tabindex on the segments (§1.3/§1.4), the control-owned
     # declared live region (§1.5), stable ref-seg-* data-tela identities
     # throughout (Stage 5 U5 — the reference re-home).
-    const string html_controllum ← tela.html_view(control) coalesce ""
+    let string html_controllum ← tela.html_view(control) coalesce ""
     # Serializer emission order: attributes in author order, then data-tela
     # (the identity attribute) — the U2 exempla precedent.
     assert html_controllum ≡ «<div role="radiogroup" aria-label="segmented control" data-tela="ref-seg-control"><button role="radio" aria-selected="true" tabindex="0" data-tela="ref-seg-control-1">One</button><button role="radio" aria-selected="false" tabindex="-1" data-tela="ref-seg-control-2">Two</button><button role="radio" aria-selected="false" tabindex="-1" data-tela="ref-seg-control-3">Three</button><div role="status" aria-live="polite" data-tela="ref-seg-live"></div></div>»
@@ -1513,72 +1513,72 @@ main {
     # The plan is app-typed (D1 recorded, never kernel-generic) and carried
     # by typed message-producing closures (not erased into strings). Stage 5
     # U5: the plan re-targets the reference identities (ref-seg-control-N).
-    const list<EventBinding> vincula ← control_bindings()
+    let list<EventBinding> vincula ← control_bindings()
     assert vincula.length() ≡ 3
     # Invoke a binding's closure: click on ref-seg-control-2 → Selected.
-    const Message click_msg ← vincula[1].message(tela.event_name("ref-seg-control-2"))
+    let Message click_msg ← vincula[1].message(tela.event_name("ref-seg-control-2"))
     match click_msg {
-        case Selected const identity {
+        case Selected let identity {
             assert identity ≡ "ref-seg-control-2"
         }
-        case Moved const identity {
+        case Moved let identity {
             assert false
         }
     }
     # The update loop: Selected changes the selection.
-    const string post ← update_control("ref-seg-control-1", click_msg)
+    let string post ← update_control("ref-seg-control-1", click_msg)
     assert post ≡ "ref-seg-control-2"
     # The keyboard mapping: arrows move focus only (Moved) — the update
     # leaves the selection unchanged (§1.3; live-region-silent per §1.5).
-    const Message arrow_msg ← key_message("ref-seg-control-2", "ArrowRight")
+    let Message arrow_msg ← key_message("ref-seg-control-2", "ArrowRight")
     match arrow_msg {
-        case Moved const identity {
+        case Moved let identity {
             assert identity ≡ "ref-seg-control-3"
         }
-        case Selected const identity {
+        case Selected let identity {
             assert false
         }
     }
-    const string post_arrow ← update_control(post, arrow_msg)
+    let string post_arrow ← update_control(post, arrow_msg)
     assert post_arrow ≡ post
     # Home/End move focus to first/last (Moved); Space/Enter select.
-    const Message home_msg ← key_message("ref-seg-control-3", "Home")
+    let Message home_msg ← key_message("ref-seg-control-3", "Home")
     match home_msg {
-        case Moved const identity {
+        case Moved let identity {
             assert identity ≡ "ref-seg-control-1"
         }
-        case Selected const identity {
+        case Selected let identity {
             assert false
         }
     }
-    const Message end_msg ← key_message("ref-seg-control-1", "End")
+    let Message end_msg ← key_message("ref-seg-control-1", "End")
     match end_msg {
-        case Moved const identity {
+        case Moved let identity {
             assert identity ≡ "ref-seg-control-3"
         }
-        case Selected const identity {
+        case Selected let identity {
             assert false
         }
     }
-    const Message space_msg ← key_message("ref-seg-control-2", "Space")
+    let Message space_msg ← key_message("ref-seg-control-2", "Space")
     match space_msg {
-        case Selected const identity {
+        case Selected let identity {
             assert identity ≡ "ref-seg-control-2"
         }
-        case Moved const identity {
+        case Moved let identity {
             assert false
         }
     }
     # A no-op selection change: clicking the already-selected segment keeps
     # the model unchanged — the update returns the same selection (silent).
-    const Message noop_msg ← vincula[1].message(tela.event_name("ref-seg-control-2"))
+    let Message noop_msg ← vincula[1].message(tela.event_name("ref-seg-control-2"))
     assert update_control(post, noop_msg) ≡ post
     # The declarative effects (behavior-design §3.2) — the kernel carriers
     # + the key accessor (fix:sem001 — the kernel owns the only Effect
     # matcher; the host executes effects by reading the key).
-    const tela.Effect restore ← tela.restore("ref-seg-control-2")
+    let tela.Effect restore ← tela.restore("ref-seg-control-2")
     assert tela.effect_identity(restore) ≡ "ref-seg-control-2"
-    const tela.Effect anchor ← tela.anchor("#root")
+    let tela.Effect anchor ← tela.anchor("#root")
     assert tela.effect_identity(anchor) ≡ "#root"
     # The live-region announcement mapping (§1.5): names the new option.
     assert announcement(props, "ref-seg-control-2") ≡ "Two selected"
@@ -1596,10 +1596,10 @@ main {
     assert forms.change_event() ≡ "change"
     assert forms.submit_event() ≡ "submit"
     assert forms.click_event() ≡ "click"
-    const FormBinding v_campum ← field_binding("form-field-name", "Ada")
-    const FormBinding v_boxum ← checkbox_binding("form-checkbox-agree", true)
-    const FormBinding v_selectum ← select_binding("form-select-tone", "Dark")
-    const FormBinding v_submissio ← submit_binding("form-submit")
+    let FormBinding v_campum ← field_binding("form-field-name", "Ada")
+    let FormBinding v_boxum ← checkbox_binding("form-checkbox-agree", true)
+    let FormBinding v_selectum ← select_binding("form-select-tone", "Dark")
+    let FormBinding v_submissio ← submit_binding("form-submit")
     assert v_campum.event_name ≡ forms.field_event()
     assert v_boxum.event_name ≡ forms.change_event()
     assert v_selectum.event_name ≡ forms.change_event()
@@ -1611,66 +1611,66 @@ main {
 
     # Invoke the bindings' closures (the event's name carries the
     # identity — the event subscription keys by identity, never ambient).
-    const FormMessage m_campum ← v_campum.message(tela.event_name("form-field-name"))
+    let FormMessage m_campum ← v_campum.message(tela.event_name("form-field-name"))
     match m_campum {
-        case FieldText const identity, value {
+        case FieldText let identity, value {
             assert identity ≡ "form-field-name"
             assert value ≡ "Ada"
         }
-        case CheckboxToggle const identity, selected {
+        case CheckboxToggle let identity, selected {
             assert false
         }
-        case SelectChange const identity, selected {
+        case SelectChange let identity, selected {
             assert false
         }
-        case Submit const identity {
+        case Submit let identity {
             assert false
         }
     }
-    const FormMessage m_boxum ← v_boxum.message(tela.event_name("form-checkbox-agree"))
+    let FormMessage m_boxum ← v_boxum.message(tela.event_name("form-checkbox-agree"))
     match m_boxum {
-        case CheckboxToggle const identity, selected {
+        case CheckboxToggle let identity, selected {
             assert identity ≡ "form-checkbox-agree"
             assert selected ≡ true
         }
-        case FieldText const identity, value {
+        case FieldText let identity, value {
             assert false
         }
-        case SelectChange const identity, selected {
+        case SelectChange let identity, selected {
             assert false
         }
-        case Submit const identity {
+        case Submit let identity {
             assert false
         }
     }
-    const FormMessage m_selectum ← v_selectum.message(tela.event_name("form-select-tone"))
+    let FormMessage m_selectum ← v_selectum.message(tela.event_name("form-select-tone"))
     match m_selectum {
-        case SelectChange const identity, selected {
+        case SelectChange let identity, selected {
             assert identity ≡ "form-select-tone"
             assert selected ≡ "Dark"
         }
-        case FieldText const identity, value {
+        case FieldText let identity, value {
             assert false
         }
-        case CheckboxToggle const identity, selected {
+        case CheckboxToggle let identity, selected {
             assert false
         }
-        case Submit const identity {
+        case Submit let identity {
             assert false
         }
     }
-    const FormMessage m_submissio ← v_submissio.message(tela.event_name("form-submit"))
+    let FormMessage m_submissio ← v_submissio.message(tela.event_name("form-submit"))
     match m_submissio {
-        case Submit const identity {
+        case Submit let identity {
             assert identity ≡ "form-submit"
         }
-        case FieldText const identity, value {
+        case FieldText let identity, value {
             assert false
         }
-        case CheckboxToggle const identity, selected {
+        case CheckboxToggle let identity, selected {
             assert false
         }
-        case SelectChange const identity, selected {
+        case SelectChange let identity, selected {
             assert false
         }
     }
@@ -1678,56 +1678,56 @@ main {
     # The update/validation semantics: an empty field input → invalid (the
     # error text set — the model flips to invalid); the validation-state
     # mapping flips aria-invalid to "true" + the error text is present.
-    const FieldState statu_init ← field_state("form-field-name", "", "")
-    const FieldState statu_invalidum ← update_field(statu_init, field_text_message("form-field-name", ""))
+    let FieldState statu_init ← field_state("form-field-name", "", "")
+    let FieldState statu_invalidum ← update_field(statu_init, field_text_message("form-field-name", ""))
     assert statu_invalidum.error ≡ "Required"
     assert forms.invalid_state(forms.error_present(statu_invalidum.error)) ≡ "true"
     # The round trip through the package's render helper: invalid → the
     # bytes carry aria-invalid="true" + aria-describedby → the error
     # identity + the error text (the field_group association, U2).
-    const string grex_invalidum ← tela.html_view(forms.field_group(forms.field_props("name", "Name", statu_invalidum.value, forms.invalid_state(forms.error_present(statu_invalidum.error)), statu_invalidum.error))) coalesce ""
+    let string grex_invalidum ← tela.html_view(forms.field_group(forms.field_props("name", "Name", statu_invalidum.value, forms.invalid_state(forms.error_present(statu_invalidum.error)), statu_invalidum.error))) coalesce ""
     assert grex_invalidum.contains(«aria-invalid="true"»)
     assert grex_invalidum.contains(«aria-describedby="form-error-name"»)
     assert grex_invalidum.contains(">Required</div>")
     # A non-empty field input → valid: the error cleared (aria-invalid
     # flips "false", no describedby).
-    const FieldState statu_validum ← update_field(statu_invalidum, field_text_message("form-field-name", "Ada"))
+    let FieldState statu_validum ← update_field(statu_invalidum, field_text_message("form-field-name", "Ada"))
     assert statu_validum.error ≡ ""
-    const string grex_validum ← tela.html_view(forms.field_group(forms.field_props("name", "Name", statu_validum.value, forms.invalid_state(forms.error_present(statu_validum.error)), statu_validum.error))) coalesce ""
+    let string grex_validum ← tela.html_view(forms.field_group(forms.field_props("name", "Name", statu_validum.value, forms.invalid_state(forms.error_present(statu_validum.error)), statu_validum.error))) coalesce ""
     assert not grex_validum.contains(«aria-invalid="true"»)
     assert not grex_validum.contains("aria-describedby")
     # The live-region policy (§1.5 extended to form validation): the
     # invalid → valid transition announces; a no-op input (same value,
     # same state) is SILENT ("" — the no-op rule).
     assert form_announcement(statu_invalidum, statu_validum) ≡ "form-field-name valid"
-    const FieldState statu_noop ← update_field(statu_validum, field_text_message("form-field-name", "Ada"))
+    let FieldState statu_noop ← update_field(statu_validum, field_text_message("form-field-name", "Ada"))
     assert statu_noop.value ≡ statu_validum.value
     assert form_announcement(statu_validum, statu_noop) ≡ ""
     # The checkbox toggle + select change update the model (the change
     # messages keyed to the forms identities); the second identical toggle
     # is a state no-op → silent.
-    const FieldState statu_boxum ← update_field(statu_validum, checkbox_toggle_message("form-checkbox-agree", true))
+    let FieldState statu_boxum ← update_field(statu_validum, checkbox_toggle_message("form-checkbox-agree", true))
     assert statu_boxum.value ≡ "true"
     assert form_announcement(statu_validum, statu_boxum) ≡ "form-checkbox-agree valid"
-    const FieldState statu_boxum_noop ← update_field(statu_boxum, checkbox_toggle_message("form-checkbox-agree", true))
+    let FieldState statu_boxum_noop ← update_field(statu_boxum, checkbox_toggle_message("form-checkbox-agree", true))
     assert statu_boxum_noop.value ≡ statu_boxum.value
     assert form_announcement(statu_boxum, statu_boxum_noop) ≡ ""
-    const FieldState statu_selectum ← update_field(statu_boxum, select_change_message("form-select-tone", "Dark"))
+    let FieldState statu_selectum ← update_field(statu_boxum, select_change_message("form-select-tone", "Dark"))
     assert statu_selectum.value ≡ "Dark"
     # The submit validates: an invalid field keeps the error (a state
     # no-op — silent); a valid field stays cleared (submitted).
-    const FieldState statu_submit_invalidum ← update_field(statu_invalidum, submit_message("form-submit"))
+    let FieldState statu_submit_invalidum ← update_field(statu_invalidum, submit_message("form-submit"))
     assert statu_submit_invalidum.error ≡ "Required"
     assert form_announcement(statu_invalidum, statu_submit_invalidum) ≡ ""
-    const FieldState statu_submit_validum ← update_field(statu_validum, submit_message("form-submit"))
+    let FieldState statu_submit_validum ← update_field(statu_validum, submit_message("form-submit"))
     assert statu_submit_validum.error ≡ ""
     # fix:sem001 held (the recorded G3-family gap): effect keys are read
     # through the kernel's effect_identity — the app never matches an
     # imported union. The declarative effect keys attach to the same
     # data-tela values the bindings key to (identity-hydration §7).
-    const tela.Effect restore_formae ← tela.restore("form-field-name")
+    let tela.Effect restore_formae ← tela.restore("form-field-name")
     assert tela.effect_identity(restore_formae) ≡ "form-field-name"
-    const tela.Effect ancora_formae ← tela.anchor("#root")
+    let tela.Effect ancora_formae ← tela.anchor("#root")
     assert tela.effect_identity(ancora_formae) ≡ "#root"
 
     # --- The static-render runner output: HTML once, the full cascade CSS
@@ -1751,8 +1751,8 @@ main {
     # hierarchy (native h1..h6), the prose semantics (p), the semantic
     # emphasis (strong/em/code), the scale steps — the wrapper identities
     # are app-owned data (canary-*).
-    const string html_layout ← tela.html_view(layout_composition()) coalesce ""
-    const string html_typography ← tela.html_view(typography_composition()) coalesce ""
+    let string html_layout ← tela.html_view(layout_composition()) coalesce ""
+    let string html_typography ← tela.html_view(typography_composition()) coalesce ""
     assert html_layout.contains(«<div data-tela="ref-layout-stack">»)
     assert html_layout.contains(«<div data-tela="ref-layout-grid">»)
     assert html_layout.contains(«<div data-tela="ref-layout-prose">»)
@@ -1782,9 +1782,9 @@ main {
     # name, the badge's role=status + the textual meaning (the status word
     # in the accessible name — never color alone), the metric's dl/dt/dd
     # label/value(+delta) structure (the textual form preserved).
-    const string html_panel ← tela.html_view(panel_composition()) coalesce ""
-    const string html_badge ← tela.html_view(badge_composition()) coalesce ""
-    const string html_metric ← tela.html_view(metric_composition()) coalesce ""
+    let string html_panel ← tela.html_view(panel_composition()) coalesce ""
+    let string html_badge ← tela.html_view(badge_composition()) coalesce ""
+    let string html_metric ← tela.html_view(metric_composition()) coalesce ""
     assert html_panel.contains(«<div role="region" aria-label="Status panel" data-tela="ref-panel-status">»)
     assert html_panel.contains(«<p data-tela="ref-typography-prose">all systems operational</p>»)
     assert html_badge.contains(«<span role="status" aria-label="New: 3 messages" data-tela="ref-badge-new">3 messages</span>»)
@@ -1809,7 +1809,7 @@ main {
     # caption provides the accessible name, the ref-table-* identities
     # (root + header cells + body cells) are the stable focus targets for
     # the declared consumer-plan navigation interaction.
-    const string html_table ← tela.html_view(table_composition()) coalesce ""
+    let string html_table ← tela.html_view(table_composition()) coalesce ""
     assert html_table.contains(«<div data-tela="canary-ref-table">»)
     assert html_table.contains(«<table data-tela="ref-table-services"><caption>Services</caption>»)
     assert html_table.contains(«<thead><tr><th scope="col" data-tela="ref-table-services-header-0">Service</th><th scope="col" data-tela="ref-table-services-header-1">Status</th></tr></thead>»)
@@ -1827,7 +1827,7 @@ main {
     # a11y structure asserts: the group's radiogroup + accessible name,
     # the segments' role=radio + aria-selected + the roving tabindex (one
     # tab stop as a whole), the control-owned declared live region.
-    const string html_seg ← tela.html_view(segmented_composition()) coalesce ""
+    let string html_seg ← tela.html_view(segmented_composition()) coalesce ""
     assert html_seg.contains(«<div data-tela="canary-ref-seg">»)
     assert html_seg.contains(«<div role="radiogroup" aria-label="segmented control" data-tela="ref-seg-control">»)
     assert html_seg.contains(«<button role="radio" aria-selected="true" tabindex="0" data-tela="ref-seg-control-1">One</button>»)
@@ -1849,7 +1849,7 @@ main {
     # duplication), the label/aria-label accessible name, the native
     # disabled attribute on the delete button (no activation, the state
     # exposed), the data-ref-variant treatments.
-    const string html_button ← tela.html_view(button_composition()) coalesce ""
+    let string html_button ← tela.html_view(button_composition()) coalesce ""
     assert html_button.contains(«<div data-tela="canary-ref-button">»)
     assert html_button.contains(«<button data-ref-variant="primary" data-tela="ref-button-save">Save</button>»)
     assert html_button.contains(«<button data-ref-variant="secondary" data-tela="ref-button-cancel">Cancel</button>»)
@@ -1862,7 +1862,7 @@ main {
     # bindings key to the ref-button-* identities + the DECLARED activation
     # event (props.event_name = the catalog's button_event() = "click").
     assert reference.button_event() ≡ "click"
-    const list<ButtonBinding> button_vincula ← button_bindings()
+    let list<ButtonBinding> button_vincula ← button_bindings()
     assert button_vincula.length() ≡ 2
     # Only the ENABLED buttons are bound (the disabled delete button
     # carries no subscription — a disabled click no-ops by construction).
@@ -1870,21 +1870,21 @@ main {
     assert button_vincula[1].identity ≡ "ref-button-cancel"
     assert button_vincula[0].event_name ≡ reference.button_event()
     # Invoke a binding's closure: click on ref-button-save → Pressed.
-    const ButtonMessage press_msg ← button_vincula[0].message(tela.event_name("ref-button-save"))
+    let ButtonMessage press_msg ← button_vincula[0].message(tela.event_name("ref-button-save"))
     match press_msg {
-        case Pressed const identity {
+        case Pressed let identity {
             assert identity ≡ "ref-button-save"
         }
     }
     # The update loop: Pressed increments the press count + records the
     # last activated identity.
-    const ButtonState bstate_init ← button_state(0, "")
-    const ButtonState bstate_post ← update_button(bstate_init, press_msg)
+    let ButtonState bstate_init ← button_state(0, "")
+    let ButtonState bstate_post ← update_button(bstate_init, press_msg)
     assert bstate_post.presses ≡ 1
     assert bstate_post.last ≡ "ref-button-save"
     # The declarative effects (the focus-restoration pattern): restore by
     # identity — the kernel carriers + the key accessor (fix:sem001).
-    const tela.Effect restore_button ← tela.restore("ref-button-save")
+    let tela.Effect restore_button ← tela.restore("ref-button-save")
     assert tela.effect_identity(restore_button) ≡ "ref-button-save"
     # The mount seam is the check-reference U6 browser-proof surface (the
     # driver calls mount_button through the app's own imports after
@@ -1905,7 +1905,7 @@ main {
     # error/live-region association structure (the form-control-* group
     # + the role=alert error node + the declared form-live live region),
     # the native disabled attribute.
-    const string html_field ← tela.html_view(field_composition()) coalesce ""
+    let string html_field ← tela.html_view(field_composition()) coalesce ""
     assert html_field.contains(«<div data-tela="canary-ref-field">»)
     assert html_field.contains(«<div data-tela="form-control-name">»)
     assert html_field.contains(«<input type="text" aria-label="Name" aria-invalid="false" value="Ada" data-tela="form-field-name">»)
@@ -1941,32 +1941,32 @@ main {
     assert reference.field_input_event() ≡ "input"
     assert reference.field_error_for_value("") ≡ "Required"
     assert reference.field_error_for_value("Ada") ≡ ""
-    const reference.FieldInputProps f_ante ← reference.field_input_props("name", "Name", "", "", "enabled")
-    const reference.FieldInputProps f_inv ← reference.field_input_props("name", "Name", "", "Required", "enabled")
-    const reference.FieldInputProps f_val ← reference.field_input_props("name", "Name", "Ada", "", "enabled")
+    let reference.FieldInputProps f_ante ← reference.field_input_props("name", "Name", "", "", "enabled")
+    let reference.FieldInputProps f_inv ← reference.field_input_props("name", "Name", "", "Required", "enabled")
+    let reference.FieldInputProps f_val ← reference.field_input_props("name", "Name", "Ada", "", "enabled")
     assert reference.field_announcement(f_ante, f_inv) ≡ "form-field-name invalid: Required"
     assert reference.field_announcement(f_ante, f_val) ≡ "form-field-name valid"
     assert reference.field_announcement(f_val, f_val) ≡ ""
     # The app-typed update loop: the incoming value through the catalog's
     # rule; a foreign identity is a state no-op (the silent rule).
-    const FieldPlanState fp0 ← field_plan_state("name", "Name", "", "")
-    const FieldMessage fmsg ← field_text("form-field-name", "Ada")
-    const FieldPlanState fp1 ← update_field_plan(fp0, fmsg)
+    let FieldPlanState fp0 ← field_plan_state("name", "Name", "", "")
+    let FieldMessage fmsg ← field_text("form-field-name", "Ada")
+    let FieldPlanState fp1 ← update_field_plan(fp0, fmsg)
     assert fp1.value ≡ "Ada" and fp1.error ≡ ""
     assert field_plan_announcement(fp0, fp1) ≡ "form-field-name valid"
-    const FieldMessage fmsg2 ← field_text("form-field-name", "")
-    const FieldPlanState fp2 ← update_field_plan(fp1, fmsg2)
+    let FieldMessage fmsg2 ← field_text("form-field-name", "")
+    let FieldPlanState fp2 ← update_field_plan(fp1, fmsg2)
     assert fp2.error ≡ "Required"
     assert field_plan_announcement(fp1, fp2) ≡ "form-field-name invalid: Required"
-    const FieldMessage fmsg3 ← field_text("form-field-name", "Ada")
-    const FieldPlanState fp3 ← update_field_plan(fp2, fmsg3)
+    let FieldMessage fmsg3 ← field_text("form-field-name", "Ada")
+    let FieldPlanState fp3 ← update_field_plan(fp2, fmsg3)
     assert fp3.error ≡ ""
     assert field_plan_announcement(fp2, fp3) ≡ "form-field-name valid"
-    const FieldMessage fmsg4 ← field_text("form-field-email", "x")
-    const FieldPlanState fp4 ← update_field_plan(fp3, fmsg4)
+    let FieldMessage fmsg4 ← field_text("form-field-email", "x")
+    let FieldPlanState fp4 ← update_field_plan(fp3, fmsg4)
     assert fp4.value ≡ "Ada" and fp4.error ≡ ""
     # The update loop's view-render input: the model → the composition.
-    const string html_field_plan ← tela.html_view(field_plan_composition(fp3)) coalesce ""
+    let string html_field_plan ← tela.html_view(field_plan_composition(fp3)) coalesce ""
     assert html_field_plan.contains(«value="Ada"»)
     assert html_field_plan.contains(«aria-invalid="false"»)
     # The mount seam is the check-reference U8 browser-proof surface (the
@@ -1980,13 +1980,13 @@ main {
     # browser.mount); the pure surface is asserted here, the scripted DOM
     # sequence executes under check-forms-interactive (the documented
     # tela:dom host binding).
-    const tela.View compositio ← forms_composition()
+    let tela.View compositio ← forms_composition()
     assert tela.html_view(compositio) not is none
     assert tela.html_view(compositio) coalesce "" ≡ «<div data-tela="forma"><div data-tela="form-control-name"><input type="text" aria-label="Name" aria-invalid="false" data-tela="form-field-name"><div role="alert" data-tela="form-error-name"></div></div><input type="checkbox" aria-label="Agree" aria-checked="false" aria-invalid="false" data-tela="form-checkbox-agree"><select aria-label="Tone" aria-invalid="false" data-tela="form-select-tone"><option>Light</option><option>Dark</option></select><div role="status" aria-live="polite" data-tela="form-live"></div></div>»
     assert bool_text(true) ≡ "true"
     assert bool_text(false) ≡ "false"
-    const FieldState state_invalid ← field_state("form-field-name", "", "Required")
-    const string compositio_invalida ← tela.html_view(forms_composition_from_state(state_invalid, false, "Light")) coalesce ""
+    let FieldState state_invalid ← field_state("form-field-name", "", "Required")
+    let string compositio_invalida ← tela.html_view(forms_composition_from_state(state_invalid, false, "Light")) coalesce ""
     assert compositio_invalida.contains(«aria-invalid="true"»)
     assert compositio_invalida.contains(«aria-describedby="form-error-name"»)
     assert compositio_invalida.contains(">Required</div>")

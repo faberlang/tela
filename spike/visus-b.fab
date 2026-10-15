@@ -37,26 +37,26 @@ enum Spatium {
 
 # Attributum: serialized attribute — an (nomen, valor) pair emitted into the tag.
 class Attributum {
-    var string nomen
-    var string valor
+    mut string nomen
+    mut string valor
 }
 
 # Proprietas: DOM property (value, checked, selection), modeled separately from
 # serialized attributes because their semantics differ.
 class Proprietas {
-    var string nomen
-    var string valor
+    mut string nomen
+    mut string valor
 }
 
 # Identitas: stable identity. Explicit typed field — never inferred from array
 # position. Serialized in one documented hydration-ready form (data-tela).
 class Identitas {
-    var string valor
+    mut string valor
 }
 
 # Eventum: event descriptor (e.g. "click", "input").
 class Eventum {
-    var string nomen
+    mut string nomen
 }
 
 # Visus: the recursive tagged union at the center of the protocol. Closure-free
@@ -84,9 +84,9 @@ union AppNuntius {
 # Adjacent behavior plan: an event binding carrying a message-producing closure,
 # keyed to a stable node identity (Identitas.valor) for the hydration plan.
 class Vinculum {
-    var string identitas
-    var string eventus
-    var (Eventum) → AppNuntius nuntius
+    mut string identitas
+    mut string eventus
+    mut (Eventum) → AppNuntius nuntius
 }
 
 # ---------------------------------------------------------------------------
@@ -130,8 +130,8 @@ fn incrementum_binding() → Vinculum {
 
 # The component's view: ordinary Faber function composing child views.
 fn contator_app(int model) → Visus {
-    const list<Attributum> aria_attributa ← [ Attributum { nomen = "aria-label", valor = "contator" } ]
-    const list<Proprietas> aria_proprietas ← [ Proprietas { nomen = "aria-valuenow", valor = "§"(model) } ]
+    let list<Attributum> aria_attributa ← [ Attributum { nomen = "aria-label", valor = "contator" } ]
+    let list<Proprietas> aria_proprietas ← [ Proprietas { nomen = "aria-valuenow", valor = "§"(model) } ]
     return variant Elementum {
         identitas = nova_identitas("contator-app"),
         spatium = Spatium.html,
@@ -175,16 +175,16 @@ fn escapa(string s) → string {
 }
 
 fn seri_attributa(list<Attributum> attributa) → string {
-    var string accum ← ""
-    for from attributa const attr {
+    mut string accum ← ""
+    for from attributa let attr {
         accum ← accum + " " + attr.nomen + "='" + escapa(attr.valor) + "'"
     }
     return accum
 }
 
 fn seri_proprietates(list<Proprietas> proprietates) → string {
-    var string accum ← ""
-    for from proprietates const prop {
+    mut string accum ← ""
+    for from proprietates let prop {
         accum ← accum + " data-prop:" + prop.nomen + "='" + escapa(prop.valor) + "'"
     }
     return accum
@@ -214,23 +214,23 @@ fn seri_ns(Spatium spatium) → string {
 
 fn seri_visus(Visus v) → string {
     match v {
-        case Textus const valor {
+        case Textus let valor {
             return escapa(valor)
         }
-        case Fragmentum const liberi {
-            var string accum ← ""
-            for from liberi const liber {
+        case Fragmentum let liberi {
+            mut string accum ← ""
+            for from liberi let liber {
                 accum ← accum + seri_visus(liber)
             }
             return accum
         }
-        case Elementum const identitas, spatium, nomen_tag, attributa, proprietates, liberi {
-            var string accum ← "<" + nomen_tag + seri_ns(spatium)
+        case Elementum let identitas, spatium, nomen_tag, attributa, proprietates, liberi {
+            mut string accum ← "<" + nomen_tag + seri_ns(spatium)
             accum ← accum + seri_attributa(attributa)
             accum ← accum + seri_proprietates(proprietates)
             accum ← accum + seri_identitas(identitas)
-            var string inner ← ""
-            for from liberi const liber {
+            mut string inner ← ""
+            for from liberi let liber {
                 inner ← inner + seri_visus(liber)
             }
             return accum + ">" + inner + "</" + nomen_tag + ">"
@@ -240,24 +240,24 @@ fn seri_visus(Visus v) → string {
 
 # Spike-quality structured CSS: selector + declarations; typed constructors.
 class Declaratio {
-    var string nomen
-    var string valor
+    mut string nomen
+    mut string valor
 }
 
 class Regula {
-    var string selector
-    var list<Declaratio> declarationes
+    mut string selector
+    mut list<Declaratio> declarationes
 }
 
 class Stilum {
-    var list<Regula> regulae
+    mut list<Regula> regulae
 }
 
 fn seri_css(Stilum stilum) → string {
-    var string accum ← ""
-    for from stilum.regulae const regula {
+    mut string accum ← ""
+    for from stilum.regulae let regula {
         accum ← accum + regula.selector + " { "
-        for from regula.declarationes const decl {
+        for from regula.declarationes let decl {
             accum ← accum + decl.nomen + ": " + decl.valor + "; "
         }
         accum ← accum + "}\n"
@@ -275,9 +275,9 @@ main {
     # Structural assertion: the sample tree serializes to a plausible static
     # HTML fragment with open tags, attributes, identity; the behavior plan
     # stays adjacent and typed (contator_program is typechecked).
-    const _ html_out ← seri_visus(app_arbor())
-    const _ program ← contator_program()
-    const _ css_out ← seri_css(Stilum {
+    let html_out ← seri_visus(app_arbor())
+    let program ← contator_program()
+    let css_out ← seri_css(Stilum {
         regulae = [
             Regula {
                 selector = "[data-tela='contator-app']",

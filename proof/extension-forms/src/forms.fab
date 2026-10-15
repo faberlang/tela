@@ -115,29 +115,29 @@ import from "tela:tela" public * as tela
 # node; aria-describedby → form-error-<name> when invalid).
 @ public
 class FieldProps {
-    var string name
-    var string label
-    var string value
-    var string invalid
-    var string error
+    mut string name
+    mut string label
+    mut string value
+    mut string invalid
+    mut string error
 }
 
 # The select props (option list; aria-invalid + aria-describedby surface).
 @ public
 class SelectProps {
-    var string name
-    var string label
-    var list<string> options
-    var string invalid
+    mut string name
+    mut string label
+    mut list<string> options
+    mut string invalid
 }
 
 # The checkbox props. `selected` = "true"/"false" (aria-checked).
 @ public
 class CheckboxProps {
-    var string name
-    var string label
-    var string selected
-    var string invalid
+    mut string name
+    mut string label
+    mut string selected
+    mut string invalid
 }
 
 # Props constructors — ordinary functions returning local classes, keeping
@@ -163,7 +163,7 @@ fn checkbox_props(string name, string label, string selected, string invalid) �
 
 @ public
 fn field(FieldProps props) → tela.View {
-    var list<tela.Attribute> attributes ← empty
+    mut list<tela.Attribute> attributes ← empty
     attributes.append(tela.Attribute { name = "type", value = "text" })
     attributes.append(tela.Attribute { name = "aria-label", value = props.label })
     attributes.append(tela.Attribute { name = "aria-invalid", value = props.invalid })
@@ -189,7 +189,7 @@ fn field(FieldProps props) → tela.View {
 
 @ public
 fn checkbox(CheckboxProps props) → tela.View {
-    var list<tela.Attribute> attributes ← empty
+    mut list<tela.Attribute> attributes ← empty
     attributes.append(tela.Attribute { name = "type", value = "checkbox" })
     attributes.append(tela.Attribute { name = "aria-label", value = props.label })
     attributes.append(tela.Attribute { name = "aria-checked", value = props.selected })
@@ -213,14 +213,14 @@ fn checkbox(CheckboxProps props) → tela.View {
 
 @ public
 fn select(SelectProps props) → tela.View {
-    var list<tela.Attribute> attributes ← empty
+    mut list<tela.Attribute> attributes ← empty
     attributes.append(tela.Attribute { name = "aria-label", value = props.label })
     attributes.append(tela.Attribute { name = "aria-invalid", value = props.invalid })
     if props.invalid ≡ "true" {
         attributes.append(tela.Attribute { name = "aria-describedby", value = "form-error-" + props.name })
     }
-    var list<tela.View> children ← empty
-    var int i ← 0
+    mut list<tela.View> children ← empty
+    mut int i ← 0
     while i ≺ props.options.length() {
         children.append(tela.element_view(tela.html_space(), "option", [ tela.text_view(props.options[i]) ]))
         i ← i + 1
@@ -244,7 +244,7 @@ fn select(SelectProps props) → tela.View {
 # (the association structure is stable — the group always carries it).
 @ public
 fn error_region(string name, string text) → tela.View {
-    var list<tela.View> children ← empty
+    mut list<tela.View> children ← empty
     if not (text ≡ "") {
         children.append(tela.text_view(text))
     }
@@ -280,7 +280,7 @@ fn form_live_region() → tela.View {
 # form-error-<name> when invalid) + its error node under form-control-<name>.
 @ public
 fn field_group(FieldProps props) → tela.View {
-    var list<tela.View> children ← empty
+    mut list<tela.View> children ← empty
     children.append(field(props))
     children.append(error_region(props.name, props.error))
     return tela.element_full(

@@ -56,21 +56,21 @@ main {
     # --- layout: the stack — stacked rows --------------------------------
     # No attributes, no ARIA (pure layout grouping): the identity emits
     # after the tag; text children concatenate without a wrapper.
-    const string stack_html ← tela.html_view(ref.layout_stack(ref.stack_props([
+    let string stack_html ← tela.html_view(ref.layout_stack(ref.stack_props([
         tela.text_view("row one"),
         tela.text_view("row two")
     ]))) coalesce ""
     assert stack_html ≡ «<div data-tela="ref-layout-stack">row onerow two</div>»
 
     # --- layout: the two-column grid --------------------------------------
-    const string grid ← tela.html_view(ref.layout_grid(ref.grid_props([
+    let string grid ← tela.html_view(ref.layout_grid(ref.grid_props([
         tela.text_view("column one"),
         tela.text_view("column two")
     ]))) coalesce ""
     assert grid ≡ «<div data-tela="ref-layout-grid">column onecolumn two</div>»
 
     # --- layout: the prose measure container (wraps the typography prose)
-    const string prose_layout ← tela.html_view(ref.layout_prose(ref.layout_prose_props([
+    let string prose_layout ← tela.html_view(ref.layout_prose(ref.layout_prose_props([
         ref.typography_prose(ref.prose_props([ tela.text_view("prose text") ]))
     ]))) coalesce ""
     assert prose_layout ≡ «<div data-tela="ref-layout-prose"><p data-tela="ref-typography-prose">prose text</p></div>»
@@ -109,11 +109,11 @@ main {
     assert tela.html_view(ref.typography_scale(ref.scale_props("xs", "caption"))) coalesce "" ≡ «<span data-tela="ref-typography-scale-xs">caption</span>»
 
     # --- the layout style bundle (keyed on the identities, --ref-* tokens)
-    const string css_layout ← tela.css(ref.layout_style())
+    let string css_layout ← tela.css(ref.layout_style())
     assert css_layout ≡ "[data-tela='ref-layout-stack'] { display: flex; flex-direction: column; gap: var(--ref-layout-gap); }\n[data-tela='ref-layout-grid'] { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--ref-layout-gap); }\n[data-tela='ref-layout-prose'] { max-width: var(--ref-layout-prose-measure); margin: 0 auto; }\n"
 
     # --- the typography style bundle (the heading scale + prose) ----------
-    const string css_typography ← tela.css(ref.typography_style())
+    let string css_typography ← tela.css(ref.typography_style())
     assert css_typography.contains("[data-tela='ref-typography-heading-1'] { font-size: var(--ref-type-scale-xl); font-weight: var(--ref-type-heading-weight); margin: var(--ref-type-heading-margin); }")
     assert css_typography.contains("[data-tela='ref-typography-heading-6'] { font-size: var(--ref-type-scale-xs); font-weight: var(--ref-type-heading-weight); margin: var(--ref-type-heading-margin); }")
     assert css_typography.contains("[data-tela='ref-typography-prose'] { font-size: var(--ref-type-scale-md); line-height: var(--ref-type-prose-line-height); margin: var(--ref-type-prose-margin); }")
@@ -133,11 +133,11 @@ main {
     # token-name shape — theme_css/assemble reject invalid names).
     assert tela.token_name_valid(ref.ref_layout_gap().name)
     assert tela.token_name_valid(ref.ref_type_prose_line_height().name)
-    const list<tela.Token> collectio ← ref.reference_tokens()
+    let list<tela.Token> collectio ← ref.reference_tokens()
     assert collectio.length() ≡ 46
 
     # --- determinism: identical input → identical bytes -------------------
-    const string stack_b ← tela.html_view(ref.layout_stack(ref.stack_props([
+    let string stack_b ← tela.html_view(ref.layout_stack(ref.stack_props([
         tela.text_view("row one"),
         tela.text_view("row two")
     ]))) coalesce ""
@@ -177,11 +177,11 @@ main {
     assert tela.html_view(ref.metric(ref.metric_props("requests", "requests", "12 480", "+3.1%"))) coalesce "" ≡ «<dl data-tela="ref-metric-requests"><dt>requests</dt><dd>12 480</dd><dd>+3.1%</dd></dl>»
 
     # --- the panel/badge/metric style bundles (prefix-keyed, --ref-* tokens)
-    const string css_panel ← tela.css(ref.panel_style())
+    let string css_panel ← tela.css(ref.panel_style())
     assert css_panel ≡ "[data-tela^='ref-panel-'] { background: var(--ref-panel-surface); border: 1px solid var(--ref-panel-border); border-radius: var(--ref-panel-radius); padding: var(--ref-panel-padding); }\n"
-    const string css_badge ← tela.css(ref.badge_style())
+    let string css_badge ← tela.css(ref.badge_style())
     assert css_badge ≡ "[data-tela^='ref-badge-'] { display: inline-block; font-size: var(--ref-badge-size); padding: var(--ref-badge-padding); border-radius: var(--ref-badge-radius); }\n"
-    const string css_metric ← tela.css(ref.metric_style())
+    let string css_metric ← tela.css(ref.metric_style())
     assert css_metric.contains("[data-tela^='ref-metric-'] { margin: 0; padding: 0; }")
     assert css_metric.contains("[data-tela^='ref-metric-'] dt { font-size: var(--ref-metric-label-size); color: var(--ref-metric-label-muted); }")
     assert css_metric.contains("[data-tela^='ref-metric-'] dd { font-size: var(--ref-metric-value-size); font-weight: var(--ref-metric-value-weight); margin: 0; }")
@@ -203,7 +203,7 @@ main {
     assert tela.token_name_valid(ref.ref_panel_surface().name)
     assert tela.token_name_valid(ref.ref_badge_radius().name)
     assert tela.token_name_valid(ref.ref_metric_value_weight().name)
-    const list<tela.Token> collectio_u3 ← ref.reference_tokens()
+    let list<tela.Token> collectio_u3 ← ref.reference_tokens()
     assert collectio_u3.length() ≡ 46
 
     # =====================================================================
@@ -233,7 +233,7 @@ main {
     ]))) coalesce "" ≡ «<table data-tela="ref-table-plain"><thead><tr><th scope="col" data-tela="ref-table-plain-header-0">A</th><th scope="col" data-tela="ref-table-plain-header-1">B</th></tr></thead><tbody><tr><td data-tela="ref-table-plain-cell-0-0">1</td><td data-tela="ref-table-plain-cell-0-1">2</td></tr></tbody></table>»
 
     # --- the table style bundle (prefix-keyed, --ref-* tokens) ------------
-    const string css_table ← tela.css(ref.table_style())
+    let string css_table ← tela.css(ref.table_style())
     assert css_table ≡ "[data-tela^='ref-table-'] { border-collapse: collapse; width: 100%; }\n[data-tela^='ref-table-'] th { border: 1px solid var(--ref-table-border); padding: var(--ref-table-padding); text-align: left; font-weight: var(--ref-table-header-weight); }\n[data-tela^='ref-table-'] td { border: 1px solid var(--ref-table-border); padding: var(--ref-table-padding); text-align: left; }\n[data-tela^='ref-table-'] caption { color: var(--ref-table-caption-muted); text-align: left; }\n"
 
     # --- the ref.table.* tokens (theme-surface — border + caption color
@@ -248,7 +248,7 @@ main {
     # Every token name passes the kernel lexical predicate (fail-closed).
     assert tela.token_name_valid(ref.ref_table_border().name)
     assert tela.token_name_valid(ref.ref_table_caption_muted().name)
-    const list<tela.Token> collectio_u4 ← ref.reference_tokens()
+    let list<tela.Token> collectio_u4 ← ref.reference_tokens()
     assert collectio_u4.length() ≡ 46
 
     # =====================================================================
@@ -275,7 +275,7 @@ main {
     assert tela.html_view(ref.segmented_control(ref.segmented_props("sort", "sort", ["A", "B"], "ref-seg-sort-1"))) coalesce "" ≡ «<div role="radiogroup" aria-label="sort" data-tela="ref-seg-sort"><button role="radio" aria-selected="true" tabindex="0" data-tela="ref-seg-sort-1">A</button><button role="radio" aria-selected="false" tabindex="-1" data-tela="ref-seg-sort-2">B</button><div role="status" aria-live="polite" data-tela="ref-seg-live"></div></div>»
 
     # --- the segmented-control style bundle (role-scoped, --ref-* tokens)
-    const string css_seg ← tela.css(ref.segmented_style())
+    let string css_seg ← tela.css(ref.segmented_style())
     assert css_seg ≡ «[data-tela^='ref-seg-'][role='radiogroup'] { display: flex; gap: var(--ref-seg-gap); border-radius: var(--ref-seg-radius); }\n[data-tela^='ref-seg-'][role='radio'] { font-size: var(--ref-seg-size); padding: var(--ref-seg-padding); border: 1px solid var(--ref-seg-border); }\n[data-tela^='ref-seg-'][role='radio'][aria-selected="true"] { border-color: var(--ref-seg-selected-border); }\n»
 
     # --- the ref.seg.* tokens (the border color references the theme's
@@ -294,7 +294,7 @@ main {
     # Every token name passes the kernel lexical predicate (fail-closed).
     assert tela.token_name_valid(ref.ref_seg_gap().name)
     assert tela.token_name_valid(ref.ref_seg_selected_border().name)
-    const list<tela.Token> collectio_u5 ← ref.reference_tokens()
+    let list<tela.Token> collectio_u5 ← ref.reference_tokens()
     assert collectio_u5.length() ≡ 46
 
     # =====================================================================
@@ -334,7 +334,7 @@ main {
     # focus; the indicator from the ref.button.focus token, never
     # removed) + the disabled rule (:disabled — the visual dim; the
     # SEMANTIC state rides the native attribute).
-    const string css_button ← tela.css(ref.button_style())
+    let string css_button ← tela.css(ref.button_style())
     assert css_button ≡ "[data-tela^='ref-button-'] { display: inline-block; font-size: var(--ref-button-size); padding: var(--ref-button-padding); border: 1px solid var(--ref-button-border); border-radius: var(--ref-button-radius); color: var(--ref-button-text); }\n[data-tela^='ref-button-'][data-ref-variant='primary'] { background: var(--ref-button-primary-background); color: var(--ref-button-primary-text); }\n[data-tela^='ref-button-'][data-ref-variant='secondary'] { background: var(--ref-button-secondary-background); }\n[data-tela^='ref-button-'][data-ref-variant='ghost'] { background: var(--ref-button-ghost-background); }\n[data-tela^='ref-button-']:focus-visible { outline: 2px solid var(--ref-button-focus); outline-offset: 2px; }\n[data-tela^='ref-button-']:disabled { opacity: var(--ref-button-disabled-opacity); cursor: not-allowed; }\n"
 
     # --- the ref.button.* tokens (theme-surface — the color-bearing
@@ -361,7 +361,7 @@ main {
     assert tela.token_name_valid(ref.ref_button_focus().name)
     assert tela.token_name_valid(ref.ref_button_primary_background().name)
     assert tela.token_name_valid(ref.ref_button_disabled_opacity().name)
-    const list<tela.Token> collectio_u6 ← ref.reference_tokens()
+    let list<tela.Token> collectio_u6 ← ref.reference_tokens()
     assert collectio_u6.length() ≡ 46
 
     # =====================================================================
@@ -412,7 +412,7 @@ main {
     # live-region emphasis come from the form.* tokens; the disabled dim
     # is the visual treatment — the SEMANTIC state rides the native
     # attribute (never a color-only signal).
-    const string css_field ← tela.css(ref.field_style())
+    let string css_field ← tela.css(ref.field_style())
     assert css_field ≡ "[data-tela^='form-field-'] { border-bottom: 2px solid var(--form-field-invalid); color: var(--form-field-valid); }\n[data-tela^='form-field-']:focus { outline: 2px solid var(--form-focus); }\n[data-tela^='form-error-'] { color: var(--form-field-invalid); font-size: 0.875rem; }\n[data-tela='form-live'] { font-weight: 600; color: var(--form-field-valid); }\n[data-tela^='form-field-']:disabled { opacity: 0.6; cursor: not-allowed; }\n"
 
     # --- the form.* tokens (the Stage 4 namespaced-token surface, re-homed
@@ -427,7 +427,7 @@ main {
     assert tela.token_name_valid(ref.field_invalid_token().name)
     assert tela.token_name_valid(ref.field_valid_token().name)
     assert tela.token_name_valid(ref.field_focus_token().name)
-    const list<tela.Token> collectio_u7 ← ref.reference_tokens()
+    let list<tela.Token> collectio_u7 ← ref.reference_tokens()
     assert collectio_u7.length() ≡ 46
 
     print "reference catalog exempla ready (layout + typography + panel + badge + metric + table + segmented-control + button + field; tela-s5-u2/u3/u4/u5/u6/u7)"

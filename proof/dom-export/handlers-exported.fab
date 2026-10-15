@@ -49,17 +49,17 @@ fn handle_lock(dom.PointerLockState lock) → void {
 }
 
 main {
-    const dom.Scope scope ← dom.scope("#root")
-    const dom.Element element ← dom.require(scope, "#target")
-    const dom.SubmitOptions options ← dom.SubmitOptions {}
-    const dom.Subscription on_frame ← dom.on_frame(handle_frame)
-    const dom.Subscription on_resize ← dom.on_resize(handle_resize)
-    const dom.Subscription on_keyboard ← dom.on_keyboard(element, "keydown", handle_key)
-    const dom.Subscription on_pointer ← dom.on_pointer(element, "pointermove", handle_pointer)
-    const dom.Subscription on_focus ← dom.on_focus(element, "focus", handle_focus)
-    const dom.Subscription on_pointer_lock ← dom.on_pointer_lock(element, handle_lock)
-    const dom.Subscription on_submit ← dom.on_submit(element, options, handle_submit)
-    const dom.Subscription on_event ← dom.on(element, "click", handle_event)
-    const dom.Subscription on_input ← dom.on_input(element, handle_input)
+    let dom.Scope scope ← dom.scope("#root")
+    let dom.Element element ← dom.require(scope, "#target")
+    let dom.SubmitOptions options ← dom.SubmitOptions {}
+    let dom.Subscription on_frame ← dom.on_frame(handle_frame)
+    let dom.Subscription on_resize ← dom.on_resize(handle_resize)
+    let dom.Subscription on_keyboard ← dom.on_keyboard(element, "keydown", handle_key)
+    let dom.Subscription on_pointer ← dom.on_pointer(element, "pointermove", handle_pointer)
+    let dom.Subscription on_focus ← dom.on_focus(element, "focus", handle_focus)
+    let dom.Subscription on_pointer_lock ← dom.on_pointer_lock(element, handle_lock)
+    let dom.Subscription on_submit ← dom.on_submit(element, options, handle_submit)
+    let dom.Subscription on_event ← dom.on(element, "click", handle_event)
+    let dom.Subscription on_input ← dom.on_input(element, handle_input)
     print on_frame.id + on_resize.id + on_keyboard.id + on_pointer.id + on_focus.id + on_pointer_lock.id + on_submit.id + on_event.id + on_input.id
 }

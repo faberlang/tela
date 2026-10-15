@@ -8,7 +8,7 @@ locale = "la"
 importa ex "tela:tela" * ut tela
 
 functio probe() → textus {
-    fixum tela.Visum visus ← tela.textus_ping("salve")
+    sit tela.Visum visus ← tela.textus_ping("salve")
     redde tela.html_visus(visus) vel ""
 }
 

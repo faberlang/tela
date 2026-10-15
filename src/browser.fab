@@ -59,15 +59,15 @@ import from "tela:dom" public * as dom
 # selector doubles as the region identity for scroll-anchor intent).
 @ public
 class RegionRoot {
-    var string identity
+    mut string identity
 }
 
 # A live subscription handle; the host maps identity → the bound
 # tela:dom subscription on the node (data-tela='identity').
 @ public
 class EventSubscription {
-    var string identity
-    var string event_name
+    mut string identity
+    mut string event_name
 }
 
 # One binding-plan entry: a view identity + its hydration status.
@@ -75,8 +75,8 @@ class EventSubscription {
 # status "create" = create/replace the node from the View.
 @ public
 class Binding {
-    var string identity
-    var string status
+    mut string identity
+    mut string status
 }
 
 # Mounted — the mount state carrier (delivery U2 done_when (b)): host
@@ -85,18 +85,18 @@ class Binding {
 # diagnostics, and the modeled focus state.
 @ public
 class Mounted {
-    var dom.Scope scope
-    var RegionRoot root
-    var tela.View view
-    var tela.Theme theme
-    var string markup
-    var string css_text
-    var list<string> identities
-    var list<string> diagnostics
-    var list<Binding> bindings
-    var list<EventSubscription> subscriptions
-    var string focused_identity
-    var string target_identity
+    mut dom.Scope scope
+    mut RegionRoot root
+    mut tela.View view
+    mut tela.Theme theme
+    mut string markup
+    mut string css_text
+    mut list<string> identities
+    mut list<string> diagnostics
+    mut list<Binding> bindings
+    mut list<EventSubscription> subscriptions
+    mut string focused_identity
+    mut string target_identity
 }
 
 # Kernel-owned constructors (G3 posture — ordinary functions over the same
@@ -138,11 +138,11 @@ fn identity_marker() → string {
 
 @ public
 fn unescape(string text) → string {
-    var string accum ← ""
-    var int i ← 0
+    mut string accum ← ""
+    mut int i ← 0
     while i ≺ text.length() {
-        var string fragment ← text.slice(i, i + 1)
-        var int step ← 1
+        mut string fragment ← text.slice(i, i + 1)
+        mut int step ← 1
         if not (i + 5 ≻ text.length()) and text.slice(i, i + 5) ≡ "&quot;" {
             fragment ← "§"('"')
             step ← 5
@@ -171,15 +171,15 @@ fn unescape(string text) → string {
 
 @ public
 fn parse_identities(string text) → list<string> {
-    var list<string> identities ← empty
-    var int i ← 0
+    mut list<string> identities ← empty
+    mut int i ← 0
     while i ≺ text.length() {
         if not (i + 12 ≻ text.length()) and text.slice(i, i + 12) ≡ identity_marker() {
-            var string raw ← ""
-            var int j ← i + 12
-            var bool terminated ← false
+            mut string raw ← ""
+            mut int j ← i + 12
+            mut bool terminated ← false
             while j ≺ text.length() and not terminated {
-                const string ch ← text.slice(j, j + 1)
+                let string ch ← text.slice(j, j + 1)
                 if ch ≡ "§"('"') {
                     terminated ← true
                 }
@@ -207,14 +207,14 @@ fn parse_identities(string text) → list<string> {
 # identity is absent or the element is malformed.
 @ public
 fn element_tag(string text, string identity) → string ∪ none {
-    var int i ← 0
+    mut int i ← 0
     while i ≺ text.length() {
         if not (i + 12 ≻ text.length()) and text.slice(i, i + 12) ≡ identity_marker() {
-            var string raw ← ""
-            var int j ← i + 12
-            var bool terminated ← false
+            mut string raw ← ""
+            mut int j ← i + 12
+            mut bool terminated ← false
             while j ≺ text.length() and not terminated {
-                const string ch ← text.slice(j, j + 1)
+                let string ch ← text.slice(j, j + 1)
                 if ch ≡ "§"('"') {
                     terminated ← true
                 }
@@ -224,10 +224,10 @@ fn element_tag(string text, string identity) → string ∪ none {
                 j ← j + 1
             }
             if terminated and unescape(raw) ≡ identity {
-                var int a ← i
-                var bool found ← false
+                mut int a ← i
+                mut bool found ← false
                 while a ≻ 0 and not found {
-                    const string ch ← text.slice(a - 1, a)
+                    let string ch ← text.slice(a - 1, a)
                     if ch ≡ "<" {
                         found ← true
                     }
@@ -235,10 +235,10 @@ fn element_tag(string text, string identity) → string ∪ none {
                         a ← a - 1
                     }
                 }
-                var int b ← j
-                var bool closed ← false
+                mut int b ← j
+                mut bool closed ← false
                 while b ≺ text.length() and not closed {
-                    const string ch ← text.slice(b, b + 1)
+                    let string ch ← text.slice(b, b + 1)
                     if ch ≡ ">" {
                         closed ← true
                     }
@@ -266,11 +266,11 @@ fn element_tag(string text, string identity) → string ∪ none {
 # never enters the comparison (the U6 discovery's quote-style finding).
 @ public
 fn tag_name(string tag) → string {
-    var string result ← ""
-    var int i ← 1
-    var bool finished ← false
+    mut string result ← ""
+    mut int i ← 1
+    mut bool finished ← false
     while i ≺ tag.length() and not finished {
-        const string ch ← tag.slice(i, i + 1)
+        let string ch ← tag.slice(i, i + 1)
         if ch ≡ " " or ch ≡ ">" {
             finished ← true
         }
@@ -285,8 +285,8 @@ fn tag_name(string tag) → string {
 # Occurrence count of an identity in a list.
 @ public
 fn count_occurrences(list<string> collection, string name) → int {
-    var int count_occurrences ← 0
-    var int i ← 0
+    mut int count_occurrences ← 0
+    mut int i ← 0
     while i ≺ collection.length() {
         if collection[i] ≡ name {
             count_occurrences ← count_occurrences + 1
@@ -299,10 +299,10 @@ fn count_occurrences(list<string> collection, string name) → int {
 # Distinct identities appearing more than once (the ambiguity set).
 @ public
 fn duplicate_identities(list<string> collection) → list<string> {
-    var list<string> duplicates ← empty
-    var int i ← 0
+    mut list<string> duplicates ← empty
+    mut int i ← 0
     while i ≺ collection.length() {
-        const string identity ← collection[i]
+        let string identity ← collection[i]
         if count_occurrences(collection, identity) ≻ 1 and not duplicates.contains(identity) {
             duplicates.append(identity)
         }
@@ -323,9 +323,9 @@ fn duplicate_identities(list<string> collection) → list<string> {
 
 @ public
 fn identities_from_nodes(list<dom.DomNode> ∪ none nodes) → list<string> {
-    var list<string> result ← empty
+    mut list<string> result ← empty
     if nodes not is none {
-        var int i ← 0
+        mut int i ← 0
         while i ≺ nodes.length() {
             result.append(nodes[i].identity)
             i ← i + 1
@@ -336,9 +336,9 @@ fn identities_from_nodes(list<dom.DomNode> ∪ none nodes) → list<string> {
 
 @ public
 fn tags_from_nodes(list<dom.DomNode> ∪ none nodes) → list<string> {
-    var list<string> result ← empty
+    mut list<string> result ← empty
     if nodes not is none {
-        var int i ← 0
+        mut int i ← 0
         while i ≺ nodes.length() {
             result.append(nodes[i].tag)
             i ← i + 1
@@ -351,7 +351,7 @@ fn tags_from_nodes(list<dom.DomNode> ∪ none nodes) → list<string> {
 # ("" when the identity is absent from the present set).
 @ public
 fn tag_at(string identity, list<string> identities, list<string> tags) → string {
-    var int i ← 0
+    mut int i ← 0
     while i ≺ identities.length() {
         if identities[i] ≡ identity {
             return tags[i]
@@ -383,10 +383,10 @@ fn binding_status(
     string markup,
     list<string> present_tags
 ) → string {
-    var bool bind ← false
+    mut bool bind ← false
     if count_occurrences(present_identities, identity) ≡ 1 and count_occurrences(view_identities, identity) ≡ 1 {
-        const string tag_view ← tag_name(element_tag(markup, identity) coalesce "")
-        const string present_tag ← tag_at(identity, present_identities, present_tags)
+        let string tag_view ← tag_name(element_tag(markup, identity) coalesce "")
+        let string present_tag ← tag_at(identity, present_identities, present_tags)
         if not (tag_view ≡ "") and not (present_tag ≡ "") and tag_view ≡ present_tag {
             bind ← true
         }
@@ -413,33 +413,33 @@ fn hydration_diagnostics(
     list<string> present_identities,
     list<string> present_tags
 ) → list<string> {
-    var list<string> diagnostics ← empty
-    const list<string> duplicate_view ← duplicate_identities(view_identities)
-    var int di ← 0
+    mut list<string> diagnostics ← empty
+    let list<string> duplicate_view ← duplicate_identities(view_identities)
+    mut int di ← 0
     while di ≺ duplicate_view.length() {
         diagnostics.append("duplicate:" + duplicate_view[di])
         di ← di + 1
     }
-    const list<string> duplicate_present ← duplicate_identities(present_identities)
-    var int dj ← 0
+    let list<string> duplicate_present ← duplicate_identities(present_identities)
+    mut int dj ← 0
     while dj ≺ duplicate_present.length() {
         diagnostics.append("duplicate:" + duplicate_present[dj])
         dj ← dj + 1
     }
-    var int ek ← 0
+    mut int ek ← 0
     while ek ≺ present_identities.length() {
-        const string identity ← present_identities[ek]
+        let string identity ← present_identities[ek]
         if not view_identities.contains(identity) {
             diagnostics.append("foreign:" + identity)
         }
         ek ← ek + 1
     }
-    var int mi ← 0
+    mut int mi ← 0
     while mi ≺ view_identities.length() {
-        const string identity ← view_identities[mi]
+        let string identity ← view_identities[mi]
         if count_occurrences(present_identities, identity) ≡ 1 and count_occurrences(view_identities, identity) ≡ 1 {
-            const string tag_view ← tag_name(element_tag(markup, identity) coalesce "")
-            const string present_tag ← tag_at(identity, present_identities, present_tags)
+            let string tag_view ← tag_name(element_tag(markup, identity) coalesce "")
+            let string present_tag ← tag_at(identity, present_identities, present_tags)
             if not (tag_view ≡ "") and not (present_tag ≡ "") and tag_view ≢ present_tag {
                 diagnostics.append("changed:" + identity)
             }
@@ -468,30 +468,30 @@ fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ none
     # nullable checks run against the call / the bound nullable
     # (fix:prim-nullable workaround).
     if tela.html_view(view) is none then return null
-    const string markup ← tela.html_view(view) coalesce ""
+    let string markup ← tela.html_view(view) coalesce ""
     if tela.theme_css(theme) is none then return null
-    const string css ← tela.theme_css(theme) coalesce ""
+    let string css ← tela.theme_css(theme) coalesce ""
 
-    const list<string> view_identities ← parse_identities(markup)
+    let list<string> view_identities ← parse_identities(markup)
 
     # The typed hydration read (head-cto fire-13 + the U6 discovery): the
     # provider's snapshot per data-tela descendant → the parallel string
     # lists the policy fns consume. The Scope.textus_praesens carrier is
     # GONE — the pre-existing state is READ from the DOM, never carried.
-    const list<dom.DomNode> ∪ none nodes ← dom.snapshot(scope)
+    let list<dom.DomNode> ∪ none nodes ← dom.snapshot(scope)
     if nodes is none then return null
-    const list<string> present_identities ← identities_from_nodes(nodes)
-    const list<string> present_tags ← tags_from_nodes(nodes)
+    let list<string> present_identities ← identities_from_nodes(nodes)
+    let list<string> present_tags ← tags_from_nodes(nodes)
 
     # The hydration policy (diagnose + bind) lives in the exposed pure
     # functions above — mount composes them into the plan.
-    const list<string> diagnostics ← hydration_diagnostics(markup, view_identities, present_identities, present_tags)
+    let list<string> diagnostics ← hydration_diagnostics(markup, view_identities, present_identities, present_tags)
 
     # Binding plan: per View identity in order (binding_status decides).
-    var list<Binding> bindings ← empty
-    var int li ← 0
+    mut list<Binding> bindings ← empty
+    mut int li ← 0
     while li ≺ view_identities.length() {
-        const string status ← binding_status(view_identities[li], view_identities, present_identities, markup, present_tags)
+        let string status ← binding_status(view_identities[li], view_identities, present_identities, markup, present_tags)
         bindings.append(binding(view_identities[li], status))
         li ← li + 1
     }
@@ -499,8 +499,8 @@ fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ none
     # Region-bind subscriptions: one per View identity (the U2 dispose
     # proof surface; the app's event bindings are app-typed in U3). The
     # host binds a tela:dom on(node, "tela:binding") per descriptor.
-    var list<EventSubscription> subscriptions ← empty
-    var int sub ← 0
+    mut list<EventSubscription> subscriptions ← empty
+    mut int sub ← 0
     while sub ≺ view_identities.length() {
         subscriptions.append(event_subscription(view_identities[sub], "tela:binding"))
         sub ← sub + 1
@@ -536,7 +536,7 @@ fn mount(dom.Scope scope, tela.View view, tela.Theme theme) → Mounted ∪ none
 @ public
 fn replace(Mounted m, tela.View view) → tela.Update ∪ none {
     if tela.html_view(view) is none then return null
-    var list<tela.Effect> effects ← empty
+    mut list<tela.Effect> effects ← empty
     if not (m.focused_identity ≡ "") {
         effects.append(tela.restore(m.focused_identity))
     }
