@@ -249,9 +249,8 @@ fn fake_event_key(string kind, string key) → FakeEvent {
     return FakeEvent { kind = kind, key = key }
 }
 
-fn event_prevent_default(FakeEvent event) → FakeEvent {
-    var FakeEvent e ← copy event
-    e.default_prevented ← true
+fn event_prevent_default(mut FakeEvent event) → FakeEvent {
+    event.default_prevented ← true
     return event
 }
 
@@ -264,8 +263,8 @@ fn fake_element(string tag) → FakeElement {
 }
 
 fn make_text_node(string text) → FakeElement {
-    const FakeElement node ← fake_element("#text")
-    element_text_set(node, text)
+    var FakeElement node ← fake_element("#text")
+    element_text_set(mut node, text)
     return node
 }
 
@@ -285,11 +284,10 @@ fn element_text(FakeElement el) → string {
 }
 
 # Setting textContent replaces the children (webDomTextSet behaviour).
-fn element_text_set(FakeElement el, string value) → void {
-    var FakeElement e ← copy el
-    e.own_text ← value
-    if e.tagName ≢ "#text" {
-        e.children ← empty
+fn element_text_set(mut FakeElement el, string value) → void {
+    el.own_text ← value
+    if el.tagName ≢ "#text" {
+        el.children ← empty
     }
 }
 
@@ -298,19 +296,17 @@ fn element_attr_get(FakeElement el, string name) → string ∪ none {
 }
 
 # String(value) coercion is identity for the harness's string call sites.
-fn element_attr_set(FakeElement el, string name, string value) → void {
-    var FakeElement e ← copy el
-    e.attrs.put(name, value)
+fn element_attr_set(mut FakeElement el, string name, string value) → void {
+    el.attrs.put(name, value)
     if name ≡ "data-tela" {
-        e.data_tela ← value
+        el.data_tela ← value
     }
 }
 
-fn element_attr_remove(FakeElement el, string name) → void {
-    var FakeElement e ← copy el
-    e.attrs.delete(name)
+fn element_attr_remove(mut FakeElement el, string name) → void {
+    el.attrs.delete(name)
     if name ≡ "data-tela" {
-        e.data_tela ← ""
+        el.data_tela ← ""
     }
 }
 
@@ -414,41 +410,38 @@ fn query_all_into(list<FakeElement> children, string selector) → list<FakeElem
     return out
 }
 
-fn element_append_child(FakeElement parent, FakeElement child) → void {
-    var FakeElement p ← copy parent
-    var FakeElement c ← copy child
-    p.children.append(child)
-    c.parent ← parent
+fn element_append_child(FakeElement parent, mut FakeElement child) → void {
+    parent.children.append(child)
+    child.parent ← parent
 }
 
-fn element_remove(FakeElement child) → void {
-    const FakeElement ∪ none parent ← child.parent
+fn element_remove(mut FakeElement child) → void {
+    var FakeElement ∪ none parent ← child.parent
     if parent not is none {
-        const FakeElement certain ← parent
+        var FakeElement certain ← parent
         var list<FakeElement> kept ← empty
+        # A `mut` parameter does not compare against an element (SEM010);
+        # the const name is the same node, so the identity test reads it.
+        const FakeElement removed ← child
         var int i ← 0
         while i ≺ certain.children.length() {
-            if certain.children[i] ≢ child {
+            if certain.children[i] ≢ removed {
                 kept.append(certain.children[i])
             }
             i ← i + 1
         }
-        var FakeElement p ← copy certain
-        p.children ← kept
-        var FakeElement c ← copy child
-        c.parent ← null
+        certain.children ← kept
+        child.parent ← null
     }
 }
 
-fn element_clear_children(FakeElement el) → void {
-    var FakeElement e ← copy el
-    e.children ← empty
+fn element_clear_children(mut FakeElement el) → void {
+    el.children ← empty
 }
 
 fn element_add_listener(FakeElement el, string kind, (FakeEvent) → void handler) → void {
     if not el.listeners.has(kind) {
-        var FakeElement e ← copy el
-        e.listeners.put(kind, empty)
+        el.listeners.put(kind, empty)
     }
     const list<(FakeEvent) → void> ∪ none maybe ← el.listeners.get(kind)
     if maybe not is none {
@@ -458,6 +451,7 @@ fn element_add_listener(FakeElement el, string kind, (FakeEvent) → void handle
         if not handlers.contains(handler) {
             handlers.append(handler)
         }
+        el.listeners.put(kind, handlers)
     }
 }
 
@@ -466,7 +460,6 @@ fn element_remove_listener(FakeElement el, string kind, (FakeEvent) → void han
         const list<(FakeEvent) → void> ∪ none maybe ← el.listeners.get(kind)
         if maybe not is none {
             const list<(FakeEvent) → void> handlers ← maybe
-            var FakeElement e ← copy el
             var list<(FakeEvent) → void> kept ← empty
             var int i ← 0
             while i ≺ handlers.length() {
@@ -475,7 +468,7 @@ fn element_remove_listener(FakeElement el, string kind, (FakeEvent) → void han
                 }
                 i ← i + 1
             }
-            e.listeners.put(kind, kept)
+            el.listeners.put(kind, kept)
         }
     }
 }
@@ -509,9 +502,8 @@ fn doc_has_focus(FakeDocument doc) → bool {
     return true
 }
 
-fn doc_focus_node(FakeDocument doc, FakeElement ∪ none node) → void {
-    var FakeDocument d ← copy doc
-    d.active_element ← node
+fn doc_focus_node(mut FakeDocument doc, FakeElement ∪ none node) → void {
+    doc.active_element ← node
 }
 
 fn doc_query_selector(FakeDocument doc, string selector) → FakeElement ∪ none {
@@ -533,9 +525,9 @@ fn resolve_region(FakeDocument doc, string selector) → FakeElement {
         const FakeElement certain ← existing
         return certain
     }
-    const FakeElement region ← fake_element("div")
-    element_attr_set(region, "id", selector.slice(1, selector.length()))
-    element_append_child(doc.body, region)
+    var FakeElement region ← fake_element("div")
+    element_attr_set(mut region, "id", selector.slice(1, selector.length()))
+    element_append_child(doc.body, mut region)
     return region
 }
 
@@ -631,7 +623,7 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
     if name.slice(0, 1) ≡ "/" {
         return null
     }
-    const FakeElement node ← fake_element(name)
+    var FakeElement node ← fake_element(name)
     # Attribute scan (single/double-quoted or bare values; boolean attrs).
     var bool in_tag ← true
     while j ≺ html.length() and in_tag {
@@ -686,7 +678,7 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
                             }
                             j ← j + 1
                         }
-                        element_attr_set(node, attr_name, unescape_html(val))
+                        element_attr_set(mut node, attr_name, unescape_html(val))
                     } else {
                         var string val ← ""
                         var bool reading_bare ← true
@@ -699,10 +691,10 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
                                 j ← j + 1
                             }
                         }
-                        element_attr_set(node, attr_name, unescape_html(val))
+                        element_attr_set(mut node, attr_name, unescape_html(val))
                     }
                 } else {
-                    element_attr_set(node, attr_name, "")
+                    element_attr_set(mut node, attr_name, "")
                 }
             }
         }
@@ -717,10 +709,10 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
             closed ← true
         } else {
             if html.slice(j, j + 1) ≡ "<" {
-                const ParseResult ∪ none child ← parse_element(html, j)
+                var ParseResult ∪ none child ← parse_element(html, j)
                 if child not is none {
-                    const ParseResult certain ← child
-                    element_append_child(node, certain.node)
+                    var ParseResult certain ← child
+                    element_append_child(node, mut certain.node)
                     j ← certain.next
                 } else {
                     j ← j + 1
@@ -730,13 +722,15 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
                 if end ≺ 0 {
                     const string text ← html.slice(j, html.length())
                     if text.length() ≻ 0 {
-                        element_append_child(node, make_text_node(text))
+                        var FakeElement text_node ← make_text_node(text)
+                        element_append_child(node, mut text_node)
                     }
                     j ← html.length()
                 } else {
                     const string text ← html.slice(j, end)
                     if text.length() ≻ 0 {
-                        element_append_child(node, make_text_node(text))
+                        var FakeElement text_node ← make_text_node(text)
+                        element_append_child(node, mut text_node)
                     }
                     j ← end
                 }
@@ -839,16 +833,16 @@ fn web_dom_snapshot(FakeScope ∪ none scope) → list<FakeNodus> ∪ none {
     return out
 }
 
-fn web_dom_text_set(FakeElement element, string value) → void {
-    element_text_set(element, value)
+fn web_dom_text_set(mut FakeElement element, string value) → void {
+    element_text_set(mut element, value)
 }
 
-fn web_dom_attr_set(FakeElement element, string name, string value) → void {
-    element_attr_set(element, name, value)
+fn web_dom_attr_set(mut FakeElement element, string name, string value) → void {
+    element_attr_set(mut element, name, value)
 }
 
-fn web_dom_attr_remove(FakeElement element, string name) → void {
-    element_attr_remove(element, name)
+fn web_dom_attr_remove(mut FakeElement element, string name) → void {
+    element_attr_remove(mut element, name)
 }
 
 fn web_dom_class_add(FakeElement element, string class_name) → void {
@@ -863,64 +857,62 @@ fn web_dom_class_toggle(FakeElement element, string class_name) → bool {
     return class_list_toggle(element.class_list, class_name)
 }
 
-fn web_dom_on(FakeDocument doc, FakeElement element, string event_name, (FakeEvent) → void handler) → FakeSubscription {
+fn web_dom_on(mut FakeDocument doc, FakeElement element, string event_name, (FakeEvent) → void handler) → FakeSubscription {
     element_add_listener(element, event_name, handler)
-    var FakeDocument d ← copy doc
-    d.active_subscriptions.put(d.next_subscription_id, SubscriptionRecord { element = element, event_name = event_name, handler = handler })
-    d.next_subscription_id ← d.next_subscription_id + 1
-    return FakeSubscription { id = d.next_subscription_id - 1 }
+    doc.active_subscriptions.put(doc.next_subscription_id, SubscriptionRecord { element = element, event_name = event_name, handler = handler })
+    doc.next_subscription_id ← doc.next_subscription_id + 1
+    return FakeSubscription { id = doc.next_subscription_id - 1 }
 }
 
 fn web_dom_unsubscribe(FakeDocument doc, FakeSubscription subscription) → void {
-    var FakeDocument d ← copy doc
-    const SubscriptionRecord ∪ none record ← d.active_subscriptions.get(subscription.id)
+    const SubscriptionRecord ∪ none record ← doc.active_subscriptions.get(subscription.id)
     if record not is none {
         const SubscriptionRecord certain ← record
         element_remove_listener(certain.element, certain.event_name, certain.handler)
     }
-    d.active_subscriptions.delete(subscription.id)
+    doc.active_subscriptions.delete(subscription.id)
 }
 
 fn web_dom_value(FakeElement element) → string {
     return element.value
 }
 
-fn web_dom_value_set(FakeElement element, string value) → void {
-    var FakeElement e ← copy element
-    e.value ← value
+fn web_dom_value_set(mut FakeElement element, string value) → void {
+    element.value ← value
 }
 
-fn web_dom_on_input(FakeDocument doc, FakeElement element, (FakeElement, string) → void handler) → FakeSubscription {
-    return web_dom_on(doc, element, "input", FakeEvent event → void ∴ handler(element, web_dom_value(element)))
+fn web_dom_on_input(mut FakeDocument doc, FakeElement element, (FakeElement, string) → void handler) → FakeSubscription {
+    return web_dom_on(mut doc, element, "input", FakeEvent event → void ∴ handler(element, web_dom_value(element)))
 }
 
-fn submit_dispatch(FakeEvent event, FakeElement form, FakeSubmitOptions options, (FakeElement) → void handler) → void {
+fn submit_dispatch(mut FakeEvent event, FakeElement form, FakeSubmitOptions options, (FakeElement) → void handler) → void {
     if options.prevent_default {
-        event_prevent_default(event)
+        event_prevent_default(mut event)
     }
     handler(form)
 }
 
-fn web_dom_on_submit(FakeDocument doc, FakeElement form, FakeSubmitOptions options, (FakeElement) → void handler) → FakeSubscription {
-    return web_dom_on(doc, form, "submit", FakeEvent event → void ∴ submit_dispatch(event, form, options, handler))
+fn web_dom_on_submit(mut FakeDocument doc, FakeElement form, FakeSubmitOptions options, (FakeElement) → void handler) → FakeSubscription {
+    return web_dom_on(mut doc, form, "submit", FakeEvent event → void ∴ submit_dispatch(mut event, form, options, handler))
 }
 
-fn web_dom_on_keyboard(FakeDocument doc, FakeElement element, string event_name, (FakeKeyboardState) → void handler) → FakeSubscription {
-    return web_dom_on(doc, element, event_name, FakeEvent event → void ∴ handler(FakeKeyboardState { kind = event.kind, key = event.key, code = event.code, repeat = event.repeat, alt = event.alt_key, ctrl = event.ctrl_key, shift = event.shift_key, meta = event.meta_key }))
+fn web_dom_on_keyboard(mut FakeDocument doc, FakeElement element, string event_name, (FakeKeyboardState) → void handler) → FakeSubscription {
+    return web_dom_on(mut doc, element, event_name, FakeEvent event → void ∴ handler(FakeKeyboardState { kind = event.kind, key = event.key, code = event.code, repeat = event.repeat, alt = event.alt_key, ctrl = event.ctrl_key, shift = event.shift_key, meta = event.meta_key }))
 }
 
-fn web_dom_on_pointer(FakeDocument doc, FakeElement element, string event_name, (FakePointerState) → void handler) → FakeSubscription {
-    return web_dom_on(doc, element, event_name, FakeEvent event → void ∴ handler(FakePointerState { kind = event.kind, x = event.client_x, y = event.client_y, movement_x = event.movement_x, movement_y = event.movement_y, button = event.button, primary = event.primary }))
+fn web_dom_on_pointer(mut FakeDocument doc, FakeElement element, string event_name, (FakePointerState) → void handler) → FakeSubscription {
+    return web_dom_on(mut doc, element, event_name, FakeEvent event → void ∴ handler(FakePointerState { kind = event.kind, x = event.client_x, y = event.client_y, movement_x = event.movement_x, movement_y = event.movement_y, button = event.button, primary = event.primary }))
 }
 
-fn web_dom_on_focus(FakeDocument doc, FakeElement element, string event_name, (FakeFocusState) → void handler) → FakeSubscription {
-    const FakeSubscription subscription ← web_dom_on(doc, element, event_name, FakeEvent event → void ∴ handler(FakeFocusState { focused = doc_has_focus(doc) }))
-    handler(FakeFocusState { focused = doc_has_focus(doc) })
+fn web_dom_on_focus(mut FakeDocument doc, FakeElement element, string event_name, (FakeFocusState) → void handler) → FakeSubscription {
+    const bool focused ← doc_has_focus(doc)
+    const FakeSubscription subscription ← web_dom_on(mut doc, element, event_name, FakeEvent event → void ∴ handler(FakeFocusState { focused = focused }))
+    handler(FakeFocusState { focused = focused })
     return subscription
 }
 
-fn web_dom_prevent_default(FakeEvent event) → FakeEvent {
-    return event_prevent_default(event)
+fn web_dom_prevent_default(mut FakeEvent event) → FakeEvent {
+    return event_prevent_default(mut event)
 }
 
 # ---------------------------------------------------------------------------
@@ -938,14 +930,13 @@ fn find_child_by_identity(list<FakeElement> children, string identity) → FakeE
     return null
 }
 
-fn stamp_subtree(FakeElement node, string token) → void {
+fn stamp_subtree(mut FakeElement node, string token) → void {
     if node.data_tela ≢ "" {
-        var FakeElement n ← copy node
-        n.token ← token
+        node.token ← token
     }
     var int i ← 0
     while i ≺ node.children.length() {
-        stamp_subtree(node.children[i], token)
+        stamp_subtree(mut node.children[i], token)
         i ← i + 1
     }
 }
@@ -961,37 +952,37 @@ fn open_tag_equals(FakeElement a, FakeElement b) → bool {
 }
 
 fn clone_node(FakeElement node) → FakeElement {
-    const FakeElement copy ← fake_element(node.tagName)
+    var FakeElement clone ← fake_element(node.tagName)
     if node.tagName ≡ "#text" {
-        element_text_set(copy, element_text(node))
-        return copy
+        element_text_set(mut clone, element_text(node))
+        return clone
     }
-    var FakeElement c ← copy copy
-    c.value ← copy node.value
-    c.data_tela ← copy node.data_tela
+    clone.value ← node.value
+    clone.data_tela ← node.data_tela
     const list<string> names ← node.attrs.keys()
     var int i ← 0
     while i ≺ names.length() {
         const string ∪ none maybe_value ← node.attrs.get(names[i])
         if maybe_value not is none {
             const string value ← maybe_value
-            element_attr_set(copy, names[i], value)
+            element_attr_set(mut clone, names[i], value)
         }
         i ← i + 1
     }
     const list<string> class_names ← class_list_names(node.class_list)
     var int j ← 0
     while j ≺ class_names.length() {
-        class_list_add(copy.class_list, class_names[j])
+        class_list_add(clone.class_list, class_names[j])
         j ← j + 1
     }
-    c.token ← node.token
+    clone.token ← node.token
     var int k ← 0
     while k ≺ node.children.length() {
-        element_append_child(copy, clone_node(node.children[k]))
+        var FakeElement kid ← clone_node(node.children[k])
+        element_append_child(clone, mut kid)
         k ← k + 1
     }
-    return copy
+    return clone
 }
 
 fn find_match(list<FakeElement> children, string t_id, int k) → FakeElement ∪ none {
@@ -1011,13 +1002,13 @@ fn find_match(list<FakeElement> children, string t_id, int k) → FakeElement �
 # rebuild carries exactly the target's nodes — the shim's removal pass is
 # the same result when the target order matches the present order, which
 # holds for the proof corpus; recorded).
-fn sync_region(FakeElement parent, list<FakeElement> target, map<string, string> plan, bool stamp) → void {
+fn sync_region(mut FakeElement parent, list<FakeElement> target, map<string, string> plan, bool stamp) → void {
     var list<FakeElement> rebuilt ← empty
     var int k ← 0
     while k ≺ target.length() {
         const FakeElement t ← target[k]
         const string t_id ← t.data_tela
-        const FakeElement ∪ none match ← find_match(parent.children, t_id, k)
+        var FakeElement ∪ none match ← find_match(parent.children, t_id, k)
         var string status ← "create"
         if t_id ≢ "" and plan.has(t_id) {
             const string ∪ none s ← plan.get(t_id)
@@ -1027,32 +1018,30 @@ fn sync_region(FakeElement parent, list<FakeElement> target, map<string, string>
             }
         }
         if match not is none {
-            const FakeElement certain_match ← match
+            var FakeElement certain_match ← match
             if status ≡ "bind" and open_tag_equals(certain_match, t) {
                 if stamp {
-                    var FakeElement m ← copy certain_match
-                    m.token ← "original"
+                    certain_match.token ← "original"
                 }
-                sync_region(certain_match, t.children, plan, stamp)
+                sync_region(mut certain_match, t.children, plan, stamp)
                 rebuilt.append(certain_match)
             } else {
-                const FakeElement fresh ← clone_node(t)
+                var FakeElement fresh ← clone_node(t)
                 if stamp {
-                    stamp_subtree(fresh, "fresh")
+                    stamp_subtree(mut fresh, "fresh")
                 }
                 rebuilt.append(fresh)
             }
         } else {
-            const FakeElement fresh ← clone_node(t)
+            var FakeElement fresh ← clone_node(t)
             if stamp {
-                stamp_subtree(fresh, "fresh")
+                stamp_subtree(mut fresh, "fresh")
             }
             rebuilt.append(fresh)
         }
         k ← k + 1
     }
-    var FakeElement p ← copy parent
-    p.children ← rebuilt
+    parent.children ← rebuilt
 }
 
 # Execute a mount plan against the installed fake DOM. Node-level policy
@@ -1060,7 +1049,7 @@ fn sync_region(FakeElement parent, list<FakeElement> target, map<string, string>
 # the existing matching node (stamped "original" when `stamp` is set);
 # "create" identities are created/replaced from the View.
 fn execute_mount_plan(FakeDocument doc, string selector, MountedLike mounted, bool stamp) → void {
-    const FakeElement root ← resolve_region(doc, selector)
+    var FakeElement root ← resolve_region(doc, selector)
     const list<FakeElement> target ← parse_fragment(mounted.markup)
     var map<string, string> plan ← empty
     var int i ← 0
@@ -1068,11 +1057,11 @@ fn execute_mount_plan(FakeDocument doc, string selector, MountedLike mounted, bo
         plan.put(mounted.bindings[i].identity, mounted.bindings[i].status)
         i ← i + 1
     }
-    sync_region(root, target, plan, stamp)
+    sync_region(mut root, target, plan, stamp)
 }
 
 # Bind a webDom subscription per Mounted descriptor onto the identity node.
-fn bind_region_subscriptions(FakeDocument doc, string selector, MountedLike mounted, (FakeEvent) → void handler) → list<FakeSubscription> {
+fn bind_region_subscriptions(mut FakeDocument doc, string selector, MountedLike mounted, (FakeEvent) → void handler) → list<FakeSubscription> {
     const FakeElement root ← resolve_region(doc, selector)
     const list<FakeElement> nodes ← element_query_all(root, "[data-tela]")
     var list<FakeSubscription> subs ← empty
@@ -1081,7 +1070,7 @@ fn bind_region_subscriptions(FakeDocument doc, string selector, MountedLike moun
         const FakeElement ∪ none node ← find_child_by_identity(nodes, mounted.subscriptions[i].identity)
         if node not is none {
             const FakeElement certain ← node
-            subs.append(web_dom_on(doc, certain, mounted.subscriptions[i].event_name, handler))
+            subs.append(web_dom_on(mut doc, certain, mounted.subscriptions[i].event_name, handler))
         } else {
             panic "dom-shim: subscription target missing: " + mounted.subscriptions[i].identity
         }

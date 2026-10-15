@@ -120,6 +120,7 @@ emit_module() { # <fab path> <scratch file name>
     | sed -E 's/^(function|class|interface|type|const|let|var|enum) ([A-Za-z_$][A-Za-z0-9_$]*).*/\2/' \
     | sort -u \
     | grep -vE "^($INTRINSICS)$" \
+    | sed -E 's/^([A-Za-z0-9$]+)_$/\1_ as \1/' \
     | paste -sd, - \
     | sed 's/,/, /g')"
   if [[ -n "$names" ]]; then
@@ -163,81 +164,20 @@ export function snapshot(scope: any): Array<FakeNodus> | null {
 }
 DOM_SEAM
 
-# The @faber/runtime namespaces: the emitted `print` surface imports
-# `{ display }` from the package and calls `display.value` instead of inlining
-# the family, and integer arithmetic imports `{ exact }` and calls
-# `exact.add`, `exact.store`, ... The exempla gate prints only string carriers,
-# so `display` is a harness stand-in mirroring that contract
-# (faber/runtime/typescript/display.ts is the authority); `exact` computes real
-# values the assertions read, so it is the package's own module, re-exported
-# from its source (faber/runtime/typescript/exact.ts) and type-declared here.
-RUNTIME_TS="${FABER_RUNTIME_TS:-$ROOT/../faber/runtime/typescript}"
+# The @faber/runtime package: the emitted code imports runtime namespaces
+# (`display`, `exact`, `dup`, `valor`, `variant`, ...) from "@faber/runtime".
+# The package is radix's own TypeScript runtime (radix/runtime/typescript, the
+# authority; the public faber/ copy is stale) and is installed into the scratch
+# node_modules by symlink, so tsc and node resolve the real package source and
+# the harness carries no hand-maintained type stub that can drift from it.
+RUNTIME_TS="${FABER_RUNTIME_TS:-$RADIX/runtime/typescript}"
 if [[ ! -f "$RUNTIME_TS/exact.ts" ]]; then
   echo "check-exempla: missing faber runtime package at $RUNTIME_TS (set FABER_RUNTIME_TS)" >&2
   exit 1
 fi
 RUNTIME_TS="$(cd "$RUNTIME_TS" && pwd)"
-mkdir -p "$SCRATCH/node_modules/@faber/runtime"
-cat > "$SCRATCH/node_modules/@faber/runtime/package.json" <<'RUNTIME_PKG'
-{ "name": "@faber/runtime", "type": "module", "main": "./index.js", "types": "./index.d.ts" }
-RUNTIME_PKG
-cat > "$SCRATCH/node_modules/@faber/runtime/index.d.ts" <<'RUNTIME_DTS'
-export type DisplayHint =
-  | "unknown" | "textus" | "ascii" | "numerus" | "fractus" | "bivalens"
-  | "nihil" | "vacuum" | "valor" | "instans" | "regex"
-  | { kind: "nullable"; inner: DisplayHint }
-  | { kind: "lista"; element: DisplayHint }
-  | { kind: "tensor"; element: DisplayHint }
-  | { kind: "sparsa"; element: DisplayHint }
-  | { kind: "map"; key: DisplayHint; value: DisplayHint }
-  | { kind: "set"; element: DisplayHint };
-export declare const display: {
-  value(value: any, hint?: DisplayHint): string;
-};
-export declare const exact: {
-  chk(v: number): number;
-  add(a: number, b: number): number;
-  sub(a: number, b: number): number;
-  mul(a: number, b: number): number;
-  div(a: number, b: number): number;
-  mod(a: number, b: number): number;
-  shl(a: number, n: number): number;
-  shr(a: number, n: number): number;
-  floatRem(a: number, b: number): number;
-  neg(a: number): number;
-  not(a: number): number;
-  abs(a: number): number;
-  pow(base: number, exponent: number): number;
-  hi(a: number): number;
-  lo(a: number): number;
-  join(hi: number, lo: number): number;
-  and(a: number, b: number): number;
-  or(a: number, b: number): number;
-  xor(a: number, b: number): number;
-  store(v: number, lo: number, hi: number, ty: string, pos: string, extra: string): number;
-  clamp(v: number, lo: number, hi: number): number;
-  wrap(v: number, bits: number, signed: boolean): number;
-  trueDiv(a: number, b: number): number;
-  trueDivF32(a: number, b: number): number;
-};
-RUNTIME_DTS
-cat > "$SCRATCH/node_modules/@faber/runtime/index.js" <<RUNTIME_JS
-// Harness stand-in for @faber/runtime: \`display\` mirrors the string-carrier
-// contract (the full hint family lives in faber/runtime/typescript); \`exact\`
-// is the package's own module, loaded from its source (Node strips the types).
-export * as exact from "$RUNTIME_TS/exact.ts";
-export const display = {
-  value(value, hint = "unknown") {
-    if (value === null || value === undefined) {
-      return hint === "vacuum" ? "vacuum" : "nihil";
-    }
-    if (hint === "bivalens") {
-      return value ? "verum" : "falsum";
-    }
-    return String(value);
-  },
-};
-RUNTIME_JS
+mkdir -p "$SCRATCH/node_modules/@faber"
+ln -s "$RUNTIME_TS" "$SCRATCH/node_modules/@faber/runtime"
 
 # The compiled module graph runs as ESM under node.
 printf '{ "type": "module" }\n' > "$SCRATCH/package.json"
@@ -302,7 +242,7 @@ interface MountProofApi {
   focus_held: (mounted: any, identity: string) => any;
   focus_target: (mounted: any, identity: string) => any;
   scope: (selector: string) => any;
-  html_visus: (view: any) => string | null;
+  html_view: (view: any) => string | null;
   effect_identity: (effects: any) => string;
   tree: () => any;
   extended_tree: () => any;
@@ -435,7 +375,7 @@ const executeMountProof = (doc: FakeDocument, api: MountProofApi): void => {
     assert(keys.length === 2, "replace derives two effects");
     assert(keys[0] === "tela-seg-2" && keys[1] === "#root", "effects are restore(seg-2) + anchor(#root)");
     // Execute the replacement (rebuild the region from the next View).
-    const nextMarkup = api.html_visus(r.view) ?? "";
+    const nextMarkup = api.html_view(r.view) ?? "";
     const nextPlan: MountedLike = {
       ...m,
       markup: nextMarkup,
@@ -473,7 +413,7 @@ const executeMountProof = (doc: FakeDocument, api: MountProofApi): void => {
       keys[0] === "tela-seg-2" && keys[1] === "tela-seg-3" && keys[2] === "#root",
       "effects are restore + direct + anchor",
     );
-    const nextMarkup = api.html_visus(r.view) ?? "";
+    const nextMarkup = api.html_view(r.view) ?? "";
     const extIds = m.identities.concat("tela-seg-3");
     const nextPlan: MountedLike = {
       ...m,
@@ -533,7 +473,7 @@ const domProofApi = {
   focus_held: browser.focus_held,
   focus_target: browser.focus_target,
   scope: (selector: string): any => web_dom_scope(doc, selector),
-  html_visus: tela.html_view,
+  html_view: tela.html_view,
   effect_identity: tela.effect_identity,
   tree: control_tree,
   extended_tree: extended_control_tree,
