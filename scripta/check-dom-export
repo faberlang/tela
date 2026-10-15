@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
-# Prove the exported subset of tela:dom and assert the nine G4 handler
-# exports remain absent. src/dom.fab, fix:g4 records their WARN014 skips and
-# host-binding consumption at the DOM_NS harness boundary. A newly exposed
-# handler must turn this gate red until the consumer claim is updated.
+# Prove the exported subset of tela:dom and that the nine handler-typed
+# functions (on, on_input, on_submit, on_frame, on_resize, on_keyboard,
+# on_pointer, on_focus, on_pointer_lock) export and can be called by a
+# consumer. They were once skipped at export (WARN014, fix:g4 in src/dom.fab);
+# a regression back to a skip must turn this gate red.
 #
 # Usage: ./scripta/check-dom-export
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROOF="$ROOT/proof/dom-export/probe.fab"
-ABSENT="$ROOT/proof/dom-export/known-absent.fab"
+HANDLERS="$ROOT/proof/dom-export/handlers-exported.fab"
 
 if [[ -n "${RADIX_ROOT:-}" ]]; then
   RADIX="$RADIX_ROOT"
@@ -40,7 +41,7 @@ if [[ ! -f "$ROOT/src/dom.fab" ]]; then
   echo "check-dom-export: missing $ROOT/src/dom.fab" >&2
   exit 1
 fi
-for proof in "$PROOF" "$ABSENT"; do
+for proof in "$PROOF" "$HANDLERS"; do
   if [[ ! -f "$proof" ]]; then
     echo "check-dom-export: missing $proof" >&2
     exit 1
@@ -71,41 +72,20 @@ fi
 echo "$out"
 echo "check-dom-export: exported subset checks"
 
-if absent_out="$("$FABER_BIN" check --library-home "$FABER_LIBRARY_HOME" --locale en "$ABSENT" 2>&1)"; then
-  echo "$absent_out" >&2
-  echo "check-dom-export: G4 handlers now export; update the probe claim" >&2
+handlers_out="$("$FABER_BIN" check --library-home "$FABER_LIBRARY_HOME" --locale en "$HANDLERS" 2>&1)" || {
+  echo "$handlers_out" >&2
+  echo "check-dom-export: the handler-typed tela:dom functions no longer check for a consumer" >&2
   exit 1
-else
-  status=$?
-  if [[ "$status" -ne 1 ]]; then
-    echo "$absent_out" >&2
-    echo "check-dom-export: unexpected negative-check exit $status" >&2
-    exit 1
-  fi
+}
+if ! grep -q "^ok:" <<<"$handlers_out"; then
+  echo "$handlers_out" >&2
+  echo "check-dom-export: missing ok: line on $HANDLERS" >&2
+  exit 1
 fi
-
-# Match catalog identities and their source expressions, never reader-pack
-# prose. Exact error membership rejects unrelated failures AND any handler
-# that begins exporting. Warning count also freezes the documented G4 seam.
-printf '%s\n' "$absent_out" | python3 -c '
-import re
-import sys
-
-out = sys.stdin.read().translate({ord(c): None for c in "\u2066\u2067\u2068\u2069"})
-fields = (
-    "on_frame", "on_resize", "on_keyboard", "on_pointer", "on_focus",
-    "on_pointer_lock", "on_submit", "on", "on_input",
-)
-expected = sorted(("SEM004:type_has_no_field", "print dom." + field) for field in fields)
-errors = re.findall(r"^error\[([^\]]+)\]:[^\n]*\n  \| ([^\n]*)", out, re.MULTILINE)
-actual = sorted((code, source.strip()) for code, source in errors)
-headers = len(re.findall(r"^error\[", out, re.MULTILINE))
-warns = len(re.findall(r"^warning\[WARN014:file_interface_export_skipped\]:", out, re.MULTILINE))
-if actual != expected or headers != len(expected) or warns != len(expected):
-    print(out, file=sys.stderr)
-    print("check-dom-export: G4 absence assertion changed; expected exactly nine "
-          "WARN014 skips and nine SEM004:type_has_no_field references", file=sys.stderr)
-    sys.exit(1)
-print("check-dom-export: G4 known-absent handlers asserted: " + ", ".join(fields))
-'
-echo "check-dom-export: GREEN (exported subset + nine G4 absences)"
+if grep -q "file_interface_export_skipped" <<<"$handlers_out"; then
+  echo "$handlers_out" >&2
+  echo "check-dom-export: a tela:dom export is skipped again (WARN014)" >&2
+  exit 1
+fi
+echo "check-dom-export: nine handler-typed exports called by a consumer: on, on_input, on_submit, on_frame, on_resize, on_keyboard, on_pointer, on_focus, on_pointer_lock"
+echo "check-dom-export: GREEN (exported subset + nine handler exports)"

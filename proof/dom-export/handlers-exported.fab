@@ -1,0 +1,65 @@
++++
+locale = "en"
++++
+
+# Cross-package consumer: the nine handler-typed tela:dom functions are part
+# of the exported file interface, and a consumer can call each one with a
+# handler of the declared type. They were once skipped at export (WARN014,
+# fix:g4 in src/dom.fab) and consumed only through the harness binding; the
+# compiler now exports them. check-dom-export requires this file to check
+# clean with no WARN014 export skips, so a regression back to a skip turns the
+# gate red.
+
+import from "tela:dom" public * as dom
+
+fn handle_event(dom.DomEvent event) → void {
+    print 1
+}
+
+fn handle_input(dom.Element element, string value) → void {
+    print value
+}
+
+fn handle_submit(dom.Element form) → void {
+    print 1
+}
+
+fn handle_frame(dom.FrameState frame) → void {
+    print frame.frame
+}
+
+fn handle_resize(dom.ResizeState resize) → void {
+    print resize.width
+}
+
+fn handle_key(dom.KeyboardState key) → void {
+    print key.code
+}
+
+fn handle_pointer(dom.PointerState pointer) → void {
+    print pointer.x
+}
+
+fn handle_focus(dom.FocusState focus) → void {
+    print focus.focused
+}
+
+fn handle_lock(dom.PointerLockState lock) → void {
+    print 1
+}
+
+main {
+    const dom.Scope scope ← dom.scope("#root")
+    const dom.Element element ← dom.require(scope, "#target")
+    const dom.SubmitOptions options ← dom.SubmitOptions {}
+    const dom.Subscription on_frame ← dom.on_frame(handle_frame)
+    const dom.Subscription on_resize ← dom.on_resize(handle_resize)
+    const dom.Subscription on_keyboard ← dom.on_keyboard(element, "keydown", handle_key)
+    const dom.Subscription on_pointer ← dom.on_pointer(element, "pointermove", handle_pointer)
+    const dom.Subscription on_focus ← dom.on_focus(element, "focus", handle_focus)
+    const dom.Subscription on_pointer_lock ← dom.on_pointer_lock(element, handle_lock)
+    const dom.Subscription on_submit ← dom.on_submit(element, options, handle_submit)
+    const dom.Subscription on_event ← dom.on(element, "click", handle_event)
+    const dom.Subscription on_input ← dom.on_input(element, handle_input)
+    print on_frame.id + on_resize.id + on_keyboard.id + on_pointer.id + on_focus.id + on_pointer_lock.id + on_submit.id + on_event.id + on_input.id
+}
