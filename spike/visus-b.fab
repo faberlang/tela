@@ -130,14 +130,14 @@ fn incrementum_binding() → Vinculum {
 
 # The component's view: ordinary Faber function composing child views.
 fn contator_app(int model) → Visus {
-    let attributa ← [ Attributum { nomen = "aria-label", valor = "contator" } ]
-    let proprietates ← [ Proprietas { nomen = "aria-valuenow", valor = "§"(model) } ]
+    const list<Attributum> aria_attributa ← [ Attributum { nomen = "aria-label", valor = "contator" } ]
+    const list<Proprietas> aria_proprietas ← [ Proprietas { nomen = "aria-valuenow", valor = "§"(model) } ]
     return variant Elementum {
         identitas = nova_identitas("contator-app"),
         spatium = Spatium.html,
         nomen_tag = "div",
-        attributa = attributa,
-        proprietates = proprietates,
+        attributa = aria_attributa,
+        proprietates = aria_proprietas,
         liberi = [
             textus_view("contator: "),
             textus_view("§"(model)),

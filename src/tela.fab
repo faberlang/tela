@@ -742,7 +742,7 @@ fn dependencies_met(list<Order> orders, string identity, list<string> placed) �
 @ public
 fn topological_order(list<Order> orders, list<string> identities) → list<string> ∪ none {
     var list<string> ordered ← empty
-    var list<string> remaining ← identities
+    var list<string> remaining ← copy identities
     while remaining.length() ≻ 0 {
         var list<string> ready ← empty
         var int i ← 0

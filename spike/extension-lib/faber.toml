@@ -11,6 +11,7 @@ source = "src"
 
 [build]
 kind = "lib"
+targets = ["rust", "ts"]
 
 [reader]
 locale = "en"

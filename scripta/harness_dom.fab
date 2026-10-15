@@ -30,7 +30,7 @@
 # The class-list set. Set semantics (presence + insertion-ordered
 # read-back) backed by a tabula — see fix:copia-iteration.
 class FakeClassList {
-    var tabula<string, bool> classes = empty
+    var map<string, bool> classes = empty
 
     # The runtime-contract method bridge (faber-web runtime/dom.ts —
     # webDomClassAdd/Remove/Toggle call the classList method surface).
@@ -85,9 +85,9 @@ class FakeElement {
     var string data_tela = ""
     # Hydration stamp: "original" when the node was bound (not recreated).
     var string token = ""
-    var tabula<string, string> attrs = empty
+    var map<string, string> attrs = empty
     # Listener sets per event kind (Set-dedup via contains() before append).
-    var tabula<string, list<(FakeEvent) → void>> listeners = empty
+    var map<string, list<(FakeEvent) → void>> listeners = empty
     var string own_text = ""
 
     # Runtime-contract methods: webDomSnapshot reads getAttribute + tagName
@@ -112,7 +112,7 @@ class FakeDocument {
     var FakeElement body
     var FakeElement ∪ none active_element = null
     var int next_subscription_id = 1
-    var tabula<int, SubscriptionRecord> active_subscriptions = empty
+    var map<int, SubscriptionRecord> active_subscriptions = empty
 
     # The runtime-contract method bridge (webDomScope reads
     # document.querySelector; webDomSnapshot reads scope.root.querySelectorAll
@@ -250,7 +250,7 @@ fn fake_event_key(string kind, string key) → FakeEvent {
 }
 
 fn event_prevent_default(FakeEvent event) → FakeEvent {
-    var FakeEvent e ← event
+    var FakeEvent e ← copy event
     e.default_prevented ← true
     return event
 }
@@ -286,7 +286,7 @@ fn element_text(FakeElement el) → string {
 
 # Setting textContent replaces the children (webDomTextSet behaviour).
 fn element_text_set(FakeElement el, string value) → void {
-    var FakeElement e ← el
+    var FakeElement e ← copy el
     e.own_text ← value
     if e.tagName ≢ "#text" {
         e.children ← empty
@@ -299,7 +299,7 @@ fn element_attr_get(FakeElement el, string name) → string ∪ none {
 
 # String(value) coercion is identity for the harness's string call sites.
 fn element_attr_set(FakeElement el, string name, string value) → void {
-    var FakeElement e ← el
+    var FakeElement e ← copy el
     e.attrs.put(name, value)
     if name ≡ "data-tela" {
         e.data_tela ← value
@@ -307,7 +307,7 @@ fn element_attr_set(FakeElement el, string name, string value) → void {
 }
 
 fn element_attr_remove(FakeElement el, string name) → void {
-    var FakeElement e ← el
+    var FakeElement e ← copy el
     e.attrs.delete(name)
     if name ≡ "data-tela" {
         e.data_tela ← ""
@@ -415,8 +415,8 @@ fn query_all_into(list<FakeElement> children, string selector) → list<FakeElem
 }
 
 fn element_append_child(FakeElement parent, FakeElement child) → void {
-    var FakeElement p ← parent
-    var FakeElement c ← child
+    var FakeElement p ← copy parent
+    var FakeElement c ← copy child
     p.children.append(child)
     c.parent ← parent
 }
@@ -433,26 +433,26 @@ fn element_remove(FakeElement child) → void {
             }
             i ← i + 1
         }
-        var FakeElement p ← certain
+        var FakeElement p ← copy certain
         p.children ← kept
-        var FakeElement c ← child
+        var FakeElement c ← copy child
         c.parent ← null
     }
 }
 
 fn element_clear_children(FakeElement el) → void {
-    var FakeElement e ← el
+    var FakeElement e ← copy el
     e.children ← empty
 }
 
 fn element_add_listener(FakeElement el, string kind, (FakeEvent) → void handler) → void {
     if not el.listeners.has(kind) {
-        var FakeElement e ← el
+        var FakeElement e ← copy el
         e.listeners.put(kind, empty)
     }
     const list<(FakeEvent) → void> ∪ none maybe ← el.listeners.get(kind)
     if maybe not is none {
-        var list<(FakeEvent) → void> handlers ← maybe
+        var list<(FakeEvent) → void> handlers ← copy maybe
         # Set-dedup the same handler (fix:copia-iteration: contains()
         # stands in for copia membership).
         if not handlers.contains(handler) {
@@ -466,7 +466,7 @@ fn element_remove_listener(FakeElement el, string kind, (FakeEvent) → void han
         const list<(FakeEvent) → void> ∪ none maybe ← el.listeners.get(kind)
         if maybe not is none {
             const list<(FakeEvent) → void> handlers ← maybe
-            var FakeElement e ← el
+            var FakeElement e ← copy el
             var list<(FakeEvent) → void> kept ← empty
             var int i ← 0
             while i ≺ handlers.length() {
@@ -510,7 +510,7 @@ fn doc_has_focus(FakeDocument doc) → bool {
 }
 
 fn doc_focus_node(FakeDocument doc, FakeElement ∪ none node) → void {
-    var FakeDocument d ← doc
+    var FakeDocument d ← copy doc
     d.active_element ← node
 }
 
@@ -865,14 +865,14 @@ fn web_dom_class_toggle(FakeElement element, string class_name) → bool {
 
 fn web_dom_on(FakeDocument doc, FakeElement element, string event_name, (FakeEvent) → void handler) → FakeSubscription {
     element_add_listener(element, event_name, handler)
-    var FakeDocument d ← doc
+    var FakeDocument d ← copy doc
     d.active_subscriptions.put(d.next_subscription_id, SubscriptionRecord { element = element, event_name = event_name, handler = handler })
     d.next_subscription_id ← d.next_subscription_id + 1
     return FakeSubscription { id = d.next_subscription_id - 1 }
 }
 
 fn web_dom_unsubscribe(FakeDocument doc, FakeSubscription subscription) → void {
-    var FakeDocument d ← doc
+    var FakeDocument d ← copy doc
     const SubscriptionRecord ∪ none record ← d.active_subscriptions.get(subscription.id)
     if record not is none {
         const SubscriptionRecord certain ← record
@@ -886,7 +886,7 @@ fn web_dom_value(FakeElement element) → string {
 }
 
 fn web_dom_value_set(FakeElement element, string value) → void {
-    var FakeElement e ← element
+    var FakeElement e ← copy element
     e.value ← value
 }
 
@@ -940,7 +940,7 @@ fn find_child_by_identity(list<FakeElement> children, string identity) → FakeE
 
 fn stamp_subtree(FakeElement node, string token) → void {
     if node.data_tela ≢ "" {
-        var FakeElement n ← node
+        var FakeElement n ← copy node
         n.token ← token
     }
     var int i ← 0
@@ -966,9 +966,9 @@ fn clone_node(FakeElement node) → FakeElement {
         element_text_set(copy, element_text(node))
         return copy
     }
-    var FakeElement c ← copy
-    c.value ← node.value
-    c.data_tela ← node.data_tela
+    var FakeElement c ← copy copy
+    c.value ← copy node.value
+    c.data_tela ← copy node.data_tela
     const list<string> names ← node.attrs.keys()
     var int i ← 0
     while i ≺ names.length() {
@@ -1011,7 +1011,7 @@ fn find_match(list<FakeElement> children, string t_id, int k) → FakeElement �
 # rebuild carries exactly the target's nodes — the shim's removal pass is
 # the same result when the target order matches the present order, which
 # holds for the proof corpus; recorded).
-fn sync_region(FakeElement parent, list<FakeElement> target, tabula<string, string> plan, bool stamp) → void {
+fn sync_region(FakeElement parent, list<FakeElement> target, map<string, string> plan, bool stamp) → void {
     var list<FakeElement> rebuilt ← empty
     var int k ← 0
     while k ≺ target.length() {
@@ -1030,7 +1030,7 @@ fn sync_region(FakeElement parent, list<FakeElement> target, tabula<string, stri
             const FakeElement certain_match ← match
             if status ≡ "bind" and open_tag_equals(certain_match, t) {
                 if stamp {
-                    var FakeElement m ← certain_match
+                    var FakeElement m ← copy certain_match
                     m.token ← "original"
                 }
                 sync_region(certain_match, t.children, plan, stamp)
@@ -1051,7 +1051,7 @@ fn sync_region(FakeElement parent, list<FakeElement> target, tabula<string, stri
         }
         k ← k + 1
     }
-    var FakeElement p ← parent
+    var FakeElement p ← copy parent
     p.children ← rebuilt
 }
 
@@ -1062,7 +1062,7 @@ fn sync_region(FakeElement parent, list<FakeElement> target, tabula<string, stri
 fn execute_mount_plan(FakeDocument doc, string selector, MountedLike mounted, bool stamp) → void {
     const FakeElement root ← resolve_region(doc, selector)
     const list<FakeElement> target ← parse_fragment(mounted.markup)
-    var tabula<string, string> plan ← empty
+    var map<string, string> plan ← empty
     var int i ← 0
     while i ≺ mounted.bindings.length() {
         plan.put(mounted.bindings[i].identity, mounted.bindings[i].status)

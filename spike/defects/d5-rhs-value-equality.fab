@@ -20,7 +20,7 @@
 # Stage 5 (no radix-lane fixes in this unit).
 
 fn f(string selector) → bool {
-    const string inner ← selector.sectio(1, selector.longitudo() - 1)
+    const string inner ← selector.slice(1, selector.length() - 1)
     const string value ← "x"
     return inner ≡ value
 }

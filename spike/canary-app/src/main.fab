@@ -18,19 +18,21 @@ locale = "en"
 # (ext.chart_axis_muted). Static composition only — no behavior/mount
 # (Stage 3), no theme rendering (Stage 2), no catalog.
 
-importa ex "extensionlib:extension" publica * ut ext
+import from "extensionlib:extension" public * as ext
 
 # --- App-side composition, public shape only ---------------------------------
 
 # Themed panel: a div with a stable identity and an accessible name; the panel
 # rule in main's style bundle keys on the identity.
 fn panelum(list<ext.Visus> liberi) → ext.Visus {
+    const list<ext.Attributum> aria ← [ ext.Attributum { nomen = "aria-label", valor = "metric panel" } ]
+    const list<ext.Proprietas> no_props ← []
     return ext.elementum_omne(
         ext.nova_identitas("canary-panelum"),
         ext.html_spatium(),
         "div",
-        [ ext.Attributum { nomen = "aria-label", valor = "metric panel" } ],
-        [],
+        aria,
+        no_props,
         liberi
     )
 }

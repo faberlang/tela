@@ -22,18 +22,18 @@ class FakeElement {
     var string tag
 }
 
-fn collect_text(copia<string> xs) → list<string> {
-    var list<string> all ← vacua
-    itera ex xs fixum h {
-        all.appende(h)
+fn collect_text(set<string> xs) → list<string> {
+    var list<string> all ← empty
+    for from xs const h {
+        all.append(h)
     }
     return all
 }
 
-fn collect_elements(copia<FakeElement> xs) → list<FakeElement> {
-    var list<FakeElement> all ← vacua
-    itera ex xs fixum h {
-        all.appende(h)
+fn collect_elements(set<FakeElement> xs) → list<FakeElement> {
+    var list<FakeElement> all ← empty
+    for from xs const h {
+        all.append(h)
     }
     return all
 }
