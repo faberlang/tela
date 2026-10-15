@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # tela/scripta/check-compile — Stage 1 U6 compile surface.
-# radix check every src/*.fab (kernel + validation under the container
+# `faber check` every src/*.fab (kernel + validation under the container
 # library home) and both benchmark packages (under the benchmark libhome).
 set -euo pipefail
 
@@ -19,15 +19,22 @@ if [[ ! -d "$RADIX/crates/radix" ]]; then
   exit 1
 fi
 
-RADIX_BIN="$RADIX/target/debug/radix"
-(cd "$RADIX" && cargo build -q -p radix-cli --bin radix)
+# `faber check` owns package-aware analysis and resolves the sibling provider
+# imports (tela:validate, tela:dom, extensionlib:extension, …) through
+# --library-home. `radix check` is single-file only and has no library home,
+# so an importing file fails there; the retired FABER_LIBRARY_HOME env branch
+# is not read.
+FABER_BIN="${FABER_BIN:-$RADIX/target/debug/faber}"
+if [[ ! -x "$FABER_BIN" ]]; then
+  (cd "$RADIX" && cargo build -q -p faber)
+fi
 
 # The tela package reads English (faber.toml `[reader] locale = "en"`); the
-# radix CLI defaults to Latin, so the en reader locale is passed explicitly
-# with `--locale en`.
+# CLI defaults to Latin for an untagged input, so the en reader locale is
+# passed explicitly with `--locale en`.
 
 echo "check-compile: kernel + validation + reference + dom + canvas2d + web modules (container library home)"
-export FABER_LIBRARY_HOME="${FABER_LIBRARY_HOME:-$ROOT/..}"
+KERNEL_HOME="${FABER_LIBRARY_HOME:-$ROOT/..}"
 # Stage 5 U2: the reference catalog module joins the compile surface.
 # Web-surface-import U4: the tela:dom + tela:canvas2d modules join (the
 # browser flip's imported seam — U1/U3 landed the sources).
@@ -35,14 +42,14 @@ export FABER_LIBRARY_HOME="${FABER_LIBRARY_HOME:-$ROOT/..}"
 # (the WebController packaging entry contract).
 for mod in tela validate reference dom canvas2d web browser; do
   echo "check-compile: parsing src/${mod}.fab"
-  "$RADIX_BIN" check --locale en "$ROOT/src/${mod}.fab"
+  "$FABER_BIN" check --library-home "$KERNEL_HOME" --locale en "$ROOT/src/${mod}.fab"
 done
 
 echo "check-compile: benchmark packages (benchmark library home)"
-export FABER_LIBRARY_HOME="$ROOT/proof/benchmark/libhome"
+BENCH_HOME="$ROOT/proof/benchmark/libhome"
 echo "check-compile: parsing proof/benchmark/extension-lib/src/extension.fab"
-"$RADIX_BIN" check --locale en "$ROOT/proof/benchmark/extension-lib/src/extension.fab"
+"$FABER_BIN" check --library-home "$BENCH_HOME" --locale en "$ROOT/proof/benchmark/extension-lib/src/extension.fab"
 echo "check-compile: parsing proof/benchmark/canary-app/src/main.fab"
-"$RADIX_BIN" check --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab"
+"$FABER_BIN" check --library-home "$BENCH_HOME" --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab"
 
 echo "check-compile: green"

@@ -11,38 +11,41 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROOF="$ROOT/proof/locale-la"
 
-if [[ -n "${RADIX_BIN:-}" && -x "${RADIX_BIN}" ]]; then
+if [[ -n "${FABER_BIN:-}" && -x "${FABER_BIN}" ]]; then
     :
-elif [[ -n "${RADIX:-}" && -x "${RADIX}" ]]; then
-    RADIX_BIN="$RADIX"
-elif [[ -n "${RADIX_ROOT:-}" && -x "${RADIX_ROOT}/target/debug/radix" ]]; then
-    RADIX_BIN="$RADIX_ROOT/target/debug/radix"
-elif [[ -x "$ROOT/../radix/target/debug/radix" ]]; then
-    RADIX_BIN="$ROOT/../radix/target/debug/radix"
-elif [[ -x "$ROOT/../../../radix/target/debug/radix" ]]; then
-    RADIX_BIN="$ROOT/../../../radix/target/debug/radix"
+elif [[ -n "${FABER:-}" && -x "${FABER}" ]]; then
+    FABER_BIN="$FABER"
+elif [[ -n "${RADIX_ROOT:-}" && -x "${RADIX_ROOT}/target/debug/faber" ]]; then
+    FABER_BIN="$RADIX_ROOT/target/debug/faber"
+elif [[ -x "$ROOT/../radix/target/debug/faber" ]]; then
+    FABER_BIN="$ROOT/../radix/target/debug/faber"
+elif [[ -x "$ROOT/../../../radix/target/debug/faber" ]]; then
+    FABER_BIN="$ROOT/../../../radix/target/debug/faber"
 else
-    RADIX_BIN="$(command -v radix || true)"
+    FABER_BIN="$(command -v faber || true)"
 fi
 
-if [[ -z "${RADIX_BIN}" || ! -x "${RADIX_BIN}" ]]; then
-    echo "check-locale-la: no radix binary (set RADIX_BIN, or build -p radix --bin radix)" >&2
+if [[ -z "${FABER_BIN}" || ! -x "${FABER_BIN}" ]]; then
+    echo "check-locale-la: no faber binary (set FABER_BIN, or build -p faber)" >&2
     exit 1
 fi
 
+# `faber check`/`faber emit` resolve the tela provider through --library-home;
+# `radix check`/`radix emit` are single-file only and cannot resolve the
+# tela:tela import of the Latin proof fixtures.
 export FABER_LIBRARY_HOME="${FABER_LIBRARY_HOME:-$ROOT/..}"
 if [[ ! -f "$ROOT/src/tela.fab" ]]; then
     echo "check-locale-la: missing $ROOT/src/tela.fab" >&2
     exit 1
 fi
 
-echo "check-locale-la: radix=$RADIX_BIN"
+echo "check-locale-la: faber=$FABER_BIN"
 echo "check-locale-la: FABER_LIBRARY_HOME=$FABER_LIBRARY_HOME"
 
 expect_ok() {
     local file="$1"
     local out
-    if ! out="$("$RADIX_BIN" check --locale la "$file" 2>&1)"; then
+    if ! out="$("$FABER_BIN" check --library-home "$FABER_LIBRARY_HOME" --locale la "$file" 2>&1)"; then
         echo "$out" >&2
         echo "check-locale-la: expected ok on $file" >&2
         exit 1
@@ -60,7 +63,7 @@ expect_codes() {
     shift
     local out rc
     set +e
-    out="$("$RADIX_BIN" check --locale la "$file" 2>&1)"
+    out="$("$FABER_BIN" check --library-home "$FABER_LIBRARY_HOME" --locale la "$file" 2>&1)"
     rc=$?
     set -e
     if [[ "$rc" -eq 0 ]]; then
@@ -88,10 +91,10 @@ echo "check-locale-la: positive canonical English fallback"
 expect_ok "$PROOF/canonical-members.fab"
 
 echo "check-locale-la: negative invented Latin members"
-expect_codes "$PROOF/invented-members.fab" "SEM002.qualified_type_not_exported"
+expect_codes "$PROOF/invented-members.fab" "SEM002:qualified_type_not_exported"
 
 echo "check-locale-la: negative missing English export"
-expect_codes "$PROOF/absent-member.fab" "SEM004.namespace_missing_export"
+expect_codes "$PROOF/absent-member.fab" "SEM004:namespace_missing_export"
 
 # Emit keeps the canonical English member names (radix contract, recorded in
 # the radix lane's `proof(locale): Latin consumer imports English tela via
@@ -99,7 +102,7 @@ expect_codes "$PROOF/absent-member.fab" "SEM004.namespace_missing_export"
 # call site reads `html_visus`. The surface projection itself is proven by the
 # positive `expect_ok` checks above.
 echo "check-locale-la: emit rust"
-if ! rust_out="$("$RADIX_BIN" emit -t rust --locale la "$PROOF/latin-consumer.fab" 2>&1)"; then
+if ! rust_out="$("$FABER_BIN" emit --library-home "$FABER_LIBRARY_HOME" -t rust --locale la "$PROOF/latin-consumer.fab" 2>&1)"; then
     echo "$rust_out" >&2
     echo "check-locale-la: rust emit failed" >&2
     exit 1
@@ -112,7 +115,7 @@ fi
 echo "check-locale-la: rust emit contains html_view"
 
 echo "check-locale-la: emit ts"
-if ! ts_out="$("$RADIX_BIN" emit -t ts --locale la "$PROOF/latin-consumer.fab" 2>&1)"; then
+if ! ts_out="$("$FABER_BIN" emit --library-home "$FABER_LIBRARY_HOME" -t ts --locale la "$PROOF/latin-consumer.fab" 2>&1)"; then
     echo "$ts_out" >&2
     echo "check-locale-la: ts emit failed" >&2
     exit 1
@@ -124,27 +127,9 @@ if ! grep -q "html_view" <<<"$ts_out"; then
 fi
 echo "check-locale-la: ts emit contains html_view"
 
-if [[ -n "${FABER_BIN:-}" && -x "${FABER_BIN}" ]]; then
-    :
-elif [[ -n "${FABER:-}" && -x "${FABER}" ]]; then
-    FABER_BIN="$FABER"
-elif [[ -x "$ROOT/../radix/target/debug/faber" ]]; then
-    FABER_BIN="$ROOT/../radix/target/debug/faber"
-elif [[ -x "$ROOT/../../../radix/target/debug/faber" ]]; then
-    FABER_BIN="$ROOT/../../../radix/target/debug/faber"
-else
-    FABER_BIN="$(command -v faber || true)"
-fi
-
-if [[ -z "${FABER_BIN}" || ! -x "${FABER_BIN}" ]]; then
-    echo "check-locale-la: no faber binary (set FABER_BIN); skipping product-path proof" >&2
-    echo "check-locale-la: GREEN"
-    exit 0
-fi
-
 echo "check-locale-la: faber=$FABER_BIN"
 echo "check-locale-la: faber check Latin consumer (package identity)"
-if ! faber_out="$("$FABER_BIN" check --locale la "$PROOF" 2>&1)"; then
+if ! faber_out="$("$FABER_BIN" check --library-home "$FABER_LIBRARY_HOME" --locale la "$PROOF" 2>&1)"; then
     echo "$faber_out" >&2
     echo "check-locale-la: faber check failed on $PROOF" >&2
     exit 1

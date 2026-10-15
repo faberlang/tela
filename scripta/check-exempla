@@ -61,17 +61,23 @@ if [[ ! -d "$RADIX/crates/radix" ]]; then
   exit 1
 fi
 
-RADIX_BIN="$RADIX/target/debug/radix"
-if [[ ! -x "$RADIX_BIN" ]]; then
-  (cd "$RADIX" && cargo build -q -p radix-cli --bin radix)
+# `faber check`/`faber emit` own package-aware analysis and resolve sibling
+# provider imports through --library-home; `radix check`/`radix emit` are
+# single-file only and have no library home, so a file that imports a sibling
+# module (tela:validate, tela:dom, …) fails there. The retired
+# FABER_LIBRARY_HOME env branch is not read, so the flag is passed explicitly.
+FABER_BIN="${FABER_BIN:-$RADIX/target/debug/faber}"
+if [[ ! -x "$FABER_BIN" ]]; then
+  (cd "$RADIX" && cargo build -q -p faber)
 fi
+RADIX_BIN="$FABER_BIN"
 
 export FABER_LIBRARY_HOME="${FABER_LIBRARY_HOME:-$ROOT/..}"
 
 echo "check-exempla: radix check every exempla/*.fab"
 for f in "$ROOT"/exempla/*.fab; do
   echo "check-exempla: parsing $(basename "$f")"
-  "$RADIX_BIN" check --locale en "$f"
+  "$FABER_BIN" check --library-home "$FABER_LIBRARY_HOME" --locale en "$f"
 done
 
 SCRATCH="$(mktemp -d "${TMPDIR:-/tmp}/tela-u6-exempla.XXXXXX")"
@@ -106,7 +112,7 @@ seam_normalize() {
 }
 
 emit_module() { # <fab path> <scratch file name>
-  "$RADIX_BIN" emit -t ts --locale en "$1" -o "$SCRATCH/$2" >/dev/null
+  "$FABER_BIN" emit --library-home "$FABER_LIBRARY_HOME" -t ts --locale en "$1" -o "$SCRATCH/$2" >/dev/null
   perl -0pi -e "s/^interface ($INTRINSICS) \\{\n(.*?)^\\}\n/declare global {\ninterface \$1 {\n\$2}\n}\n/ms" "$SCRATCH/$2"
   seam_normalize "$SCRATCH/$2"
   local names
@@ -547,7 +553,7 @@ for f in "$ROOT"/exempla/*.fab; do
   name="$(basename "$f" .fab)"
   # Emit the exempla to its own module file: exempla/browser.fab emits
   # ./tela-*.js imports too, which must not clobber the library modules.
-  "$RADIX_BIN" emit -t ts --locale en "$f" -o "$SCRATCH/exempla-$name.ts" >/dev/null
+  "$FABER_BIN" emit --library-home "$FABER_LIBRARY_HOME" -t ts --locale en "$f" -o "$SCRATCH/exempla-$name.ts" >/dev/null
   seam_normalize "$SCRATCH/exempla-$name.ts"
   case "$name" in
     browser)

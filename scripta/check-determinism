@@ -115,10 +115,16 @@ if [[ ! -d "$RADIX/crates/radix" ]]; then
   exit 1
 fi
 
-RADIX_BIN="$RADIX/target/debug/radix"
-if [[ ! -x "$RADIX_BIN" ]]; then
-  (cd "$RADIX" && cargo build -q -p radix-cli --bin radix)
+# `faber check`/`faber emit` own package-aware analysis and resolve sibling
+# provider imports through --library-home; `radix check`/`radix emit` are
+# single-file only and have no library home, so a file that imports a sibling
+# module (tela:validate, tela:dom, …) fails there. The retired
+# FABER_LIBRARY_HOME env branch is not read, so the flag is passed explicitly.
+FABER_BIN="${FABER_BIN:-$RADIX/target/debug/faber}"
+if [[ ! -x "$FABER_BIN" ]]; then
+  (cd "$RADIX" && cargo build -q -p faber)
 fi
+RADIX_BIN="$FABER_BIN"
 
 sha256() {
   if command -v shasum >/dev/null 2>&1; then
@@ -134,7 +140,7 @@ echo "== check-determinism: benchmark composition double-build =="
 
 # ---- Rust path (primary; currently BLOCKED by the recorded defect) -------
 RUST_RUN_OK=0
-if "$RADIX_BIN" emit -t rust --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab" -o "$SCRATCH/main.rs" >"$SCRATCH/rust-emit.log" 2>&1; then
+if "$FABER_BIN" emit --library-home "$FABER_LIBRARY_HOME" -t rust --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab" -o "$SCRATCH/main.rs" >"$SCRATCH/rust-emit.log" 2>&1; then
   CRATE="$SCRATCH/crate"
   mkdir -p "$CRATE/src"
   cp "$SCRATCH/main.rs" "$CRATE/src/main.rs"
@@ -192,7 +198,7 @@ seam_normalize() {
   perl -pi -e 's/value\.__faberValorTag/(value as { __faberValorTag?: unknown }).__faberValorTag/g' "$1"
 }
 emit_module() { # <fab path> <specifier file name>
-  "$RADIX_BIN" emit -t ts --locale en "$1" -o "$SCRATCH/$2" >/dev/null
+  "$FABER_BIN" emit --library-home "$FABER_LIBRARY_HOME" -t ts --locale en "$1" -o "$SCRATCH/$2" >/dev/null
   # Intrinsic-augmentation interfaces are script-only; wrap in `declare global`.
   perl -0pi -e "s/^interface ($INTRINSICS) \\{\n(.*?)^\\}\n/declare global {\ninterface \$1 {\n\$2}\n}\n/ms" "$SCRATCH/$2"
   seam_normalize "$SCRATCH/$2"
@@ -217,7 +223,7 @@ emit_module "$ROOT/src/reference.fab" "tela-reference.ts"
 emit_module "$ROOT/src/dom.fab" "tela-dom.ts"
 emit_module "$ROOT/proof/benchmark/extension-lib/src/extension.fab" "extensionlib-extension.ts"
 emit_module "$ROOT/proof/extension-forms/src/forms.fab" "formslib-forms.ts"
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab" -o "$SCRATCH/main.ts" >/dev/null
+"$FABER_BIN" emit --library-home "$FABER_LIBRARY_HOME" -t ts --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab" -o "$SCRATCH/main.ts" >/dev/null
 
 # The @faber/runtime package seam: the emitted modules import
 # `{ display, exact }` from the package instead of inlining the family.
@@ -293,14 +299,14 @@ RUNTIME_JS
 printf '{ "type": "module" }\n' > "$SCRATCH/package.json"
 
 echo "TS lane: double-emit byte-identity (kernel + forms package)"
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela-ident-1.ts" >/dev/null
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela-ident-2.ts" >/dev/null
+"$FABER_BIN" emit --library-home "$FABER_LIBRARY_HOME" -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela-ident-1.ts" >/dev/null
+"$FABER_BIN" emit --library-home "$FABER_LIBRARY_HOME" -t ts --locale en "$ROOT/src/tela.fab" -o "$SCRATCH/tela-ident-2.ts" >/dev/null
 if ! cmp -s "$SCRATCH/tela-ident-1.ts" "$SCRATCH/tela-ident-2.ts"; then
   echo "FAIL: double-emit of the kernel is not byte-identical" >&2
   exit 1
 fi
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms-ident-1.ts" >/dev/null
-"$RADIX_BIN" emit -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms-ident-2.ts" >/dev/null
+"$FABER_BIN" emit --library-home "$FABER_LIBRARY_HOME" -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms-ident-1.ts" >/dev/null
+"$FABER_BIN" emit --library-home "$FABER_LIBRARY_HOME" -t ts --locale en "$ROOT/proof/extension-forms/src/forms.fab" -o "$SCRATCH/forms-ident-2.ts" >/dev/null
 if ! cmp -s "$SCRATCH/forms-ident-1.ts" "$SCRATCH/forms-ident-2.ts"; then
   echo "FAIL: double-emit of the forms package is not byte-identical" >&2
   exit 1
