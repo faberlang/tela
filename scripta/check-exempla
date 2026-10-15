@@ -47,6 +47,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT/scripta/runtime-link.sh"
 
 if [[ -n "${RADIX_ROOT:-}" ]]; then
   RADIX="$RADIX_ROOT"
@@ -164,20 +165,9 @@ export function snapshot(scope: any): Array<FakeNodus> | null {
 }
 DOM_SEAM
 
-# The @faber/runtime package: the emitted code imports runtime namespaces
-# (`display`, `exact`, `dup`, `valor`, `variant`, ...) from "@faber/runtime".
-# The package is radix's own TypeScript runtime (radix/runtime/typescript, the
-# authority; the public faber/ copy is stale) and is installed into the scratch
-# node_modules by symlink, so tsc and node resolve the real package source and
-# the harness carries no hand-maintained type stub that can drift from it.
-RUNTIME_TS="${FABER_RUNTIME_TS:-$RADIX/runtime/typescript}"
-if [[ ! -f "$RUNTIME_TS/exact.ts" ]]; then
-  echo "check-exempla: missing faber runtime package at $RUNTIME_TS (set FABER_RUNTIME_TS)" >&2
-  exit 1
-fi
-RUNTIME_TS="$(cd "$RUNTIME_TS" && pwd)"
-mkdir -p "$SCRATCH/node_modules/@faber"
-ln -s "$RUNTIME_TS" "$SCRATCH/node_modules/@faber/runtime"
+# The @faber/runtime package is radix's own TypeScript runtime, linked into
+# the scratch node_modules (scripta/runtime-link.sh).
+link_faber_runtime check-exempla "$RADIX" "$SCRATCH"
 
 # The compiled module graph runs as ESM under node.
 printf '{ "type": "module" }\n' > "$SCRATCH/package.json"

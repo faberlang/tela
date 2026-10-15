@@ -97,6 +97,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT/scripta/runtime-link.sh"
 BUILD="$ROOT/build"
 SCRATCH="$(mktemp -d "${TMPDIR:-/tmp}/tela-u6-det.XXXXXX")"
 trap 'rm -rf "$SCRATCH"' EXIT
@@ -197,6 +198,9 @@ INTRINSICS='Number|String|Boolean|Object|Array|Function|Symbol'
 seam_normalize() {
   perl -pi -e 's/value\.__faberValorTag/(value as { __faberValorTag?: unknown }).__faberValorTag/g' "$1"
 }
+# A declaration the emitter sanitized with a trailing underscore (`order` is a
+# runtime namespace word, so the fn is declared `order_`) is exported under its
+# source name: qualified uses (`tela.order(...)`) are spelled with the source name.
 emit_module() { # <fab path> <specifier file name>
   "$FABER_BIN" emit --library-home "$FABER_LIBRARY_HOME" -t ts --locale en "$1" -o "$SCRATCH/$2" >/dev/null
   # Intrinsic-augmentation interfaces are script-only; wrap in `declare global`.
@@ -207,7 +211,7 @@ emit_module() { # <fab path> <specifier file name>
     | sed -E 's/^(function|class|interface|type|const|let|var|enum) ([A-Za-z_$][A-Za-z0-9_$]*).*/\2/' \
     | sort -u \
     | grep -vE "^($INTRINSICS)$" \
-    | paste -sd, - \
+    | sed -E 's/^([A-Za-z0-9$]+)_$/\1_ as \1/' | paste -sd, - \
     | sed 's/,/, /g')"
   if [[ -n "$names" ]]; then
     printf '\nexport { %s };\n' "$names" >> "$SCRATCH/$2"
@@ -225,77 +229,10 @@ emit_module "$ROOT/proof/benchmark/extension-lib/src/extension.fab" "extensionli
 emit_module "$ROOT/proof/extension-forms/src/forms.fab" "formslib-forms.ts"
 "$FABER_BIN" emit --library-home "$FABER_LIBRARY_HOME" -t ts --locale en "$ROOT/proof/benchmark/canary-app/src/main.fab" -o "$SCRATCH/main.ts" >/dev/null
 
-# The @faber/runtime package seam: the emitted modules import
-# `{ display, exact }` from the package instead of inlining the family.
-# `display` mirrors the string-carrier contract (the full hint family is
-# authoritative at faber/runtime/typescript/display.ts); `exact` is the
-# package's own arithmetic module, stood in here.
-mkdir -p "$SCRATCH/node_modules/@faber/runtime"
-cat > "$SCRATCH/node_modules/@faber/runtime/package.json" <<'RUNTIME_PKG'
-{ "name": "@faber/runtime", "type": "module", "main": "./index.js", "types": "./index.d.ts" }
-RUNTIME_PKG
-cat > "$SCRATCH/node_modules/@faber/runtime/index.d.ts" <<'RUNTIME_DTS'
-export type DisplayHint =
-  | "unknown" | "textus" | "ascii" | "numerus" | "fractus" | "bivalens"
-  | "nihil" | "vacuum" | "valor" | "instans" | "regex"
-  | { kind: "nullable"; inner: DisplayHint }
-  | { kind: "lista"; element: DisplayHint }
-  | { kind: "tensor"; element: DisplayHint }
-  | { kind: "sparsa"; element: DisplayHint }
-  | { kind: "map"; key: DisplayHint; value: DisplayHint }
-  | { kind: "set"; element: DisplayHint };
-export declare const display: {
-  value(value: any, hint?: DisplayHint): string;
-};
-export declare const exact: {
-  chk(v: number): number;
-  add(a: number, b: number): number;
-  sub(a: number, b: number): number;
-  mul(a: number, b: number): number;
-  div(a: number, b: number): number;
-  mod(a: number, b: number): number;
-  shl(a: number, n: number): number;
-  shr(a: number, n: number): number;
-  floatRem(a: number, b: number): number;
-  neg(a: number): number;
-  not(a: number): number;
-  abs(a: number): number;
-  pow(base: number, exponent: number): number;
-  hi(a: number): number;
-  lo(a: number): number;
-  join(hi: number, lo: number): number;
-  and(a: number, b: number): number;
-  or(a: number, b: number): number;
-  xor(a: number, b: number): number;
-  store(v: number, lo: number, hi: number, ty: string, pos: string, extra: string): number;
-  clamp(v: number, lo: number, hi: number): number;
-  wrap(v: number, bits: number, signed: boolean): number;
-  trueDiv(a: number, b: number): number;
-  trueDivF32(a: number, b: number): number;
-};
-RUNTIME_DTS
-RUNTIME_TS="${FABER_RUNTIME_TS:-$ROOT/../faber/runtime/typescript}"
-if [[ ! -f "$RUNTIME_TS/exact.ts" ]]; then
-  echo "check-determinism: missing faber runtime package at $RUNTIME_TS (set FABER_RUNTIME_TS)" >&2
-  exit 1
-fi
-RUNTIME_TS="$(cd "$RUNTIME_TS" && pwd)"
-cat > "$SCRATCH/node_modules/@faber/runtime/index.js" <<RUNTIME_JS
-// exact is the authoritative Faber runtime module. Only display is a
-// string-carrier harness shim; it is not involved in arithmetic assertions.
-export * as exact from "$RUNTIME_TS/exact.ts";
-export const display = {
-  value(value, hint = "unknown") {
-    if (value === null || value === undefined) {
-      return hint === "vacuum" ? "vacuum" : "nihil";
-    }
-    if (hint === "bivalens") {
-      return value ? "verum" : "falsum";
-    }
-    return String(value);
-  },
-};
-RUNTIME_JS
+# The @faber/runtime package is radix's own TypeScript runtime, linked into
+# the scratch node_modules (scripta/runtime-link.sh).
+link_faber_runtime check-determinism "$RADIX" "$SCRATCH"
+
 printf '{ "type": "module" }\n' > "$SCRATCH/package.json"
 
 echo "TS lane: double-emit byte-identity (kernel + forms package)"
