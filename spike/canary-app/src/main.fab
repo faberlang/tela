@@ -54,15 +54,15 @@ main {
     let ext.Visus bar ← ext.bar_metrum("throughput", "7.4 Mbps", 74)
 
     # Assembled arbor: panel > (two-column metric table, horizontal bar meter).
-    let arbor ← panelum([
+    let _ arbor ← panelum([
         metrica_tabula(),
         bar
     ])
 
     # Extension style + namespaced token contribution (declared only).
     let ext.Scopulum axis_muted ← ext.chart_axis_muted()
-    let chart_stilum ← ext.chart_stilum()
-    let app_stilum ← ext.Stilum {
+    let _ chart_stilum ← ext.chart_stilum()
+    let _ app_stilum ← ext.Stilum {
         regulae = [
             ext.Regula {
                 selector = "[data-tela='canary-panelum']",

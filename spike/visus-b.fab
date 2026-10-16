@@ -275,9 +275,9 @@ main {
     # Structural assertion: the sample tree serializes to a plausible static
     # HTML fragment with open tags, attributes, identity; the behavior plan
     # stays adjacent and typed (contator_program is typechecked).
-    let html_out ← seri_visus(app_arbor())
-    let program ← contator_program()
-    let css_out ← seri_css(Stilum {
+    let _ html_out ← seri_visus(app_arbor())
+    let _ program ← contator_program()
+    let _ css_out ← seri_css(Stilum {
         regulae = [
             Regula {
                 selector = "[data-tela='contator-app']",

@@ -17,7 +17,7 @@
 #     is spelled attr_value.
 #   - No else-if (nested if/else). No ternaries. No regexes (string-scanning
 #     parser + selector matcher).
-#   - Mutable fields: `var` copy of the record + `←` (SEM020).
+#   - Mutable fields: `mut` copy of the record + `←` (SEM020).
 #   - Nullable reads: bind + `is null` guard + copy-narrow.
 #   - No `\"` string payloads (the TS emitter double-escapes them — see
 #     tela.fab escape notes): the double-quote comes from the ascii § hole
