@@ -74,5 +74,5 @@ docs/          design records and planning history
 
 ## Licence
 
-This repository does not yet include a `LICENSE` file. The other Faber
-libraries are MIT-licensed; the terms for Tela will be stated here once added.
+Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or
+[MIT license](LICENSE-MIT) at your option.
