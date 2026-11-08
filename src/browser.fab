@@ -141,25 +141,25 @@ fn unescape(string text) → string {
     mut string accum ← ""
     mut int i ← 0
     while i ≺ text.length() {
-        mut string fragment ← text.slice(i, i + 1)
+        mut string fragment ← text.slice(i, i + 1) ⊥ ""
         mut int step ← 1
-        if not (i + 5 ≻ text.length()) and text.slice(i, i + 5) ≡ "&quot;" {
+        if not (i + 5 ≻ text.length()) and (text.slice(i, i + 5) ⊥ "") ≡ "&quot;" {
             fragment ← "§"('"')
             step ← 5
         }
-        if not (i + 5 ≻ text.length()) and text.slice(i, i + 5) ≡ "&#39;" {
+        if not (i + 5 ≻ text.length()) and (text.slice(i, i + 5) ⊥ "") ≡ "&#39;" {
             fragment ← "'"
             step ← 5
         }
-        if not (i + 4 ≻ text.length()) and text.slice(i, i + 4) ≡ "&amp;" {
+        if not (i + 4 ≻ text.length()) and (text.slice(i, i + 4) ⊥ "") ≡ "&amp;" {
             fragment ← "&"
             step ← 4
         }
-        if not (i + 4 ≻ text.length()) and text.slice(i, i + 4) ≡ "&lt;" {
+        if not (i + 4 ≻ text.length()) and (text.slice(i, i + 4) ⊥ "") ≡ "&lt;" {
             fragment ← "<"
             step ← 4
         }
-        if not (i + 4 ≻ text.length()) and text.slice(i, i + 4) ≡ "&gt;" {
+        if not (i + 4 ≻ text.length()) and (text.slice(i, i + 4) ⊥ "") ≡ "&gt;" {
             fragment ← ">"
             step ← 4
         }
@@ -174,12 +174,12 @@ fn parse_identities(string text) → list<string> {
     mut list<string> identities ← empty
     mut int i ← 0
     while i ≺ text.length() {
-        if not (i + 12 ≻ text.length()) and text.slice(i, i + 12) ≡ identity_marker() {
+        if not (i + 12 ≻ text.length()) and (text.slice(i, i + 12) ⊥ "") ≡ identity_marker() {
             mut string raw ← ""
             mut int j ← i + 12
             mut bool terminated ← false
             while j ≺ text.length() and not terminated {
-                let string ch ← text.slice(j, j + 1)
+                let string ch ← text.slice(j, j + 1) ⊥ ""
                 if ch ≡ "§"('"') {
                     terminated ← true
                 }
@@ -209,12 +209,12 @@ fn parse_identities(string text) → list<string> {
 fn element_tag(string text, string identity) → string ∪ none {
     mut int i ← 0
     while i ≺ text.length() {
-        if not (i + 12 ≻ text.length()) and text.slice(i, i + 12) ≡ identity_marker() {
+        if not (i + 12 ≻ text.length()) and (text.slice(i, i + 12) ⊥ "") ≡ identity_marker() {
             mut string raw ← ""
             mut int j ← i + 12
             mut bool terminated ← false
             while j ≺ text.length() and not terminated {
-                let string ch ← text.slice(j, j + 1)
+                let string ch ← text.slice(j, j + 1) ⊥ ""
                 if ch ≡ "§"('"') {
                     terminated ← true
                 }
@@ -227,7 +227,7 @@ fn element_tag(string text, string identity) → string ∪ none {
                 mut int a ← i
                 mut bool found ← false
                 while a ≻ 0 and not found {
-                    let string ch ← text.slice(a - 1, a)
+                    let string ch ← text.slice(a - 1, a) ⊥ ""
                     if ch ≡ "<" {
                         found ← true
                     }
@@ -238,7 +238,7 @@ fn element_tag(string text, string identity) → string ∪ none {
                 mut int b ← j
                 mut bool closed ← false
                 while b ≺ text.length() and not closed {
-                    let string ch ← text.slice(b, b + 1)
+                    let string ch ← text.slice(b, b + 1) ⊥ ""
                     if ch ≡ ">" {
                         closed ← true
                     }
@@ -246,7 +246,7 @@ fn element_tag(string text, string identity) → string ∪ none {
                         b ← b + 1
                     }
                 }
-                if found and closed then return text.slice(a - 1, b + 1)
+                if found and closed then return text.slice(a - 1, b + 1) ⊥ ""
                 return null
             }
             i ← j
@@ -270,7 +270,7 @@ fn tag_name(string tag) → string {
     mut int i ← 1
     mut bool finished ← false
     while i ≺ tag.length() and not finished {
-        let string ch ← tag.slice(i, i + 1)
+        let string ch ← tag.slice(i, i + 1) ⊥ ""
         if ch ≡ " " or ch ≡ ">" {
             finished ← true
         }
