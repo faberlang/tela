@@ -33,6 +33,7 @@
 
 import {
   webCanvas2dArc,
+  webCanvas2dBezierCurveTo,
   webCanvas2dBeginPath,
   webCanvas2dClearRect,
   webCanvas2dClip,
@@ -48,12 +49,18 @@ import {
   webCanvas2dPath2DNew,
   webCanvas2dPath2DNewFromSvg,
   webCanvas2dPath2DStroke,
+  webCanvas2dQuadraticCurveTo,
   webCanvas2dRestore,
   webCanvas2dRotate,
   webCanvas2dSave,
   webCanvas2dScale,
   webCanvas2dSetFillStyle,
   webCanvas2dSetFont,
+  webCanvas2dSetGlobalAlpha,
+  webCanvas2dSetLineCap,
+  webCanvas2dSetLineDash,
+  webCanvas2dSetLineJoin,
+  webCanvas2dSetLineWidth,
   webCanvas2dSetStrokeStyle,
   webCanvas2dSetTextAlign,
   webCanvas2dSetTextBaseline,
@@ -78,6 +85,11 @@ class FakeCanvasRenderingContext2D {
   font = "";
   textAlign: CanvasTextAlign = "start";
   textBaseline: CanvasTextBaseline = "alphabetic";
+  lineWidth = 1;
+  lineCap: CanvasLineCap = "butt";
+  lineJoin: CanvasLineJoin = "miter";
+  globalAlpha = 1;
+  lineDash: number[] = [];
 
   save(): void {
     this.calls.push("save");
@@ -153,6 +165,15 @@ class FakeCanvasRenderingContext2D {
   }
   fillText(text: string, x: number, y: number): void {
     this.calls.push(`fillText(${text},${x},${y})`);
+  }
+  quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void {
+    this.calls.push(`quadraticCurveTo(${cpx},${cpy},${x},${y})`);
+  }
+  bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): void {
+    this.calls.push(`bezierCurveTo(${cp1x},${cp1y},${cp2x},${cp2y},${x},${y})`);
+  }
+  setLineDash(segments: number[]): void {
+    this.lineDash = segments;
   }
 }
 
@@ -266,6 +287,33 @@ function main(): void {
   assert(fakeCtx.textAlign === "center", "the text-align route writes the property");
   assert(fakeCtx.textBaseline === "middle", "the text-baseline route writes the property");
 
+  // --- Unit 3: line style, curves, global alpha --------------------------
+  // The curve segments are method calls (recorded in order, after the
+  // earlier sequence); the line-style setters are property writes and the
+  // dash list reaches setLineDash as the same plain number list.
+  const before = fakeCtx.calls.length;
+  webCanvas2dSetLineWidth(ctx, 3.5);
+  webCanvas2dSetLineCap(ctx, "round");
+  webCanvas2dSetLineJoin(ctx, "bevel");
+  webCanvas2dSetLineDash(ctx, [4, 2, 1]);
+  webCanvas2dSetGlobalAlpha(ctx, 0.25);
+  webCanvas2dBeginPath(ctx);
+  webCanvas2dMoveTo(ctx, 0, 0);
+  webCanvas2dQuadraticCurveTo(ctx, 10, 20, 30, 0);
+  webCanvas2dBezierCurveTo(ctx, 1, 2, 3, 4, 5, 6);
+  const curveCalls = fakeCtx.calls.slice(before);
+  assert(
+    curveCalls.join("|") === "beginPath|moveTo(0,0)|quadraticCurveTo(10,20,30,0)|bezierCurveTo(1,2,3,4,5,6)",
+    `the curve routes dispatch in order (got ${curveCalls.join("|")})`,
+  );
+  assert(fakeCtx.lineWidth === 3.5, "the line-width route writes the property");
+  assert(fakeCtx.lineCap === "round", "the line-cap route writes the property");
+  assert(fakeCtx.lineJoin === "bevel", "the line-join route writes the property");
+  assert(fakeCtx.lineDash.join(",") === "4,2,1", "the line-dash route sets the dash list");
+  assert(fakeCtx.globalAlpha === 0.25, "the global-alpha route writes the property");
+  webCanvas2dSetLineDash(ctx, []);
+  assert(fakeCtx.lineDash.length === 0, "an empty dash list restores solid lines");
+
   // --- the documented error surface (the thin-shim boundary) ------------
   let threw = false;
   try {
@@ -288,6 +336,13 @@ function main(): void {
     threw = (e as Error).message.includes("unknown context handle id");
   }
   assert(threw, "an unknown context handle is rejected");
+  threw = false;
+  try {
+    webCanvas2dSetLineWidth({ id: 9999 }, 2);
+  } catch (e) {
+    threw = (e as Error).message.includes("unknown context handle id");
+  }
+  assert(threw, "an unknown context handle is rejected by the Unit 3 routes");
   threw = false;
   try {
     webCanvas2dPath2DFill(ctx, { id: 9999 });

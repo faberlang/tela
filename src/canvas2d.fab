@@ -43,6 +43,10 @@
 #   LOCALE002 advisories (recorded, non-blocking — Q3 resolution: leave;
 #     they parse + emit): `id` (the handle field), `ok` — keyword-like
 #     spellings on this surface.
+#
+# Beyond the conversion: Unit 3 (the Vox app lane) adds line width, cap, join
+# and dash, global alpha, and quadratic / bezier curve segments (the last
+# section of this file).
 
 import from "tela:dom" dom
 
@@ -272,4 +276,66 @@ fn canvas2d_path2d_fill(Canvas2DContext ctx, Path2D path) → void {
 fn canvas2d_path2d_stroke(Canvas2DContext ctx, Path2D path) → void {
     print ctx
     print path
+}
+
+# ===========================================================================
+# Unit 3 — line style, curves and global alpha (the Vox app's surface gap:
+# every line was one pixel wide, curves were sampled polylines and alpha
+# lived in the colour string). Each fn is a thin shim over one
+# CanvasRenderingContext2D member, like the Unit 1 setters; the curve
+# segments extend the context's current path from its current point.
+# `set_line_dash` takes the dash and gap lengths in order (an empty list
+# draws solid lines again). Cap, join and the other names take the canvas
+# spec's own words: cap "butt" | "round" | "square", join "round" | "bevel" |
+# "miter".
+# ===========================================================================
+
+@ public
+fn canvas2d_set_line_width(Canvas2DContext ctx, f64 width) → void {
+    print ctx
+    print width
+}
+
+@ public
+fn canvas2d_set_line_cap(Canvas2DContext ctx, string cap) → void {
+    print ctx
+    print cap
+}
+
+@ public
+fn canvas2d_set_line_join(Canvas2DContext ctx, string join) → void {
+    print ctx
+    print join
+}
+
+@ public
+fn canvas2d_set_line_dash(Canvas2DContext ctx, list<f64> segments) → void {
+    print ctx
+    print segments
+}
+
+@ public
+fn canvas2d_set_global_alpha(Canvas2DContext ctx, f64 alpha) → void {
+    print ctx
+    print alpha
+}
+
+@ public
+fn canvas2d_quadratic_curve_to(Canvas2DContext ctx, f64 control_x, f64 control_y, f64 x, f64 y) → void {
+    print ctx
+    print control_x
+    print control_y
+    print x
+    print y
+}
+
+@ public
+fn canvas2d_bezier_curve_to(Canvas2DContext ctx, f64 control1_x, f64 control1_y, f64 control2_x, f64 control2_y, f64 x, f64 y) → void {
+    print ctx
+    print control1_x
+    print control1_y
+    print control2_x
+    print control2_y
+    print x
+    print y
 }

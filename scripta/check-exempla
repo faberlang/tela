@@ -75,8 +75,13 @@ RADIX_BIN="$FABER_BIN"
 
 export FABER_LIBRARY_HOME="${FABER_LIBRARY_HOME:-$ROOT/..}"
 
+# TELA_EXEMPLA="entities audio" limits both passes to those exempla (default:
+# every exempla/*.fab), so one exemplum can be run on its own.
+selected() { [[ -z "${TELA_EXEMPLA:-}" || " ${TELA_EXEMPLA} " == *" $1 "* ]]; }
+
 echo "check-exempla: radix check every exempla/*.fab"
 for f in "$ROOT"/exempla/*.fab; do
+  selected "$(basename "$f" .fab)" || continue
   echo "check-exempla: parsing $(basename "$f")"
   "$FABER_BIN" check --library-home "$FABER_LIBRARY_HOME" --locale en "$f"
 done
@@ -478,20 +483,68 @@ const domProofApi = {
 executeMountProof(doc, domProofApi);
 BROWSER_DRIVER
 
+# The tela:audio seam (exempla/audio.fab): the emitted exemplum imports
+# ./tela-audio.js. The seam re-exports tela's ACTUAL host runtime
+# (runtime/audio.ts) under the Faber route names of bindings/ts.toml (the
+# route table is read, so the seam cannot drift from it) and the genus and
+# handler types the product facade exports. The runtime runs over the fake
+# Web Audio of tests/fake-web-audio.ts, installed before the first context is
+# made. TELA_AUDIO_FAIL=1 makes every worklet module load reject.
+cp "$ROOT/runtime/audio.ts" "$SCRATCH/tela-audio-runtime.ts"
+cp "$ROOT/tests/fake-web-audio.ts" "$SCRATCH/fake-web-audio.ts"
+{
+  cat <<'AUDIO_SEAM_HEAD'
+import { installFakeWebAudio } from "./fake-web-audio.js";
+import * as rt from "./tela-audio-runtime.js";
+
+declare const process: { env: Record<string, string | undefined> };
+installFakeWebAudio({ failLoad: process.env.TELA_AUDIO_FAIL === "1" });
+
+export type AudioContext = rt.WebAudioContext;
+export type AudioNode = rt.WebAudioNode;
+export type BlockHandler = rt.WebAudioBlockHandler;
+export type MessageHandler = rt.WebAudioMessageHandler;
+AUDIO_SEAM_HEAD
+  awk '/^\[functions\."tela:audio\./ { match($0, /tela:audio\.[a-z_]+/); name = substr($0, RSTART + 11, RLENGTH - 11) }
+       /^symbol = / && name != "" { gsub(/"/, "", $3); print "export const " name " = rt." $3 ";"; name = "" }' "$ROOT/bindings/ts.toml"
+} > "$SCRATCH/tela-audio.ts"
+
+# The audio driver rides in the exemplum module (like the browser driver): once
+# the exemplum's async entry has run (it closed the context, so the driver uses
+# the handler the node had), it plays the browser's part and calls the
+# block handler twice, then checks the Faber closure produced a continuous
+# 220 Hz sine (its phase is captured state).
+cat > "$SCRATCH/audio-driver.ts" <<'AUDIO_DRIVER'
+
+import { FakeScriptProcessorNode, lastContext, wiring } from "./fake-web-audio.js";
+
+// `faber emit` of a single file leaves norma:math as a free `math` namespace
+// (the product build provides it); the exemplum only calls math.sin.
+const math = { sin: Math.sin };
+
+await new Promise<void>((resolve) => setTimeout(resolve, 20));
+const audioAssert = (condition: boolean, message: string): void => {
+  if (!condition) {
+    throw new Error(`audio exemplum driver assert failed: ${message}`);
+  }
+};
+const fakeContext = lastContext();
+audioAssert(fakeContext !== null, "the exemplum made a context");
+const processor = fakeContext!.created.find((n) => n instanceof FakeScriptProcessorNode) as FakeScriptProcessorNode | undefined;
+audioAssert(processor !== undefined, "the exemplum made a block node");
+const step = (2 * Math.PI * 220) / 48000;
+const firstBlock = processor!.fireLast(1024).getChannelData(0);
+const secondBlock = processor!.fireLast(1024).getChannelData(0);
+audioAssert(firstBlock[0] === 0, "the sine starts at zero");
+audioAssert(Math.abs(firstBlock[1] - Math.sin(step)) < 1e-6, "the first block is a 220 Hz sine");
+audioAssert(Math.abs(secondBlock[0] - Math.sin(step * 1024)) < 1e-4, "the phase carries into the next block");
+audioAssert(wiring.some((w) => w.includes("-> destination#")), "the master gain is wired to the destination");
+AUDIO_DRIVER
+
 echo "check-exempla: TS lane (emit + module-graph assembly + tsc + node runtime gate)"
 for f in "$ROOT"/exempla/*.fab; do
   name="$(basename "$f" .fab)"
-  # exempla/audio.fab is check-only: it calls tela:audio fns whose signatures
-  # name handler type aliases, and `faber emit` of a single consumer file skips
-  # every export of that shape (WARN014 NominalTypeUnsupported, then SEM010 on
-  # the call), so the TS lane cannot emit it. The `faber check` pass above
-  # covers it; tests/audio-runtime-test.ts covers the runtime. Repro:
-  # tests/gaps/handler-alias-emit.fab. Remove this case once `faber emit`
-  # accepts the alias-typed exports.
-  if [[ "$name" == "audio" ]]; then
-    echo "check-exempla: ${name}: check-only (TS lane skipped, see tests/gaps/handler-alias-emit.fab)"
-    continue
-  fi
+  selected "$name" || continue
   # Emit the exempla to its own module file: exempla/browser.fab emits
   # ./tela-*.js imports too, which must not clobber the library modules.
   "$FABER_BIN" emit --library-home "$FABER_LIBRARY_HOME" -t ts --locale en "$f" -o "$SCRATCH/exempla-$name.ts" >/dev/null
@@ -505,7 +558,12 @@ for f in "$ROOT"/exempla/*.fab; do
       # resolves through the tela-dom seam module.
       cat "$SCRATCH/browser-driver.ts" >> "$SCRATCH/exempla-$name.ts"
       ;;
-    validation|serializer|thema|assemble|behavior|reference)
+    audio)
+      # exempla/audio.fab imports tela:audio, which resolves to the seam
+      # written above (the real runtime over the fake Web Audio).
+      cat "$SCRATCH/audio-driver.ts" >> "$SCRATCH/exempla-$name.ts"
+      ;;
+    validation|serializer|thema|assemble|behavior|reference|entities)
       # The exempla emit's import graph (tela:validate / tela:tela /
       # tela:reference) resolves against the assembled library modules.
       ;;
@@ -522,7 +580,25 @@ for f in "$ROOT"/exempla/*.fab; do
   # EXECUTES under node — every `assert` runs, so a wrong expectation or a
   # real source/emitter defect fails the check (node exit != 0).
   echo "check-exempla: ${name}: node (runtime gate — assertions execute)"
-  node "$SCRATCH/dist/exempla-$name.js" >/dev/null
+  if [[ "$name" == "audio" ]]; then
+    # Two runs: the worklet module loads, then every load rejects. The Faber
+    # `catch` must receive the rejection's text (the imported async error
+    # channel) and the block source must stay playable.
+    ok_out="$(node "$SCRATCH/dist/exempla-$name.js")"
+    grep -q "sample rate 48000" <<<"$ok_out" || { echo "check-exempla: audio: missing sample rate line" >&2; exit 1; }
+    grep -q "bins 1024, samples 2048" <<<"$ok_out" || { echo "check-exempla: audio: missing analyser line" >&2; exit 1; }
+    if grep -q "no worklet" <<<"$ok_out"; then
+      echo "check-exempla: audio: the worklet load failed under the working fake" >&2
+      exit 1
+    fi
+    fail_out="$(TELA_AUDIO_FAIL=1 node "$SCRATCH/dist/exempla-$name.js")"
+    grep -q "no worklet, block source only: fake worklet module failed to load" <<<"$fail_out" || {
+      echo "check-exempla: audio: a rejected worklet load did not reach the Faber catch" >&2
+      exit 1
+    }
+  else
+    node "$SCRATCH/dist/exempla-$name.js" >/dev/null
+  fi
 done
 
 echo "check-exempla: green"

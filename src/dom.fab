@@ -18,6 +18,10 @@
 #                          (canonical `valor`) makes `fn value` a
 #                          SEM005.duplicate_definition — probe P2/P3; the
 #                          route is tela:dom.input_value → webDomValue)
+# Beyond the conversion: `Rect` + `bounding_rect` (the Vox app lane: an
+# element's rectangle in viewport coordinates, so a pointer position can be
+# made element-relative; runtime webDomBoundingRect).
+#
 # Keyword surface (en): genus→class, textus→string, bivalens→bool,
 # numerus→int, sponte→optional, typus→type, functio→fn, redde→return,
 # nota→print (the en surface of the stub marker — the `print` bodies emit
@@ -120,6 +124,17 @@ class PointerLockState {
     mut bool locked = false
     mut bool denied = false
     mut bool target_matches = false
+}
+
+# An element's bounding rectangle in viewport coordinates — the same
+# coordinates PointerState.x / y report (clientX / clientY) — so
+# `pointer.x - rect.x` is the pointer position on the element.
+@ public
+class Rect {
+    mut f64 x = 0.0
+    mut f64 y = 0.0
+    mut f64 width = 0.0
+    mut f64 height = 0.0
 }
 
 @ public
@@ -374,6 +389,15 @@ fn on_pointer_lock(Element element, PointerLockHandler handler) → Subscription
     print element
     print handler
     return Subscription { id = 0 }
+}
+
+# The element's current bounding rectangle in viewport coordinates (it moves
+# with scrolling; read it when the pointer event arrives). Runtime binding:
+# webDomBoundingRect(element).
+@ public
+fn bounding_rect(Element element) → Rect {
+    print element
+    return Rect { x = 0.0, y = 0.0, width = 0.0, height = 0.0 }
 }
 
 @ public

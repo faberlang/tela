@@ -12,14 +12,15 @@
  * reads, the connect graph, the async worklet load, and context close
  * releasing the node handles.
  *
- * Honest limit: the fakes record calls; they produce no sound and run no
- * audio thread. Behavior in a real browser (autoplay policy, the audio
- * thread's block cadence, a real AudioWorkletGlobalScope, FFT output) is NOT
- * covered here and needs a browser harness.
+ * The fakes live in tests/fake-web-audio.ts. They record calls; they
+ * produce no sound and run no audio thread. Behavior in a real browser
+ * (autoplay policy, the audio thread's block cadence, a real
+ * AudioWorkletGlobalScope, FFT output) is NOT covered here; the manual page
+ * tests/audio-browser/page.html checks it.
  *
  * Run (from the tela repo root):
  *   tsc --strict --module CommonJS --outDir <scratch> tests/audio-runtime-test.ts
- *   node <scratch>/audio-runtime-test.js
+ *   node <scratch>/tests/audio-runtime-test.js
  */
 
 import {
@@ -45,171 +46,19 @@ import {
   webAudioSuspend,
   webAudioTimeData,
 } from "../runtime/audio";
-
-// ---- hand-rolled fakes ---------------------------------------------------
-
-/** Every connect/disconnect, in order, shared by all fake nodes. */
-const wiring: string[] = [];
-
-let fakeNodeCount = 0;
-
-class FakeNode {
-  readonly label: string;
-  constructor(label: string) {
-    fakeNodeCount += 1;
-    this.label = `${label}#${fakeNodeCount}`;
-  }
-  connect(target: FakeNode): void {
-    wiring.push(`connect ${this.label} -> ${target.label}`);
-  }
-  disconnect(target: FakeNode): void {
-    wiring.push(`disconnect ${this.label} -> ${target.label}`);
-  }
-}
-
-class FakeGainNode extends FakeNode {
-  readonly gain = { value: 1 };
-  constructor() {
-    super("gain");
-  }
-}
-
-class FakeOutputBuffer {
-  readonly length: number;
-  readonly numberOfChannels = 2;
-  private readonly channels: Float32Array[];
-  constructor(frames: number) {
-    this.length = frames;
-    this.channels = [new Float32Array(frames), new Float32Array(frames)];
-  }
-  getChannelData(channel: number): Float32Array {
-    return this.channels[channel];
-  }
-}
-
-class FakeScriptProcessorNode extends FakeNode {
-  onaudioprocess: ((event: { outputBuffer: FakeOutputBuffer }) => void) | null = null;
-  readonly blockSize: number;
-  readonly inputs: number;
-  readonly outputs: number;
-  constructor(blockSize: number, inputs: number, outputs: number) {
-    super("block");
-    this.blockSize = blockSize;
-    this.inputs = inputs;
-    this.outputs = outputs;
-  }
-  /** The browser's audio callback for one block. */
-  fire(frames: number): FakeOutputBuffer {
-    const outputBuffer = new FakeOutputBuffer(frames);
-    if (this.onaudioprocess === null) {
-      throw new Error("fake script processor has no handler");
-    }
-    this.onaudioprocess({ outputBuffer });
-    return outputBuffer;
-  }
-}
-
-class FakeAnalyserNode extends FakeNode {
-  fftSize = 2048;
-  get frequencyBinCount(): number {
-    return this.fftSize / 2;
-  }
-  constructor() {
-    super("analyser");
-  }
-  getFloatFrequencyData(out: Float32Array): void {
-    for (let i = 0; i < out.length; i += 1) {
-      out[i] = -100 + i; // a deterministic dB ramp
-    }
-  }
-  getFloatTimeDomainData(out: Float32Array): void {
-    for (let i = 0; i < out.length; i += 1) {
-      out[i] = i % 2 === 0 ? 0.5 : -0.5;
-    }
-  }
-}
-
-class FakeMessagePort {
-  readonly posted: unknown[] = [];
-  onmessage: ((event: { data: unknown }) => void) | null = null;
-  postMessage(message: unknown): void {
-    this.posted.push(message);
-  }
-}
-
-let lastWorkletNode: FakeAudioWorkletNode | null = null;
-
-class FakeAudioWorkletNode extends FakeNode {
-  readonly port = new FakeMessagePort();
-  readonly context: unknown;
-  readonly processorName: string;
-  readonly options: unknown;
-  constructor(context: unknown, processorName: string, options: unknown) {
-    super("worklet");
-    this.context = context;
-    this.processorName = processorName;
-    this.options = options;
-    lastWorkletNode = this;
-  }
-}
-
-class FakeAudioWorklet {
-  readonly modules: string[] = [];
-  failWith: Error | null = null;
-  async addModule(url: string): Promise<void> {
-    await Promise.resolve();
-    if (this.failWith !== null) {
-      throw this.failWith;
-    }
-    this.modules.push(url);
-  }
-}
-
-class FakeAudioContext {
-  state = "suspended";
-  readonly sampleRate = 48000;
-  currentTime = 0;
-  readonly destination = new FakeNode("destination");
-  audioWorklet: FakeAudioWorklet | undefined = new FakeAudioWorklet();
-  readonly created: FakeNode[] = [];
-  async resume(): Promise<void> {
-    await Promise.resolve();
-    this.state = "running";
-  }
-  async suspend(): Promise<void> {
-    await Promise.resolve();
-    this.state = "suspended";
-  }
-  async close(): Promise<void> {
-    await Promise.resolve();
-    this.state = "closed";
-  }
-  createGain(): FakeGainNode {
-    const node = new FakeGainNode();
-    this.created.push(node);
-    return node;
-  }
-  createScriptProcessor(blockSize: number, inputs: number, outputs: number): FakeScriptProcessorNode {
-    const node = new FakeScriptProcessorNode(blockSize, inputs, outputs);
-    this.created.push(node);
-    return node;
-  }
-  createAnalyser(): FakeAnalyserNode {
-    const node = new FakeAnalyserNode();
-    this.created.push(node);
-    return node;
-  }
-}
-
-// The runtime reaches the live context through its handle map; the test
-// reaches the fake behind a handle through the last context constructed.
-let lastContext: FakeAudioContext | null = null;
-class RecordingAudioContext extends FakeAudioContext {
-  constructor() {
-    super();
-    lastContext = this;
-  }
-}
+import {
+  FakeAnalyserNode,
+  FakeAudioContext,
+  FakeAudioWorklet,
+  FakeAudioWorkletNode,
+  FakeGainNode,
+  FakeNode,
+  FakeScriptProcessorNode,
+  installFakeWebAudio,
+  lastContext,
+  lastWorkletNode,
+  wiring,
+} from "./fake-web-audio";
 
 function assert(condition: boolean, message: string): void {
   if (!condition) {
@@ -236,14 +85,12 @@ function throwsWith(action: () => void, fragment: string): boolean {
 }
 
 async function main(): Promise<void> {
-  const g = globalThis as unknown as Record<string, unknown>;
-  g.AudioContext = RecordingAudioContext;
-  g.AudioWorkletNode = FakeAudioWorkletNode;
+  installFakeWebAudio();
 
   // --- context lifecycle --------------------------------------------------
   const ctx = webAudioCreateContext();
   assert(typeof ctx.id === "number" && ctx.id >= 1, "a context handle is a positive number");
-  const fake = lastContext as unknown as FakeAudioContext;
+  const fake = lastContext() as unknown as FakeAudioContext;
   assert(webAudioState(ctx) === "suspended", "a new context is suspended");
   assert(webAudioSampleRate(ctx) === 48000, "sample rate reads the context");
   fake.currentTime = 1.5;
@@ -307,8 +154,8 @@ async function main(): Promise<void> {
   fake.audioWorklet = worklet;
 
   const voice = webAudioCreateWorkletNode(ctx, "vox-voice");
-  assert(lastWorkletNode !== null, "the worklet node was constructed");
-  const node = lastWorkletNode as unknown as FakeAudioWorkletNode;
+  assert(lastWorkletNode() !== null, "the worklet node was constructed");
+  const node = lastWorkletNode() as unknown as FakeAudioWorkletNode;
   assert(node.processorName === "vox-voice", "the worklet node names its processor");
   assert(node.context === fake, "the worklet node is made on the context");
   assert(JSON.stringify(node.options) === JSON.stringify({ numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [1] }), "the worklet node is a mono source");

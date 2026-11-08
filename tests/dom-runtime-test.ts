@@ -2,6 +2,7 @@ import {
   webDomAll,
   webDomAttrRemove,
   webDomAttrSet,
+  webDomBoundingRect,
   webDomClassAdd,
   webDomClassRemove,
   webDomClassToggle,
@@ -111,6 +112,7 @@ class FakeElement {
   requestPointerLock?: () => Promise<void> | void;
   textContent: string | null = null;
   value = "";
+  rect = { x: 0, y: 0, width: 0, height: 0 };
   tagName = "";
   namespaceURI: string | null = null;
   localName = "";
@@ -137,6 +139,13 @@ class FakeElement {
     };
     visit(this);
     return found as unknown as Element[];
+  }
+
+  // A DOMRect also carries left / top / right / bottom; the runtime must
+  // hand back exactly the four fields the Rect class declares.
+  getBoundingClientRect(): Record<string, number> {
+    const r = this.rect;
+    return { ...r, left: r.x, top: r.y, right: r.x + r.width, bottom: r.y + r.height };
   }
 
   getAttribute(name: string): string | null {
@@ -328,6 +337,19 @@ async function main(): Promise<void> {
   webDomClassAdd(label as unknown as Element, "gone");
   webDomClassRemove(label as unknown as Element, "gone");
   assert(!label.classList.has("gone"), "class_remove deletes class");
+
+  label.rect = { x: 12.5, y: 40, width: 300, height: 150.25 };
+  const rect = webDomBoundingRect(label as unknown as Element);
+  assert(
+    rect.x === 12.5 && rect.y === 40 && rect.width === 300 && rect.height === 150.25,
+    "bounding_rect reads the element's rectangle in viewport coordinates",
+  );
+  assert(
+    Object.keys(rect).sort().join(",") === "height,width,x,y",
+    "bounding_rect returns exactly x, y, width and height",
+  );
+  label.rect = { x: 12.5, y: -10, width: 300, height: 150.25 };
+  assert(webDomBoundingRect(label as unknown as Element).y === -10, "bounding_rect is read fresh each call (scrolling moves it)");
 
   webDomValueSet(input as unknown as Element, "abc");
   assert(webDomValue(input as unknown as Element) === "abc", "value helpers roundtrip");

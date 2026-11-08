@@ -143,17 +143,17 @@ fn unescape(string text) → string {
     while i ≺ text.length() {
         mut string fragment ← text.slice(i, i + 1) ⊥ ""
         mut int step ← 1
-        if not (i + 5 ≻ text.length()) and (text.slice(i, i + 5) ⊥ "") ≡ "&quot;" {
+        if not (i + 6 ≻ text.length()) and (text.slice(i, i + 6) ⊥ "") ≡ "&quot;" {
             fragment ← "§"('"')
-            step ← 5
+            step ← 6
         }
         if not (i + 5 ≻ text.length()) and (text.slice(i, i + 5) ⊥ "") ≡ "&#39;" {
             fragment ← "'"
             step ← 5
         }
-        if not (i + 4 ≻ text.length()) and (text.slice(i, i + 4) ⊥ "") ≡ "&amp;" {
+        if not (i + 5 ≻ text.length()) and (text.slice(i, i + 5) ⊥ "") ≡ "&amp;" {
             fragment ← "&"
-            step ← 4
+            step ← 5
         }
         if not (i + 4 ≻ text.length()) and (text.slice(i, i + 4) ⊥ "") ≡ "&lt;" {
             fragment ← "<"
