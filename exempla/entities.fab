@@ -1,0 +1,49 @@
++++
+term = "entities"
+kind = "concept"
+category = "library"
+locale = "en"
++++
+
+# tela/exempla/entities.fab — the HTML entities the identity parser decodes.
+#
+# `tela:browser`'s `unescape` turns the serializer's escaped attribute text
+# back into the identity string. The serializer emits &amp; &lt; &gt; and (in
+# attributes) &quot;; &#39; is decoded for markup a browser serialized. The
+# five entities have three different lengths (6, 5, 5, 4, 4), so a slice
+# width or step that is off by one skips the entity or eats the character
+# after it. Each entity is proven on its own, then mixed, then through the
+# serializer's own `escape` and the identity parser.
+
+import from "tela:tela" tela
+import from "tela:browser" browser
+
+main {
+    # --- each entity on its own ------------------------------------------
+    assert browser.unescape("&quot;") ≡ «"»
+    assert browser.unescape("&#39;") ≡ "'"
+    assert browser.unescape("&amp;") ≡ "&"
+    assert browser.unescape("&lt;") ≡ "<"
+    assert browser.unescape("&gt;") ≡ ">"
+
+    # --- all five in one string, text between them survives ---------------
+    assert browser.unescape("a&quot;b&amp;c&#39;d&lt;e&gt;f") ≡ «a"b&c'd<e>f»
+
+    # --- one pass only: a decoded & never starts another entity -----------
+    assert browser.unescape("&amp;quot;") ≡ "&quot;"
+    assert browser.unescape("&amp;&amp;") ≡ "&&"
+    assert browser.unescape("&quot;&quot;") ≡ «""»
+
+    # --- text without entities, and truncated entities, pass through ------
+    assert browser.unescape("plain") ≡ "plain"
+    assert browser.unescape("") ≡ ""
+    assert browser.unescape("&quot") ≡ "&quot"
+    assert browser.unescape("&amp") ≡ "&amp"
+    assert browser.unescape("a & b") ≡ "a & b"
+
+    # --- an identity the serializer escaped comes back unchanged ----------
+    let string tricky ← «a&b"c<d>e»
+    let list<string> found ← browser.parse_identities(« data-tela="» + tela.escape(tricky, true) + «"»)
+    assert found.length() ≡ 1
+    assert found[0] ≡ tricky
+}

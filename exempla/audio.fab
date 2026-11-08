@@ -19,13 +19,12 @@ locale = "en"
 # steers the node with numeric {key, value} messages; the processor posts
 # numeric telemetry back as a list.
 #
-# HOW THIS FILE IS CHECKED: `faber check` (scripta/check-exempla) proves the
-# whole surface type-checks, including the handler-typed calls. The TS lane
-# of check-exempla does NOT assemble this exemplum, because `faber emit` of a
-# single consumer file skips every export whose signature names a handler
-# type alias (WARN014 NominalTypeUnsupported) — the same skip hits tela:dom's
-# handler fns; repro in tests/gaps/handler-alias-emit.fab. The runtime side
-# is exercised by tests/audio-runtime-test.ts.
+# HOW THIS FILE IS CHECKED: `faber check` proves the whole surface
+# type-checks, including the handler-typed calls. scripta/check-exempla then
+# emits it to TypeScript and runs it under node over tela's real runtime
+# (runtime/audio.ts) and the fake Web Audio of tests/fake-web-audio.ts: the
+# block handler's sine is continuous across blocks, and a rejected worklet
+# load reaches the `catch` below with the browser's error text.
 #
 # BROWSER RULES the caller owns: a context starts suspended, and `resume`
 # must be called from a user gesture (a click or key press handler). The

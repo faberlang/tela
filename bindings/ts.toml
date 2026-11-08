@@ -145,6 +145,11 @@ symbol = "webDomOnPointerLock"
 opener = "Element, PointerLockHandler"
 result = "Subscription"
 
+[functions."tela:dom.bounding_rect"]
+symbol = "webDomBoundingRect"
+opener = "Element"
+result = "Rect"
+
 [functions."tela:dom.prevent_default"]
 symbol = "webDomPreventDefault"
 opener = "DomEvent"
@@ -312,6 +317,41 @@ result = "void"
 [functions."tela:canvas2d.canvas2d_path2d_stroke"]
 symbol = "webCanvas2dPath2DStroke"
 opener = "Canvas2DContext, Path2D"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_set_line_width"]
+symbol = "webCanvas2dSetLineWidth"
+opener = "Canvas2DContext, f64"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_set_line_cap"]
+symbol = "webCanvas2dSetLineCap"
+opener = "Canvas2DContext, string"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_set_line_join"]
+symbol = "webCanvas2dSetLineJoin"
+opener = "Canvas2DContext, string"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_set_line_dash"]
+symbol = "webCanvas2dSetLineDash"
+opener = "Canvas2DContext, list<f64>"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_set_global_alpha"]
+symbol = "webCanvas2dSetGlobalAlpha"
+opener = "Canvas2DContext, f64"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_quadratic_curve_to"]
+symbol = "webCanvas2dQuadraticCurveTo"
+opener = "Canvas2DContext, f64, f64, f64, f64"
+result = "void"
+
+[functions."tela:canvas2d.canvas2d_bezier_curve_to"]
+symbol = "webCanvas2dBezierCurveTo"
+opener = "Canvas2DContext, f64, f64, f64, f64, f64, f64"
 result = "void"
 
 # tela:audio — the Web Audio binding (tela-audio lane). The per-stem shim:

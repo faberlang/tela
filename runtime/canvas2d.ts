@@ -207,6 +207,48 @@ export function webCanvas2dPath2DStroke(ctx: WebCanvas2dContext, path: WebCanvas
   contextById(ctx).stroke(pathById(path));
 }
 
+export function webCanvas2dSetLineWidth(ctx: WebCanvas2dContext, width: number): void {
+  contextById(ctx).lineWidth = width;
+}
+
+export function webCanvas2dSetLineCap(ctx: WebCanvas2dContext, cap: string): void {
+  contextById(ctx).lineCap = cap as CanvasLineCap;
+}
+
+export function webCanvas2dSetLineJoin(ctx: WebCanvas2dContext, join: string): void {
+  contextById(ctx).lineJoin = join as CanvasLineJoin;
+}
+
+export function webCanvas2dSetLineDash(ctx: WebCanvas2dContext, segments: number[]): void {
+  contextById(ctx).setLineDash(segments);
+}
+
+export function webCanvas2dSetGlobalAlpha(ctx: WebCanvas2dContext, alpha: number): void {
+  contextById(ctx).globalAlpha = alpha;
+}
+
+export function webCanvas2dQuadraticCurveTo(
+  ctx: WebCanvas2dContext,
+  controlX: number,
+  controlY: number,
+  x: number,
+  y: number,
+): void {
+  contextById(ctx).quadraticCurveTo(controlX, controlY, x, y);
+}
+
+export function webCanvas2dBezierCurveTo(
+  ctx: WebCanvas2dContext,
+  control1X: number,
+  control1Y: number,
+  control2X: number,
+  control2Y: number,
+  x: number,
+  y: number,
+): void {
+  contextById(ctx).bezierCurveTo(control1X, control1Y, control2X, control2Y, x, y);
+}
+
 function contextById(handle: WebCanvas2dContext): CanvasRenderingContext2D {
   const ctx = contexts.get(handle.id);
   if (ctx === undefined) {

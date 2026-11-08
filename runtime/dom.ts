@@ -68,6 +68,12 @@ export type WebDomPointerState = {
 export type WebDomFocusState = {
   readonly focused: boolean;
 };
+export type WebDomRect = {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+};
 export type WebDomPointerLockState = {
   readonly supported: boolean;
   readonly locked: boolean;
@@ -347,6 +353,11 @@ export function webDomOnPointerLock(
     document.removeEventListener("pointerlockchange", emit);
     document.removeEventListener("pointerlockerror", emit);
   });
+}
+
+export function webDomBoundingRect(element: WebDomElement): WebDomRect {
+  const rect = element.getBoundingClientRect();
+  return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
 }
 
 export function webDomPreventDefault(event: WebDomEvent): WebDomEvent {

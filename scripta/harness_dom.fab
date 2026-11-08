@@ -338,34 +338,34 @@ fn element_matches(FakeElement el, string selector) → bool {
     if selector ≡ "[data-tela]" {
         return el.data_tela ≢ ""
     }
-    if selector.length() ≻ 0 and selector.slice(0, 1) ≡ "#" {
+    if selector.length() ≻ 0 and (selector.slice(0, 1) ⊥ "") ≡ "#" {
         let string ∪ none id ← element_attr_get(el, "id")
         if id not is none {
             let string certain ← id
-            return certain ≡ selector.slice(1, selector.length())
+            return certain ≡ (selector.slice(1, selector.length()) ⊥ "")
         }
         return false
     }
-    if selector.length() ≻ 0 and selector.slice(0, 1) ≡ "." {
-        return class_list_has(el.class_list, selector.slice(1, selector.length()))
+    if selector.length() ≻ 0 and (selector.slice(0, 1) ⊥ "") ≡ "." {
+        return class_list_has(el.class_list, (selector.slice(1, selector.length()) ⊥ ""))
     }
-    if selector.length() ≥ 2 and selector.slice(0, 1) ≡ "[" and selector.slice(selector.length() - 1, selector.length()) ≡ "]" {
-        let string inner ← selector.slice(1, selector.length() - 1)
+    if selector.length() ≥ 2 and (selector.slice(0, 1) ⊥ "") ≡ "[" and (selector.slice(selector.length() - 1, selector.length()) ⊥ "") ≡ "]" {
+        let string inner ← selector.slice(1, selector.length() - 1) ⊥ ""
         let int eq ← index_of(inner, "=", 0)
         if eq ≺ 0 {
             return element_attr_has(el, inner)
         }
-        mut string name ← inner.slice(0, eq)
+        mut string name ← inner.slice(0, eq) ⊥ ""
         # fix:codegen002 — the TS emitter rejects equality comparisons whose
         # RHS variable is named `value` (a codegen helper-name collision;
         # minimized repro tela/spike/defects/d5-rhs-value-equality.fab). The
         # local is spelled attr_value in this module.
-        mut string attr_value ← inner.slice(eq + 1, inner.length())
+        mut string attr_value ← inner.slice(eq + 1, inner.length()) ⊥ ""
         if attr_value.length() ≥ 2 {
-            let string first ← attr_value.slice(0, 1)
+            let string first ← attr_value.slice(0, 1) ⊥ ""
             if first ≡ "'" or first ≡ q {
-                if attr_value.slice(attr_value.length() - 1, attr_value.length()) ≡ first {
-                    attr_value ← attr_value.slice(1, attr_value.length() - 1)
+                if (attr_value.slice(attr_value.length() - 1, attr_value.length()) ⊥ "") ≡ first {
+                    attr_value ← attr_value.slice(1, attr_value.length() - 1) ⊥ ""
                 }
             }
         }
@@ -526,7 +526,7 @@ fn resolve_region(FakeDocument doc, string selector) → FakeElement {
         return certain
     }
     mut FakeElement region ← fake_element("div")
-    element_attr_set(mut region, "id", selector.slice(1, selector.length()))
+    element_attr_set(mut region, "id", (selector.slice(1, selector.length()) ⊥ ""))
     element_append_child(doc.body, mut region)
     return region
 }
@@ -558,25 +558,25 @@ fn unescape_html(string text) → string {
     mut string accum ← ""
     mut int i ← 0
     while i ≺ text.length() {
-        mut string fragment ← text.slice(i, i + 1)
+        mut string fragment ← text.slice(i, i + 1) ⊥ ""
         mut int step ← 1
-        if not (i + 5 ≻ text.length()) and text.slice(i, i + 5) ≡ "&quot;" {
+        if not (i + 6 ≻ text.length()) and (text.slice(i, i + 6) ⊥ "") ≡ "&quot;" {
             fragment ← q
-            step ← 5
+            step ← 6
         }
-        if not (i + 5 ≻ text.length()) and text.slice(i, i + 5) ≡ "&#39;" {
+        if not (i + 5 ≻ text.length()) and (text.slice(i, i + 5) ⊥ "") ≡ "&#39;" {
             fragment ← "'"
             step ← 5
         }
-        if not (i + 4 ≻ text.length()) and text.slice(i, i + 4) ≡ "&amp;" {
+        if not (i + 5 ≻ text.length()) and (text.slice(i, i + 5) ⊥ "") ≡ "&amp;" {
             fragment ← "&"
-            step ← 4
+            step ← 5
         }
-        if not (i + 4 ≻ text.length()) and text.slice(i, i + 4) ≡ "&lt;" {
+        if not (i + 4 ≻ text.length()) and (text.slice(i, i + 4) ⊥ "") ≡ "&lt;" {
             fragment ← "<"
             step ← 4
         }
-        if not (i + 4 ≻ text.length()) and text.slice(i, i + 4) ≡ "&gt;" {
+        if not (i + 4 ≻ text.length()) and (text.slice(i, i + 4) ⊥ "") ≡ "&gt;" {
             fragment ← ">"
             step ← 4
         }
@@ -592,7 +592,7 @@ fn index_of(string text, string needle, int start) → int {
     }
     mut int i ← start
     while i ≤ text.length() - needle.length() {
-        if text.slice(i, i + needle.length()) ≡ needle {
+        if (text.slice(i, i + needle.length()) ⊥ "") ≡ needle {
             return i
         }
         i ← i + 1
@@ -609,7 +609,7 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
     mut string name ← ""
     mut bool name_scan ← true
     while j ≺ html.length() and name_scan {
-        let string ch ← html.slice(j, j + 1)
+        let string ch ← html.slice(j, j + 1) ⊥ ""
         if ch ≡ " " or ch ≡ ">" {
             name_scan ← false
         } else {
@@ -620,24 +620,24 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
     if name.length() ≡ 0 {
         return null
     }
-    if name.slice(0, 1) ≡ "/" {
+    if (name.slice(0, 1) ⊥ "") ≡ "/" {
         return null
     }
     mut FakeElement node ← fake_element(name)
     # Attribute scan (single/double-quoted or bare values; boolean attrs).
     mut bool in_tag ← true
     while j ≺ html.length() and in_tag {
-        if html.slice(j, j + 1) ≡ ">" {
+        if (html.slice(j, j + 1) ⊥ "") ≡ ">" {
             j ← j + 1
             in_tag ← false
         } else {
-            if html.slice(j, j + 1) ≡ " " {
+            if (html.slice(j, j + 1) ⊥ "") ≡ " " {
                 j ← j + 1
             } else {
                 mut string attr_name ← ""
                 mut bool reading_name ← true
                 while j ≺ html.length() and reading_name {
-                    let string ch ← html.slice(j, j + 1)
+                    let string ch ← html.slice(j, j + 1) ⊥ ""
                     if ch ≡ "=" or ch ≡ ">" or ch ≡ " " {
                         reading_name ← false
                     } else {
@@ -647,29 +647,29 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
                 }
                 mut bool skipping ← true
                 while j ≺ html.length() and skipping {
-                    if html.slice(j, j + 1) ≡ " " {
+                    if (html.slice(j, j + 1) ⊥ "") ≡ " " {
                         j ← j + 1
                     } else {
                         skipping ← false
                     }
                 }
-                if j ≺ html.length() and html.slice(j, j + 1) ≡ "=" {
+                if j ≺ html.length() and (html.slice(j, j + 1) ⊥ "") ≡ "=" {
                     j ← j + 1
                     mut bool skipping2 ← true
                     while j ≺ html.length() and skipping2 {
-                        if html.slice(j, j + 1) ≡ " " {
+                        if (html.slice(j, j + 1) ⊥ "") ≡ " " {
                             j ← j + 1
                         } else {
                             skipping2 ← false
                         }
                     }
-                    if j ≺ html.length() and (html.slice(j, j + 1) ≡ "'" or html.slice(j, j + 1) ≡ q) {
-                        let string quote ← html.slice(j, j + 1)
+                    if j ≺ html.length() and ((html.slice(j, j + 1) ⊥ "") ≡ "'" or (html.slice(j, j + 1) ⊥ "") ≡ q) {
+                        let string quote ← html.slice(j, j + 1) ⊥ ""
                         j ← j + 1
                         mut string val ← ""
                         mut bool reading_val ← true
                         while j ≺ html.length() and reading_val {
-                            let string ch ← html.slice(j, j + 1)
+                            let string ch ← html.slice(j, j + 1) ⊥ ""
                             if ch ≡ quote {
                                 reading_val ← false
                             }
@@ -683,7 +683,7 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
                         mut string val ← ""
                         mut bool reading_bare ← true
                         while j ≺ html.length() and reading_bare {
-                            let string ch ← html.slice(j, j + 1)
+                            let string ch ← html.slice(j, j + 1) ⊥ ""
                             if ch ≡ " " or ch ≡ ">" {
                                 reading_bare ← false
                             } else {
@@ -704,11 +704,11 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
     }
     mut bool closed ← false
     while j ≺ html.length() and not closed {
-        if j + name.length() + 3 ≤ html.length() and html.slice(j, j + name.length() + 3) ≡ "</" + name + ">" {
+        if j + name.length() + 3 ≤ html.length() and (html.slice(j, j + name.length() + 3) ⊥ "") ≡ "</" + name + ">" {
             j ← j + name.length() + 3
             closed ← true
         } else {
-            if html.slice(j, j + 1) ≡ "<" {
+            if (html.slice(j, j + 1) ⊥ "") ≡ "<" {
                 mut ParseResult ∪ none child ← parse_element(html, j)
                 if child not is none {
                     mut ParseResult certain ← child
@@ -720,14 +720,14 @@ fn parse_element(string html, int start) → ParseResult ∪ none {
             } else {
                 let int end ← index_of(html, "<", j)
                 if end ≺ 0 {
-                    let string text ← html.slice(j, html.length())
+                    let string text ← html.slice(j, html.length()) ⊥ ""
                     if text.length() ≻ 0 {
                         mut FakeElement text_node ← make_text_node(text)
                         element_append_child(node, mut text_node)
                     }
                     j ← html.length()
                 } else {
-                    let string text ← html.slice(j, end)
+                    let string text ← html.slice(j, end) ⊥ ""
                     if text.length() ≻ 0 {
                         mut FakeElement text_node ← make_text_node(text)
                         element_append_child(node, mut text_node)
@@ -745,7 +745,7 @@ fn parse_fragment(string html) → list<FakeElement> {
     mut list<FakeElement> nodes ← empty
     mut int i ← 0
     while i ≺ html.length() {
-        if html.slice(i, i + 1) ≡ "<" {
+        if (html.slice(i, i + 1) ⊥ "") ≡ "<" {
             let ParseResult ∪ none parsed ← parse_element(html, i)
             if parsed not is none {
                 let ParseResult certain ← parsed
@@ -757,13 +757,13 @@ fn parse_fragment(string html) → list<FakeElement> {
         } else {
             let int end ← index_of(html, "<", i)
             if end ≺ 0 {
-                let string text ← html.slice(i, html.length())
+                let string text ← html.slice(i, html.length()) ⊥ ""
                 if text.length() ≻ 0 {
                     nodes.append(make_text_node(text))
                 }
                 i ← html.length()
             } else {
-                let string text ← html.slice(i, end)
+                let string text ← html.slice(i, end) ⊥ ""
                 if text.length() ≻ 0 {
                     nodes.append(make_text_node(text))
                 }
