@@ -1,0 +1,6 @@
+import from "mini:mini" m
+
+@ public
+fn thrice(int x) → int {
+    return m.twice(x) + x
+}

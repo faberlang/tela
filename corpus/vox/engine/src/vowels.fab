@@ -1,0 +1,34 @@
+# vowels.fab: articulation presets for the five cardinal vowels and schwa.
+#
+# Each is a point in the engine's articulation space (see articulation.fab).
+# They were found by searching the articulation grid for the closest
+# adult-male formant pattern under this area-function model (neutral tube,
+# adult male, velum closed):
+#
+#   vowel   F1 (Hz)   F2 (Hz)   reference F1 / F2 (Peterson and Barney 1952)
+#   a        719      1102      730 / 1090
+#   e        435      1860      ~450 / ~1900 (between P&B /e/ and /E/)
+#   i        277      2301      270 / 2290
+#   o        482       935      ~480 / ~930 (/o/ of Hillenbrand et al. 1995)
+#   u        331       921      300 / 870
+#
+# The tools in tools/ measure the rendered audio, not these numbers.
+
+@ public
+class Vowel {
+    let string name
+    let f64 tongue_x
+    let f64 tongue_h
+    let f64 lips
+    let f64 jaw
+}
+
+@ public
+fn vowel(string name) → Vowel {
+    if name ≡ "a" then return Vowel { name = "a", tongue_x = 0.0, tongue_h = 0.1, lips = 1.0, jaw = 0.9 }
+    if name ≡ "e" then return Vowel { name = "e", tongue_x = 1.0, tongue_h = 0.4, lips = 1.0, jaw = 0.4 }
+    if name ≡ "i" then return Vowel { name = "i", tongue_x = 1.0, tongue_h = 0.9, lips = 0.8, jaw = 0.0 }
+    if name ≡ "o" then return Vowel { name = "o", tongue_x = 0.0, tongue_h = 0.4, lips = 0.2, jaw = 0.5 }
+    if name ≡ "u" then return Vowel { name = "u", tongue_x = 0.2, tongue_h = 0.7, lips = 0.06, jaw = 0.5 }
+    return Vowel { name = "schwa", tongue_x = 0.5, tongue_h = 0.5, lips = 0.5, jaw = 0.4 }
+}

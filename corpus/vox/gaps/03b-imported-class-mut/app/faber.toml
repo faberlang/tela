@@ -1,0 +1,28 @@
+# gap 03b: a class imported from another module loses its method mutability.
+#
+# Run (from gaps/):
+#   faber check 03b-imported-class-mut/app
+# Actual:   `let b` calling the mutating `bump` is accepted (in one file it is
+#           SEM020 "declare `value` with `mut`"), and the `mut a` that does the
+#           same call draws
+#               warning[WARN013:unnecessary_varia] ... message: unnecessary mut: binding is never reassigned
+#           so no spelling is clean, and the one that is needed is the one flagged.
+# Expected: the same answer as the single-file case: `let` is SEM020, `mut` is silent.
+# The engine's tools hit it on every `mut eng.Engine e` / `mut voice.Voice v`;
+# they keep `mut` (the Rust target needs it) and carry `# gap 03`.
+
+[package]
+name = "app"
+version = "0.0.0"
+edition = "2026"
+
+[paths]
+source = "src"
+entry = "main.fab"
+library_home = "../libhome"
+
+[build]
+kind = "bin"
+
+[locale]
+locale = "en"

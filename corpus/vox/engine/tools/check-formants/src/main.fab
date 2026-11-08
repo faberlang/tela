@@ -1,0 +1,181 @@
+# check-formants: render /a i u/ from the engine and check F1 and F2 of the
+# audio against published adult-male ranges. Exits 1 when any formant is out
+# of range, 0 when all are in.
+#
+# Method: render 1 s at 16 kHz (male body, pitch 110 Hz, breath 0.6), take
+# three 64 ms frames from the steady part, pre-emphasise (0.97), Hamming
+# window, order-16 autocorrelation LPC (Levinson-Durbin), and read the first
+# three peaks of the LPC spectral envelope 1 / |A(e^jw)| on a 5 Hz grid
+# (parabolic refinement). The three frames' peaks are averaged.
+#
+# Published adult-male formants (Hz), as F1 / F2:
+#   Peterson and Barney (1952), Table I male means:
+#       /a/ (as in "father") 730 / 1090;  /i/ 270 / 2290;  /u/ 300 / 870.
+#   Hillenbrand, Getty, Clark and Wheeler (1995), Table V male means:
+#       /a/ 768 / 1333;  /i/ 342 / 2322;  /u/ 378 / 997.
+# Accepted range per formant: 12% below the lower of the two means to 12%
+# above the higher (roughly 1.5 standard deviations of the published speaker
+# spread, which is about 8 to 12% of the mean for F1 and F2).
+
+import from "engine:engine" eng
+import from "engine:vowels" vowels
+import from "norma:process" process
+
+const f64 PI = 3.141592653589793
+const f64 SR = 16000.0
+const int ORDER = 16
+const int FRAME = 1024
+
+class Range {
+    let string name
+    let f64 f1_lo
+    let f64 f1_hi
+    let f64 f2_lo
+    let f64 f2_hi
+}
+
+fn range_for(string name, f64 pb1, f64 pb2, f64 h1, f64 h2) → Range {
+    return Range {
+        name = name,
+        f1_lo = 0.88 * (pb1 ⤓ h1),
+        f1_hi = 1.12 * (pb1 ⤒ h1),
+        f2_lo = 0.88 * (pb2 ⤓ h2),
+        f2_hi = 1.12 * (pb2 ⤒ h2)
+    }
+}
+
+fn levinson(list<f64> r, int order) → list<f64> {
+    mut list<f64> a ← empty
+    for range 0 ‥ order + 1 let i {
+        a.append(i ≡ 0 ✓ 1.0 ✗ 0.0)
+    }
+    mut f64 err ← r[0]
+    for range 1 ‥ order + 1 let m {
+        mut f64 acc ← r[m]
+        for range 1 ‥ m let j {
+            acc ← acc + a[j] * r[m - j]
+        }
+        let f64 k ← -acc / err
+        mut list<f64> na ← empty
+        for from a let v {
+            na.append(v)
+        }
+        for range 1 ‥ m let j {
+            na[j] ← a[j] + k * a[m - j]
+        }
+        na[m] ← k
+        a ← na
+        err ← err * (1.0 - k * k)
+    }
+    return a
+}
+
+# Envelope 1 / |A| at frequency f, as a magnitude.
+fn envelope(list<f64> a, f64 f) → f64 {
+    let f64 w ← 2.0 * PI * f / SR
+    mut f64 re ← 0.0
+    mut f64 im ← 0.0
+    for range 0 ‥ a.length() let j {
+        let f64 jw ← (j ↦ f64) * w
+        re ← re + a[j] * jw.cos()
+        im ← im - a[j] * jw.sin()
+    }
+    return 1.0 / (re * re + im * im).sqrt()
+}
+
+# First three envelope peaks of one frame, Hz.
+fn frame_formants(list<f64> x) → list<f64> {
+    mut list<f64> w ← empty
+    for range 0 ‥ FRAME let i {
+        let f64 pre ← i ≡ 0 ✓ x[0] ✗ x[i] - 0.97 * x[i - 1]
+        let f64 win ← 0.54 - 0.46 * (2.0 * PI * (i ↦ f64) / ((FRAME - 1) ↦ f64)).cos()
+        w.append(pre * win)
+    }
+    mut list<f64> r ← empty
+    for range 0 ‥ ORDER + 1 let lag {
+        mut f64 s ← 0.0
+        for range lag ‥ FRAME let i {
+            s ← s + w[i] * w[i - lag]
+        }
+        r.append(s)
+    }
+    let list<f64> a ← levinson(r, ORDER)
+    mut list<f64> peaks ← empty
+    mut f64 prev2 ← envelope(a, 150.0)
+    mut f64 prev1 ← envelope(a, 155.0)
+    mut f64 f ← 160.0
+    while f ≺ 4500.0 and peaks.length() ≺ 3 {
+        let f64 cur ← envelope(a, f)
+        if prev1 ≻ prev2 and prev1 ≥ cur {
+            # parabolic refinement on the three points around f - 5
+            let f64 d ← prev2 - 2.0 * prev1 + cur
+            mut f64 off ← 0.0
+            if d ≢ 0.0 {
+                off ← 0.5 * (prev2 - cur) / d
+            }
+            peaks.append(f - 5.0 + 5.0 * off)
+        }
+        prev2 ← prev1
+        prev1 ← cur
+        f ← f + 5.0
+    }
+    while peaks.length() ≺ 3 {
+        peaks.append(0.0)
+    }
+    return peaks
+}
+
+fn measure(string name) → list<f64> {
+    let vowels.Vowel v ← vowels.vowel(name)
+    # gap 03b: `mut` is needed (setters mutate it, and the Rust target needs it),
+    # yet the checker warns WARN013 unnecessary mut for an imported class.
+    mut eng.Engine e ← eng.make_engine(0, SR)
+    e.set_tongue_x(v.tongue_x)
+    e.set_tongue_h(v.tongue_h)
+    e.set_lips(v.lips)
+    e.set_jaw(v.jaw)
+    e.set_breath(0.6)
+    let list<f64> audio ← e.render(16000)
+    mut f64 f1 ← 0.0
+    mut f64 f2 ← 0.0
+    mut f64 f3 ← 0.0
+    for from [7200, 9600, 12000] let start {
+        mut list<f64> frame ← empty
+        for range 0 ‥ FRAME let i {
+            frame.append(audio[start + i])
+        }
+        let list<f64> p ← frame_formants(frame)
+        f1 ← f1 + p[0] / 3.0
+        f2 ← f2 + p[1] / 3.0
+        f3 ← f3 + p[2] / 3.0
+    }
+    let list<f64> tel ← e.telemetry()
+    return [f1, f2, f3, tel[11], tel[12], tel[13], e.rms]
+}
+
+main {
+    let list<Range> ranges ← [
+        range_for("a", 730.0, 1090.0, 768.0, 1333.0),
+        range_for("i", 270.0, 2290.0, 342.0, 2322.0),
+        range_for("u", 300.0, 870.0, 378.0, 997.0)
+    ]
+    mut int failures ← 0
+    for from ranges let rg {
+        let list<f64> m ← measure(rg.name)
+        let bool ok1 ← m[0] ≥ rg.f1_lo and m[0] ≤ rg.f1_hi
+        let bool ok2 ← m[1] ≥ rg.f2_lo and m[1] ≤ rg.f2_hi
+        print "/§/ audio F1=§ F2=§ | model (area function) F1=§ F2=§ F3=§ | rms=§"(rg.name, m[0].round(), m[1].round(), m[3].round(), m[4].round(), m[5].round(), m[6])
+        print "    F1 range §-§ §   F2 range §-§ §"(rg.f1_lo.round(), rg.f1_hi.round(), ok1 ✓ "ok" ✗ "FAIL", rg.f2_lo.round(), rg.f2_hi.round(), ok2 ✓ "ok" ✗ "FAIL")
+        if not ok1 {
+            failures ← failures + 1
+        }
+        if not ok2 {
+            failures ← failures + 1
+        }
+    }
+    if failures ≻ 0 {
+        print "FAIL: § formant(s) out of range"(failures)
+        process.exit_process(1)
+    }
+    print "ok: F1 and F2 of /a i u/ are inside the published adult-male ranges"
+}

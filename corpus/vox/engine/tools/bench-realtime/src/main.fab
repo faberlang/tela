@@ -1,0 +1,59 @@
+# bench-realtime: render a fixed amount of audio through the worklet entry the
+# way the AudioWorklet processor does (128-frame blocks at 44.1 kHz, a
+# telemetry snapshot every 1024 frames) and print a checksum, so the timing
+# wrapper (bench.sh) can compare targets and know the work was real.
+#
+# The program takes no clock: norma:time has no clock leaf on the ts target
+# (gap 05), so every target is timed from outside by bench.sh.
+#
+# Scene: an /a/ at 110 Hz with vibrato, then a nasal (/m/-like) stretch, then
+# a whispered fricative stretch, so the nasal branch and the noise sources
+# are inside the timing and not only the vowel path.
+
+import from "engine:voice" voice
+
+const int SECONDS = 20
+const int RATE = 44100
+const int BLOCK = 128
+
+main {
+    # gap 03b: `mut` is needed (setters mutate it, and the Rust target needs it),
+    # yet the checker warns WARN013 unnecessary mut for an imported class.
+    mut voice.Voice v ← voice.create()
+    v.message("breath", 0.7)
+    v.message("tongue_x", 0.0)
+    v.message("tongue_h", 0.1)
+    v.message("lips", 1.0)
+    v.message("jaw", 0.9)
+    v.message("vibrato_cents", 30.0)
+    v.message("vibrato_rate", 5.5)
+
+    let int total ← SECONDS * RATE
+    mut int done ← 0
+    mut f64 sum ← 0.0
+    mut int snapshots ← 0
+    mut f64 f1 ← 0.0
+    while done ≺ total {
+        if done ≡ (total / 3) - (total / 3) % BLOCK {
+            v.message("lips", 0.0)
+            v.message("velum", 1.0)
+        }
+        if done ≡ 2 * (total / 3) - (2 * (total / 3)) % BLOCK {
+            v.message("velum", 0.0)
+            v.message("mode", 1.0)
+            v.message("tip_place", 0.9)
+            v.message("tip_area", 0.08)
+        }
+        let list<f64> block ← v.process(BLOCK, 44100.0)
+        for from block let s {
+            sum ← sum + s.abs()
+        }
+        done ← done + BLOCK
+        if done % 1024 ≡ 0 {
+            let list<f64> t ← v.telemetry()
+            snapshots ← snapshots + 1
+            f1 ← t[11]
+        }
+    }
+    print "frames=§ seconds=§ snapshots=§ checksum=§ last_f1=§"(done, SECONDS, snapshots, sum, f1)
+}

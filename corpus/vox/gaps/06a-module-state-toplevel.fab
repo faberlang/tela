@@ -1,0 +1,21 @@
+# gap 06a: there is no module-level mutable state.
+#
+# Run:      faber check 06a-module-state-toplevel.fab
+# Actual:   error[SEM062:top_level_binding]: top-level `g`: module-level mutable state does not exist
+#           help: a module-level value is a compile-time constant: `const T X = …`; a runtime value belongs in a function
+#           (plus SEM020 assignment_to_constant at the store)
+# Consequence: the worklet contract in SCOPE.md (free functions `process`,
+# `message`, `telemetry`) has nowhere to keep the engine between calls.
+# engine/src/voice.fab exposes the same three operations as methods of a
+# `Voice` object that the host creates and holds. See also 06b.
+
+mut int g ← 0
+
+fn tick() → int {
+    g ← g + 1
+    return g
+}
+
+main {
+    print tick()
+}

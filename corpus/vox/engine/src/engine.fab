@@ -1,0 +1,500 @@
+# engine.fab: the voice engine. One state object, render(frames) to mono
+# samples, a setter for every control, and a telemetry snapshot.
+#
+# Signal path, all at the waveguide's own rate (tract_rate, 88 kHz for a male
+# tract, higher for shorter tracts; see body.fab):
+#   LF glottal flow derivative (glottis.fab) * voice amplitude
+#   + aspiration noise (differentiated white noise, pulsed by the open phase)
+#       -> glottis end of the waveguide (tract.fab)
+#   + turbulence noise injected at the narrowest oral section
+#       -> radiated pressure from mouth (and nose when the velum is open)
+#       -> optional anti-alias low-pass, DC blocker
+#       -> Catmull-Rom resample to the host sample rate
+#       -> master gain and soft clip.
+#
+# Control changes are cheap setters that mark state dirty; the work happens at
+# control rate (every CTRL_STEPS waveguide steps) inside render, so a setter is
+# safe to call between any two render calls.
+
+# gap 16: every module of this package imports a given library module under the
+# same alias (body, glottis, tract, noise, art, formants, eng); different aliases
+# for one module are an error.
+import from "engine:body" body
+import from "engine:glottis" glottis
+import from "engine:tract" tract
+import from "engine:noise" noise
+import from "engine:articulation" art
+import from "engine:formants" formants
+
+# gap 04: the built-in float methods (.sin(), .cos(), .exp(), .sqrt(), .power())
+# are used instead of norma:math, which does not link on the ts target.
+const f64 PI = 3.141592653589793
+const f64 LN2 = 0.6931471805599453
+const f64 LN9 = 2.1972245773362196
+
+# Waveguide steps between control updates (about 0.7 ms).
+const int CTRL_STEPS = 32
+
+# Articulators glide to new targets with this time constant, seconds.
+const f64 ART_TAU = 0.025
+
+# Source smoothing time constant, seconds.
+const f64 AMP_TAU = 0.006
+
+# Constrictions narrower than this many cm^2 make turbulence noise.
+const f64 A_TURB = 0.25
+
+# Source scaling (calibrated so a neutral vowel at breath 0.6 peaks near 0.3).
+const f64 SRC_VOICE = 1.5
+const f64 SRC_ASPIRATION = 1.0
+const f64 SRC_TURBULENCE = 4.5
+
+# Glottis reflection: closed fold, open fold, and a fold held apart (whisper).
+const f64 RG_CLOSED = 0.97
+const f64 RG_OPEN = 0.65
+const f64 RG_WHISPER = 0.60
+
+@ public
+const int MODE_VOICE = 0
+
+@ public
+const int MODE_WHISPER = 1
+
+@ public
+const int MODE_HOLD = 2
+
+# Telemetry layout (see voice.fab for the documented contract).
+@ public
+const int TEL_VERSION = 1
+
+@ public
+const int TEL_N_WAVE = 64
+
+@ public
+const int TEL_HEADER = 16
+
+@ public
+const int TEL_AREA = 16
+
+@ public
+const int TEL_NASAL = 60
+
+@ public
+const int TEL_FLOW = 89
+
+@ public
+const int TEL_DERIV = 153
+
+@ public
+const int TEL_LENGTH = 217
+
+fn soft_clip(f64 v) → f64 {
+    let f64 c ← v ⤒ -3.0 ⤓ 3.0
+    return c * (27.0 + c * c) / (27.0 + 9.0 * c * c)
+}
+
+@ public
+class Engine {
+    mut body.Body anatomy
+    mut glottis.Glottis source
+    mut tract.Tract waveguide
+    mut noise.Noise asp_noise
+    mut noise.Noise turb_noise
+    mut list<f64> target_area = empty
+    mut list<f64> target_nasal = empty
+
+    # Controls.
+    mut f64 pitch = 110.0
+    mut f64 breath = 0.0
+    mut f64 pressed = 0.5
+    mut f64 vib_cents = 0.0
+    mut f64 vib_rate = 5.5
+    mut f64 aspiration = 0.0
+    mut int mode = 0
+    mut f64 tongue_x = 0.5
+    mut f64 tongue_h = 0.5
+    mut f64 lips = 0.5
+    mut f64 jaw = 0.4
+    mut f64 velum = 0.0
+    mut f64 tip_place = 0.9
+    mut f64 tip_area = 99.0
+    mut f64 turbulence = 1.0
+    mut f64 gain = 1.0
+
+    # Rates.
+    mut f64 sample_rate = 44100.0
+    mut f64 tract_rate = 88000.0
+    mut f64 ratio = 1.9955
+    mut f64 art_a = 0.03
+    mut f64 amp_k = 0.004
+
+    # Dirty flags.
+    mut bool dirty_art = true
+    mut bool dirty_rd = true
+
+    # Dynamics.
+    # Starts at CTRL_STEPS (32) so the first step runs a control update. The
+    # literal stands in for the constant (gap 13: a constant in a field default
+    # is rejected).
+    mut int tick = 32
+    mut f64 f0_cur = 110.0
+    mut f64 vib_phase = 0.0
+    mut f64 amp_v = 0.0
+    mut f64 amp_v_t = 0.0
+    mut f64 amp_a = 0.0
+    mut f64 amp_a_t = 0.0
+    mut f64 amp_t = 0.0
+    mut f64 amp_t_t = 0.0
+    mut int turb_idx = 0
+    mut f64 asp_prev = 0.0
+    mut f64 turb_prev = 0.0
+    mut f64 rg_a = 0.97
+    mut f64 rg_b = 0.32
+    mut f64 voiced_mod = 1.0
+
+    # Output stage: two cascaded low-pass biquads (used when the waveguide
+    # runs faster than the host), DC blocker, resampler history.
+    mut bool lp_on = false
+    mut f64 bq_b0 = 1.0
+    mut f64 bq_b1 = 0.0
+    mut f64 bq_a1 = 0.0
+    mut f64 bq_a2 = 0.0
+    mut f64 s1z1 = 0.0
+    mut f64 s1z2 = 0.0
+    mut f64 s2z1 = 0.0
+    mut f64 s2z2 = 0.0
+    mut f64 hp_a = 0.998
+    mut f64 hp_x = 0.0
+    mut f64 hp_y = 0.0
+    mut f64 rs_x = 0.0
+    mut f64 h0 = 0.0
+    mut f64 h1 = 0.0
+    mut f64 h2 = 0.0
+    mut f64 h3 = 0.0
+
+    # Telemetry of the last render block.
+    mut f64 peak = 0.0
+    mut f64 rms = 0.0
+
+    # Why: derive every rate-dependent constant from the body and the host
+    # sample rate. Called whenever either changes.
+    fn retune() → void {
+        let f64 rate ← body.tract_rate(self.anatomy.length_cm)
+        self.tract_rate ← rate
+        self.waveguide.rate ← rate
+        self.waveguide.dx ← self.anatomy.length_cm / (body.N_SEC ↦ f64)
+        self.ratio ← rate / self.sample_rate
+        self.art_a ← 1.0 - (-(CTRL_STEPS ↦ f64) / (ART_TAU * rate)).exp()
+        self.amp_k ← 1.0 - (-1.0 / (AMP_TAU * rate)).exp()
+        self.hp_a ← 1.0 - 2.0 * PI * 25.0 / rate
+        self.lp_on ← self.ratio ≻ 1.0
+        if self.lp_on {
+            # Butterworth low-pass at 0.45 of the host rate, two stages.
+            let f64 w0 ← 2.0 * PI * 0.45 * self.sample_rate / rate
+            let f64 cw ← w0.cos()
+            let f64 alpha ← w0.sin() / (2.0 * 0.7071)
+            let f64 a0 ← 1.0 + alpha
+            self.bq_b0 ← (1.0 - cw) / 2.0 / a0
+            self.bq_b1 ← (1.0 - cw) / a0
+            self.bq_a1 ← -2.0 * cw / a0
+            self.bq_a2 ← (1.0 - alpha) / a0
+        }
+        self.dirty_art ← true
+    }
+
+    # Why: control-rate update. Vibrato and pitch glide, Rd, articulation
+    # targets, area glide, turbulence site and source amplitudes.
+    fn control_tick() → void {
+        let f64 dt ← (CTRL_STEPS ↦ f64) / self.tract_rate
+
+        self.vib_phase ← self.vib_phase + self.vib_rate * dt
+        if self.vib_phase ≥ 1.0 {
+            self.vib_phase ← self.vib_phase - 1.0
+        }
+        let f64 vib ← self.vib_cents * (2.0 * PI * self.vib_phase).sin() / 1200.0
+        let f64 f0t ← self.pitch * (vib * LN2).exp()
+        self.f0_cur ← self.f0_cur + (f0t - self.f0_cur) * 0.15
+
+        if self.dirty_rd {
+            self.source.rebuild(0.3 * ((1.0 - self.pressed) * LN9).exp())
+            self.dirty_rd ← false
+        }
+        if self.dirty_art {
+            self.target_area ← art.oral_areas(self.tongue_x, self.tongue_h, self.lips, self.jaw, self.tip_place, self.tip_area)
+            self.target_nasal ← art.nasal_areas(self.velum)
+            self.dirty_art ← false
+        }
+        self.waveguide.glide(self.target_area, self.target_nasal, self.art_a)
+
+        # Turbulence: noise at the narrowest oral section from the velum on.
+        mut f64 amin ← 99.0
+        mut int imin ← 0
+        for range 10 ‥ body.N_SEC let i {
+            let f64 a ← self.waveguide.area[i]
+            if a ≺ amin {
+                amin ← a
+                imin ← i
+            }
+        }
+        mut f64 level ← 0.0
+        if amin ≺ A_TURB {
+            let f64 x ← amin / A_TURB
+            level ← 2.6 * x.sqrt() * (1.0 - x)
+        }
+        self.turb_idx ← imin
+
+        let f64 b ← self.breath
+        mut f64 tv ← 0.0
+        mut f64 ta ← 0.0
+        mut f64 tt ← 0.0
+        if self.mode ≡ MODE_VOICE {
+            tv ← SRC_VOICE * (b * 1.3).sqrt() * b
+            ta ← SRC_ASPIRATION * b * (0.08 + 0.9 * self.aspiration + 0.2 * (1.0 - self.pressed))
+            tt ← SRC_TURBULENCE * self.turbulence * level * b
+            self.rg_a ← RG_CLOSED
+            self.rg_b ← RG_CLOSED - RG_OPEN
+            self.voiced_mod ← 0.0
+        }
+        elif self.mode ≡ MODE_WHISPER {
+            ta ← SRC_ASPIRATION * b * 6.0
+            tt ← SRC_TURBULENCE * self.turbulence * level * b
+            self.rg_a ← RG_WHISPER
+            self.rg_b ← 0.0
+            self.voiced_mod ← 1.0
+        }
+        else {
+            self.rg_a ← RG_CLOSED
+            self.rg_b ← 0.0
+            self.voiced_mod ← 0.0
+        }
+        self.amp_v_t ← tv
+        self.amp_a_t ← ta
+        self.amp_t_t ← tt
+    }
+
+    # Why: one waveguide step, the whole source and output chain at tract rate.
+    fn tract_sample() → f64 {
+        if self.tick ≥ CTRL_STEPS {
+            self.tick ← 0
+            self.control_tick()
+        }
+        self.tick ← self.tick + 1
+
+        let f64 k ← self.amp_k
+        self.amp_v ← self.amp_v + (self.amp_v_t - self.amp_v) * k
+        self.amp_a ← self.amp_a + (self.amp_a_t - self.amp_a) * k
+        self.amp_t ← self.amp_t + (self.amp_t_t - self.amp_t) * k
+
+        let f64 e ← self.source.step(self.f0_cur / self.tract_rate)
+        let f64 flow ← self.source.flow_norm
+        let f64 pulse ← self.voiced_mod + (1.0 - self.voiced_mod) * (0.3 + 0.7 * flow)
+
+        let f64 an ← self.asp_noise.next()
+        let f64 asp ← (an - self.asp_prev) * 0.5
+        self.asp_prev ← an
+        let f64 tn ← self.turb_noise.next()
+        let f64 turb ← (tn - self.turb_prev) * 0.5
+        self.turb_prev ← tn
+
+        let f64 src ← self.amp_v * e + self.amp_a * asp * pulse
+        let f64 rg ← self.rg_a - self.rg_b * flow
+        mut f64 y ← self.waveguide.step(src, self.turb_idx, self.amp_t * turb * pulse, rg)
+
+        if self.lp_on {
+            let f64 o1 ← self.bq_b0 * y + self.s1z1
+            self.s1z1 ← self.bq_b1 * y - self.bq_a1 * o1 + self.s1z2
+            self.s1z2 ← self.bq_b0 * y - self.bq_a2 * o1
+            let f64 o2 ← self.bq_b0 * o1 + self.s2z1
+            self.s2z1 ← self.bq_b1 * o1 - self.bq_a1 * o2 + self.s2z2
+            self.s2z2 ← self.bq_b0 * o1 - self.bq_a2 * o2
+            y ← o2
+        }
+        # DC blocker, corner near 25 Hz.
+        let f64 hp ← y - self.hp_x + self.hp_a * self.hp_y
+        self.hp_x ← y
+        self.hp_y ← hp
+        return hp
+    }
+
+    # Why: render the next `frames` mono samples at the host sample rate.
+    fn render(int frames) → list<f64> {
+        mut list<f64> out ← empty
+        mut f64 pk ← 0.0
+        mut f64 sq ← 0.0
+        for range 0 ‥ frames let n {
+            mut f64 x ← self.rs_x + self.ratio
+            while x ≥ 1.0 {
+                x ← x - 1.0
+                let f64 s ← self.tract_sample()
+                self.h0 ← self.h1
+                self.h1 ← self.h2
+                self.h2 ← self.h3
+                self.h3 ← s
+            }
+            self.rs_x ← x
+            let f64 c1 ← 0.5 * (self.h2 - self.h0)
+            let f64 c2 ← self.h0 - 2.5 * self.h1 + 2.0 * self.h2 - 0.5 * self.h3
+            let f64 c3 ← 0.5 * (self.h3 - self.h0) + 1.5 * (self.h1 - self.h2)
+            let f64 v ← soft_clip(self.gain * (((c3 * x + c2) * x + c1) * x + self.h1))
+            out.append(v)
+            let f64 av ← v.abs()
+            if av ≻ pk {
+                pk ← av
+            }
+            sq ← sq + v * v
+        }
+        self.peak ← pk
+        if frames ≻ 0 {
+            self.rms ← (sq / (frames ↦ f64)).sqrt()
+        }
+        return out
+    }
+
+    # Why: flat snapshot for the main thread; the layout is documented in
+    # voice.fab and fixed by the TEL_* constants above.
+    fn telemetry() → list<f64> {
+        let list<f64> area ← self.waveguide.area
+        let list<f64> f ← formants.estimate(area, self.anatomy.length_cm)
+        mut list<f64> t ← empty
+        t.append(TEL_VERSION ↦ f64)
+        t.append(body.N_SEC ↦ f64)
+        t.append(body.N_NASAL ↦ f64)
+        t.append(TEL_N_WAVE ↦ f64)
+        t.append(self.f0_cur)
+        t.append(self.source.rd)
+        t.append(self.amp_v / SRC_VOICE)
+        t.append(self.peak)
+        t.append(self.rms)
+        t.append(self.mode ↦ f64)
+        t.append(self.waveguide.narea[0])
+        t.append(f[0])
+        t.append(f[1])
+        t.append(f[2])
+        t.append(self.anatomy.length_cm)
+        t.append(self.source.phase)
+        # gap 08: iterating the `area` alias breaks the Rust target; the field
+        # expression compiles everywhere.
+        for from self.waveguide.area let a {
+            t.append(a)
+        }
+        for from self.waveguide.narea let a {
+            t.append(a)
+        }
+        let int tn ← self.source.flow.length() - 1
+        for range 0 ‥ TEL_N_WAVE let i {
+            t.append(self.source.flow[(i * tn) / TEL_N_WAVE])
+        }
+        for range 0 ‥ TEL_N_WAVE let i {
+            t.append(self.source.deriv[(i * tn) / TEL_N_WAVE])
+        }
+        return t
+    }
+
+    fn set_sample_rate(f64 sr) → void {
+        self.sample_rate ← sr ⤒ 8000.0 ⤓ 192000.0
+        self.retune()
+    }
+
+    # Why: switching body changes the tract length and so the waveguide rate;
+    # pitch resets to the new body's default and the tract rings out clean.
+    fn set_body(int kind) → void {
+        self.anatomy ← body.body_preset(kind)
+        self.pitch ← self.anatomy.pitch_default
+        self.f0_cur ← self.anatomy.pitch_default
+        self.retune()
+    }
+
+    fn set_pitch(f64 hz) → void {
+        self.pitch ← hz ⤒ self.anatomy.pitch_min ⤓ self.anatomy.pitch_max
+    }
+
+    fn set_breath(f64 v) → void {
+        self.breath ← v ⤒ 0.0 ⤓ 1.0
+    }
+
+    fn set_pressed(f64 v) → void {
+        self.pressed ← v ⤒ 0.0 ⤓ 1.0
+        self.dirty_rd ← true
+    }
+
+    fn set_vibrato_depth(f64 cents) → void {
+        self.vib_cents ← cents ⤒ 0.0 ⤓ 200.0
+    }
+
+    fn set_vibrato_rate(f64 hz) → void {
+        self.vib_rate ← hz ⤒ 0.0 ⤓ 12.0
+    }
+
+    fn set_aspiration(f64 v) → void {
+        self.aspiration ← v ⤒ 0.0 ⤓ 1.0
+    }
+
+    fn set_mode(int m) → void {
+        self.mode ← m ⤒ 0 ⤓ 2
+    }
+
+    fn set_tongue_x(f64 v) → void {
+        self.tongue_x ← v ⤒ 0.0 ⤓ 1.0
+        self.dirty_art ← true
+    }
+
+    fn set_tongue_h(f64 v) → void {
+        self.tongue_h ← v ⤒ 0.0 ⤓ 1.0
+        self.dirty_art ← true
+    }
+
+    fn set_lips(f64 v) → void {
+        self.lips ← v ⤒ 0.0 ⤓ 1.0
+        self.dirty_art ← true
+    }
+
+    fn set_jaw(f64 v) → void {
+        self.jaw ← v ⤒ 0.0 ⤓ 1.0
+        self.dirty_art ← true
+    }
+
+    fn set_velum(f64 v) → void {
+        self.velum ← v ⤒ 0.0 ⤓ 1.0
+        self.dirty_art ← true
+    }
+
+    fn set_tip_place(f64 v) → void {
+        self.tip_place ← v ⤒ 0.0 ⤓ 1.0
+        self.dirty_art ← true
+    }
+
+    fn set_tip_area(f64 cm2) → void {
+        self.tip_area ← cm2 ⤒ 0.0 ⤓ 99.0
+        self.dirty_art ← true
+    }
+
+    fn set_turbulence(f64 v) → void {
+        self.turbulence ← v ⤒ 0.0 ⤓ 4.0
+    }
+
+    fn set_gain(f64 v) → void {
+        self.gain ← v ⤒ 0.0 ⤓ 4.0
+    }
+}
+
+# Why: a ready engine for a body at a host sample rate, articulators neutral,
+# breath 0 (silent) until the caller sets breath.
+@ public
+fn make_engine(int kind, f64 sample_rate) → Engine {
+    let body.Body anatomy ← body.body_preset(kind)
+    let f64 rate ← body.tract_rate(anatomy.length_cm)
+    mut Engine e ← Engine {
+        anatomy = anatomy,
+        source = glottis.Glottis { },
+        waveguide = tract.make_tract(rate, anatomy.length_cm / (body.N_SEC ↦ f64)),
+        asp_noise = noise.Noise { seed = 1234567 },
+        turb_noise = noise.Noise { seed = 7654321 },
+        pitch = anatomy.pitch_default,
+        f0_cur = anatomy.pitch_default
+    }
+    e.set_sample_rate(sample_rate)
+    e.target_area ← art.oral_areas(e.tongue_x, e.tongue_h, e.lips, e.jaw, e.tip_place, e.tip_area)
+    e.target_nasal ← art.nasal_areas(e.velum)
+    e.waveguide.glide(e.target_area, e.target_nasal, 1.0)
+    return e
+}

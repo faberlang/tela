@@ -1,0 +1,18 @@
+# gap 14: an out-of-range list index traps without a location.
+#
+# Run:      faber run 14-index-trap-no-location.fab
+#           faber run -t ts 14-index-trap-no-location.fab
+# Actual:   error: array index out of bounds
+#           (no file, line, function or index; in a 20-module engine it cost a
+#           bisection to find that a table was read before it was built)
+# Expected: at least the function and source line, as the checker's own
+# diagnostics have.
+
+main {
+    let list<int> xs ← [1, 2, 3]
+    mut int i ← 0
+    while i ≺ 5 {
+        i ← i + 1
+    }
+    print xs[i]
+}

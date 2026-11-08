@@ -1,0 +1,122 @@
+# glottis.fab: glottal source, the Liljencrants-Fant (LF) flow-derivative model.
+#
+# The LF model (Fant, Liljencrants and Lin 1985) describes the derivative of
+# glottal flow over one period with an exponentially growing sinusoid for the
+# open phase and an exponential return phase. Its shape is set by one number,
+# Rd (Fant 1995): small Rd is a pressed, tense voice with a short open phase,
+# large Rd is a breathy voice. The Rd regression to the timing parameters Ra,
+# Rk and Rg is the one from Fant (1995), valid for 0.3 <= Rd <= 2.7.
+#
+# Everything is normalised to a period of 1 and an excitation strength
+# (the most negative derivative, -Ee) of 1, so the table depends on Rd only
+# and is rebuilt only when Rd changes. The source then reads the table with a
+# phase that advances f0 / tract_rate per tract step.
+
+@ public
+const int LF_POINTS = 512
+
+# gap 04: the built-in float methods (.sin(), .cos(), .exp(), .sqrt(), .power())
+# are used instead of norma:math, which does not link on the ts target.
+const f64 PI = 3.141592653589793
+
+@ public
+class Glottis {
+    mut f64 phase = 0.0
+    mut f64 rd = 0.0
+    # Last flow value read, normalised to 0..1 of the peak of the period.
+    mut f64 flow_norm = 0.0
+    # Flow derivative table, LF_POINTS + 1 entries over one period, Ee = 1.
+    mut list<f64> deriv = empty
+    # Flow table (integral of deriv), normalised so the peak is 1.
+    mut list<f64> flow = empty
+
+    # Why: rebuild the two tables for a new Rd. Newton on epsilon (return
+    # phase), bisection on alpha (open-phase growth) so the net flow over the
+    # period is zero, then a trapezoid integral for the flow table.
+    fn rebuild(f64 rd_new) → void {
+        let f64 ra ← (4.8 * rd_new - 1.0) / 100.0
+        let f64 rk ← (22.4 + 11.8 * rd_new) / 100.0
+        let f64 rg ← rk / (4.0 * (0.11 * rd_new / (0.5 + 1.2 * rk) - ra))
+        let f64 tp ← 1.0 / (2.0 * rg)
+        let f64 te ← tp * (1.0 + rk)
+        let f64 ta ← ra
+        let f64 tc ← 1.0
+        let f64 omega ← PI / tp
+
+        mut f64 eps ← 1.0 / ta
+        for range 0 ‥ 40 let it {
+            let f64 ex ← (-eps * (tc - te)).exp()
+            eps ← eps - (eps * ta - 1.0 + ex) / (ta - (tc - te) * ex)
+        }
+
+        let f64 tail ← -1.0 / eps + (tc - te) * (-eps * (tc - te)).exp() / (eps * ta)
+        let f64 st ← (omega * te).sin()
+        let f64 ct ← (omega * te).cos()
+
+        mut f64 lo ← -50.0
+        mut f64 hi ← 100.0
+        let f64 glo ← (lo - omega * ct / st + omega * (-lo * te).exp() / st) / (lo * lo + omega * omega) - tail
+        for range 0 ‥ 60 let it {
+            let f64 mid ← 0.5 * (lo + hi)
+            let f64 gm ← (mid - omega * ct / st + omega * (-mid * te).exp() / st) / (mid * mid + omega * omega) - tail
+            if gm ≻ 0.0 ≡ glo ≻ 0.0 {
+                lo ← mid
+            }
+            else {
+                hi ← mid
+            }
+        }
+        let f64 alpha ← 0.5 * (lo + hi)
+        let f64 e0 ← -1.0 / ((alpha * te).exp() * st)
+
+        mut list<f64> d ← empty
+        mut list<f64> u ← empty
+        mut f64 acc ← 0.0
+        mut f64 peak ← 0.0
+        mut f64 prev ← 0.0
+        let f64 dt ← 1.0 / (LF_POINTS ↦ f64)
+        for range 0 ‥ LF_POINTS + 1 let i {
+            let f64 t ← (i ↦ f64) * dt
+            mut f64 e ← 0.0
+            if t ≤ te {
+                e ← e0 * (alpha * t).exp() * (omega * t).sin()
+            }
+            else {
+                e ← -(1.0 / (eps * ta)) * ((-eps * (t - te)).exp() - (-eps * (tc - te)).exp())
+            }
+            if i ≻ 0 {
+                acc ← acc + 0.5 * (e + prev) * dt
+            }
+            prev ← e
+            d.append(e)
+            u.append(acc)
+            if acc ≻ peak {
+                peak ← acc
+            }
+        }
+        mut list<f64> un ← empty
+        for from u let v {
+            un.append(v / peak)
+        }
+        self.deriv ← d
+        self.flow ← un
+        self.rd ← rd_new
+    }
+
+    # Why: advance the phase by dphase cycles and read the derivative table
+    # with linear interpolation; flow_norm follows from the flow table.
+    fn step(f64 dphase) → f64 {
+        mut f64 p ← self.phase + dphase
+        if p ≥ 1.0 {
+            p ← p - 1.0
+        }
+        self.phase ← p
+        let f64 x ← p * (LF_POINTS ↦ f64)
+        let int i ← x.floor()
+        let f64 fr ← x - (i ↦ f64)
+        let f64 d0 ← self.deriv[i]
+        let f64 u0 ← self.flow[i]
+        self.flow_norm ← u0 + (self.flow[i + 1] - u0) * fr
+        return d0 + (self.deriv[i + 1] - d0) * fr
+    }
+}

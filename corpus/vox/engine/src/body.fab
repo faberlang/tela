@@ -1,0 +1,51 @@
+# body.fab: body presets (male, female, child).
+#
+# A body fixes the vocal tract length and the pitch range. The tract always
+# has N_SEC sections, so the section length is length / N_SEC. A wave crosses
+# one section per waveguide step, so the waveguide's natural rate is
+# c * N_SEC / length (tract_rate): 88 kHz for the 17.5 cm male tract, which is
+# 2x oversampling of a 44.1 kHz host. Shorter tracts run faster (female about
+# 106 kHz, child about 134 kHz) and the engine resamples down to the host rate.
+
+@ public
+const int N_SEC = 44
+
+@ public
+const int N_NASAL = 29
+
+# Speed of sound in warm, moist air, cm/s.
+@ public
+const f64 SOUND_SPEED = 35000.0
+
+@ public
+const int BODY_MALE = 0
+
+@ public
+const int BODY_FEMALE = 1
+
+@ public
+const int BODY_CHILD = 2
+
+@ public
+class Body {
+    let int kind
+    let f64 length_cm
+    let f64 pitch_default
+    let f64 pitch_min
+    let f64 pitch_max
+}
+
+# Why: tract lengths follow adult male ~17.5 cm, adult female ~14.5 cm and a
+# six-year-old child ~11.5 cm; pitch ranges cover speaking plus singing.
+@ public
+fn body_preset(int kind) → Body {
+    if kind ≡ BODY_FEMALE then return Body { kind = BODY_FEMALE, length_cm = 14.5, pitch_default = 210.0, pitch_min = 110.0, pitch_max = 1100.0 }
+    if kind ≡ BODY_CHILD then return Body { kind = BODY_CHILD, length_cm = 11.5, pitch_default = 300.0, pitch_min = 150.0, pitch_max = 1200.0 }
+    return Body { kind = BODY_MALE, length_cm = 17.5, pitch_default = 110.0, pitch_min = 60.0, pitch_max = 500.0 }
+}
+
+# Why: one tract section is one waveguide step of delay each way.
+@ public
+fn tract_rate(f64 length_cm) → f64 {
+    return SOUND_SPEED * (N_SEC ↦ f64) / length_cm
+}

@@ -1,0 +1,8 @@
+import from "mini:mini" mini
+
+main {
+    mut mini.Counter a ← mini.make()
+    print a.bump()
+    let mini.Counter b ← mini.make()
+    print b.bump()
+}

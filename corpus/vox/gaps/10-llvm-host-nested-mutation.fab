@@ -1,0 +1,35 @@
+# gap 10: llvm-host loses a mutation made through a nested object's method.
+#
+# Run:      faber run 10-llvm-host-nested-mutation.fab                  1.0 2.0 2.0
+#           faber run -t ts 10-llvm-host-nested-mutation.fab            1.0 2.0 2.0
+#           faber run -t go 10-llvm-host-nested-mutation.fab            1.0 2.0 2.0
+#           faber run -t clif-jit 10-llvm-host-nested-mutation.fab      1.0 2.0 2.0
+#           faber run -t llvm-host 10-llvm-host-nested-mutation.fab     1.0 1.0 0.0
+# Expected: 1.0 2.0 2.0 (the object in `h.cell` is shared, not copied).
+# Actual (llvm-host): `self.cell.bump(x)` runs on a copy of `cell`, so `h.cell.v`
+# stays 0.0. No diagnostic; the program exits 0. The engine's Tract inside
+# Engine has the same shape, so the engine is not usable on llvm-host.
+
+class Cell {
+    mut f64 v
+
+    fn bump(f64 x) → f64 {
+        self.v ← self.v + x
+        return self.v
+    }
+}
+
+class Holder {
+    mut Cell cell
+
+    fn go(f64 x) → f64 {
+        return self.cell.bump(x)
+    }
+}
+
+main {
+    mut Holder h ← Holder { cell = Cell { v = 0.0 } }
+    print h.go(1.0)
+    print h.go(1.0)
+    print h.cell.v
+}

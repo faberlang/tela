@@ -1,0 +1,14 @@
+# gap 15: `print (a) and (b)` is read as a call to `print`.
+#
+# Run:      faber check 15-print-paren.fab
+# Actual:   error[SEM001:scribe_callee]: unknown identifier
+#           help: `print` is the output statement, not a function: import the console
+#           function ... or bind the value first
+# Expected: `print` followed by a space and a parenthesised operand starts an
+# expression, as `print 1 and 2` does. A leading paren after `print` silently
+# changes the statement into a call; `print (x ÷ 3.0).truncate()` fails the same way.
+# Plain formulation: bind first (`let _ ok ← (a) and (b)`, `print ok`).
+
+main {
+    print (1.5 ≺ 2.0) and (3 ≥ 2)
+}

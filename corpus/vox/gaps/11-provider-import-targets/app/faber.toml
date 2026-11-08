@@ -1,0 +1,34 @@
+# gap 11: a package that imports a library provider (library_home) only runs on
+# the runner, the JIT, ts and rust.
+#
+# Run (from gaps/, each prints 42 where it works):
+#   faber run 11-provider-import-targets/app                  42
+#   faber run -t clif-jit 11-provider-import-targets/app      42
+#   faber run -t ts 11-provider-import-targets/app            42
+#   faber run -t go 11-provider-import-targets/app
+#       error: `go build ...` failed ... main.go:7:8: invalid import path: mini:mini
+#   faber run -t llvm-host 11-provider-import-targets/app
+#       error: LLVM emission failed for .../src/main.fab: llvm_runtime_symbol_unavailable:
+#       llvm_runtime_symbol_unavailable: no ABI row for `__faber_runtime_provider_2_3_6_1_i64_to_i64`
+#   faber build -t c 11-provider-import-targets/app
+#       error[PKG001:package_c_export_home_missing] (no message, no span)
+# Expected: the same program runs on every target that runs a single file
+# (go, llvm-host and c all run a hello-world), or the failure names the cause.
+# Consequence: the engine and its tools are built for rust and ts; go,
+# llvm-host and c are not usable for them.
+
+[package]
+name = "app"
+version = "0.0.0"
+edition = "2026"
+
+[paths]
+source = "src"
+entry = "main.fab"
+library_home = "../libhome"
+
+[build]
+kind = "bin"
+
+[locale]
+locale = "en"

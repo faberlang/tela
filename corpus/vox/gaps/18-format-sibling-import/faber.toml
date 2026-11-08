@@ -1,0 +1,30 @@
+# gap 18: `faber format` refuses a library module that imports a sibling module
+# of its own package.
+#
+# Run (from gaps/):
+#   faber check 18-format-sibling-import                       ok
+#   faber format 18-format-sibling-import/src/a.fab --check    1 files already formatted
+#   faber format 18-format-sibling-import/src/b.fab --check
+#       error[PKG001:unknown_library_module] analysis .../src/b.fab   span: <none>   (no message)
+#       0 of 1 files would be reformatted, 1 header-formatted (program refused)
+# Expected: the formatter resolves the package's own provider, as `check` does.
+# Consequence: every engine module that imports a sibling (`engine:body` ...)
+# is formatted by hand to the formatter's style (Stroustrup braces).
+
+[package]
+name = "one"
+version = "0.0.0"
+edition = "2026"
+
+[library]
+provider = "one"
+
+[paths]
+source = "src"
+
+[build]
+kind = "lib"
+targets = ["rust", "ts"]
+
+[locale]
+locale = "en"

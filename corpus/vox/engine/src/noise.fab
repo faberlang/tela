@@ -1,0 +1,15 @@
+# noise.fab: white noise from a 32-bit linear congruential generator.
+#
+# Integer arithmetic is exact and wide, so the product below stays under 2^53
+# and every target produces the same sequence.
+
+@ public
+class Noise {
+    mut int seed = 12345
+
+    # Why: Numerical Recipes constants; the high bits are used, the low bits are weak.
+    fn next() → f64 {
+        self.seed ← (self.seed * 1664525 + 1013904223) % 4294967296
+        return (self.seed ↦ f64) / 2147483648.0 - 1.0
+    }
+}

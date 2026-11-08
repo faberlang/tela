@@ -1,0 +1,95 @@
+# render-wav: render the vowels /a e i o u/ (male body, 110 Hz, about 1 s
+# each) to mono 16-bit 44.1 kHz WAV files, vowel-a.wav ... vowel-u.wav, in the
+# directory given as the first argument (default ./vox-wav).
+#
+# Needs the native file leaf (norma:fs), so build it for a native target:
+#   faber build tools/render-wav -t rust --release -o <dir>
+# (`faber run` also works but leaves the JIT because of the norma:fs call, gap 12,
+# and renders on the interpreter: about 5 s for the five files.)
+
+import from "engine:engine" eng
+import from "engine:vowels" vowels
+import from "norma:fs" fs
+import from "norma:process" process
+
+const f64 SR = 44100.0
+const int FRAMES = 44100
+# The voice stops at this frame and the vocal tract rings out the rest.
+const int HOLD_AT = 38000
+
+fn le16(int v) → list<b8> {
+    let int m ← v % 65536
+    mut list<b8> out ← empty
+    out.append((m % 256) ↦ b8)
+    out.append(((m / 256) % 256) ↦ b8)
+    return out
+}
+
+fn le32(int v) → list<b8> {
+    mut list<b8> out ← empty
+    out.extend(le16(v % 65536))
+    out.extend(le16(v / 65536))
+    return out
+}
+
+fn wav(list<f64> samples) → list<b8> {
+    let int data ← samples.length() * 2
+    mut list<b8> out ← empty
+    out.extend([0x52, 0x49, 0x46, 0x46])
+    out.extend(le32(36 + data))
+    out.extend([0x57, 0x41, 0x56, 0x45])
+    out.extend([0x66, 0x6d, 0x74, 0x20])
+    out.extend(le32(16))
+    out.extend(le16(1))
+    out.extend(le16(1))
+    out.extend(le32(44100))
+    out.extend(le32(88200))
+    out.extend(le16(2))
+    out.extend(le16(16))
+    out.extend([0x64, 0x61, 0x74, 0x61])
+    out.extend(le32(data))
+    for from samples let s {
+        let int q ← (s * 32767.0).round()
+        out.extend(le16(q ⤒ -32768 ⤓ 32767))
+    }
+    return out
+}
+
+fn render_vowel(string name) → list<f64> {
+    let vowels.Vowel v ← vowels.vowel(name)
+    # gap 03b: `mut` is needed (setters mutate it, and the Rust target needs it),
+    # yet the checker warns WARN013 unnecessary mut for an imported class.
+    mut eng.Engine e ← eng.make_engine(0, SR)
+    e.set_tongue_x(v.tongue_x)
+    e.set_tongue_h(v.tongue_h)
+    e.set_lips(v.lips)
+    e.set_jaw(v.jaw)
+    e.set_breath(0.9)
+    mut list<f64> samples ← e.render(HOLD_AT)
+    e.set_mode(eng.MODE_HOLD)
+    samples.extend(e.render(FRAMES - HOLD_AT))
+    return samples
+}
+
+main {
+    let list<string> args ← process.argv()
+    let string dir ← args.length() ≻ 0 ✓ args[0] ✗ "vox-wav"
+    do {
+        fs.create_dir(dir)
+    } catch err {
+        print "note: could not create §, continuing"(dir)
+    }
+    # gap 09: a literal list in the `for` head breaks the Rust target; a typed name does not.
+    let list<string> names ← ["a", "e", "i", "o", "u"]
+    for from names let name {
+        let list<f64> samples ← render_vowel(name)
+        let string path ← "§/vowel-§.wav"(dir, name)
+        do {
+            fs.write_bytes(path, wav(samples))
+            print "wrote § (§ samples)"(path, samples.length())
+        } catch err {
+            print "failed to write §"(path)
+            process.exit_process(1)
+        }
+    }
+}

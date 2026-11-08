@@ -1,0 +1,52 @@
+# gap 03: a method that only calls a mutating method on one of its fields is
+# compiled as a read-only method on the Rust target.
+#
+# `go` and `go3` only call `bump`, which mutates `self.cell`. The Rust target
+# emits `pub fn go(&self, ..)` and rustc rejects it:
+#   error[E0596]: cannot borrow `self.cell` as mutable, as it is behind a `&` reference
+# `go2` has a direct store of its own and compiles to `&mut self`. On the
+# runner, JIT, ts and go all three work (the call site does need `mut`: calling
+# `go` on a `let` binding is SEM020, so the checker knows `go` mutates).
+#
+# Run:      faber check 03-field-delegate-mut.fab            ok
+#           faber build -t rust 03-field-delegate-mut.fab    E0596 twice (go, go3)
+#           faber run -t ts 03-field-delegate-mut.fab        1.0 2.0 3.0
+# Expected: `go` and `go3` are `&mut self` on the Rust target.
+# Used by:  engine/src/voice.fab (Voice.message) carries a message counter so it
+#           has a store of its own and is `&mut self`; marked `# gap 03`.
+# See also 03b (the same area, across modules).
+
+class Cell {
+    mut f64 v
+
+    fn bump(f64 x) → f64 {
+        self.v ← self.v + x
+        return self.v
+    }
+}
+
+class Holder {
+    mut Cell cell
+    mut int calls
+
+    fn go(f64 x) → f64 {
+        return self.cell.bump(x)
+    }
+
+    fn go2(f64 x) → f64 {
+        self.calls ← self.calls + 1
+        return self.cell.bump(x)
+    }
+
+    fn go3(f64 x) → f64 {
+        let f64 y ← self.cell.bump(x)
+        return y
+    }
+}
+
+main {
+    mut Holder h ← Holder { cell = Cell { v = 0.0 }, calls = 0 }
+    print h.go(1.0)
+    print h.go2(1.0)
+    print h.go3(1.0)
+}

@@ -1,0 +1,23 @@
+# gap 09: Rust target, `for from` over a list literal of strings.
+#
+# Run:      faber check 09-rust-for-string-list.fab             ok
+#           faber run 09-rust-for-string-list.fab               prints a b
+#           faber build -t rust 09-rust-for-string-list.fab
+# Actual (rust):
+#   error[E0308]: mismatched types
+#       let l_s: ... = shout(l_name.clone());   expected `String`, found `&str`
+# (the literal list is emitted as `vec!["a", "b"]`, a Vec<&str>, so the loop
+# variable is a &str when it is passed to a `string` parameter.)
+# Plain formulation: bind the list to a typed name first,
+# `let list<string> names ← ["a", "b"]`, then loop over `names`
+# (engine/tools/render-wav; marked `# gap 09`).
+
+fn shout(string s) → string {
+    return s
+}
+
+main {
+    for from ["a", "b"] let name {
+        print shout(name)
+    }
+}

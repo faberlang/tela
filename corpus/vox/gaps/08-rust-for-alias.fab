@@ -1,0 +1,47 @@
+# gap 08: Rust target, `for from` over a local alias of a nested list field.
+#
+# Run:      faber check 08-rust-for-alias.fab                   ok
+#           faber run 08-rust-for-alias.fab                     prints [2.0, 1.0, 2.0, 3.0]
+#           faber run -t ts 08-rust-for-alias.fab               prints the same
+#           faber emit -t rust 08-rust-for-alias.fab            shows the borrow below
+#           faber build -t rust 08-rust-for-alias.fab           rustc fails
+# Actual (rust): the alias is emitted as a borrow and the loop borrows it again,
+#     let l_area: &Vec<f64> = &self.w.area;
+#     for i0 in &(l_area) {
+#   error[E0277]: `&&Vec<f64>` is not an iterator
+# Expected: an alias that is iterated compiles (clone it, or do not re-borrow).
+# Plain formulation: iterate the field expression itself, `for from self.w.area`.
+# Marked `# gap 08` in engine/src/engine.fab (Engine.telemetry).
+
+class Wave {
+    mut list<f64> area
+    mut list<f64> narea
+}
+
+class Eng {
+    mut Wave w
+    mut f64 len
+
+    fn telemetry() → list<f64> {
+        let list<f64> area ← self.w.area
+        let list<f64> f ← est(area, self.len)
+        mut list<f64> t ← empty
+        t.append(f[0])
+        for from area let a {
+            t.append(a)
+        }
+        for from self.w.narea let a {
+            t.append(a)
+        }
+        return t
+    }
+}
+
+fn est(list<f64> a, f64 len) → list<f64> {
+    return [a[0] * len, 2.0]
+}
+
+main {
+    let Eng e ← Eng { w = Wave { area = [1.0, 2.0], narea = [3.0] }, len = 2.0 }
+    print e.telemetry()
+}

@@ -1,0 +1,31 @@
+# gap 02: a library whose manifest lists ts cannot be built for ts.
+#
+# Run (from gaps/):
+#   faber check 02-lib-ts-build                  ok
+#   faber build 02-lib-ts-build -t ts            exit 1:
+#       error: package has no entry unit for TypeScript assembly
+#   faber build 02-lib-ts-build -t rust          builds libone.rlib (exit 0)
+# The same manifest shape is tela's (kind = "lib", targets = ["rust", "ts"]):
+# `faber build tela -t ts` exits 65 on the same step.
+# Expected: a library builds to ts as a module set (the worklet and browser
+# lanes need the engine as ts modules), or the manifest rejects "ts" for a lib.
+# Plain formulation used: the engine is built for ts through a bin package that
+# imports it by library_home (engine/tools/bench-realtime).
+
+[package]
+name = "one"
+version = "0.0.0"
+edition = "2026"
+
+[library]
+provider = "one"
+
+[paths]
+source = "src"
+
+[build]
+kind = "lib"
+targets = ["rust", "ts"]
+
+[locale]
+locale = "en"

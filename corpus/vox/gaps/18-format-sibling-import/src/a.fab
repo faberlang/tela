@@ -1,0 +1,4 @@
+@ public
+fn one() → int {
+    return 1
+}

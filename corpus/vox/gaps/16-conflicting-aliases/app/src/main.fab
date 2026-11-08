@@ -1,0 +1,7 @@
+import from "mini:mini" mini
+import from "mini:other" other
+
+main {
+    print mini.twice(21)
+    print other.thrice(5)
+}

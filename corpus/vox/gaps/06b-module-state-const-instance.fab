@@ -1,0 +1,32 @@
+# gap 06b: a `const` class instance with `mut` fields checks, but keeps its
+# state on one target only.
+#
+# Run:      faber check 06b-module-state-const-instance.fab      (ok, no warning)
+#           faber run 06b-module-state-const-instance.fab        (prints 1 1)
+#           faber run -t clif-jit 06b-module-state-const-instance.fab   (1 1)
+#           faber run --device reference 06b-module-state-const-instance.fab (1 1)
+#           faber run -t ts 06b-module-state-const-instance.fab  (1 2)
+# Expected: either an error (a compile-time constant cannot be mutated, the
+# rule SEM062 states) or the same answer everywhere.
+# Actual:   the runner and the JIT build a fresh `C` at each use; ts shares one
+#           object, so the call count survives only there.
+
+class Counter {
+    mut int n
+
+    fn bump() → int {
+        self.n ← self.n + 1
+        return self.n
+    }
+}
+
+const Counter C = Counter { n = 0 }
+
+fn tick() → int {
+    return C.bump()
+}
+
+main {
+    print tick()
+    print tick()
+}

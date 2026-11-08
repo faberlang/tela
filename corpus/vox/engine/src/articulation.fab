@@ -1,0 +1,136 @@
+# articulation.fab: area functions from articulation.
+#
+# Controls, all in 0..1 unless noted:
+#   tongue_x  0 = tongue pulled back, 1 = tongue pushed forward
+#   tongue_h  0 = tongue low, 1 = tongue raised toward the palate
+#   lips      0 = lips closed, 1 = lips wide open (small values are rounded)
+#   jaw       0 = jaw closed, 1 = jaw dropped
+#   velum     0 = soft palate raised (no nose), 1 = lowered (nasal port open)
+#   tip_place, tip_area: a second, narrow constriction (fricatives and stops)
+#             at tip_place (0 = glottis, 1 = lips) with area tip_area in cm^2;
+#             tip_area >= 9 means no tip constriction.
+#
+# The oral tract is N_SEC sections from the glottis (index 0) to the lips.
+# A smooth baseline tube (a narrow larynx tube, a pharynx that widens as the
+# tongue moves forward, an oral cavity that widens as the jaw drops) is
+# narrowed by one raised-cosine tongue constriction whose place, depth and
+# width interpolate between four corner shapes (low back, low front, high
+# back, high front), and ends in a lip tube whose length and area follow the
+# lip opening. Section diameters become areas as pi/4 * d^2.
+#
+# The corner constants were fitted so the vowels in vowels.fab land on adult
+# male formants (Peterson and Barney 1952; Hillenbrand et al. 1995); they
+# are a model of the tract, not measurements of one speaker.
+
+import from "engine:body" body
+
+# gap 04: the built-in float methods (.sin(), .cos(), .exp(), .sqrt(), .power())
+# are used instead of norma:math, which does not link on the ts target.
+const f64 PI = 3.141592653589793
+
+# Knot positions of the baseline tube, fractions of the tract length.
+const f64 K0 = 0.0
+const f64 K1 = 0.10
+const f64 K2 = 0.20
+const f64 K3 = 0.34
+const f64 K4 = 0.46
+const f64 K5 = 0.58
+const f64 K6 = 0.72
+const f64 K7 = 0.84
+const f64 K8 = 1.0
+
+fn lerp(f64 a, f64 b, f64 t) → f64 {
+    return a + (b - a) * t
+}
+
+fn smooth(f64 t) → f64 {
+    let f64 c ← t ⤒ 0.0 ⤓ 1.0
+    return c * c * (3.0 - 2.0 * c)
+}
+
+# Why: baseline diameter between two knots, cosine eased.
+fn ease(f64 d0, f64 d1, f64 t) → f64 {
+    return lerp(d0, d1, 0.5 - 0.5 * (PI * t).cos())
+}
+
+# Why: raised-cosine bump, 1 at s = 0 and 0 at |s| = 1.
+fn bump(f64 s) → f64 {
+    if s ≤ -1.0 or s ≥ 1.0 {
+        return 0.0
+    }
+    return 0.5 * (1.0 + (PI * s).cos())
+}
+
+@ public
+fn oral_areas(f64 tongue_x, f64 tongue_h, f64 lips, f64 jaw, f64 tip_place, f64 tip_area) → list<f64> {
+    let f64 tx ← tongue_x ⤒ 0.0 ⤓ 1.0
+    let f64 th ← tongue_h ⤒ 0.0 ⤓ 1.0
+    let f64 lp ← lips ⤒ 0.0 ⤓ 1.0
+    let f64 jw ← jaw ⤒ 0.0 ⤓ 1.0
+
+    let f64 d_ph ← 1.75 + 1.5 * tx
+    let f64 d_or ← (2.0 + 1.6 * jw) * (1.0 - 0.30 * th * tx)
+    let f64 d_lar ← 1.1
+    let f64 d_ph_start ← 1.9
+
+    let f64 uc ← lerp(lerp(0.30, 0.55, tx), lerp(0.62, 0.77, tx), th)
+    let f64 dc ← lerp(lerp(1.0, 1.9, tx), lerp(0.85, 0.60, tx), th)
+    let f64 w ← lerp(lerp(0.30, 0.20, tx), lerp(0.14, 0.15, tx), th)
+
+    let f64 lip_area ← 0.02 + 0.10 * smooth(lp / 0.05) + 5.0 * lp
+    let f64 d_lip ← (lip_area / (PI / 4.0)).sqrt()
+    let f64 ell ← 0.04 + 0.08 * (1.0 - lp)
+
+    mut list<f64> out ← empty
+    for range 0 ‥ body.N_SEC let i {
+        let f64 u ← ((i ↦ f64) + 0.5) / (body.N_SEC ↦ f64)
+
+        mut f64 d ← d_or
+        if u ≤ K1 {
+            d ← d_lar
+        }
+        elif u ≤ K2 {
+            d ← ease(d_lar, d_ph_start, (u - K1) / (K2 - K1))
+        }
+        elif u ≤ K3 {
+            d ← ease(d_ph_start, d_ph, (u - K2) / (K3 - K2))
+        }
+        elif u ≤ K4 {
+            d ← d_ph
+        }
+        elif u ≤ K5 {
+            d ← ease(d_ph, d_or, (u - K4) / (K5 - K4))
+        }
+
+        let f64 s ← (u - uc) / w
+        let f64 dm ← d ⤓ dc
+        d ← d - (d - dm) * bump(s)
+
+        let f64 lt ← smooth((u - (1.0 - ell) + 0.02) / 0.04)
+        d ← lerp(d, d_lip, lt)
+
+        mut f64 a ← (PI / 4.0) * d * d
+        if tip_area ≺ 9.0 {
+            let f64 tb ← bump((u - tip_place) / 0.035)
+            a ← lerp(a, a ⤓ tip_area, tb)
+        }
+        out.append(a ⤒ 0.02)
+    }
+    return out
+}
+
+# Why: nasal tract of N_NASAL sections from the velum to the nostrils. Section
+# 0 is the velopharyngeal port, whose area follows the velum control; the rest
+# is a fixed nasal cavity (about 3 cm^2 in the nasopharynx, widening in the
+# nose, narrowing at the nostrils).
+@ public
+fn nasal_areas(f64 velum) → list<f64> {
+    let f64 v ← velum ⤒ 0.0 ⤓ 1.0
+    mut list<f64> out ← empty
+    out.append((1.6 * v) ⤒ 0.001)
+    for range 1 ‥ body.N_NASAL let j {
+        let f64 u ← (j ↦ f64) / ((body.N_NASAL - 1) ↦ f64)
+        out.append(2.6 + 2.0 * (PI * u).sin() - 0.8 * u)
+    }
+    return out
+}

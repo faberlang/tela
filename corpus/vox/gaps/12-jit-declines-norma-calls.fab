@@ -1,0 +1,25 @@
+# gap 12: any program that calls a norma provider function leaves the JIT.
+#
+# Run:      faber run 12-jit-declines-norma-calls.fab
+# Actual:   info[ENGINE001]: running on the MIR interpreter (slow): clif-jit declined: provider call package:norma:fs::fs::write_bytes; gaps: provider call package:norma:fs::fs::write_bytes
+#           and the whole program (here a 3,000,000-step loop) runs on the
+#           interpreter. norma:math::sin and norma:time::monotonic decline the
+#           same way (see gap 04 and gap 05 runs).
+# Expected: the JIT compiles the program and calls the provider function.
+# Consequence: a tool that renders audio and writes a WAV must be built for a
+# native target (rust), since `faber run` of the same source is interpreted.
+
+import from "norma:fs" fs
+
+main {
+    mut int s ← 0
+    for range 0 ‥ 3000000 let i {
+        s ← s + i % 7
+    }
+    print s
+    do {
+        fs.write_bytes("/private/tmp/vox-gap12.bin", [0x01, 0x02])
+    } catch err {
+        print "write failed"
+    }
+}

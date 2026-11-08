@@ -1,0 +1,14 @@
+@ public
+class Counter {
+    mut int n
+
+    fn bump() → int {
+        self.n ← self.n + 1
+        return self.n
+    }
+}
+
+@ public
+fn make() → Counter {
+    return Counter { n = 0 }
+}

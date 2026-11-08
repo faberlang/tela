@@ -1,0 +1,74 @@
+# formants.fab: formant estimate of an area function (telemetry F1 to F3).
+#
+# The oral tract is a chain of uniform lossless tubes driven by a flow source
+# at the glottis and open at the lips. Its transfer function is 1 / D(f),
+# where D is the lower-right entry of the product of the section matrices
+# [[cos t, j Z sin t], [j sin t / Z, cos t]] (t = 2 pi f dx / c, Z = 1 / area).
+# Every product keeps the form [[a, j b], [j c, d]] with real a, b, c, d, so D
+# is real and the formants are its first zero crossings. A short tube of the
+# lip area and 0.6 times the lip radius models the radiation end correction.
+# The nose is ignored (the estimate is for a closed velum), and losses are
+# ignored (they move formants very little).
+
+import from "engine:body" body
+
+# gap 04: the built-in float methods (.sin(), .cos(), .exp(), .sqrt(), .power())
+# are used instead of norma:math, which does not link on the ts target.
+const f64 PI = 3.141592653589793
+
+# Scan resolution in Hz; the crossing is refined by linear interpolation.
+const f64 SCAN_STEP = 20.0
+const f64 SCAN_START = 100.0
+const f64 SCAN_END = 5500.0
+
+fn chain_d(list<f64> area, f64 dx, f64 ell, f64 f) → f64 {
+    let f64 theta ← 2.0 * PI * f * dx / body.SOUND_SPEED
+    let f64 c ← theta.cos()
+    let f64 s ← theta.sin()
+    mut f64 a ← 1.0
+    mut f64 b ← 0.0
+    mut f64 cc ← 0.0
+    mut f64 d ← 1.0
+    for from area let ai {
+        let f64 b2 ← s / ai
+        let f64 c2 ← s * ai
+        let f64 na ← a * c - b * c2
+        let f64 nb ← a * b2 + b * c
+        let f64 nc ← cc * c + d * c2
+        let f64 nd ← -cc * b2 + d * c
+        a ← na
+        b ← nb
+        cc ← nc
+        d ← nd
+    }
+    # End correction tube, same area as the last section.
+    let f64 lip_a ← area[area.length() - 1]
+    let f64 theta2 ← 2.0 * PI * f * ell / body.SOUND_SPEED
+    return -cc * (theta2.sin() / lip_a) + d * theta2.cos()
+}
+
+# Why: returns [F1, F2, F3] in Hz, with 0.0 for a formant below SCAN_END that
+# was not found.
+@ public
+fn estimate(list<f64> area, f64 length_cm) → list<f64> {
+    let int n ← area.length()
+    let f64 dx ← length_cm / (n ↦ f64)
+    let f64 lip_a ← area[n - 1]
+    let f64 ell ← 0.6 * (lip_a / PI).sqrt()
+    mut list<f64> found ← empty
+    mut f64 f ← SCAN_START
+    mut f64 prev ← chain_d(area, dx, ell, f)
+    while f ≺ SCAN_END and found.length() ≺ 3 {
+        let f64 f2 ← f + SCAN_STEP
+        let f64 cur ← chain_d(area, dx, ell, f2)
+        if prev * cur ≺ 0.0 {
+            found.append(f + SCAN_STEP * prev / (prev - cur))
+        }
+        prev ← cur
+        f ← f2
+    }
+    while found.length() ≺ 3 {
+        found.append(0.0)
+    }
+    return found
+}

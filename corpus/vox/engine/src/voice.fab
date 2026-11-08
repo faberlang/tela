@@ -1,0 +1,117 @@
+# voice.fab: the AudioWorklet entry of the Vox voice engine.
+#
+# A host (the generated AudioWorkletProcessor, or tela:audio's main-thread
+# block processing) creates one Voice with create() and then calls its three
+# methods:
+#
+#   voice.process(frames, sample_rate)  next `frames` mono samples, list<f64>
+#   voice.message(key, value)           one control change
+#   voice.telemetry()                   flat snapshot, list<f64>
+#
+# CONTRACT DEVIATION (gap 06): SCOPE.md fixes three free functions
+# `process`, `message` and `telemetry`. Faber has no module-level mutable
+# state (SEM062 top_level_binding), and a `const` class instance that checks
+# does not keep its state on the runner or the JIT (repro:
+# gaps/06-module-state.fab), so free functions have nowhere to keep the
+# engine between calls. The same three operations are the methods of Voice;
+# the host holds the instance. See GAPS.md, gap 06.
+#
+# Message keys (value is an f64; unknown keys are ignored):
+#
+#   key            value                         range / meaning
+#   pitch          fundamental frequency, Hz     clamped to the body's range
+#   breath         breath pressure               0 silent .. 1 loud
+#   pressed        glottal tension               0 breathy .. 0.5 modal .. 1 pressed
+#   vibrato_cents  vibrato depth, cents          0 .. 200
+#   vibrato_rate   vibrato rate, Hz              0 .. 12
+#   aspiration     breath noise in the voice     0 .. 1
+#   mode           0 voice, 1 whisper, 2 hold    hold closes the glottis: silence
+#   body           0 male, 1 female, 2 child     changes tract length and pitch
+#   tongue_x       tongue position               0 back .. 1 front
+#   tongue_h       tongue height                 0 low .. 1 high
+#   lips           lip opening                   0 closed .. 1 wide (small = rounded)
+#   jaw            jaw drop                      0 closed .. 1 open
+#   velum          soft palate                   0 raised (oral) .. 1 lowered (nasal)
+#   tip_place      tip constriction place        0 glottis .. 1 lips
+#   tip_area       tip constriction area, cm^2   >= 9 means none; 0.02 is a full stop
+#   turbulence     fricative noise gain          0 .. 4, default 1
+#   gain           master gain                   0 .. 4, default 1
+#
+# Telemetry layout (Float64Array of TEL_LENGTH = 217 values; the TEL_*
+# constants in engine.fab name the offsets):
+#
+#   index    count  meaning
+#   0        1      layout version (1)
+#   1        1      oral section count (44)
+#   2        1      nasal section count (29)
+#   3        1      glottal waveform points (64)
+#   4        1      f0 now, Hz (includes vibrato and glide)
+#   5        1      glottal Rd (0.3 pressed .. 2.7 breathy)
+#   6        1      voice amplitude 0..1 (smoothed)
+#   7        1      peak |sample| of the last process block
+#   8        1      rms of the last process block
+#   9        1      mode (0, 1, 2)
+#   10       1      velopharyngeal port area, cm^2
+#   11..13   3      F1, F2, F3 of the current oral tract, Hz (0 = not found);
+#                   closed-velum estimate from the area function
+#   14       1      tract length, cm
+#   15       1      glottal phase 0..1 (where in the period the source is)
+#   16..59   44     oral area function, glottis to lips, cm^2
+#   60..88   29     nasal area function, velum to nostrils, cm^2
+#   89..152  64     glottal flow over one period, 0..1 of its peak
+#   153..216 64     glottal flow derivative over one period, peak negative = -1
+
+import from "engine:engine" eng
+
+@ public
+class Voice {
+    mut eng.Engine engine
+    mut f64 rate = 44100.0
+    # Count of messages handled. gap 03: `message` only calls setters on
+    # `self.engine`, which the Rust target does not count as mutation (it emits
+    # `&self` and rustc rejects the call); a store of its own makes it `&mut`.
+    mut int messages = 0
+
+    fn process(int frames, f64 sample_rate) → list<f64> {
+        if sample_rate ≢ self.rate {
+            self.rate ← sample_rate
+            self.engine.set_sample_rate(sample_rate)
+        }
+        return self.engine.render(frames)
+    }
+
+    fn message(string key, f64 value) → void {
+        self.messages ← self.messages + 1
+        switch key {
+            case "pitch" { self.engine.set_pitch(value) }
+            case "breath" { self.engine.set_breath(value) }
+            case "pressed" { self.engine.set_pressed(value) }
+            case "vibrato_cents" { self.engine.set_vibrato_depth(value) }
+            case "vibrato_rate" { self.engine.set_vibrato_rate(value) }
+            case "aspiration" { self.engine.set_aspiration(value) }
+            case "mode" { self.engine.set_mode(value.round()) }
+            case "body" { self.engine.set_body(value.round()) }
+            case "tongue_x" { self.engine.set_tongue_x(value) }
+            case "tongue_h" { self.engine.set_tongue_h(value) }
+            case "lips" { self.engine.set_lips(value) }
+            case "jaw" { self.engine.set_jaw(value) }
+            case "velum" { self.engine.set_velum(value) }
+            case "tip_place" { self.engine.set_tip_place(value) }
+            case "tip_area" { self.engine.set_tip_area(value) }
+            case "turbulence" { self.engine.set_turbulence(value) }
+            case "gain" { self.engine.set_gain(value) }
+            default { }
+        }
+    }
+
+    fn telemetry() → list<f64> {
+        return self.engine.telemetry()
+    }
+}
+
+# Why: the host's constructor. A fresh male voice at 44.1 kHz, silent until
+# breath is set.
+@ public
+fn create() → Voice {
+    return Voice { engine = eng.make_engine(0, 44100.0) }
+}

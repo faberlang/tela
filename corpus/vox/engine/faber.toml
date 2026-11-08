@@ -1,0 +1,17 @@
+[package]
+name = "vox-engine"
+version = "0.0.0"
+edition = "2026"
+
+[library]
+provider = "engine"
+
+[paths]
+source = "src"
+
+[build]
+kind = "lib"
+targets = ["rust", "ts"]
+
+[locale]
+locale = "en"

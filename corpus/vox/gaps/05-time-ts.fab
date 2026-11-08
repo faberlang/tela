@@ -1,0 +1,22 @@
+# gap 05: the clock leaf is not available on the ts target.
+#
+# Run:      faber run 05-time-ts.fab             (prints a duration in ns)
+#           faber run -t ts 05-time-ts.fab
+# Expected: a monotonic clock on ts (Node has process.hrtime / performance.now).
+# Actual (ts): error: the clock leaf is not supported on the ts target (route `tempus:nunc`)
+#           (the route name is Latin although the file is en).
+# Plain formulation: engine/tools/bench-realtime has no clock; bench.sh times
+# every target from outside. Marked `(gap 05)` in the tool.
+
+import from "norma:time" time
+
+main {
+    let _ t0 ← time.monotonic()
+    mut int s ← 0
+    for range 0 ‥ 1000000 let i {
+        s ← s + i % 7
+    }
+    let _ t1 ← time.monotonic()
+    print s
+    print t1 - t0
+}

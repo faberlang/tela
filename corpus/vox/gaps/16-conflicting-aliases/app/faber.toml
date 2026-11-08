@@ -1,0 +1,29 @@
+# gap 16: one library module cannot be imported under different aliases by
+# different modules.
+#
+# Run (from gaps/):
+#   faber check 16-conflicting-aliases/app
+#       error[PKG001:library_conflicting_aliases] tool .../libhome/mini/src/mini.fab
+#       span: 0..25      (no message; the span is in the library file, not at either import)
+#   faber run 16-conflicting-aliases/app
+#       error: library module `mini` is imported under conflicting aliases `mini` and `m`
+# Expected: an alias is local to the importing module (`import from "mini:mini" m`
+# in other.fab and `... mini` in main.fab are independent names).
+# Plain formulation: use one alias per library module in the whole package
+# (engine/src: body, glottis, tract, noise, art, formants, eng).
+
+[package]
+name = "app"
+version = "0.0.0"
+edition = "2026"
+
+[paths]
+source = "src"
+entry = "main.fab"
+library_home = "../libhome"
+
+[build]
+kind = "bin"
+
+[locale]
+locale = "en"

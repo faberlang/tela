@@ -1,0 +1,21 @@
+# gap 01: SEM020 names the wrong receiver.
+#
+# Run:      faber check 01-sem020-receiver-name.fab
+# Expected: the diagnostic names the binding that must be `mut`, here `t`.
+# Actual:   message: `step` changes `value` in place, but `value` is an immutable binding
+#           help: declare `value` with `mut` so it can be changed in place, ...
+#           (`value` is not a name in this program; the binding is `t`).
+
+class Counter {
+    mut int n
+
+    fn step() → int {
+        self.n ← self.n + 1
+        return self.n
+    }
+}
+
+main {
+    let Counter t ← Counter { n = 0 }
+    print t.step()
+}

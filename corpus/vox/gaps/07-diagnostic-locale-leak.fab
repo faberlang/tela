@@ -1,0 +1,33 @@
+# gap 07: en-locale diagnostics contain Latin words.
+#
+# Run:      faber check 07-diagnostic-locale-leak.fab
+# Actual (both are en files):
+#   warning[WARN028:redundant_member_publica]
+#       message: `@ publica` on a member is redundant; members are public by default
+#       (en spells it `@ public`)
+#   error[SEM011:failable_conversio_requires_handler]
+#       message: failable conversion from f64 to numerus requires a '⊥' default, a ⇥ declaring
+#       context, a local handler, or a trap trap
+#       (en spells the type `int`; "trap trap" is a doubled word)
+# Expected: en diagnostics use en spellings (the rule that en mode is English
+# everywhere).
+
+@ public
+class Box {
+    mut f64 x
+
+    @ public
+    fn set(f64 v) → void {
+        self.x ← v
+    }
+
+    fn to_int() → int {
+        return self.x ↦ int via Trunc
+    }
+}
+
+main {
+    mut Box b ← Box { x = 1.5 }
+    b.set(2.5)
+    print b.to_int()
+}

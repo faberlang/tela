@@ -1,0 +1,42 @@
+# gap 17: the ts target emits slow shapes for the hot loop.
+#
+# Run:      faber build -t ts 17-ts-emission-shape.fab -o <dir>   then read dist/*.js
+# Emitted for the loop below (excerpt, one iteration of `for range 0 ‥ n - 1`):
+#   const s1 = 0n; const e1 = BigInt(exact.sub(l_n, 1)); ...
+#   for (let n1 = s1; (a1 ? n1 < e1 : n1 > e1); n1 += d1) { const l_i = Number(n1);
+#     const l_lnext = ((__o, __i) => { if (!(__i in __o)) throw new Error("array index out of bounds");
+#                                       return __o[__i]; })(this.l, exact.add(l_i, 1));
+# i.e. a BigInt induction variable converted with Number() every iteration, a
+# fresh closure for every list read, and `exact.add` / `exact.sub` calls for
+# every integer `+`/`-`.
+# Measured (node 24, Apple M-series): the engine's Tract.step is 74% of the
+# run; the whole engine runs 9.6x realtime on node and 107x on rust --release
+# (tools/bench-realtime/bench.sh). On the 44-section ladder microbenchmark
+# (2,000,000 steps) node takes 1.57 s and rust --release 0.056 s (28x).
+# Expected: numbers for int loop counters bounded by `n`, index reads without
+# a closure when the index is proven in range (the loop bound proves it here).
+
+class Ladder {
+    mut list<f64> r
+    mut list<f64> l
+    mut list<f64> k
+
+    fn step() → f64 {
+        let int n ← self.r.length()
+        mut f64 rcur ← self.r[0]
+        for range 0 ‥ n - 1 let i {
+            let f64 lnext ← self.l[i + 1]
+            let f64 w ← self.k[i] * (rcur - lnext)
+            let f64 rnext ← self.r[i + 1]
+            self.r[i + 1] ← (rcur + w) * 0.9995
+            self.l[i] ← (lnext + w) * 0.9995
+            rcur ← rnext
+        }
+        return rcur
+    }
+}
+
+main {
+    mut Ladder t ← Ladder { r = [1.0, 0.0, 0.0], l = [0.0, 0.0, 0.0], k = [0.5, -0.5, 0.0] }
+    print t.step()
+}

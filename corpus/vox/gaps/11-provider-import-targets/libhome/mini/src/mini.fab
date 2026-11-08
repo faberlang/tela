@@ -1,0 +1,4 @@
+@ public
+fn twice(int x) → int {
+    return x * 2
+}

@@ -1,0 +1,18 @@
+# gap 04: `norma:math` does not link on the ts target.
+#
+# Run:      faber check 04-norma-math-ts.fab     (ok)
+#           faber run 04-norma-math-ts.fab       (prints 0.8414709848078965)
+#           faber run -t ts 04-norma-math-ts.fab
+# Expected: 0.8414709848078965 on every target.
+# Actual (ts): tsc fails,
+#           src/main.ts(..): error TS2552: Cannot find name 'math'. Did you mean 'Math'?
+#           (the emitted code calls `math.sin(...)` and never defines `math`).
+# Plain formulation used in engine/: the built-in float methods, x.sin(),
+# x.cos(), x.exp(), x.sqrt(), x.power(y); they run on the runner, the JIT, rust
+# and ts. Marked `# gap 04` in the engine modules.
+
+import from "norma:math" math
+
+main {
+    print math.sin(1.0)
+}

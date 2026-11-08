@@ -1,0 +1,240 @@
+# tract.fab: Kelly-Lochbaum waveguide vocal tract with a nasal branch.
+#
+# The oral tract is N_SEC uniform sections from glottis to lips; section i has
+# cross-section area area[i]. Pressure waves travel one section per step: r[i]
+# is the right-going (toward the lips) wave arriving at junction i, and l[i]
+# the left-going wave arriving at the left end of section i. At the junction
+# between sections i and i+1, with reflection k = (A_i - A_{i+1}) / (A_i + A_{i+1}),
+#     w = k (r[i] - l[i+1]);   r'[i+1] = r[i] + w;   l'[i] = l[i+1] + w
+# (Kelly and Lochbaum 1962). Each pass also loses a little energy to walls and
+# friction, more in narrow sections.
+#
+# At the velum the oral tract and the nasal tract meet in a three-port
+# parallel junction: p = 2 (A_a r + A_b l + A_n nl) / (A_a + A_b + A_n) and
+# every outgoing wave is p minus the incoming wave of the same port.
+#
+# Ends: the glottis reflects with a coefficient that drops while the glottis
+# is open (the trachea loads the tract) and takes a source injection; each
+# mouth and nostril reflects through a one-pole low-pass (radiation loses
+# high frequencies, more for a wider opening) and radiates the transmitted
+# flow. Sources enter as waves, so the output is already the radiated pressure
+# of a flow-derivative source.
+
+import from "engine:body" body
+
+# gap 04: the built-in float methods (.sin(), .cos(), .exp(), .sqrt(), .power())
+# are used instead of norma:math, which does not link on the ts target.
+const f64 PI = 3.141592653589793
+
+# Loss per cm of tube: wall absorption, and friction that grows as sections
+# narrow. A pass over one section of length dx loses dx times these.
+const f64 LOSS_WALL = 0.0008
+const f64 LOSS_FRICTION = 0.0010
+
+@ public
+class Tract {
+    mut int n = 44
+    mut int nn = 29
+    # Velum junction sits between oral section iv and iv + 1.
+    mut int iv = 18
+    mut bool nasal_on = false
+    mut list<f64> r = empty
+    mut list<f64> l = empty
+    mut list<f64> k = empty
+    mut list<f64> g = empty
+    mut list<f64> area = empty
+    mut list<f64> nr = empty
+    mut list<f64> nl = empty
+    mut list<f64> nk = empty
+    mut list<f64> ng = empty
+    mut list<f64> narea = empty
+    # Three-port weights at the velum: 2 A / (A_a + A_b + A_n).
+    mut f64 wa = 1.0
+    mut f64 wb = 1.0
+    mut f64 wn = 0.0
+    # Mouth radiation: reflection low-pass pole, magnitude, state, output gain.
+    mut f64 lip_lam = 0.5
+    mut f64 lip_rho = 0.98
+    mut f64 lip_y = 0.0
+    mut f64 lip_gain = 1.0
+    mut f64 nose_lam = 0.5
+    mut f64 nose_rho = 0.98
+    mut f64 nose_y = 0.0
+    mut f64 nose_gain = 1.0
+    # Rate the waveguide runs at (Hz), for the radiation pole.
+    mut f64 rate = 88000.0
+    # Section length in cm, for per-cm losses.
+    mut f64 dx = 0.3977
+
+    # Why: one waveguide step. src enters the glottis end, tval is a noise
+    # pressure added in section tidx (tidx 0 means none), rg is the glottis
+    # reflection for this step. Returns the radiated pressure (mouth + nose).
+    fn step(f64 src, int tidx, f64 tval, f64 rg) → f64 {
+        let int n ← self.n
+        let int nn ← self.nn
+        let int iv ← self.iv
+        let f64 l0 ← self.l[0]
+        let f64 rend ← self.r[n - 1]
+        let f64 nl0 ← self.nl[0]
+        let f64 nrend ← self.nr[nn - 1]
+
+        if self.nasal_on {
+            mut f64 nrc ← self.nr[0]
+            for range 0 ‥ nn - 1 let j {
+                let f64 nln ← self.nl[j + 1]
+                let f64 nrn ← self.nr[j + 1]
+                let f64 nw ← self.nk[j] * (nrc - nln)
+                self.nr[j + 1] ← (nrc + nw) * self.ng[j]
+                self.nl[j] ← (nln + nw) * self.ng[j]
+                nrc ← nrn
+            }
+            let f64 ny ← (1.0 - self.nose_lam) * nrend + self.nose_lam * self.nose_y
+            self.nose_y ← ny
+            self.nl[nn - 1] ← -self.nose_rho * ny
+        }
+
+        mut f64 rcur ← self.r[0]
+        for range 0 ‥ n - 1 let i {
+            let f64 lnext ← self.l[i + 1]
+            let f64 rnext ← self.r[i + 1]
+            if i ≡ iv {
+                let f64 p ← self.wa * rcur + self.wb * lnext + self.wn * nl0
+                self.r[i + 1] ← (p - lnext) * self.g[i]
+                self.l[i] ← (p - rcur) * self.g[i]
+                if self.nasal_on {
+                    self.nr[0] ← p - nl0
+                }
+            }
+            else {
+                let f64 w ← self.k[i] * (rcur - lnext)
+                self.r[i + 1] ← (rcur + w) * self.g[i]
+                self.l[i] ← (lnext + w) * self.g[i]
+            }
+            rcur ← rnext
+        }
+
+        self.r[0] ← rg * l0 + src
+        let f64 y ← (1.0 - self.lip_lam) * rend + self.lip_lam * self.lip_y
+        self.lip_y ← y
+        self.l[n - 1] ← -self.lip_rho * y
+
+        if tidx ≻ 0 {
+            self.r[tidx] ← self.r[tidx] + tval
+            self.l[tidx] ← self.l[tidx] + tval
+        }
+
+        mut f64 out ← self.lip_gain * (rend + self.lip_rho * y)
+        if self.nasal_on {
+            out ← out + self.nose_gain * (nrend + self.nose_rho * self.nose_y)
+        }
+        return out
+    }
+
+    # Why: move the areas a fraction a of the way to their targets, then
+    # recompute reflections, losses, velum weights and radiation poles.
+    # Called at control rate, not every step.
+    fn glide(list<f64> target, list<f64> ntarget, f64 a) → void {
+        let int n ← self.n
+        let int nn ← self.nn
+        for range 0 ‥ n let i {
+            self.area[i] ← self.area[i] + (target[i] - self.area[i]) * a
+        }
+        for range 0 ‥ nn let j {
+            self.narea[j] ← self.narea[j] + (ntarget[j] - self.narea[j]) * a
+        }
+        for range 0 ‥ n - 1 let i {
+            let f64 a0 ← self.area[i]
+            let f64 a1 ← self.area[i + 1]
+            self.k[i] ← (a0 - a1) / (a0 + a1)
+            self.g[i] ← 1.0 - self.dx * (LOSS_WALL + LOSS_FRICTION / (((a0 + a1) * 0.5).sqrt() + 0.25))
+        }
+        for range 0 ‥ nn - 1 let j {
+            let f64 a0 ← self.narea[j]
+            let f64 a1 ← self.narea[j + 1]
+            self.nk[j] ← (a0 - a1) / (a0 + a1)
+            self.ng[j] ← 1.0 - self.dx * (LOSS_WALL + 2.0 * LOSS_FRICTION / (((a0 + a1) * 0.5).sqrt() + 0.25))
+        }
+
+        let f64 aa ← self.area[self.iv]
+        let f64 ab ← self.area[self.iv + 1]
+        let f64 an ← self.narea[0]
+        let f64 sum ← aa + ab + an
+        self.wa ← 2.0 * aa / sum
+        self.wb ← 2.0 * ab / sum
+        self.wn ← 2.0 * an / sum
+
+        # Mouth: opening radius sets the radiation cutoff (ka = 0.9) and the
+        # output weight. The weight grows with the opening faster than linear:
+        # a narrow opening rings harder inside the tract, and the extra
+        # exponent evens out loudness across vowels (it is a loudness
+        # compensation fitted by ear-free measurement of rms, not physics).
+        let f64 lip_a ← self.area[n - 1]
+        let f64 lip_r ← (lip_a / PI).sqrt()
+        self.lip_lam ← (-0.9 * body.SOUND_SPEED / (lip_r * self.rate)).exp()
+        self.lip_gain ← (lip_a / (lip_a + 1.5)).power(1.7)
+        let f64 nose_a ← self.narea[nn - 1]
+        let f64 nose_r ← (nose_a / PI).sqrt()
+        self.nose_lam ← (-0.9 * body.SOUND_SPEED / (nose_r * self.rate)).exp()
+        self.nose_gain ← (nose_a / (nose_a + 1.5)).power(1.7)
+
+        # The nose runs only while the port is open or its sound has not died.
+        if an ≻ 0.004 {
+            self.nasal_on ← true
+        }
+        else {
+            mut f64 ring ← 0.0
+            for from self.nr let v {
+                ring ← ring + v.abs()
+            }
+            for from self.nl let v {
+                ring ← ring + v.abs()
+            }
+            if ring ≺ 0.000001 {
+                self.nasal_on ← false
+            }
+        }
+    }
+}
+
+# Why: a tract at rest, all areas 2 cm^2 (about a neutral tube).
+@ public
+fn make_tract(f64 rate, f64 dx) → Tract {
+    mut list<f64> r ← empty
+    mut list<f64> l ← empty
+    mut list<f64> k ← empty
+    mut list<f64> g ← empty
+    mut list<f64> area ← empty
+    for range 0 ‥ body.N_SEC let i {
+        r.append(0.0)
+        l.append(0.0)
+        k.append(0.0)
+        g.append(0.999)
+        area.append(2.0)
+    }
+    mut list<f64> nr ← empty
+    mut list<f64> nl ← empty
+    mut list<f64> nk ← empty
+    mut list<f64> ng ← empty
+    mut list<f64> narea ← empty
+    for range 0 ‥ body.N_NASAL let j {
+        nr.append(0.0)
+        nl.append(0.0)
+        nk.append(0.0)
+        ng.append(0.999)
+        narea.append(3.0)
+    }
+    return Tract {
+        r = r,
+        l = l,
+        k = k,
+        g = g,
+        area = area,
+        nr = nr,
+        nl = nl,
+        nk = nk,
+        ng = ng,
+        narea = narea,
+        rate = rate,
+        dx = dx
+    }
+}

@@ -1,0 +1,5 @@
+import from "mini:mini" mini
+
+main {
+    print mini.twice(21)
+}

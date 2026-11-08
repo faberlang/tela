@@ -1,0 +1,15 @@
+[package]
+name = "vox-bench-realtime"
+version = "0.0.0"
+edition = "2026"
+
+[paths]
+source = "src"
+entry = "main.fab"
+library_home = "../../.."
+
+[build]
+kind = "bin"
+
+[locale]
+locale = "en"

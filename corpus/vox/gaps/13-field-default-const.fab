@@ -1,0 +1,23 @@
+# gap 13: a field default that names a module constant is rejected without a code or a span.
+#
+# Run:      faber check 13-field-default-const.fab
+# Actual:   error[uncoded] analysis .../13-field-default-const.fab
+#           span: <none>
+#           message: public export `Counter` in `.../13-field-default-const.fab` cannot be
+#           represented in a file interface: FieldDefaultUnsupported
+# Expected: either accept a constant in a default (it is a compile-time value,
+# and the language says defaults are `=` constants) or name the field and give
+# a code and a span. With a literal default (`= 32`) the file checks.
+# Plain formulation: the literal, with a comment (engine/src/engine.fab, tick).
+
+const int LIMIT = 32
+
+@ public
+class Counter {
+    mut int n = LIMIT
+}
+
+main {
+    let Counter c ← Counter { }
+    print c.n
+}
