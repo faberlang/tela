@@ -33,14 +33,15 @@ fi
 # CLI defaults to Latin for an untagged input, so the en reader locale is
 # passed explicitly with `--locale en`.
 
-echo "check-compile: kernel + validation + reference + dom + canvas2d + web modules (container library home)"
+echo "check-compile: kernel + validation + reference + dom + canvas2d + audio + web modules (container library home)"
 KERNEL_HOME="${FABER_LIBRARY_HOME:-$ROOT/..}"
 # Stage 5 U2: the reference catalog module joins the compile surface.
 # Web-surface-import U4: the tela:dom + tela:canvas2d modules join (the
 # browser flip's imported seam — U1/U3 landed the sources).
 # Web-to-tela-consumer-migration U1: the tela:web annotation module joins
 # (the WebController packaging entry contract).
-for mod in tela validate reference dom canvas2d web browser; do
+# tela-audio lane: the tela:audio module joins, ahead of web.
+for mod in tela validate reference dom canvas2d audio web browser; do
   echo "check-compile: parsing src/${mod}.fab"
   "$FABER_BIN" check --library-home "$KERNEL_HOME" --locale en "$ROOT/src/${mod}.fab"
 done

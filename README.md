@@ -17,6 +17,7 @@ serialization, and the browser seam that mounts a view into a page.
 | `tela:browser` | Mount, update and dispose lifecycle over the `tela:dom` seam |
 | `tela:dom` | Browser DOM contracts and runtime binding surface |
 | `tela:canvas2d` | Canvas2D drawing-surface contract |
+| `tela:audio` | Web Audio: context lifecycle, master gain, main-thread block processing, AudioWorklet nodes with numeric messages, analyser data |
 | `tela:web` | `WebController` annotation for browser-app entry points |
 
 Views are plain typed values with explicit identity; there is no raw-markup
@@ -55,7 +56,7 @@ faber run --library-home "$PWD/libs" main.fab
 ```
 
 Use an absolute library-home path. The browser modules (`tela:dom`,
-`tela:canvas2d`) also need the TypeScript host runtime in [`runtime/`](runtime/),
+`tela:canvas2d`, `tela:audio`) also need the TypeScript host runtime in [`runtime/`](runtime/),
 bound through [`bindings/ts.toml`](bindings/ts.toml).
 
 ## Layout
@@ -64,7 +65,7 @@ bound through [`bindings/ts.toml`](bindings/ts.toml).
 faber.toml     library provider metadata (provider `tela`)
 src/           public `tela:*` Faber modules
 exempla/       worked examples
-runtime/       TypeScript host runtime for tela:dom and tela:canvas2d
+runtime/       TypeScript host runtime for tela:dom, tela:canvas2d and tela:audio
 bindings/      host-binding manifest
 locale/        library-owned locale member fragments
 tests/         runtime contract tests

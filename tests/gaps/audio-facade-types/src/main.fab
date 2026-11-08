@@ -1,0 +1,72 @@
+# GAP: a browser-app that names a tela:audio type fails the product's
+# TypeScript check, because the generated tela:audio facade re-exports no
+# types.
+#
+# The product writes one facade per binding module (tela-audio.ts) that
+# re-exports the runtime symbols under their Faber names. The genus and
+# handler types it also re-exports (`audio.AudioContext`, …) come from a
+# hard-coded table in radix, `STEM_TYPE_ALIASES`
+# (radix/crates/faber/src/package/product/ts_emit.rs), which has rows for
+# `dom` and `canvas2d` and none for `audio`. Without the row, `main.ts`
+# refers to types the facade does not export:
+#
+#   error: browser product TypeScript check failed:
+#   faber-ts/main.ts(L,C): error TS2694: Namespace '".../faber-ts/tela-audio"'
+#     has no exported member 'AudioContext'.
+#   faber-ts/main.ts(L,C): error TS2694: ... has no exported member 'AudioNode'.
+#   ... (every audio.AudioContext / audio.AudioNode type position)
+#
+# The fix is one table row (the runtime already names the types to match):
+#
+#   ("audio", &[
+#       ("AudioContext", "WebAudioContext"),
+#       ("AudioNode", "WebAudioNode"),
+#       ("BlockHandler", "WebAudioBlockHandler"),
+#       ("MessageHandler", "WebAudioMessageHandler"),
+#   ]),
+#
+# Typechecking main.ts against a hand-written facade with exactly those four
+# type aliases, plus tela/runtime/audio.ts as the shim, is clean under the
+# product's tsconfig (strict, ES2022, DOM lib).
+#
+# To reproduce: copy this package out of the tela tree, make `faber.lock`
+# list tela as a path package (copy the `[[package]]` block from
+# examples/canvas2d-interactive/faber.lock, version "0.0.0", package_root and
+# interface_root pointing at a copy of the tela repo), and run
+#   faber build --package . --library-home <dir holding tela/>
+# NOTE: tela's src/web.fab must first be repaired (see GAP in the lane
+# report: `@ annotatio` no longer parses, PARSE018 wrong_locale_annotation;
+# `@ annotation` fixes it), or the build stops earlier at tela:web.
+#
+# Owner: radix (product facade type-alias table).
+
+import from "tela:web" web
+import from "tela:dom" dom
+import from "tela:audio" audio
+
+fn sine(int frames) → list<f64> {
+    mut list<f64> out ← empty
+    for range 0 ‥ frames let i {
+        print i
+        out.append(0.0)
+    }
+    return out
+}
+
+fn heard(list<f64> data) → void {
+    print data.length()
+}
+
+@ WebController { selector = "#app" }
+fn start(dom.Scope scope) → list<dom.Subscription> {
+    print scope
+    let audio.AudioContext ctx ← audio.create_context()
+    let audio.AudioNode gain ← audio.create_gain(ctx)
+    let audio.AudioNode node ← audio.create_block_node(ctx, 1024, sine)
+    let audio.AudioNode worklet ← audio.create_worklet_node(ctx, "vox-voice")
+    audio.set_message_handler(worklet, heard)
+    audio.connect(node, gain)
+    audio.connect(gain, audio.destination(ctx))
+    let list<dom.Subscription> subs ← empty
+    return subs
+}

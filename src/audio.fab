@@ -1,0 +1,235 @@
+# tela/src/audio.fab — tela:audio — the tela-owned Web Audio contract
+# (English-first).
+#
+# A standalone imperative audio surface in the tela:canvas2d / tela:dom
+# pattern: AudioContext and AudioNode are opaque numeric handles — the
+# runtime resolves each to the live browser object through a module-level
+# Map. One runtime symbol (`webAudio*`) per fn, routed in bindings/ts.toml
+# and cross-checked against this file and runtime/audio.ts by
+# tests/contract-test.ts. No explicit dispose beyond `close`: node handles
+# accumulate until their context is closed (the canvas2d precedent); close
+# releases the context's node handles.
+#
+# One `AudioNode` handle stands for every node kind (destination, gain,
+# block processor, worklet, analyser), because `connect` and `disconnect`
+# take any node. A fn that needs a particular kind (`set_gain`, `set_fft_size`
+# …) throws when given another.
+#
+# Two ways to produce sound, both feeding the same graph:
+#   - block processing on the main thread (`create_block_node`): the
+#     browser calls a Faber handler for every block; the handler receives
+#     the frame count and returns that many mono samples. This is the
+#     fallback route and needs no separate module.
+#   - an AudioWorklet (`load_worklet` + `create_worklet_node`): the
+#     processor lives in a module the page loads by URL; the page steers it
+#     with numeric `{key, value}` messages (`post_message`) and reads its
+#     numeric telemetry back (`set_message_handler`).
+#
+# Browser rules the caller owns: a context starts suspended until `resume`
+# is called from a user gesture (a click or key press); `resume`, `suspend`
+# and `close` are fire-and-forget (the browser settles them later), so read
+# `state` when the outcome matters.
+#
+# Keyword surface (en): class, fn, type, print (the stub marker — the
+# `print` bodies are never executed; the runtime does the work), return,
+# `@ future` for the one async fn, `⇥ string` for its error channel.
+# `f64` is a language scalar width spelling — never localizes.
+
+@ public
+class AudioContext {
+    mut int id = 0
+}
+
+@ public
+class AudioNode {
+    mut int id = 0
+}
+
+# Called by the browser once per block with the frame count; returns exactly
+# that many mono samples.
+@ public
+type BlockHandler = (int) → list<f64>
+
+# Called with a numeric message the worklet processor posted (a
+# Float64Array in the browser).
+@ public
+type MessageHandler = (list<f64>) → void
+
+# ===========================================================================
+# Context lifecycle
+# ===========================================================================
+
+# A new context, suspended until `resume`. Runtime binding: webAudioContext.
+@ public
+fn create_context() → AudioContext {
+    return AudioContext { id = 0 }
+}
+
+# Start (or restart) the context. Must be called from a user-gesture
+# handler, or the browser keeps the context suspended.
+@ public
+fn resume(AudioContext ctx) → void {
+    print ctx
+}
+
+@ public
+fn suspend(AudioContext ctx) → void {
+    print ctx
+}
+
+# Close the context for good and release its node handles.
+@ public
+fn close(AudioContext ctx) → void {
+    print ctx
+}
+
+# "suspended", "running", "closed" (or "interrupted" on some browsers).
+@ public
+fn state(AudioContext ctx) → string {
+    print ctx
+    return ""
+}
+
+# Samples per second the context renders at.
+@ public
+fn sample_rate(AudioContext ctx) → f64 {
+    print ctx
+    return 0.0
+}
+
+# Seconds of audio rendered so far; stands still while suspended.
+@ public
+fn current_time(AudioContext ctx) → f64 {
+    print ctx
+    return 0.0
+}
+
+# The context's output node: connect a graph to it to be heard.
+@ public
+fn destination(AudioContext ctx) → AudioNode {
+    print ctx
+    return AudioNode { id = 0 }
+}
+
+# ===========================================================================
+# Master gain
+# ===========================================================================
+
+# A gain node at unity (1.0).
+@ public
+fn create_gain(AudioContext ctx) → AudioNode {
+    print ctx
+    return AudioNode { id = 0 }
+}
+
+@ public
+fn set_gain(AudioNode node, f64 gain) → void {
+    print node
+    print gain
+}
+
+# ===========================================================================
+# Main-thread block processing (ScriptProcessorNode)
+# ===========================================================================
+
+# A mono source: every `block_size` frames the browser calls `handler` with
+# the frame count and plays the returned samples. `block_size` must be one
+# of 256, 512, 1024, 2048, 4096, 8192, 16384. The node produces sound only
+# while connected toward the destination.
+@ public
+fn create_block_node(AudioContext ctx, int block_size, BlockHandler handler) → AudioNode {
+    print ctx
+    print block_size
+    print handler
+    return AudioNode { id = 0 }
+}
+
+# ===========================================================================
+# AudioWorklet route
+# ===========================================================================
+
+# Load a worklet module by URL; it registers its processors. Resolves when
+# the module is ready, so create nodes only after it. The error channel
+# carries the browser's failure text (a bad URL, a script error).
+@ future
+@ public
+fn load_worklet(AudioContext ctx, string module_url) → void ⇥ string {
+    print ctx
+    print module_url
+}
+
+# A mono source backed by the registered processor `processor_name`.
+@ public
+fn create_worklet_node(AudioContext ctx, string processor_name) → AudioNode {
+    print ctx
+    print processor_name
+    return AudioNode { id = 0 }
+}
+
+# Post one numeric control change `{key, value}` to the node's processor.
+@ public
+fn post_message(AudioNode node, string key, f64 value) → void {
+    print node
+    print key
+    print value
+}
+
+# Deliver the processor's numeric messages to `handler`; replaces any
+# earlier handler on the node.
+@ public
+fn set_message_handler(AudioNode node, MessageHandler handler) → void {
+    print node
+    print handler
+}
+
+# ===========================================================================
+# Analyser
+# ===========================================================================
+
+# An analyser node. It passes audio through unchanged, so tap a source by
+# connecting the source to it.
+@ public
+fn create_analyser(AudioContext ctx) → AudioNode {
+    print ctx
+    return AudioNode { id = 0 }
+}
+
+# A power of two from 32 to 32768. The frequency data has half as many
+# bins; the time-domain data has `size` samples.
+@ public
+fn set_fft_size(AudioNode analyser, int size) → void {
+    print analyser
+    print size
+}
+
+# Current spectrum in decibels, one value per frequency bin.
+@ public
+fn frequency_data(AudioNode analyser) → list<f64> {
+    print analyser
+    let list<f64> data ← empty
+    return data
+}
+
+# Current waveform, `fft size` samples in [-1, 1].
+@ public
+fn time_data(AudioNode analyser) → list<f64> {
+    print analyser
+    let list<f64> data ← empty
+    return data
+}
+
+# ===========================================================================
+# Graph wiring
+# ===========================================================================
+
+@ public
+fn connect(AudioNode source, AudioNode target) → void {
+    print source
+    print target
+}
+
+@ public
+fn disconnect(AudioNode source, AudioNode target) → void {
+    print source
+    print target
+}

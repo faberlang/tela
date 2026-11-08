@@ -1,0 +1,49 @@
++++
+locale = "en"
++++
+
+# GAP: `faber emit` of a consumer file skips an imported fn whose signature
+# names a function-type alias.
+#
+# tela:audio declares `type BlockHandler = (int) → list<f64>` and takes it in
+# `create_block_node` (tela:dom does the same with its nine handler aliases).
+# `faber check` accepts this consumer. `faber emit -t ts` skips the export
+# and then fails the call:
+#
+#   $ faber emit --library-home <dir holding tela/> -t ts --locale en handler-alias-emit.fab
+#   warning[WARN014:file_interface_export_skipped] ...
+#   message: file interface skipped export `audio.create_block_node`
+#            (NominalTypeUnsupported { kind: Struct }); other exports still available
+#   warning[WARN014:file_interface_export_skipped] ...
+#   message: file interface skipped export `audio.set_message_handler`
+#            (NominalTypeUnsupported { kind: Struct }); other exports still available
+#   error[SEM010:expression_type_mismatch] analysis handler-alias-emit.fab
+#   error[SEM010:initializer_annotation_mismatch] analysis handler-alias-emit.fab
+#
+# The same signature written with the function type inline
+# (`(int) → list<f64> handler`) emits cleanly, so only the alias form trips.
+# The product build (`faber build --package` of a browser-app) does NOT skip
+# these exports; the gap is the single-file `faber emit` route, which is what
+# tela/scripta/check-exempla uses. check-exempla therefore runs exempla/audio.fab
+# through `faber check` only. Owner: radix (file-interface export snapshot).
+
+import from "tela:audio" public * as audio
+
+fn silence(int frames) → list<f64> {
+    mut list<f64> out ← empty
+    for range 0 ‥ frames let i {
+        print i
+        out.append(0.0)
+    }
+    return out
+}
+
+fn on_data(list<f64> data) → void {
+    print data.length()
+}
+
+main {
+    let audio.AudioContext ctx ← audio.create_context()
+    let audio.AudioNode node ← audio.create_block_node(ctx, 1024, silence)
+    audio.set_message_handler(node, on_data)
+}
