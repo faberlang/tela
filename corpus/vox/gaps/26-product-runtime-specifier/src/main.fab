@@ -1,0 +1,33 @@
+# gap 26: a browser-app page cannot load its own modules: they import the bare
+# name "@faber/runtime", and the build ships no browser-loadable runtime and no
+# import map.
+#
+# Run (from gaps/26-product-runtime-specifier):   faber build .
+#   grep '@faber/runtime' dist/faber-esm/main.js
+#   ls dist/node_modules/@faber/runtime      (a symlink into ~/.cache/faber, TypeScript sources)
+# Actual:   build ok. The page's controller module starts with
+#           `import { exact } from "@faber/runtime";`; the browser logs
+#           `Uncaught TypeError: Failed to resolve module specifier "@faber/runtime".
+#           Relative references must start with either "/", "./", or "../"` and
+#           nothing mounts. The compiled runtime exists (the worklet bundler uses
+#           it, and inlines what it needs) but is not part of dist/.
+#           Any integer arithmetic (`exact.add`) or `display` use triggers it.
+# Expected: dist/ holds a browser-loadable runtime and the page (or the bootstrap
+#           module) maps "@faber/runtime" to it.
+# Plain formulation: app/build.sh copies the build's compiled runtime to
+#           dist/runtime and app/pages/index.html carries an import map.
+
+import from "tela:web" web
+import from "tela:dom" dom
+
+@ WebController { selector = "#app" }
+fn count(dom.Scope scope) → list<dom.Subscription> {
+    let dom.Element el ← dom.require(scope, "#app")
+    mut int n ← 0
+    for range 0 ‥ 3 let i {
+        n ← n + i
+    }
+    dom.text_set(el, n ↦ string)
+    let list<dom.Subscription> subs ← empty
+    return subs
+}

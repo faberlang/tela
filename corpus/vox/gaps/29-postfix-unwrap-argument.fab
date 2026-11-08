@@ -1,0 +1,26 @@
+# gap 29: the postfix unwrap `!` does not parse as a call argument.
+#
+# Run:      faber check 29-postfix-unwrap-argument.fab
+# Actual:   error[PARSE001:call_arguments_end]
+#           source: show(maybe!)
+#           message: expected ')' after the call arguments
+# Expected: `maybe!` is an expression, as `maybe!.n` is (that form parses).
+# Plain formulation: after `if maybe is none then return` the name is already
+# narrowed; pass `maybe` (synth.fab does).
+
+class Item {
+    mut int n = 0
+}
+
+fn show(Item i) → void {
+    print i.n
+}
+
+fn run(Item ∪ none maybe) → void {
+    if maybe is none then return
+    show(maybe!)
+}
+
+main {
+    run(Item {})
+}

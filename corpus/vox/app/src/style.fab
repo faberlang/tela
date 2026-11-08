@@ -1,0 +1,48 @@
+# style.fab: the palette of the canvas views. Colors are CSS strings because
+# tela:canvas2d takes them as strings. One dark ground, thin teal lines for
+# the tract and signals, amber for what the player is holding or hearing.
+
+@ public
+const string BG = "#0a0e13"
+
+@ public
+const string PANEL = "#0f151c"
+
+@ public
+const string GRID = "#1b2631"
+
+@ public
+const string DIM = "#3b4d5d"
+
+@ public
+const string TEXT = "#9fb2c3"
+
+@ public
+const string LABEL = "#6f869a"
+
+@ public
+const string LINE = "#6fd0bd"
+
+@ public
+const string LINE_SOFT = "rgba(111, 208, 189, 0.45)"
+
+@ public
+const string AIR = "rgba(111, 208, 189, 0.16)"
+
+@ public
+const string TONGUE = "rgba(214, 140, 120, 0.10)"
+
+@ public
+const string NASAL = "#7aa2f7"
+
+@ public
+const string NASAL_SOFT = "rgba(122, 162, 247, 0.18)"
+
+@ public
+const string LIVE = "#ffb454"
+
+@ public
+const string LIVE_SOFT = "rgba(255, 180, 84, 0.30)"
+
+@ public
+const string HEAD = "#556879"

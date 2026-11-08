@@ -1,0 +1,32 @@
+# gap 31: a conditional expression over two lists of the same type is a type
+# mismatch.
+#
+# Run:      faber check 31-ternary-list-mismatch.fab
+# Actual:   error[SEM010:common_type_mismatch]   message: incompatible types
+#           error[SEM010:expression_type_mismatch]
+#           error[SEM010:initializer_annotation_mismatch]
+#           source: let list<f64> tel ← app.count ≡ 0 ✓ fresh() ✗ app.tel
+# Expected: ok; both arms are `list<f64>`. (A fresh list and a field of a `ref`
+# parameter; with two fresh lists or two fields the shape was not tried.)
+# Plain formulation: an if with two returns (telemetry.fab `current`).
+
+class App {
+    mut list<f64> tel = empty
+    mut int count = 0
+}
+
+fn fresh() → list<f64> {
+    mut list<f64> out ← empty
+    out.append(1.0)
+    return out
+}
+
+fn pick(ref App app) → list<f64> {
+    let list<f64> tel ← app.count ≡ 0 ✓ fresh() ✗ app.tel
+    return tel
+}
+
+main {
+    let App app ← App {}
+    print pick(app).length()
+}

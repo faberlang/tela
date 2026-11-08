@@ -1,0 +1,25 @@
+# gap 21: tela:canvas2d cannot set a line width (nor draw curves).
+#
+# Run (from gaps/):   faber check 21-canvas2d-surface
+# Actual:   error[SEM004:namespace_missing_export] ... imported file exports no
+#           member `canvas2d_set_line_width` (and `canvas2d_bezier_curve_to`)
+# Expected: the 2D context's drawing state a line drawing needs: line width,
+#           line cap and join, dash, global alpha, quadratic and bezier curve
+#           segments. runtime/canvas2d.ts has none of `lineWidth`,
+#           `bezierCurveTo`, `quadraticCurveTo`, `globalAlpha`, `setLineDash`
+#           or `measureText`; the surface is 29 fns (paths, arcs, rects,
+#           fill/stroke style, text). Every line is therefore one pixel wide.
+# Plain formulation: thin lines on purpose; curves are sampled polylines
+# (Catmull-Rom in the app's geometry.fab); alpha goes in the colour string
+# ("rgba(...)"). A thick line has no formulation but filling a rectangle.
+
+import from "tela:canvas2d" canvas
+
+fn thicken(canvas.Canvas2DContext c) → void {
+    canvas.canvas2d_set_line_width(c, 3.0)
+    canvas.canvas2d_bezier_curve_to(c, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0)
+}
+
+main {
+    print 1
+}

@@ -1,0 +1,31 @@
+# Both packages are path dependencies inside this worktree. The roots are
+# relative to this file, so the app resolves the tela checkout it lives in
+# (the lane worktree), not the main tela checkout.
+
+[[package]]
+name = "tela"
+version = "0.0.0"
+source = "path"
+package_root = "../../.."
+kind = "lib"
+target_language = "ts"
+target_triple = "browser"
+target_manifest = ""
+interface_root = "../../../src"
+artifact = ""
+crate = "tela"
+rustc = ""
+
+[[package]]
+name = "engine"
+version = "0.0.0"
+source = "path"
+package_root = "../engine"
+kind = "lib"
+target_language = "ts"
+target_triple = "browser"
+target_manifest = ""
+interface_root = "../engine/src"
+artifact = ""
+crate = "engine"
+rustc = ""

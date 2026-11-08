@@ -1,0 +1,178 @@
+/* Vox: dark ground, hairline drawings. Panels are placed by the Faber
+   controller (inline left/top/width/height from layout.fab); this file only
+   styles what is inside them. */
+
+:root {
+  color-scheme: dark;
+  --ground: #0a0e13;
+  --panel: #0f151c;
+  --edge: #1b2631;
+  --dim: #3b4d5d;
+  --label: #6f869a;
+  --text: #9fb2c3;
+  --line: #6fd0bd;
+  --live: #ffb454;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--ground);
+  color: var(--text);
+}
+
+#vox-app {
+  position: fixed;
+  inset: 0;
+}
+
+.view {
+  position: absolute;
+  display: block;
+  touch-action: none;
+  user-select: none;
+}
+
+.panel, .bar {
+  position: absolute;
+  box-sizing: border-box;
+  background: var(--panel);
+  border: 1px solid var(--edge);
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 0 18px;
+  border-width: 0 0 1px 0;
+}
+
+.brand {
+  color: var(--line);
+  letter-spacing: 0.4em;
+  font-size: 15px;
+}
+
+.status {
+  margin-left: auto;
+  color: var(--label);
+}
+
+button {
+  font: inherit;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--dim);
+  border-radius: 2px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+button:hover { border-color: var(--line); color: var(--line); }
+button:focus-visible, input:focus-visible { outline: 1px solid var(--live); outline-offset: 2px; }
+
+.start {
+  color: var(--live);
+  border-color: var(--live);
+}
+
+.start.running { color: var(--label); border-color: var(--dim); }
+
+.volume-box { display: flex; align-items: center; gap: 10px; color: var(--label); }
+
+input[type="range"] {
+  accent-color: var(--line);
+  height: 14px;
+  margin: 0;
+}
+
+.panel-controls {
+  padding: 12px 18px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: min-content;
+  column-gap: 26px;
+  row-gap: 9px;
+  align-content: start;
+}
+
+.panel-controls h2 {
+  grid-column: 1 / -1;
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: normal;
+  letter-spacing: 0.2em;
+  color: var(--label);
+  text-transform: uppercase;
+}
+
+.ctl {
+  display: grid;
+  grid-template-columns: 72px 1fr 62px;
+  align-items: center;
+  gap: 10px;
+}
+
+.name { color: var(--label); }
+output { color: var(--text); text-align: right; }
+
+.choices {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.choices .name { width: 72px; }
+
+.choice { padding: 4px 10px; }
+.choice.on { color: var(--live); border-color: var(--live); }
+
+.panel-keys {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 18px 12px;
+  gap: 8px;
+}
+
+.keybar { display: flex; align-items: center; gap: 10px; }
+.hint { margin-left: auto; color: var(--dim); }
+
+.piano {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.key {
+  position: absolute;
+  top: 0;
+  box-sizing: border-box;
+  padding: 0 0 6px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  border-radius: 0 0 3px 3px;
+  color: var(--label);
+  touch-action: none;
+  user-select: none;
+}
+
+.key.white {
+  height: 100%;
+  background: #141c25;
+  border: 1px solid var(--dim);
+}
+
+.key.black {
+  height: 60%;
+  background: #05080b;
+  border: 1px solid var(--dim);
+  z-index: 2;
+}
+
+.key.down { background: var(--live); color: #0a0e13; border-color: var(--live); }

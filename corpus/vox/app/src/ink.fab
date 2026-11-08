@@ -1,0 +1,127 @@
+# ink.fab: small drawing helpers over tela:canvas2d. tela:canvas2d has no line
+# width, so every line is one pixel thin (gap 21); emphasis is colour.
+
+import from "tela:canvas2d" canvas
+import from "./style" style
+import from "./geometry" geometry
+import from "./layout" layout
+
+const string FONT = "11px ui-monospace, Menlo, Consolas, monospace"
+const f64 TAU = 6.283185307179586
+
+# Start a frame in a view: device scaling, panel ground, a hairline border.
+@ public
+fn begin(canvas.Canvas2DContext c, layout.Rect r, f64 dpr) → void {
+    canvas.canvas2d_set_transform(c, dpr, 0.0, 0.0, dpr, 0.0, 0.0)
+    canvas.canvas2d_set_fill_style(c, style.PANEL)
+    canvas.canvas2d_fill_rect(c, 0.0, 0.0, r.w, r.h)
+    canvas.canvas2d_set_stroke_style(c, style.GRID)
+    canvas.canvas2d_stroke_rect(c, 0.5, 0.5, r.w - 1.0, r.h - 1.0)
+}
+
+@ public
+fn text(canvas.Canvas2DContext c, string s, f64 x, f64 y, string color, string align) → void {
+    canvas.canvas2d_set_font(c, FONT)
+    canvas.canvas2d_set_text_align(c, align)
+    canvas.canvas2d_set_text_baseline(c, "middle")
+    canvas.canvas2d_set_fill_style(c, color)
+    canvas.canvas2d_fill_text(c, s, x, y)
+}
+
+@ public
+fn segment(canvas.Canvas2DContext c, f64 x0, f64 y0, f64 x1, f64 y1, string color) → void {
+    canvas.canvas2d_set_stroke_style(c, color)
+    canvas.canvas2d_begin_path(c)
+    canvas.canvas2d_move_to(c, x0, y0)
+    canvas.canvas2d_line_to(c, x1, y1)
+    canvas.canvas2d_stroke(c)
+}
+
+@ public
+fn ring(canvas.Canvas2DContext c, f64 x, f64 y, f64 radius, string color) → void {
+    canvas.canvas2d_set_stroke_style(c, color)
+    canvas.canvas2d_begin_path(c)
+    canvas.canvas2d_arc(c, x, y, radius, 0.0, TAU)
+    canvas.canvas2d_stroke(c)
+}
+
+@ public
+fn dot(canvas.Canvas2DContext c, f64 x, f64 y, f64 radius, string color) → void {
+    canvas.canvas2d_set_fill_style(c, color)
+    canvas.canvas2d_begin_path(c)
+    canvas.canvas2d_arc(c, x, y, radius, 0.0, TAU)
+    canvas.canvas2d_fill(c)
+}
+
+# Add a head-frame polyline to the current path.
+@ public
+fn path_pts(canvas.Canvas2DContext c, ref list<geometry.Pt> pts, geometry.View v) → void {
+    canvas.canvas2d_begin_path(c)
+    mut bool first ← true
+    for from pts let p {
+        let geometry.Pt q ← geometry.px(v, p)
+        if first {
+            canvas.canvas2d_move_to(c, q.x, q.y)
+            first ← false
+        }
+        else {
+            canvas.canvas2d_line_to(c, q.x, q.y)
+        }
+    }
+}
+
+@ public
+fn line_pts(canvas.Canvas2DContext c, ref list<geometry.Pt> pts, geometry.View v, string color) → void {
+    canvas.canvas2d_set_stroke_style(c, color)
+    path_pts(c, pts, v)
+    canvas.canvas2d_stroke(c)
+}
+
+# Fill the region between two head-frame polylines of equal length.
+@ public
+fn fill_between(canvas.Canvas2DContext c, ref list<geometry.Pt> a, ref list<geometry.Pt> b, geometry.View v, string color) → void {
+    let int n ← a.length()
+    if n ≺ 2 then return
+    canvas.canvas2d_set_fill_style(c, color)
+    canvas.canvas2d_begin_path(c)
+    for range 0 ‥ n let i {
+        let geometry.Pt q ← geometry.px(v, a[i])
+        if i ≡ 0 {
+            canvas.canvas2d_move_to(c, q.x, q.y)
+        }
+        else {
+            canvas.canvas2d_line_to(c, q.x, q.y)
+        }
+    }
+    for range 0 ‥ n let k {
+        let geometry.Pt q ← geometry.px(v, b[n - 1 - k])
+        canvas.canvas2d_line_to(c, q.x, q.y)
+    }
+    canvas.canvas2d_close_path(c)
+    canvas.canvas2d_fill(c)
+}
+
+# Whole-number text of a value: "523".
+@ public
+fn whole(f64 v) → string {
+    let int n ← v ↦ int via HalfEven ⊥ 0
+    return n ↦ string
+}
+
+# One-decimal text of a non-negative value: "3.4".
+@ public
+fn tenths(f64 v) → string {
+    let int n ← (v * 10.0) ↦ int via HalfEven ⊥ 0
+    let int signed ← n ⤒ 0
+    return "§.§"(signed / 10, signed % 10)
+}
+
+# Two-decimal text of a non-negative value: "0.35".
+@ public
+fn hundredths(f64 v) → string {
+    let int n ← (v * 100.0) ↦ int via HalfEven ⊥ 0
+    let int signed ← n ⤒ 0
+    let int frac ← signed % 100
+    let string pad ← frac ≺ 10 ✓ "0" ✗ ""
+    return "§.§§"(signed / 100, pad, frac)
+}

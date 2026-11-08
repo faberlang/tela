@@ -1,0 +1,28 @@
+# gap 30: copying one string field into another makes the object "mutably
+# borrowed".
+#
+# Run:      faber check 30-string-field-copy-borrow.fab
+# Actual:   error[SEM052:use_while_mutably_borrowed]
+#           source: print app.status
+#           message: use of 'app' while mutably borrowed
+#           (the line before is `app.shown ← app.status`; a string is a value,
+#           and the same shape with ints is accepted)
+# Expected: ok. Also seen for a class value stored into a field and then used
+# again (`app.ctx ← ctx` then `audio.sample_rate(ctx)`), where `copy` is the
+# fix; for a string `copy` is not available and the plain formulation is to
+# read the source into a local first (`let string now ← app.status`).
+
+class App {
+    mut string shown = ""
+    mut string status = "idle"
+}
+
+fn sync(mut App app) → void {
+    app.shown ← app.status
+    print app.status
+}
+
+main {
+    mut App app ← App {}
+    sync(mut app)
+}

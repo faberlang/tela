@@ -1,0 +1,26 @@
+# gap 20: a method call on a library class reached only through another
+# module's field is a compiler error with no message.
+#
+# Run (from gaps/):   faber check 20-transitive-library-class
+# Actual:   error[DEFID001:emit_def_table_missing] analysis .../src/main.fab
+#           span: <none>        (no message, no help)
+# Expected: ok, as when this module also writes `import from "engine:voice" voice`
+#           (add that line and the same program checks; the import is then
+#           unused but for naming the type). The same code with all three
+#           modules local to the package checks fine, so it is the class
+#           coming from a library provider that breaks it.
+# Plain formulation: import the class's module in the calling module too and
+# name the type once (`let voice.Voice ∪ none local ← h.local`).
+
+import from "./holder" holder
+
+fn poke(holder.Holder h) → void {
+    let _ local ← h.local
+    if local is none then return
+    local!.message("pitch", 220.0)
+}
+
+main {
+    let holder.Holder h ← holder.Holder {}
+    poke(h)
+}

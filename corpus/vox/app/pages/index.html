@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vox — a vocal tract you can play</title>
+    <!-- The generated modules import the bare name "@faber/runtime" (gap 26);
+         build.sh copies the compiled runtime to dist/runtime for this map. -->
+    <script type="importmap">
+      { "imports": { "@faber/runtime": "../runtime/index.js", "@faber/runtime/": "../runtime/" } }
+    </script>
+    <link rel="icon" href="../public/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles/main.css" />
+  </head>
+  <body>
+    <main id="vox-app">
+      <header class="bar panel-header">
+        <span class="brand">VOX</span>
+        <button class="start" type="button">Start audio</button>
+        <label class="volume-box">volume
+          <input class="volume" type="range" min="0" max="1" step="0.01" value="0.35" />
+        </label>
+        <span class="status">audio is off</span>
+      </header>
+
+      <canvas class="view v-anatomy" aria-label="Midsagittal view of the vocal tract; drag the handles"></canvas>
+      <canvas class="view v-tube" aria-label="Area function of the vocal tract"></canvas>
+      <canvas class="view v-glottal" aria-label="Glottal flow waveform"></canvas>
+      <canvas class="view v-spectrum" aria-label="Output spectrum"></canvas>
+      <canvas class="view v-vowel" aria-label="F1 and F2 vowel chart"></canvas>
+
+      <section class="panel panel-controls" aria-label="Voice controls">
+        <h2>voice</h2>
+        <label class="ctl"><span class="name">pitch</span>
+          <input class="s-pitch" type="range" min="24" max="96" step="1" value="48" />
+          <output class="o-pitch">C3</output></label>
+        <label class="ctl"><span class="name">breath</span>
+          <input class="s-breath" type="range" min="0" max="1" step="0.01" value="0.7" />
+          <output class="o-breath">0.70</output></label>
+        <label class="ctl"><span class="name">pressed</span>
+          <input class="s-pressed" type="range" min="0" max="1" step="0.01" value="0.5" />
+          <output class="o-pressed">0.50</output></label>
+        <label class="ctl"><span class="name">vibrato</span>
+          <input class="s-vibrato" type="range" min="0" max="100" step="1" value="0" />
+          <output class="o-vibrato">0 cents</output></label>
+        <label class="ctl"><span class="name">aspiration</span>
+          <input class="s-aspiration" type="range" min="0" max="1" step="0.01" value="0.1" />
+          <output class="o-aspiration">0.10</output></label>
+        <div class="choices">
+          <span class="name">mode</span>
+          <button class="choice c-mode on" type="button">voice</button>
+          <button class="choice c-mode" type="button">whisper</button>
+          <button class="choice c-mode" type="button">hold</button>
+        </div>
+        <div class="choices">
+          <span class="name">body</span>
+          <button class="choice c-body on" type="button">male</button>
+          <button class="choice c-body" type="button">female</button>
+          <button class="choice c-body" type="button">child</button>
+        </div>
+      </section>
+
+      <section class="panel panel-keys" aria-label="Keyboard">
+        <div class="keybar">
+          <button class="choice oct-down" type="button">octave -</button>
+          <button class="choice oct-up" type="button">octave +</button>
+          <output class="o-octave">C3 to C5</output>
+          <button class="choice sustain" type="button">sustain</button>
+          <span class="hint">keys: A S D F G H J K L ; and W E T Y U O P, space holds the current pitch</span>
+        </div>
+        <div class="piano">
+          <button class="key white" type="button" style="left:0.000%;width:6.667%"><span>A</span></button>
+          <button class="key black" type="button" style="left:4.667%;width:4.000%"><span>W</span></button>
+          <button class="key white" type="button" style="left:6.667%;width:6.667%"><span>S</span></button>
+          <button class="key black" type="button" style="left:11.333%;width:4.000%"><span>E</span></button>
+          <button class="key white" type="button" style="left:13.333%;width:6.667%"><span>D</span></button>
+          <button class="key white" type="button" style="left:20.000%;width:6.667%"><span>F</span></button>
+          <button class="key black" type="button" style="left:24.667%;width:4.000%"><span>T</span></button>
+          <button class="key white" type="button" style="left:26.667%;width:6.667%"><span>G</span></button>
+          <button class="key black" type="button" style="left:31.333%;width:4.000%"><span>Y</span></button>
+          <button class="key white" type="button" style="left:33.333%;width:6.667%"><span>H</span></button>
+          <button class="key black" type="button" style="left:38.000%;width:4.000%"><span>U</span></button>
+          <button class="key white" type="button" style="left:40.000%;width:6.667%"><span>J</span></button>
+          <button class="key white" type="button" style="left:46.667%;width:6.667%"><span>K</span></button>
+          <button class="key black" type="button" style="left:51.333%;width:4.000%"><span>O</span></button>
+          <button class="key white" type="button" style="left:53.333%;width:6.667%"><span>L</span></button>
+          <button class="key black" type="button" style="left:58.000%;width:4.000%"><span>P</span></button>
+          <button class="key white" type="button" style="left:60.000%;width:6.667%"><span>;</span></button>
+          <button class="key white" type="button" style="left:66.667%;width:6.667%"><span></span></button>
+          <button class="key black" type="button" style="left:71.333%;width:4.000%"><span></span></button>
+          <button class="key white" type="button" style="left:73.333%;width:6.667%"><span></span></button>
+          <button class="key black" type="button" style="left:78.000%;width:4.000%"><span></span></button>
+          <button class="key white" type="button" style="left:80.000%;width:6.667%"><span></span></button>
+          <button class="key black" type="button" style="left:84.667%;width:4.000%"><span></span></button>
+          <button class="key white" type="button" style="left:86.667%;width:6.667%"><span></span></button>
+          <button class="key white" type="button" style="left:93.333%;width:6.667%"><span></span></button>
+        </div>
+      </section>
+    </main>
+
+    <script type="module">
+      import { mountControllers } from "../faber-esm/faber-browser.js";
+
+      const root = globalThis.document.querySelector("#vox-app");
+      try {
+        const runtime = mountControllers(globalThis.document);
+        if (runtime.failures?.length) {
+          console.error("controller mount failures", runtime.failures);
+          root.setAttribute("data-mount-error", String(runtime.failures[0]?.message ?? "mount failed"));
+        }
+      } catch (error) {
+        console.error("mountControllers failed", error);
+        root.setAttribute("data-mount-error", error.message);
+      }
+    </script>
+  </body>
+</html>

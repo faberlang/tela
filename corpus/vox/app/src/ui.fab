@@ -1,0 +1,339 @@
+# ui.fab: the page's elements and what they do. The controller (main.fab) calls
+# these once; everything after that is the handlers they register.
+
+import from "tela:dom" dom
+import from "tela:canvas2d" canvas
+import from "./state" state
+import from "./layout" layout
+import from "./synth" synth
+import from "./notes" notes
+import from "./ink" ink
+import from "./anatomy" anatomy
+import from "./views" views
+
+const int TRAIL = 40
+
+# ---------------------------------------------------------------------------
+# Placement
+# ---------------------------------------------------------------------------
+
+fn put(dom.Scope scope, string selector, layout.Rect r) → void {
+    dom.attr_set(dom.require(scope, selector), "style", layout.style_of(r))
+}
+
+# A canvas is sized in CSS pixels by its style and in device pixels by its
+# width and height attributes.
+fn put_canvas(dom.Scope scope, string selector, layout.Rect r, f64 dpr) → void {
+    let dom.Element el ← dom.require(scope, selector)
+    dom.attr_set(el, "style", layout.style_of(r))
+    let int w ← (r.w * dpr) ↦ int via Ceil ⊥ 1
+    let int h ← (r.h * dpr) ↦ int via Ceil ⊥ 1
+    dom.attr_set(el, "width", w ↦ string)
+    dom.attr_set(el, "height", h ↦ string)
+}
+
+@ public
+fn place_all(dom.Scope scope, ref state.App app) → void {
+    let layout.Layout p ← app.place
+    put(scope, ".panel-header", p.header)
+    put(scope, ".panel-controls", p.controls)
+    put(scope, ".panel-keys", p.keys)
+    put_canvas(scope, ".v-anatomy", p.anatomy, app.dpr)
+    put_canvas(scope, ".v-tube", p.tube, app.dpr)
+    put_canvas(scope, ".v-glottal", p.glottal, app.dpr)
+    put_canvas(scope, ".v-spectrum", p.spectrum, app.dpr)
+    put_canvas(scope, ".v-vowel", p.vowel, app.dpr)
+}
+
+@ public
+fn surfaces(dom.Scope scope) → state.Surfaces {
+    return state.Surfaces {
+        anatomy = canvas.canvas2d_context(dom.require(scope, ".v-anatomy")),
+        tube = canvas.canvas2d_context(dom.require(scope, ".v-tube")),
+        glottal = canvas.canvas2d_context(dom.require(scope, ".v-glottal")),
+        spectrum = canvas.canvas2d_context(dom.require(scope, ".v-spectrum")),
+        vowel = canvas.canvas2d_context(dom.require(scope, ".v-vowel"))
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Frame loop
+# ---------------------------------------------------------------------------
+
+@ public
+fn frame(dom.Scope scope, mut state.App app, state.Surfaces s) → void {
+    let int before ← app.tel_count
+    synth.poll(mut app)
+    if app.tel_count ≢ before {
+        remember_formants(mut app)
+    }
+    let layout.Layout p ← app.place
+    anatomy.draw(s.anatomy, app, p.anatomy)
+    views.tube(s.tube, app, p.tube)
+    views.glottal(s.glottal, app, p.glottal)
+    views.spectrum(s.spectrum, app, p.spectrum)
+    views.vowels(s.vowel, app, p.vowel)
+    show_status(scope, mut app)
+}
+
+fn remember_formants(mut state.App app) → void {
+    if app.tel.length() ≺ 14 then return
+    app.trail_f1.append(app.tel[11])
+    app.trail_f2.append(app.tel[12])
+    if app.trail_f1.length() ≻ TRAIL {
+        app.trail_f1.remove_first()
+        app.trail_f2.remove_first()
+    }
+}
+
+fn show_status(dom.Scope scope, mut state.App app) → void {
+    # gap 30: read into a local; `app.shown ← app.status` then using
+    # `app.status` is SEM052.
+    let string now ← app.status
+    if app.shown ≡ now then return
+    dom.text_set(dom.require(scope, ".status"), now)
+    app.shown ← now
+}
+
+# ---------------------------------------------------------------------------
+# Handlers
+# ---------------------------------------------------------------------------
+
+fn on_slider(dom.Scope scope, string selector, (f64) → void apply) → dom.Subscription {
+    return dom.on_input(dom.require(scope, selector), (dom.Element el, string text) → void ∴ do {
+        apply(text ↦ f64 ⊥ 0.0)
+    })
+}
+
+fn readout(dom.Scope scope, string selector, string text) → void {
+    dom.text_set(dom.require(scope, selector), text)
+}
+
+# Show which of a group of choice buttons is on.
+fn mark_choice(ref list<dom.Element> group, int chosen) → void {
+    for range 0 ‥ group.length() let i {
+        if i ≡ chosen {
+            dom.class_add(group[i], "on")
+        }
+        else {
+            dom.class_remove(group[i], "on")
+        }
+    }
+}
+
+# The voice controls: pitch, breath, pressed, vibrato, aspiration, mode, body.
+@ public
+fn wire_controls(dom.Scope scope, mut state.App app) → list<dom.Subscription> {
+    mut list<dom.Subscription> subs ← empty
+
+    subs.append(on_slider(scope, ".s-pitch", (f64 v) → void ∴ do {
+        app.pitch_note ← v
+        synth.send_pitch(app)
+        readout(scope, ".o-pitch", pitch_text(v))
+    }))
+    subs.append(on_slider(scope, ".s-breath", (f64 v) → void ∴ do {
+        app.breath ← v
+        synth.send_breath(app)
+        readout(scope, ".o-breath", ink.hundredths(v))
+    }))
+    subs.append(on_slider(scope, ".s-pressed", (f64 v) → void ∴ do {
+        app.pressed ← v
+        synth.send(app, "pressed", v)
+        readout(scope, ".o-pressed", ink.hundredths(v))
+    }))
+    subs.append(on_slider(scope, ".s-vibrato", (f64 v) → void ∴ do {
+        app.vibrato ← v
+        synth.send(app, "vibrato_cents", v)
+        readout(scope, ".o-vibrato", "§ cents"(ink.whole(v)))
+    }))
+    subs.append(on_slider(scope, ".s-aspiration", (f64 v) → void ∴ do {
+        app.aspiration ← v
+        synth.send(app, "aspiration", v)
+        readout(scope, ".o-aspiration", ink.hundredths(v))
+    }))
+
+    let list<dom.Element> modes ← dom.all(scope, ".c-mode")
+    for range 0 ‥ modes.length() let i {
+        subs.append(dom.on(modes[i], "click", (dom.DomEvent e) → void ∴ do {
+            app.mode ← i
+            synth.send(app, "mode", i ↦ f64)
+            mark_choice(modes, i)
+        }))
+    }
+
+    let list<dom.Element> bodies ← dom.all(scope, ".c-body")
+    for range 0 ‥ bodies.length() let i {
+        subs.append(dom.on(bodies[i], "click", (dom.DomEvent e) → void ∴ do {
+            app.body ← i
+            app.octave ← 0
+            app.pitch_note ← notes.base_midi(i, 0)
+            dom.value_set(dom.require(scope, ".s-pitch"), ink.whole(app.pitch_note))
+            readout(scope, ".o-pitch", pitch_text(app.pitch_note))
+            synth.send(app, "body", i ↦ f64)
+            synth.send_pitch(app)
+            mark_choice(bodies, i)
+        }))
+    }
+    return subs
+}
+
+fn pitch_text(f64 midi) → string {
+    return "§ §Hz"(notes.note_name(midi), ink.whole(notes.note_hz(midi)))
+}
+
+# Start button, master volume. gap 23: `mut` is right here (the closures pass
+# `app` on as `mut`) and draws WARN008, because the callees are imported.
+@ public
+fn wire_header(dom.Scope scope, mut state.App app) → list<dom.Subscription> {
+    mut list<dom.Subscription> subs ← empty
+    let dom.Element button ← dom.require(scope, ".start")
+    subs.append(dom.on(button, "click", (dom.DomEvent e) → void ∴ do {
+        synth.start(mut app)
+        dom.text_set(button, "Audio running")
+        dom.class_add(button, "running")
+    }))
+    subs.append(on_slider(scope, ".volume", (f64 v) → void ∴ do {
+        synth.set_volume(mut app, v)
+    }))
+    return subs
+}
+
+# ---------------------------------------------------------------------------
+# Playing: on-screen keys, computer keys, octave and sustain
+# ---------------------------------------------------------------------------
+
+# What a held key id means: 0 and up is a semitone above the keyboard's low C;
+# SPACE_ID holds the pitch the pitch slider shows.
+const int SPACE_ID = -2
+
+# Why: with several keys down the last one pressed sets the pitch and the
+# breath stays on until the last one is let go.
+fn retarget(dom.Scope scope, mut state.App app) → void {
+    let int n ← app.held.length()
+    if n ≻ 0 {
+        let int top ← app.held[n - 1]
+        if top ≥ 0 {
+            app.pitch_note ← notes.base_midi(app.body, app.octave) + (top ↦ f64)
+            dom.value_set(dom.require(scope, ".s-pitch"), ink.whole(app.pitch_note))
+            readout(scope, ".o-pitch", pitch_text(app.pitch_note))
+            synth.send_pitch(app)
+        }
+    }
+    synth.send_breath(app)
+}
+
+fn press(dom.Scope scope, mut state.App app, ref list<dom.Element> keys, int id) → void {
+    if app.held.contains(id) then return
+    synth.start(mut app)
+    app.held.append(id)
+    if id ≥ 0 then dom.class_add(keys[id], "down")
+    retarget(scope, mut app)
+}
+
+fn release(dom.Scope scope, mut state.App app, ref list<dom.Element> keys, int id) → void {
+    if not app.held.contains(id) then return
+    mut list<int> keep ← empty
+    for from app.held let n {
+        if n ≢ id then keep.append(n)
+    }
+    app.held ← keep
+    if id ≥ 0 then dom.class_remove(keys[id], "down")
+    retarget(scope, mut app)
+}
+
+fn octave_text(int body, int octave) → string {
+    let f64 low ← notes.base_midi(body, octave)
+    return "§ to §"(notes.note_name(low), notes.note_name(low + 24.0))
+}
+
+@ public
+fn wire_keys(dom.Scope scope, mut state.App app) → list<dom.Subscription> {
+    mut list<dom.Subscription> subs ← empty
+    let list<dom.Element> keys ← dom.all(scope, ".key")
+    for range 0 ‥ keys.length() let i {
+        subs.append(dom.on(keys[i], "pointerdown", (dom.DomEvent e) → void ∴ do {
+            press(scope, mut app, keys, i)
+        }))
+        for from ["pointerup", "pointerleave", "pointercancel"] let name {
+            subs.append(dom.on(keys[i], name, (dom.DomEvent e) → void ∴ do {
+                release(scope, mut app, keys, i)
+            }))
+        }
+    }
+
+    # The home row plays white keys, the row above black keys; space holds the
+    # pitch on the slider.
+    subs.append(dom.on_keyboard(dom.require(scope, ".panel-keys"), "keydown", (dom.KeyboardState k) → void ∴ do {
+        if k.repeat or k.ctrl or k.meta or k.alt then return
+        if k.key ≡ " " {
+            press(scope, mut app, keys, SPACE_ID)
+        }
+        else {
+            let int offset ← notes.key_offset(k.key.lowercase())
+            if offset ≥ 0 then press(scope, mut app, keys, offset)
+        }
+    }))
+    subs.append(dom.on_keyboard(dom.require(scope, ".panel-keys"), "keyup", (dom.KeyboardState k) → void ∴ do {
+        if k.key ≡ " " {
+            release(scope, mut app, keys, SPACE_ID)
+        }
+        else {
+            let int offset ← notes.key_offset(k.key.lowercase())
+            if offset ≥ 0 then release(scope, mut app, keys, offset)
+        }
+    }))
+
+    subs.append(dom.on(dom.require(scope, ".oct-down"), "click", (dom.DomEvent e) → void ∴ do {
+        app.octave ← (app.octave - 1) ⤒ -1
+        readout(scope, ".o-octave", octave_text(app.body, app.octave))
+    }))
+    subs.append(dom.on(dom.require(scope, ".oct-up"), "click", (dom.DomEvent e) → void ∴ do {
+        app.octave ← (app.octave + 1) ⤓ 2
+        readout(scope, ".o-octave", octave_text(app.body, app.octave))
+    }))
+    subs.append(dom.on(dom.require(scope, ".sustain"), "click", (dom.DomEvent e) → void ∴ do {
+        app.sustain ← not app.sustain
+        dom.class_toggle(dom.require(scope, ".sustain"), "on")
+        synth.send_breath(app)
+    }))
+    readout(scope, ".o-octave", octave_text(app.body, app.octave))
+    return subs
+}
+
+# ---------------------------------------------------------------------------
+# The anatomy view: pointer handles
+# ---------------------------------------------------------------------------
+
+fn send_articulation(state.App app) → void {
+    synth.send(app, "tongue_x", app.tongue_x)
+    synth.send(app, "tongue_h", app.tongue_h)
+    synth.send(app, "lips", app.lips)
+    synth.send(app, "jaw", app.jaw)
+    synth.send(app, "velum", app.velum)
+}
+
+@ public
+fn wire_anatomy(dom.Scope scope, mut state.App app) → list<dom.Subscription> {
+    mut list<dom.Subscription> subs ← empty
+    let dom.Element view ← dom.require(scope, ".v-anatomy")
+    subs.append(dom.on_pointer(view, "pointerdown", (dom.PointerState p) → void ∴ do {
+        let layout.Rect r ← app.place.anatomy
+        app.grab ← anatomy.pick(app, r, (p.x ↦ f64) - r.x, (p.y ↦ f64) - r.y)
+        if app.grab ≢ state.GRAB_NONE {
+            anatomy.drag(mut app, r, (p.x ↦ f64) - r.x, (p.y ↦ f64) - r.y)
+            send_articulation(app)
+        }
+    }))
+    subs.append(dom.on_pointer(view, "pointermove", (dom.PointerState p) → void ∴ do {
+        if app.grab ≡ state.GRAB_NONE then return
+        let layout.Rect r ← app.place.anatomy
+        anatomy.drag(mut app, r, (p.x ↦ f64) - r.x, (p.y ↦ f64) - r.y)
+        send_articulation(app)
+    }))
+    for from ["pointerup", "pointercancel", "pointerleave"] let name {
+        subs.append(dom.on_pointer(view, name, (dom.PointerState p) → void ∴ do {
+            app.grab ← state.GRAB_NONE
+        }))
+    }
+    return subs
+}

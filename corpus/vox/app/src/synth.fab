@@ -1,0 +1,148 @@
+# synth.fab: the audio side of the page.
+#
+# Two routes make the same sound. The worklet route runs the voice inside an
+# AudioWorklet (the module the product builds from src/voice.fab) and hears
+# back its telemetry by message. If the worklet cannot load, the block route
+# creates the same voice on the main thread and tela:audio calls it for every
+# block, so the app plays with or without the worklet.
+
+import from "tela:audio" audio
+import from "engine:voice" voice
+import from "./state" state
+import from "./worklet" entry
+import from "./notes" notes
+
+# Relative to the page (dist/pages/index.html); the product writes the worklet
+# to dist/worklets/<processor>.js.
+const string WORKLET_URL = "../worklets/vox-voice.js"
+const string PROCESSOR = "vox-voice"
+const int BLOCK_FRAMES = 1024
+
+# Why: breath is the engine's only "on". The breath slider is the loudness
+# of a held note; with nothing held and no sustain the breath is zero.
+@ public
+fn sounding(state.App app) → bool {
+    return app.held.length() ≻ 0 or app.sustain
+}
+
+@ public
+fn send(state.App app, string key, f64 value) → void {
+    if not app.started then return
+    if app.route ≡ "worklet" {
+        let audio.AudioNode ∪ none source ← app.source
+        if source is none then return
+        # gap 29: `source!` does not parse as an argument; the guard narrows it.
+        audio.post_message(source, key, value)
+    }
+    else {
+        # gap 20: the class is named here only to import its module; without
+        # it the call below is a compiler error with no message.
+        let voice.Voice ∪ none local ← app.local
+        if local is none then return
+        local!.message(key, value)
+    }
+}
+
+@ public
+fn send_breath(state.App app) → void {
+    mut f64 b ← 0.0
+    if sounding(app) then b ← app.breath
+    send(app, "breath", b)
+}
+
+@ public
+fn send_pitch(state.App app) → void {
+    send(app, "pitch", notes.note_hz(app.pitch_note))
+}
+
+# Everything the voice needs to match the page; sent once the audio starts.
+@ public
+fn send_all(state.App app) → void {
+    send(app, "body", app.body ↦ f64)
+    send(app, "mode", app.mode ↦ f64)
+    send(app, "pressed", app.pressed)
+    send(app, "vibrato_cents", app.vibrato)
+    send(app, "aspiration", app.aspiration)
+    send(app, "tongue_x", app.tongue_x)
+    send(app, "tongue_h", app.tongue_h)
+    send(app, "lips", app.lips)
+    send(app, "jaw", app.jaw)
+    send(app, "velum", app.velum)
+    send_pitch(app)
+    send_breath(app)
+}
+
+@ public
+fn set_volume(mut state.App app, f64 volume) → void {
+    app.volume ← volume
+    let audio.AudioNode ∪ none master ← app.master
+    if master is none then return
+    audio.set_gain(master, volume)
+}
+
+# Start the audio. Call it from a click or key handler: the context is created
+# and resumed before the first await, still inside the user gesture.
+# gap 24: a public async fn is not exported, so the public entry is a plain fn
+# that starts the private async one.
+@ public
+fn start(mut state.App app) → void {
+    if app.started then return
+    run(mut app)
+}
+
+fn run(mut state.App app) async → void {
+    let audio.AudioContext ctx ← audio.create_context()
+    audio.resume(ctx)
+    app.ctx ← copy ctx
+    app.sample_rate ← audio.sample_rate(ctx)
+    let audio.AudioNode master ← audio.create_gain(ctx)
+    audio.set_gain(master, app.volume)
+    audio.connect(master, audio.destination(ctx))
+    app.master ← copy master
+    let audio.AudioNode analyser ← audio.create_analyser(ctx)
+    audio.set_fft_size(analyser, 2048)
+    audio.connect(analyser, master)
+    app.analyser ← copy analyser
+    app.started ← true
+    app.status ← "loading the worklet"
+    do {
+        await audio.load_worklet(ctx, WORKLET_URL)
+        let audio.AudioNode node ← audio.create_worklet_node(ctx, PROCESSOR)
+        audio.set_message_handler(node, (list<f64> snapshot) → void ∴ do {
+            app.tel ← snapshot
+            app.tel_count ← app.tel_count + 1
+        })
+        audio.connect(node, analyser)
+        app.source ← node
+        app.route ← "worklet"
+        app.status ← "worklet"
+    }
+    catch err {
+        app.status ← "block route: §"(err)
+        let voice.Voice player ← entry.create()
+        let f64 rate ← app.sample_rate
+        let audio.AudioNode node ← audio.create_block_node(ctx, BLOCK_FRAMES, (int frames) → list<f64> ∴ do {
+            return player.process(frames, rate)
+        })
+        audio.connect(node, analyser)
+        app.source ← node
+        app.local ← player
+        app.route ← "block"
+    }
+    send_all(app)
+}
+
+# Once per animation frame: the latest telemetry and spectrum.
+@ public
+fn poll(mut state.App app) → void {
+    if not app.started then return
+    if app.route ≡ "block" {
+        let voice.Voice ∪ none local ← app.local
+        if local is none then return
+        app.tel ← local!.telemetry()
+        app.tel_count ← app.tel_count + 1
+    }
+    let audio.AudioNode ∪ none analyser ← app.analyser
+    if analyser is none then return
+    app.spectrum ← audio.frequency_data(analyser)
+}

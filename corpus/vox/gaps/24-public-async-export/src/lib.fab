@@ -1,0 +1,9 @@
+@ public
+fn quick(int n) → int {
+    return n + 1
+}
+
+@ public
+fn later(int n) async → int {
+    return n + 1
+}

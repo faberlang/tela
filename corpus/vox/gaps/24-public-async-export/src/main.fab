@@ -1,0 +1,19 @@
+# gap 24: the ts backend does not export a `@ public` async fn.
+#
+# Run (from gaps/):   faber emit -t ts 24-public-async-export | grep function
+# Actual:   export function quick(p_n: number): number {
+#           async function later(p_n: number): Promise<number> {
+#           (no `export`; in a browser-app product the importing module then
+#           fails the product's tsc check: TS2339 Property 'start' does not
+#           exist on type 'typeof import(".../synth")')
+# Expected: `export async function later`.
+# Plain formulation: a public sync fn that calls a private async one without
+# awaiting it (synth.fab `start` / `run`).
+
+import from "./lib" lib
+
+async_main {
+    print lib.quick(1)
+    await_const int v ← lib.later(1)
+    print v
+}

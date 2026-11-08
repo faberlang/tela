@@ -1,0 +1,107 @@
+# state.fab: everything the page remembers between events.
+#
+# Faber has no module-level mutable state (gap 06), so the controller makes one
+# App and hands it to every handler. The articulation fields hold the last
+# value sent to the voice, so a redraw never has to ask the audio thread.
+
+import from "tela:audio" audio
+import from "tela:canvas2d" canvas
+import from "engine:voice" voice
+import from "./layout" layout
+
+@ public
+const int TEL_LENGTH = 217
+
+# What the player is grabbing in the anatomy view.
+@ public
+const int GRAB_NONE = 0
+
+@ public
+const int GRAB_TONGUE = 1
+
+@ public
+const int GRAB_LIPS = 2
+
+@ public
+const int GRAB_JAW = 3
+
+@ public
+const int GRAB_VELUM = 4
+
+@ public
+class Surfaces {
+    let canvas.Canvas2DContext anatomy
+    let canvas.Canvas2DContext tube
+    let canvas.Canvas2DContext glottal
+    let canvas.Canvas2DContext spectrum
+    let canvas.Canvas2DContext vowel
+}
+
+@ public
+class App {
+    # Window and placement.
+    mut layout.Layout place
+    mut f64 dpr = 1.0
+
+    # Audio graph. `route` is "idle" until Start, then "worklet" or "block".
+    mut bool started = false
+    mut string route = "idle"
+    mut string status = "audio is off"
+    mut string shown = ""
+    # gap 25: these are optional because app code cannot construct a
+    # tela:audio handle (`audio.AudioContext { id = 0 }` does not link).
+    mut audio.AudioContext ∪ none ctx = null
+    mut audio.AudioNode ∪ none master = null
+    mut audio.AudioNode ∪ none analyser = null
+    mut audio.AudioNode ∪ none source = null
+    mut voice.Voice ∪ none local = null
+    mut f64 volume = 0.35
+    mut f64 sample_rate = 44100.0
+
+    # Latest voice telemetry (217 values) and the analyser's spectrum.
+    mut list<f64> tel
+    mut list<f64> spectrum
+    mut int tel_count = 0
+    mut list<f64> trail_f1
+    mut list<f64> trail_f2
+
+    # Controls sent to the voice.
+    mut f64 pitch_note = 48.0
+    mut f64 breath = 0.7
+    mut f64 pressed = 0.5
+    mut f64 vibrato = 0.0
+    mut f64 aspiration = 0.1
+    mut int mode = 0
+    mut int body = 0
+    mut f64 tongue_x = 0.5
+    mut f64 tongue_h = 0.5
+    mut f64 lips = 0.5
+    mut f64 jaw = 0.4
+    mut f64 velum = 0.0
+
+    # Playing.
+    mut int octave = 0
+    mut list<int> held
+    mut bool sustain = false
+    mut int grab = 0
+}
+
+@ public
+fn make_app(layout.Layout place) → App {
+    mut list<f64> tel ← empty
+    for range 0 ‥ TEL_LENGTH let i {
+        tel.append(0.0)
+    }
+    let list<f64> spectrum ← empty
+    let list<f64> trail_f1 ← empty
+    let list<f64> trail_f2 ← empty
+    let list<int> held ← empty
+    return App {
+        place = place,
+        tel = tel,
+        spectrum = spectrum,
+        trail_f1 = trail_f1,
+        trail_f2 = trail_f2,
+        held = held
+    }
+}

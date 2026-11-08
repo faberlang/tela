@@ -1,0 +1,27 @@
+# gap 22: tela:dom reports a pointer in viewport coordinates and has no way to
+# read an element's rectangle, so a canvas cannot turn a pointer position into
+# a position on itself.
+#
+# Run (from gaps/):   faber check 22-dom-element-rect
+# Actual:   error[SEM004:namespace_missing_export] ... imported file exports no
+#           member `bounding_rect` (and no `attr_get`, `offset`, `scroll`)
+#           runtime/dom.ts `pointerState` fills x and y from `clientX` and
+#           `clientY`; `PointerState` has no element-relative position.
+# Expected: an element rect (`dom.rect(element) → Rect`) or element-relative
+#           `x`, `y` in `PointerState` (offsetX / offsetY).
+# Plain formulation: the app places every canvas itself (layout.fab computes a
+# rectangle from the window size and writes it as inline style) and maps
+# pointer positions back through the same rectangle. That holds only while the
+# page does not scroll and nothing else moves the element.
+
+import from "tela:dom" dom
+
+fn where(dom.Element canvas, dom.PointerState p) → void {
+    let _ r ← dom.bounding_rect(canvas)
+    print r
+    print p.x
+}
+
+main {
+    print 1
+}

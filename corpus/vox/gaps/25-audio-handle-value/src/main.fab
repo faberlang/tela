@@ -1,0 +1,34 @@
+# gap 25: a browser-app cannot construct a tela:audio handle.
+#
+# Run (from gaps/25-audio-handle-value):   faber build .
+# Actual:   error: browser product TypeScript check failed:
+#           faber-ts/main.ts(L,C): error TS2339: Property 'AudioContext' does
+#           not exist on type 'typeof import(".../faber-ts/tela-audio")'.
+#           (`faber check` is ok.)
+# Why:      the generated tela-audio facade re-exports a genus as a value only
+#           when runtime/audio.ts exports it as a value; it exports
+#           `type WebAudioContext = { readonly id: number }` (type only), so
+#           `audio.AudioContext { id = 0 }` is emitted as a use of a name the
+#           facade does not have. tela:dom's classes are runtime classes and
+#           work (`dom.SubmitOptions`).
+# Expected: an app can build the handle classes it names in types, or tela:audio
+#           documents that it cannot.
+# Plain formulation: never construct one; hold handles in `audio.AudioContext
+#           ∪ none` fields (state.fab, gap 25 comments).
+
+import from "tela:web" web
+import from "tela:dom" dom
+import from "tela:audio" audio
+
+class Holder {
+    mut audio.AudioContext ctx
+}
+
+@ WebController { selector = "#app" }
+fn start(dom.Scope scope) → list<dom.Subscription> {
+    print scope
+    let Holder h ← Holder { ctx = audio.AudioContext { id = 0 } }
+    print h.ctx.id
+    let list<dom.Subscription> subs ← empty
+    return subs
+}

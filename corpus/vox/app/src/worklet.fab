@@ -1,0 +1,6 @@
+import from "engine:voice" voice
+
+@ public
+fn create() → voice.Voice {
+    return voice.create()
+}

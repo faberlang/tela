@@ -1,0 +1,13 @@
+[package]
+name = "gap23"
+version = "0.0.0"
+edition = "2026"
+
+[paths]
+entry = "main.fab"
+
+[build]
+kind = "bin"
+
+[locale]
+locale = "en"

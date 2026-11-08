@@ -1,0 +1,72 @@
+# layout.fab: where every panel sits, in CSS pixels, for a window size.
+#
+# tela:dom reports a pointer's viewport position and gives no way to read an
+# element's rectangle (gap 22), so this app places its panels itself: the
+# controller computes the layout from the window size, writes each rectangle
+# onto its element as inline style, and maps pointer positions back through
+# the same rectangle.
+
+@ public
+class Rect {
+    let f64 x
+    let f64 y
+    let f64 w
+    let f64 h
+}
+
+@ public
+class Layout {
+    let Rect header
+    let Rect anatomy
+    let Rect tube
+    let Rect glottal
+    let Rect spectrum
+    let Rect vowel
+    let Rect controls
+    let Rect keys
+}
+
+@ public
+const f64 HEADER_H = 52.0
+
+@ public
+const f64 KEYS_H = 118.0
+
+fn rect(f64 x, f64 y, f64 w, f64 h) → Rect {
+    return Rect { x = x, y = y, w = w, h = h }
+}
+
+# Why: the window is split into a header, a keyboard strip, the anatomy view on
+# the left and, on the right, a 2x2 grid of signal views over the controls.
+@ public
+fn compute(f64 width, f64 height) → Layout {
+    let f64 main_top ← HEADER_H
+    let f64 main_h ← height - HEADER_H - KEYS_H
+    let f64 left_w ← (width * 0.46) ⤓ 640.0
+    let f64 right_x ← left_w
+    let f64 right_w ← width - left_w
+    let f64 cell_w ← right_w / 2.0
+    let f64 grid_h ← (main_h * 0.58) ⤓ 420.0
+    let f64 cell_h ← grid_h / 2.0
+    return Layout {
+        header = rect(0.0, 0.0, width, HEADER_H),
+        anatomy = rect(0.0, main_top, left_w, main_h),
+        tube = rect(right_x, main_top, cell_w, cell_h),
+        glottal = rect(right_x + cell_w, main_top, cell_w, cell_h),
+        spectrum = rect(right_x, main_top + cell_h, cell_w, cell_h),
+        vowel = rect(right_x + cell_w, main_top + cell_h, cell_w, cell_h),
+        controls = rect(right_x, main_top + grid_h, right_w, main_h - grid_h),
+        keys = rect(0.0, height - KEYS_H, width, KEYS_H)
+    }
+}
+
+# Why: the inline style that pins an element to a rectangle.
+@ public
+fn style_of(Rect r) → string {
+    return "left:§px;top:§px;width:§px;height:§px"(floor_text(r.x), floor_text(r.y), floor_text(r.w), floor_text(r.h))
+}
+
+fn floor_text(f64 v) → string {
+    let int whole ← v ↦ int via Floor ⊥ 0
+    return whole ↦ string
+}

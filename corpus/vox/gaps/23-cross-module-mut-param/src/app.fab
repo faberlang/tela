@@ -1,0 +1,9 @@
+@ public
+class App {
+    mut int n = 0
+}
+
+@ public
+fn bump(mut App app) → void {
+    app.n ← app.n + 1
+}

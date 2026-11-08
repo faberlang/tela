@@ -1,0 +1,128 @@
+# anatomy.fab: the midsagittal view. The air column is drawn from the live
+# area function (one gap per section, as wide as the section's diameter); the
+# head, jaw and soft palate are line art around it; four amber handles move
+# the tongue, lips, jaw and soft palate.
+
+import from "tela:canvas2d" canvas
+import from "./state" state
+import from "./geometry" geometry
+import from "./layout" layout
+import from "./style" style
+import from "./ink" ink
+import from "./telemetry" telemetry
+
+const f64 HANDLE_R = 7.0
+const f64 HIT_R = 20.0
+
+fn handle(canvas.Canvas2DContext c, geometry.View v, geometry.Pt at, string name, bool held) → void {
+    let geometry.Pt q ← geometry.px(v, at)
+    if held then ink.dot(c, q.x, q.y, HANDLE_R + 3.0, style.LIVE_SOFT)
+    ink.ring(c, q.x, q.y, HANDLE_R, style.LIVE)
+    ink.dot(c, q.x, q.y, 2.0, style.LIVE)
+    ink.text(c, name, q.x + 14.0, q.y, style.LIVE, "left")
+}
+
+# The tongue zone: the rectangle the tongue handle moves in.
+fn tongue_zone(canvas.Canvas2DContext c, geometry.View v) → void {
+    let geometry.Pt lo ← geometry.px(v, geometry.tongue_pos(0.0, 0.0))
+    let geometry.Pt hi ← geometry.px(v, geometry.tongue_pos(1.0, 1.0))
+    canvas.canvas2d_set_stroke_style(c, style.GRID)
+    canvas.canvas2d_stroke_rect(c, lo.x, hi.y, hi.x - lo.x, lo.y - hi.y)
+}
+
+@ public
+fn draw(canvas.Canvas2DContext c, ref state.App app, layout.Rect r) → void {
+    ink.begin(c, r, app.dpr)
+    let geometry.View v ← geometry.view_for(r)
+
+    # The tract: the live snapshot once there is one, the controls' preview before.
+    let list<f64> tel ← telemetry.current(app)
+    let list<f64> oral ← telemetry.oral(tel)
+    let list<f64> nasal ← telemetry.nasal(tel)
+    let f64 length_cm ← telemetry.at(tel, telemetry.LENGTH_CM)
+    let geometry.Edges tract ← geometry.tract_edges(oral, length_cm)
+    let geometry.Edges nose ← geometry.nasal_edges(nasal)
+
+    # Nose: a band over the roof of the mouth, brighter as the port opens.
+    let f64 port ← telemetry.at(tel, telemetry.PORT)
+    ink.fill_between(c, nose.wall, nose.edge, v, style.NASAL_SOFT)
+    ink.line_pts(c, nose.wall, v, style.NASAL)
+    ink.line_pts(c, nose.edge, v, style.NASAL)
+
+    # Head: skull and face, neck, and the jaw that swings on its joint.
+    let list<geometry.Pt> head ← geometry.head_outline()
+    ink.line_pts(c, head, v, style.HEAD)
+    let list<geometry.Pt> neck ← geometry.neck_front()
+    ink.line_pts(c, neck, v, style.HEAD)
+    let list<geometry.Pt> jaw ← geometry.jaw_line(app.jaw, app.lips)
+    ink.line_pts(c, jaw, v, style.HEAD)
+
+    # Air column and its edges.
+    ink.fill_between(c, tract.wall, tract.edge, v, style.AIR)
+    ink.line_pts(c, tract.wall, v, style.LINE_SOFT)
+    ink.line_pts(c, tract.edge, v, style.LINE)
+
+    # Soft palate: a flap from the hard palate; the port is shown by a tick.
+    let geometry.Pt vb ← geometry.px(v, geometry.velum_base())
+    let geometry.Pt vt ← geometry.px(v, geometry.velum_tip(app.velum))
+    ink.segment(c, vb.x, vb.y, vt.x, vt.y, style.HEAD)
+    if port ≻ 0.05 {
+        let geometry.Pt gate ← geometry.px(v, geometry.pt(2.1, 9.5))
+        ink.dot(c, gate.x, gate.y, 3.0, style.NASAL)
+    }
+
+    # Labels on the tract ends.
+    let geometry.Pt glottis ← geometry.px(v, geometry.pt(0.0, 0.0))
+    ink.text(c, "glottis", glottis.x + 12.0, glottis.y, style.LABEL, "left")
+    ink.segment(c, glottis.x - 5.0, glottis.y, glottis.x + 5.0, glottis.y, style.LINE)
+    let geometry.Pt nostril ← geometry.px(v, geometry.pt(7.0, 12.2))
+    ink.text(c, "nasal tract", nostril.x, nostril.y - 8.0, style.NASAL, "center")
+
+    # Controls.
+    tongue_zone(c, v)
+    handle(c, v, geometry.tongue_pos(app.tongue_x, app.tongue_h), "tongue", app.grab ≡ state.GRAB_TONGUE)
+    handle(c, v, geometry.lips_handle(app.jaw, app.lips), "lips", app.grab ≡ state.GRAB_LIPS)
+    handle(c, v, geometry.chin_handle(app.jaw), "jaw", app.grab ≡ state.GRAB_JAW)
+    handle(c, v, geometry.velum_tip(app.velum), "soft palate", app.grab ≡ state.GRAB_VELUM)
+
+    ink.text(c, "MIDSAGITTAL VIEW", 14.0, 18.0, style.LABEL, "left")
+    ink.text(c, "drag the amber handles", 14.0, 36.0, style.DIM, "left")
+}
+
+fn near(geometry.View v, geometry.Pt at, f64 sx, f64 sy) → bool {
+    let geometry.Pt q ← geometry.px(v, at)
+    let f64 dx ← q.x - sx
+    let f64 dy ← q.y - sy
+    return dx * dx + dy * dy ≤ HIT_R * HIT_R
+}
+
+# Which handle (state.GRAB_*) a pointer position in the view grabs, if any.
+@ public
+fn pick(ref state.App app, layout.Rect r, f64 sx, f64 sy) → int {
+    let geometry.View v ← geometry.view_for(r)
+    if near(v, geometry.velum_tip(app.velum), sx, sy) then return state.GRAB_VELUM
+    if near(v, geometry.lips_handle(app.jaw, app.lips), sx, sy) then return state.GRAB_LIPS
+    if near(v, geometry.chin_handle(app.jaw), sx, sy) then return state.GRAB_JAW
+    if near(v, geometry.tongue_pos(app.tongue_x, app.tongue_h), sx, sy) then return state.GRAB_TONGUE
+    return state.GRAB_NONE
+}
+
+# Move the grabbed control to a pointer position in the view.
+@ public
+fn drag(mut state.App app, layout.Rect r, f64 sx, f64 sy) → void {
+    let geometry.View v ← geometry.view_for(r)
+    let geometry.Pt p ← geometry.world(v, sx, sy)
+    if app.grab ≡ state.GRAB_TONGUE {
+        app.tongue_x ← geometry.tongue_x_at(p)
+        app.tongue_h ← geometry.tongue_h_at(p)
+    }
+    elif app.grab ≡ state.GRAB_LIPS {
+        app.lips ← geometry.lips_at(p, app.jaw)
+    }
+    elif app.grab ≡ state.GRAB_JAW {
+        app.jaw ← geometry.jaw_at(p)
+    }
+    elif app.grab ≡ state.GRAB_VELUM {
+        app.velum ← geometry.velum_at(p)
+    }
+}

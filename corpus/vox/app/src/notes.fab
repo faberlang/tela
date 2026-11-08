@@ -1,0 +1,80 @@
+# notes.fab: keys and pitches.
+#
+# Two octaves of on-screen keys and the home-row computer keyboard share one
+# numbering: an offset in semitones above the keyboard's lowest C, 0 to 24.
+
+const f64 LN2 = 0.6931471805599453
+
+@ public
+const int KEY_COUNT = 25
+
+# Why: equal temperament, A4 = 440 Hz, as a MIDI note number.
+@ public
+fn note_hz(f64 midi) → f64 {
+    return 440.0 * (LN2 * (midi - 69.0) ÷ 12.0).exp()
+}
+
+# Why: a male voice starts at C3, higher bodies a register up. The octave
+# buttons move it by twelve semitones.
+@ public
+fn base_midi(int body, int octave) → f64 {
+    mut f64 base ← 48.0
+    if body ≻ 0 then base ← 60.0
+    return base + 12.0 * (octave ↦ f64)
+}
+
+# The computer key for each semitone: a home row of white keys and the row
+# above for black keys, laid out like the keys they stand for. -1 for a key
+# that plays nothing.
+@ public
+fn key_offset(string key) → int {
+    switch key {
+        case "a" { return 0 }
+        case "w" { return 1 }
+        case "s" { return 2 }
+        case "e" { return 3 }
+        case "d" { return 4 }
+        case "f" { return 5 }
+        case "t" { return 6 }
+        case "g" { return 7 }
+        case "y" { return 8 }
+        case "h" { return 9 }
+        case "u" { return 10 }
+        case "j" { return 11 }
+        case "k" { return 12 }
+        case "o" { return 13 }
+        case "l" { return 14 }
+        case "p" { return 15 }
+        case ";" { return 16 }
+        default { return -1 }
+    }
+}
+
+@ public
+fn is_black(int offset) → bool {
+    let int pc ← offset % 12
+    return pc ≡ 1 or pc ≡ 3 or pc ≡ 6 or pc ≡ 8 or pc ≡ 10
+}
+
+@ public
+fn note_name(f64 midi) → string {
+    let int n ← midi ↦ int via HalfEven ⊥ 0
+    let int pc ← n % 12
+    let int oct ← n / 12 - 1
+    mut string name ← "C"
+    switch pc {
+        case 1 { name ← "C#" }
+        case 2 { name ← "D" }
+        case 3 { name ← "D#" }
+        case 4 { name ← "E" }
+        case 5 { name ← "F" }
+        case 6 { name ← "F#" }
+        case 7 { name ← "G" }
+        case 8 { name ← "G#" }
+        case 9 { name ← "A" }
+        case 10 { name ← "A#" }
+        case 11 { name ← "B" }
+        default { }
+    }
+    return "§§"(name, oct ↦ string)
+}

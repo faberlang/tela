@@ -1,0 +1,117 @@
+# telemetry.fab: reading the voice's 217-value snapshot.
+#
+# The layout is the engine's (engine/src/voice.fab documents it, engine.fab
+# names the offsets); the reads here use those named offsets. Before the audio
+# starts there is no snapshot, so `preview` builds one from the controls with
+# the engine's own area function and formant estimate: the views move while
+# the player explores with the sound off.
+
+import from "engine:engine" eng
+import from "engine:articulation" art
+import from "engine:formants" formants
+import from "engine:body" body
+import from "./state" state
+
+@ public
+const int F0 = 4
+
+@ public
+const int RD = 5
+
+@ public
+const int AMPLITUDE = 6
+
+@ public
+const int PEAK = 7
+
+@ public
+const int PORT = 10
+
+@ public
+const int F1 = 11
+
+@ public
+const int LENGTH_CM = 14
+
+@ public
+const int PHASE = 15
+
+fn take(ref list<f64> tel, int start, int count) → list<f64> {
+    mut list<f64> out ← empty
+    if tel.length() ≺ eng.TEL_LENGTH then return out
+    for range 0 ‥ count let i {
+        out.append(tel[start + i])
+    }
+    return out
+}
+
+@ public
+fn oral(ref list<f64> tel) → list<f64> {
+    return take(tel, eng.TEL_AREA, body.N_SEC)
+}
+
+@ public
+fn nasal(ref list<f64> tel) → list<f64> {
+    return take(tel, eng.TEL_NASAL, body.N_NASAL)
+}
+
+@ public
+fn flow(ref list<f64> tel) → list<f64> {
+    return take(tel, eng.TEL_FLOW, eng.TEL_N_WAVE)
+}
+
+@ public
+fn deriv(ref list<f64> tel) → list<f64> {
+    return take(tel, eng.TEL_DERIV, eng.TEL_N_WAVE)
+}
+
+@ public
+fn at(ref list<f64> tel, int index) → f64 {
+    if tel.length() ≺ eng.TEL_LENGTH then return 0.0
+    return tel[index]
+}
+
+# A snapshot made from the controls, for the time before the audio runs.
+@ public
+fn preview(ref state.App app) → list<f64> {
+    let body.Body anatomy ← body.body_preset(app.body)
+    let list<f64> oral_now ← art.oral_areas(app.tongue_x, app.tongue_h, app.lips, app.jaw, 0.9, 99.0)
+    let list<f64> nasal_now ← art.nasal_areas(app.velum)
+    let list<f64> f ← formants.estimate(oral_now, anatomy.length_cm)
+    mut list<f64> t ← empty
+    t.append(eng.TEL_VERSION ↦ f64)
+    t.append(body.N_SEC ↦ f64)
+    t.append(body.N_NASAL ↦ f64)
+    t.append(eng.TEL_N_WAVE ↦ f64)
+    t.append(0.0)
+    t.append(1.0)
+    t.append(0.0)
+    t.append(0.0)
+    t.append(0.0)
+    t.append(app.mode ↦ f64)
+    t.append(nasal_now[0])
+    t.append(f[0])
+    t.append(f[1])
+    t.append(f[2])
+    t.append(anatomy.length_cm)
+    t.append(0.0)
+    for from oral_now let a {
+        t.append(a)
+    }
+    for from nasal_now let a {
+        t.append(a)
+    }
+    for range 0 ‥ eng.TEL_N_WAVE * 2 let i {
+        t.append(0.0)
+    }
+    return t
+}
+
+# The snapshot the views draw: the voice's own once it has reported, the
+# controls' preview before.
+# gap 31: an if and two returns; `c ✓ preview(app) ✗ app.tel` is SEM010.
+@ public
+fn current(ref state.App app) → list<f64> {
+    if app.tel_count ≡ 0 then return preview(app)
+    return app.tel
+}

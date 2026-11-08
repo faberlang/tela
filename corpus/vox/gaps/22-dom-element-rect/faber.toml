@@ -1,0 +1,17 @@
+[package]
+name = "gap22"
+version = "0.0.0"
+edition = "2026"
+
+[paths]
+entry = "main.fab"
+
+[build]
+target = "ts"
+kind = "bin"
+
+[dependencies]
+tela = "0.0.0"
+
+[locale]
+locale = "en"

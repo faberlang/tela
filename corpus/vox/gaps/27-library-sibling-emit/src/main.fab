@@ -1,0 +1,40 @@
+# gap 27: a browser-app cannot build against a locked library whose modules
+# import each other.
+#
+# Run (from gaps/27-library-sibling-emit):   faber build .
+# Actual:   faber: library TS emit failed for `.../engine/src/engine.fab`:
+#           error[PKG001:unknown_library_module] analysis ... span: <none>
+#           (one such line for each engine module that imports a sibling:
+#           articulation, engine, formants, tract, voice), then
+#           error: browser product TypeScript check failed:
+#           faber-ts/main.ts(L,C): error TS2307: Cannot find module './engine-voice.js'
+#           The product emits each library module by running `faber emit -t ts
+#           <file>` in the library's directory, so a module's `import from
+#           "engine:body"` resolves only if the library's own faber.toml sets
+#           `[paths] library_home` to a directory holding `engine/`. The app's
+#           faber.lock (which lists engine) is not passed on. The same failure
+#           names tela's browser/reference/tela modules and is printed, not
+#           fatal, for modules the app does not import.
+# Expected: the library's modules resolve one another through the lock, as they
+#           do for `faber check` of this package (ok).
+# Fix tried: add `library_home = ".."` under [paths] in engine/faber.toml;
+#           the same build then succeeds and tsc passes. engine/faber.toml is
+#           the engine lane's file, so the Vox app is built from a copy of the
+#           engine with that one line added (see app/README.md).
+# Also: `faber check src/state.fab` of one module of a package that locks a
+#           library fails PKG001 the same way (a single file does not read the
+#           package's faber.lock); `faber check .` resolves it.
+# Same family as gap 18 (format of a library module with a sibling import).
+
+import from "tela:web" web
+import from "tela:dom" dom
+import from "engine:voice" voice
+
+@ WebController { selector = "#app" }
+fn start(dom.Scope scope) → list<dom.Subscription> {
+    print scope
+    let voice.Voice v ← voice.create()
+    print v.telemetry().length()
+    let list<dom.Subscription> subs ← empty
+    return subs
+}

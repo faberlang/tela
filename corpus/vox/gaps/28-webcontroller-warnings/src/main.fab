@@ -1,0 +1,21 @@
+# gap 28: `faber check` warns that a browser controller and its annotation import
+# are unused.
+#
+# Run (from gaps/28-webcontroller-warnings):   faber check .
+# Actual:   warning[WARN002:unused_import] ... import from "tela:web" web
+#           warning[WARN003:unused_function] ... fn greet(dom.Scope scope)
+#           (the product build finds `greet` through `@ WebController` and
+#           mounts it; the warnings print twice per run)
+# Expected: no warning: the annotation uses the import, and an annotated
+#           controller is used by the product.
+# Plain formulation: none needed; the warnings are noise on every controller.
+
+import from "tela:web" web
+import from "tela:dom" dom
+
+@ WebController { selector = "#app" }
+fn greet(dom.Scope scope) → list<dom.Subscription> {
+    dom.text_set(dom.require(scope, "#app"), "hello")
+    let list<dom.Subscription> subs ← empty
+    return subs
+}

@@ -1,0 +1,36 @@
+# gap 23: a `mut` parameter whose only use is being passed on as a `mut`
+# argument to an imported function is reported unused, and the same parameter
+# declared read-only is accepted.
+#
+# Run (from gaps/):   faber check 23-cross-module-mut-param
+# Actual:   warning[WARN008:unused_mut_parameter] ... `fn wire(mut app.App state)`
+#           message: mutable parameter is never mutated
+#           (`bump` is imported; the same program with `bump` in this file
+#           does not warn)
+# Second half: remove `mut` from `wire`'s parameter (and from the call in
+#           `main`). `faber check` then reports only SEM057 at the call in
+#           `main`; inside the closure `app.bump(mut state)` on a read-only
+#           parameter is accepted, so a write through a read-only name
+#           type-checks. Expected: the mutation through an imported function
+#           counts, so `mut` here is correct and quiet, and the read-only form
+#           is SEM020.
+# Plain formulation: keep `mut` and carry the warning (the Vox app does:
+# ui.fab `wire_header`).
+
+import from "./app" app
+
+fn register(() → void handler) → void {
+    handler()
+}
+
+fn wire(mut app.App state) → void {
+    register(() → void ∴ do {
+        app.bump(mut state)
+    })
+}
+
+main {
+    mut app.App state ← app.App {}
+    wire(mut state)
+    print state.n
+}

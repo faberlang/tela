@@ -1,0 +1,6 @@
+import from "engine:voice" voice
+
+@ public
+class Holder {
+    mut voice.Voice ∪ none local = null
+}

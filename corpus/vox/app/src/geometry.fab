@@ -1,0 +1,300 @@
+# geometry.fab: the midsagittal drawing frame.
+#
+# Head frame: centimetres, y up, the face looks toward +x, the glottis is the
+# origin. The vocal tract is drawn as a fixed outer wall (the back of the
+# throat, curving over into the roof of the mouth) and a moving inner edge:
+# each of the 44 sections is a gap between the wall and the edge, as wide as
+# the diameter the live area function says (area = pi/4 * d^2). The edge in
+# the throat is the tongue root, in the mouth the top of the tongue, so the
+# picture follows the sound. The head, jaw and soft palate are line art placed
+# around that tract.
+
+import from "./layout" layout
+
+const f64 PI = 3.141592653589793
+
+# Fixed wall: straight up the throat, a quarter circle over the back of the
+# tongue, then forward along the roof of the mouth. 5.5 + 6.126 + 5.874 =
+# 17.5 cm, the male tract length.
+const f64 WALL_VERT = 5.5
+const f64 WALL_R = 3.9
+const f64 WALL_ARC = 6.1261
+const f64 WALL_LEN = 17.5
+
+@ public
+class Pt {
+    let f64 x
+    let f64 y
+}
+
+@ public
+fn pt(f64 x, f64 y) → Pt {
+    return Pt { x = x, y = y }
+}
+
+# The wall point a fraction u (0 glottis, 1 lips) of the way along.
+@ public
+fn wall_pos(f64 u) → Pt {
+    let f64 s ← (u ⤒ 0.0 ⤓ 1.0) * WALL_LEN
+    if s ≤ WALL_VERT then return pt(0.0, s)
+    if s ≤ WALL_VERT + WALL_ARC {
+        let f64 phi ← PI - (s - WALL_VERT) / WALL_R
+        return pt(WALL_R + WALL_R * phi.cos(), WALL_VERT + WALL_R * phi.sin())
+    }
+    return pt(WALL_R + (s - WALL_VERT - WALL_ARC), WALL_VERT + WALL_R)
+}
+
+# Unit normal pointing from the wall into the tract (toward the tongue).
+@ public
+fn wall_normal(f64 u) → Pt {
+    let f64 s ← (u ⤒ 0.0 ⤓ 1.0) * WALL_LEN
+    if s ≤ WALL_VERT then return pt(1.0, 0.0)
+    if s ≤ WALL_VERT + WALL_ARC {
+        let f64 phi ← PI - (s - WALL_VERT) / WALL_R
+        return pt(-phi.cos(), -phi.sin())
+    }
+    return pt(0.0, -1.0)
+}
+
+@ public
+class Edges {
+    let list<Pt> wall
+    let list<Pt> edge
+}
+
+# The two sides of the air column for a list of section areas (cm^2). A tract
+# shorter than the male one is drawn at the male size: widths scale by
+# 17.5 / length.
+@ public
+fn tract_edges(ref list<f64> areas, f64 length_cm) → Edges {
+    let int n ← areas.length()
+    let f64 k ← 17.5 ÷ (length_cm ⤒ 8.0)
+    mut list<Pt> wall ← empty
+    mut list<Pt> edge ← empty
+    for range 0 ‥ n let i {
+        let f64 u ← ((i ↦ f64) + 0.5) ÷ (n ↦ f64)
+        let Pt p ← wall_pos(u)
+        let Pt nm ← wall_normal(u)
+        let f64 d ← (areas[i] * 4.0 ÷ PI).sqrt() * k
+        wall.append(p)
+        edge.append(pt(p.x + nm.x * d, p.y + nm.y * d))
+    }
+    return Edges { wall = wall, edge = edge }
+}
+
+# The nasal branch as a band above the roof of the mouth: lower edge and
+# upper edge, from the velum to the nostril. `areas` are the 29 nasal
+# sections.
+@ public
+fn nasal_edges(ref list<f64> areas) → Edges {
+    let int n ← areas.length()
+    mut list<Pt> low ← empty
+    mut list<Pt> high ← empty
+    for range 0 ‥ n let i {
+        let f64 t ← (i ↦ f64) ÷ ((n - 1) ↦ f64)
+        let f64 x ← 2.1 + 8.6 * t
+        let f64 y ← 9.75 + 0.6 * t + 1.9 * t * t
+        let f64 d ← (areas[i] * 4.0 ÷ PI).sqrt() * 0.62
+        low.append(pt(x, y))
+        high.append(pt(x, y + d))
+    }
+    return Edges { wall = low, edge = high }
+}
+
+# Catmull-Rom through the points, `per` samples per span; open curve.
+@ public
+fn spline(ref list<Pt> pts, int per) → list<Pt> {
+    let int n ← pts.length()
+    mut list<Pt> out ← empty
+    if n ≺ 3 {
+        for from pts let p {
+            out.append(p)
+        }
+        return out
+    }
+    for range 0 ‥ n - 1 let i {
+        let Pt p0 ← pts[(i - 1) ⤒ 0]
+        let Pt p1 ← pts[i]
+        let Pt p2 ← pts[i + 1]
+        let Pt p3 ← pts[(i + 2) ⤓ (n - 1)]
+        for range 0 ‥ per let j {
+            let f64 t ← (j ↦ f64) ÷ (per ↦ f64)
+            let f64 t2 ← t * t
+            let f64 t3 ← t2 * t
+            let f64 x ← 0.5 * (2.0 * p1.x + (p2.x - p0.x) * t + (2.0 * p0.x - 5.0 * p1.x + 4.0 * p2.x - p3.x) * t2 + (3.0 * p1.x - p0.x - 3.0 * p2.x + p3.x) * t3)
+            let f64 y ← 0.5 * (2.0 * p1.y + (p2.y - p0.y) * t + (2.0 * p0.y - 5.0 * p1.y + 4.0 * p2.y - p3.y) * t2 + (3.0 * p1.y - p0.y - 3.0 * p2.y + p3.y) * t3)
+            out.append(pt(x, y))
+        }
+    }
+    out.append(pts[n - 1])
+    return out
+}
+
+# The head, back of the neck round the skull to the upper lip. Static.
+@ public
+fn head_outline() → list<Pt> {
+    mut list<Pt> raw ← empty
+    raw.append(pt(-4.5, -6.0))
+    raw.append(pt(-4.7, 0.0))
+    raw.append(pt(-4.9, 4.5))
+    raw.append(pt(-5.8, 8.0))
+    raw.append(pt(-7.2, 11.0))
+    raw.append(pt(-7.9, 14.5))
+    raw.append(pt(-7.3, 18.5))
+    raw.append(pt(-5.0, 21.5))
+    raw.append(pt(-1.5, 22.8))
+    raw.append(pt(2.5, 22.6))
+    raw.append(pt(6.2, 21.0))
+    raw.append(pt(8.8, 18.6))
+    raw.append(pt(10.2, 16.4))
+    raw.append(pt(10.5, 15.2))
+    raw.append(pt(10.3, 14.4))
+    raw.append(pt(11.9, 13.5))
+    raw.append(pt(11.6, 12.8))
+    raw.append(pt(10.7, 12.2))
+    raw.append(pt(10.6, 11.0))
+    raw.append(pt(11.0, 9.9))
+    raw.append(pt(10.7, 9.0))
+    raw.append(pt(9.7, 8.7))
+    return spline(raw, 6)
+}
+
+# The front of the neck, below the jaw. Static.
+@ public
+fn neck_front() → list<Pt> {
+    mut list<Pt> raw ← empty
+    raw.append(pt(5.8, 2.9))
+    raw.append(pt(3.9, 1.8))
+    raw.append(pt(3.6, -1.5))
+    raw.append(pt(3.9, -6.0))
+    return spline(raw, 6)
+}
+
+@ public
+fn jaw_pivot() → Pt {
+    return pt(1.8, 9.2)
+}
+
+# A point of the lower jaw (rest position given) after the jaw drops by
+# `jaw` (0 closed .. 1 open): a rotation about the joint.
+@ public
+fn jaw_turn(Pt p, f64 jaw) → Pt {
+    let Pt t ← jaw_pivot()
+    let f64 a ← 0.36 * (jaw ⤒ 0.0 ⤓ 1.0)
+    let f64 dx ← p.x - t.x
+    let f64 dy ← p.y - t.y
+    return pt(t.x + dx * a.cos() + dy * a.sin(), t.y - dx * a.sin() + dy * a.cos())
+}
+
+# The lower jaw line with the lower lip: from the lip edge round the chin and
+# back to the jaw joint. `lips` (0 pressed .. 1 wide) lifts the lower lip.
+@ public
+fn jaw_line(f64 jaw, f64 lips) → list<Pt> {
+    let f64 lift ← (1.0 - (lips ⤒ 0.0 ⤓ 1.0)) * 1.4
+    mut list<Pt> raw ← empty
+    raw.append(jaw_turn(pt(9.7, 8.5 + lift * 0.6), jaw))
+    raw.append(jaw_turn(pt(10.6, 8.0 + lift), jaw))
+    raw.append(jaw_turn(pt(10.3, 6.9 + lift * 0.5), jaw))
+    raw.append(jaw_turn(pt(9.4, 6.1), jaw))
+    raw.append(jaw_turn(pt(9.2, 4.6), jaw))
+    raw.append(jaw_turn(pt(8.0, 3.3), jaw))
+    raw.append(jaw_turn(pt(6.0, 3.0), jaw))
+    raw.append(jaw_turn(pt(3.2, 5.0), jaw))
+    raw.append(jaw_turn(pt(2.0, 8.2), jaw))
+    return spline(raw, 5)
+}
+
+# Handles. Each returns where the grab point sits for the current control.
+@ public
+fn lips_handle(f64 jaw, f64 lips) → Pt {
+    let f64 lift ← (1.0 - (lips ⤒ 0.0 ⤓ 1.0)) * 1.4
+    return jaw_turn(pt(10.6, 8.0 + lift), jaw)
+}
+
+@ public
+fn chin_handle(f64 jaw) → Pt {
+    return jaw_turn(pt(9.2, 4.6), jaw)
+}
+
+# The soft palate: a flap hung from the back of the hard palate. Raised it
+# lies along the throat wall (nose closed), lowered it hangs into the throat.
+@ public
+fn velum_base() → Pt {
+    return pt(3.0, 9.3)
+}
+
+@ public
+fn velum_tip(f64 velum) → Pt {
+    let f64 v ← velum ⤒ 0.0 ⤓ 1.0
+    return pt(0.3 + 1.5 * v, 7.0 - 0.9 * v)
+}
+
+# The tongue zone: the controller for position (x: back .. front) and
+# height (y: low .. high) is a rectangle over the mouth.
+@ public
+fn tongue_pos(f64 tx, f64 th) → Pt {
+    return pt(2.6 + 6.4 * (tx ⤒ 0.0 ⤓ 1.0), 4.9 + 3.6 * (th ⤒ 0.0 ⤓ 1.0))
+}
+
+@ public
+fn tongue_x_at(Pt p) → f64 {
+    return ((p.x - 2.6) ÷ 6.4) ⤒ 0.0 ⤓ 1.0
+}
+
+@ public
+fn tongue_h_at(Pt p) → f64 {
+    return ((p.y - 4.9) ÷ 3.6) ⤒ 0.0 ⤓ 1.0
+}
+
+# Screen mapping: a uniform scale and an offset, y flipped.
+@ public
+class View {
+    let f64 scale
+    let f64 ox
+    let f64 oy
+}
+
+@ public
+fn view_for(layout.Rect r) → View {
+    let f64 s ← (r.w ÷ 21.0) ⤓ (r.h ÷ 27.0)
+    return View { scale = s, ox = r.w * 0.5 - s * 2.0, oy = r.h * 0.5 + s * 8.2 }
+}
+
+@ public
+fn px(View v, Pt p) → Pt {
+    return pt(v.ox + p.x * v.scale, v.oy - p.y * v.scale)
+}
+
+@ public
+fn world(View v, f64 sx, f64 sy) → Pt {
+    return pt((sx - v.ox) ÷ v.scale, (v.oy - sy) ÷ v.scale)
+}
+
+# Inverses of the handles, for dragging. The lip handle is measured in the
+# jaw's own frame, so the jaw is turned back first; the chin and soft palate
+# are read along their travel.
+@ public
+fn lips_at(Pt p, f64 jaw) → f64 {
+    let Pt t ← jaw_pivot()
+    let f64 a ← 0.36 * (jaw ⤒ 0.0 ⤓ 1.0)
+    let f64 dx ← p.x - t.x
+    let f64 dy ← p.y - t.y
+    let Pt back ← pt(t.x + dx * a.cos() - dy * a.sin(), t.y + dx * a.sin() + dy * a.cos())
+    return (1.0 - (back.y - 8.0) ÷ 1.4) ⤒ 0.0 ⤓ 1.0
+}
+
+@ public
+fn jaw_at(Pt p) → f64 {
+    let Pt shut ← chin_handle(0.0)
+    let Pt wide ← chin_handle(1.0)
+    return ((shut.y - p.y) ÷ (shut.y - wide.y)) ⤒ 0.0 ⤓ 1.0
+}
+
+@ public
+fn velum_at(Pt p) → f64 {
+    let Pt up ← velum_tip(0.0)
+    let Pt down ← velum_tip(1.0)
+    let f64 dx ← down.x - up.x
+    let f64 dy ← down.y - up.y
+    return (((p.x - up.x) * dx + (p.y - up.y) * dy) ÷ (dx * dx + dy * dy)) ⤒ 0.0 ⤓ 1.0
+}

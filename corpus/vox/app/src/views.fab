@@ -1,0 +1,237 @@
+# views.fab: the four signal views: tube (area function), glottal waveform,
+# spectrum and the F1/F2 vowel chart. Each takes the snapshot the voice last
+# reported; the spectrum also takes the analyser's frequency data.
+
+import from "tela:canvas2d" canvas
+import from "./state" state
+import from "./layout" layout
+import from "./style" style
+import from "./ink" ink
+import from "./telemetry" telemetry
+
+const f64 PAD = 14.0
+const f64 TOP = 34.0
+const f64 LOG10 = 2.302585092994046
+
+fn frame_title(canvas.Canvas2DContext c, string name, string note) → void {
+    ink.text(c, name, 14.0, 18.0, style.LABEL, "left")
+    ink.text(c, note, 14.0, 34.0, style.DIM, "left")
+}
+
+# Why: a bar plot of one list, scaled to `top` (cm^2).
+fn bars(canvas.Canvas2DContext c, ref list<f64> values, f64 x0, f64 y0, f64 w, f64 h, f64 top, string fill, string edge) → void {
+    let int n ← values.length()
+    if n ≡ 0 then return
+    let f64 slot ← w ÷ (n ↦ f64)
+    canvas.canvas2d_set_fill_style(c, fill)
+    for range 0 ‥ n let i {
+        let f64 bar ← (values[i] ÷ top ⤒ 0.0 ⤓ 1.0) * h
+        canvas.canvas2d_fill_rect(c, x0 + slot * (i ↦ f64) + 1.0, y0 + h - bar, slot - 2.0, bar)
+    }
+    canvas.canvas2d_set_stroke_style(c, edge)
+    canvas.canvas2d_begin_path(c)
+    for range 0 ‥ n let i {
+        let f64 bar ← (values[i] ÷ top ⤒ 0.0 ⤓ 1.0) * h
+        let f64 x ← x0 + slot * ((i ↦ f64) + 0.5)
+        if i ≡ 0 {
+            canvas.canvas2d_move_to(c, x, y0 + h - bar)
+        }
+        else {
+            canvas.canvas2d_line_to(c, x, y0 + h - bar)
+        }
+    }
+    canvas.canvas2d_stroke(c)
+}
+
+@ public
+fn tube(canvas.Canvas2DContext c, ref state.App app, layout.Rect r) → void {
+    ink.begin(c, r, app.dpr)
+    frame_title(c, "TUBE", "area per section, cm2")
+    let list<f64> tel ← telemetry.current(app)
+    let list<f64> oral ← telemetry.oral(tel)
+    let list<f64> nasal ← telemetry.nasal(tel)
+    let f64 w ← r.w - PAD * 2.0
+    let f64 oral_h ← (r.h - TOP - 70.0) * 0.64
+    let f64 nasal_h ← (r.h - TOP - 70.0) * 0.36
+    let f64 oral_y ← TOP + 6.0
+    let f64 nasal_y ← oral_y + oral_h + 34.0
+
+    # Gridlines at 4, 8 and 12 cm2.
+    for range 1 ‥ 4 let k {
+        let f64 y ← oral_y + oral_h * (1.0 - ((k ↦ f64) * 4.0) ÷ 12.0)
+        ink.segment(c, PAD, y, PAD + w, y, style.GRID)
+        ink.text(c, ink.whole((k ↦ f64) * 4.0), PAD + w, y - 7.0, style.DIM, "right")
+    }
+    bars(c, oral, PAD, oral_y, w, oral_h, 12.0, style.AIR, style.LINE)
+    ink.text(c, "glottis", PAD, oral_y + oral_h + 12.0, style.LABEL, "left")
+    ink.text(c, "lips", PAD + w, oral_y + oral_h + 12.0, style.LABEL, "right")
+    ink.text(c, "nasal branch", PAD, nasal_y - 8.0, style.NASAL, "left")
+    bars(c, nasal, PAD, nasal_y, w, nasal_h, 6.0, style.NASAL_SOFT, style.NASAL)
+    ink.text(c, "velum", PAD, nasal_y + nasal_h + 12.0, style.LABEL, "left")
+    ink.text(c, "nostrils", PAD + w, nasal_y + nasal_h + 12.0, style.LABEL, "right")
+}
+
+# One curve across a plot, `values` low to high mapped into [lo, hi].
+fn curve(canvas.Canvas2DContext c, ref list<f64> values, f64 x0, f64 y0, f64 w, f64 h, f64 lo, f64 hi, string color) → void {
+    let int n ← values.length()
+    if n ≺ 2 then return
+    canvas.canvas2d_set_stroke_style(c, color)
+    canvas.canvas2d_begin_path(c)
+    for range 0 ‥ n let i {
+        let f64 t ← ((values[i] - lo) ÷ (hi - lo)) ⤒ 0.0 ⤓ 1.0
+        let f64 x ← x0 + w * (i ↦ f64) ÷ ((n - 1) ↦ f64)
+        let f64 y ← y0 + h * (1.0 - t)
+        if i ≡ 0 {
+            canvas.canvas2d_move_to(c, x, y)
+        }
+        else {
+            canvas.canvas2d_line_to(c, x, y)
+        }
+    }
+    canvas.canvas2d_stroke(c)
+}
+
+@ public
+fn glottal(canvas.Canvas2DContext c, ref state.App app, layout.Rect r) → void {
+    ink.begin(c, r, app.dpr)
+    frame_title(c, "GLOTTAL WAVEFORM", "one period of the source")
+    let list<f64> tel ← telemetry.current(app)
+    let list<f64> flow ← telemetry.flow(tel)
+    let list<f64> deriv ← telemetry.deriv(tel)
+    let f64 w ← r.w - PAD * 2.0
+    let f64 half ← (r.h - TOP - 50.0) ÷ 2.0
+    let f64 flow_y ← TOP + 4.0
+    let f64 deriv_y ← flow_y + half + 14.0
+
+    ink.segment(c, PAD, flow_y + half, PAD + w, flow_y + half, style.GRID)
+    ink.text(c, "flow", PAD + w, flow_y + 4.0, style.DIM, "right")
+    curve(c, flow, PAD, flow_y, w, half, 0.0, 1.0, style.LINE)
+
+    ink.segment(c, PAD, deriv_y + half * 0.5, PAD + w, deriv_y + half * 0.5, style.GRID)
+    ink.text(c, "flow derivative", PAD + w, deriv_y + 4.0, style.DIM, "right")
+    curve(c, deriv, PAD, deriv_y, w, half, -1.0, 1.0, style.LIVE)
+
+    # Where in the period the source is right now.
+    let f64 phase ← telemetry.at(tel, telemetry.PHASE) ⤒ 0.0 ⤓ 1.0
+    let f64 px ← PAD + w * phase
+    ink.segment(c, px, flow_y, px, deriv_y + half, style.DIM)
+
+    let f64 f0 ← telemetry.at(tel, telemetry.F0)
+    let f64 rd ← telemetry.at(tel, telemetry.RD)
+    ink.text(c, "f0 §  Hz   Rd §"(ink.whole(f0), ink.tenths(rd)), PAD, r.h - 12.0, style.TEXT, "left")
+}
+
+@ public
+fn spectrum(canvas.Canvas2DContext c, ref state.App app, layout.Rect r) → void {
+    ink.begin(c, r, app.dpr)
+    frame_title(c, "SPECTRUM", "analyser, 0 to 5 kHz, dB")
+    let list<f64> tel ← telemetry.current(app)
+    let f64 w ← r.w - PAD * 2.0
+    let f64 h ← r.h - TOP - 34.0
+    let f64 y0 ← TOP + 4.0
+    let f64 max_hz ← 5000.0
+
+    for range 1 ‥ 6 let k {
+        let f64 x ← PAD + w * ((k ↦ f64) * 1000.0) ÷ max_hz
+        ink.segment(c, x, y0, x, y0 + h, style.GRID)
+        ink.text(c, "§k"(k), x, y0 + h + 12.0, style.DIM, "center")
+    }
+
+    # Formants from the area function, under the measured spectrum.
+    for range 0 ‥ 3 let k {
+        let f64 hz ← telemetry.at(tel, telemetry.F1 + k)
+        if hz ≻ 0.0 and hz ≺ max_hz {
+            let f64 x ← PAD + w * hz ÷ max_hz
+            ink.segment(c, x, y0, x, y0 + h, style.LIVE_SOFT)
+            ink.text(c, "F§"(k + 1), x + 3.0, y0 + 8.0, style.LIVE, "left")
+        }
+    }
+
+    let int bins ← app.spectrum.length()
+    if bins ≻ 1 and app.sample_rate ≻ 0.0 {
+        let f64 bin_hz ← app.sample_rate ÷ 2.0 ÷ (bins ↦ f64)
+        let int last ← (max_hz ÷ bin_hz) ↦ int via Floor ⊥ 0
+        let int count ← last ⤓ (bins - 1)
+        canvas.canvas2d_set_stroke_style(c, style.LINE)
+        canvas.canvas2d_begin_path(c)
+        for range 0 ‥ count let i {
+            let f64 db ← app.spectrum[i] ⤒ -100.0 ⤓ -10.0
+            let f64 x ← PAD + w * ((i ↦ f64) * bin_hz) ÷ max_hz
+            let f64 y ← y0 + h * (1.0 - (db + 100.0) ÷ 90.0)
+            if i ≡ 0 {
+                canvas.canvas2d_move_to(c, x, y)
+            }
+            else {
+                canvas.canvas2d_line_to(c, x, y)
+            }
+        }
+        canvas.canvas2d_stroke(c)
+    }
+    ink.text(c, "Hz", PAD + w, y0 + h + 24.0, style.DIM, "right")
+}
+
+# The chart is logarithmic in both axes; F1 grows downward, F2 leftward, as
+# phoneticians draw it, so the chart reads like the mouth seen from the side.
+fn chart_x(f64 f2, f64 x0, f64 w) → f64 {
+    let f64 t ← ((3000.0 ÷ (f2 ⤒ 500.0 ⤓ 3000.0)).ln()) ÷ ((3000.0 ÷ 500.0).ln())
+    return x0 + w * t
+}
+
+fn chart_y(f64 f1, f64 y0, f64 h) → f64 {
+    let f64 t ← (((f1 ⤒ 180.0 ⤓ 1000.0) ÷ 180.0).ln()) ÷ ((1000.0 ÷ 180.0).ln())
+    return y0 + h * t
+}
+
+fn reference(canvas.Canvas2DContext c, string name, f64 f1, f64 f2, f64 x0, f64 y0, f64 w, f64 h) → void {
+    let f64 x ← chart_x(f2, x0, w)
+    let f64 y ← chart_y(f1, y0, h)
+    ink.ring(c, x, y, 5.0, style.DIM)
+    ink.text(c, name, x + 9.0, y, style.LABEL, "left")
+}
+
+@ public
+fn vowels(canvas.Canvas2DContext c, ref state.App app, layout.Rect r) → void {
+    ink.begin(c, r, app.dpr)
+    frame_title(c, "F1 / F2 VOWEL CHART", "hz, log scale")
+    let list<f64> tel ← telemetry.current(app)
+    let f64 x0 ← PAD + 26.0
+    let f64 y0 ← TOP + 4.0
+    let f64 w ← r.w - x0 - PAD
+    let f64 h ← r.h - TOP - 34.0
+
+    for from [800.0, 1000.0, 1500.0, 2000.0, 2500.0] let f2 {
+        let f64 x ← chart_x(f2, x0, w)
+        ink.segment(c, x, y0, x, y0 + h, style.GRID)
+        ink.text(c, ink.whole(f2), x, y0 + h + 12.0, style.DIM, "center")
+    }
+    for from [250.0, 400.0, 600.0, 800.0] let f1 {
+        let f64 y ← chart_y(f1, y0, h)
+        ink.segment(c, x0, y, x0 + w, y, style.GRID)
+        ink.text(c, ink.whole(f1), x0 - 4.0, y, style.DIM, "right")
+    }
+
+    # Adult male reference vowels (Peterson and Barney 1952; the engine's
+    # presets are tuned to them).
+    reference(c, "i", 270.0, 2290.0, x0, y0, w, h)
+    reference(c, "e", 450.0, 1900.0, x0, y0, w, h)
+    reference(c, "a", 730.0, 1090.0, x0, y0, w, h)
+    reference(c, "o", 480.0, 935.0, x0, y0, w, h)
+    reference(c, "u", 300.0, 870.0, x0, y0, w, h)
+
+    # The live point and its trail.
+    let int trail ← app.trail_f1.length()
+    for range 0 ‥ trail let i {
+        let f64 x ← chart_x(app.trail_f2[i], x0, w)
+        let f64 y ← chart_y(app.trail_f1[i], y0, h)
+        ink.dot(c, x, y, 2.0, style.LIVE_SOFT)
+    }
+    let f64 f1 ← telemetry.at(tel, telemetry.F1)
+    let f64 f2 ← telemetry.at(tel, telemetry.F1 + 1)
+    if f1 ≻ 0.0 and f2 ≻ 0.0 {
+        let f64 x ← chart_x(f2, x0, w)
+        let f64 y ← chart_y(f1, y0, h)
+        ink.dot(c, x, y, 7.0, style.LIVE_SOFT)
+        ink.dot(c, x, y, 3.0, style.LIVE)
+        ink.text(c, "F1 §   F2 §"(ink.whole(f1), ink.whole(f2)), r.w - PAD, 18.0, style.TEXT, "right")
+    }
+}
