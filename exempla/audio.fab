@@ -1,0 +1,111 @@
++++
+term = "audio"
+kind = "concept"
+category = "library"
+locale = "en"
++++
+
+# tela/exempla/audio.fab — the tela:audio surface in use: an audio graph with
+# a main-thread block source, a master gain, an analyser tap and a worklet
+# source.
+#
+#   block source ─┐
+#                 ├─► master gain ─► destination
+#   worklet node ─┘        └─► analyser (tap)
+#
+# The block source is the fallback route: the browser calls the Faber
+# handler once per block with the frame count, and the handler returns that
+# many mono samples. The worklet route loads a processor module by URL and
+# steers the node with numeric {key, value} messages; the processor posts
+# numeric telemetry back as a list.
+#
+# HOW THIS FILE IS CHECKED: `faber check` (scripta/check-exempla) proves the
+# whole surface type-checks, including the handler-typed calls. The TS lane
+# of check-exempla does NOT assemble this exemplum, because `faber emit` of a
+# single consumer file skips every export whose signature names a handler
+# type alias (WARN014 NominalTypeUnsupported) — the same skip hits tela:dom's
+# handler fns; repro in tests/gaps/handler-alias-emit.fab. The runtime side
+# is exercised by tests/audio-runtime-test.ts.
+#
+# BROWSER RULES the caller owns: a context starts suspended, and `resume`
+# must be called from a user gesture (a click or key press handler). The
+# worklet URL must be served from a secure context (https or localhost).
+
+import from "tela:audio" public * as audio
+import from "norma:math" math
+
+# Samples for one block of a sine wave starting at `phase`, `step` radians per
+# sample. Pure, so the sample maths stays testable without a browser.
+fn sine_samples(f64 phase, f64 step, int frames) → list<f64> {
+    mut list<f64> out ← empty
+    for range 0 ‥ frames let i {
+        out.append(math.sin(phase + step * (i ↦ f64)))
+    }
+    return out
+}
+
+# The worklet route: load the processor module, then make a node from it.
+# The load can fail (a bad URL, an unsupported browser); the error channel
+# carries it to the caller.
+fn worklet_voice(audio.AudioContext ctx, string module_url) async → audio.AudioNode ⇥ string {
+    await audio.load_worklet(ctx, module_url)
+    return audio.create_worklet_node(ctx, "vox-voice")
+}
+
+# Deliver the processor's telemetry (here: print the first value).
+fn on_telemetry(list<f64> snapshot) → void {
+    if snapshot.length() ≻ 0 {
+        print snapshot[0]
+    }
+}
+
+async_main {
+    let audio.AudioContext ctx ← audio.create_context()
+    let f64 rate ← audio.sample_rate(ctx)
+    print "sample rate §"(rate)
+
+    # Master gain feeding the speakers.
+    let audio.AudioNode master ← audio.create_gain(ctx)
+    audio.set_gain(master, 0.5)
+    audio.connect(master, audio.destination(ctx))
+
+    # Main-thread block source: a 220 Hz sine. The closure keeps the phase
+    # between blocks.
+    let f64 step ← 6.283185307179586 * 220.0 ÷ rate
+    mut f64 phase ← 0.0
+    let audio.AudioNode voice ← audio.create_block_node(ctx, 1024, (int frames) → list<f64> ∴ do {
+        let list<f64> block ← sine_samples(phase, step, frames)
+        phase ← phase + step * (frames ↦ f64)
+        return block
+    })
+    audio.connect(voice, master)
+
+    # Analyser tap on the master output.
+    let audio.AudioNode meter ← audio.create_analyser(ctx)
+    audio.set_fft_size(meter, 2048)
+    audio.connect(master, meter)
+
+    # Worklet source, when the browser and the served module allow it; the
+    # block source above keeps the app playable when they do not.
+    do {
+        await_const audio.AudioNode worklet ← worklet_voice(ctx, "worklets/vox-voice.js")
+        audio.set_message_handler(worklet, on_telemetry)
+        audio.post_message(worklet, "pitch", 220.0)
+        audio.connect(worklet, master)
+    } catch err {
+        print "no worklet, block source only: §"(err)
+    }
+
+    # A page calls this from a click or key handler.
+    audio.resume(ctx)
+
+    # Read the display data each animation frame.
+    let list<f64> spectrum ← audio.frequency_data(meter)
+    let list<f64> wave ← audio.time_data(meter)
+    print "bins §, samples §"(spectrum.length(), wave.length())
+
+    # Stop the block source and shut the context down.
+    audio.disconnect(voice, master)
+    audio.suspend(ctx)
+    audio.close(ctx)
+}

@@ -313,3 +313,119 @@ result = "void"
 symbol = "webCanvas2dPath2DStroke"
 opener = "Canvas2DContext, Path2D"
 result = "void"
+
+# tela:audio — the Web Audio binding (tela-audio lane). The per-stem shim:
+# the audio stem wires to its own runtime shim, like canvas2d. Every
+# tela:audio route mirrors one `fn` in src/audio.fab and one exported
+# function in runtime/audio.ts (the `webAudio*` symbols are the
+# host-binding contract: webAudio + the fn name in PascalCase). The
+# opener/result fields are en Faber type names taken from the fn signature;
+# tests/contract-test.ts verifies the bijection mechanically.
+
+[shims.audio]
+path = "runtime/audio.ts"
+
+[functions."tela:audio.create_context"]
+symbol = "webAudioCreateContext"
+opener = ""
+result = "AudioContext"
+
+[functions."tela:audio.resume"]
+symbol = "webAudioResume"
+opener = "AudioContext"
+result = "void"
+
+[functions."tela:audio.suspend"]
+symbol = "webAudioSuspend"
+opener = "AudioContext"
+result = "void"
+
+[functions."tela:audio.close"]
+symbol = "webAudioClose"
+opener = "AudioContext"
+result = "void"
+
+[functions."tela:audio.state"]
+symbol = "webAudioState"
+opener = "AudioContext"
+result = "string"
+
+[functions."tela:audio.sample_rate"]
+symbol = "webAudioSampleRate"
+opener = "AudioContext"
+result = "f64"
+
+[functions."tela:audio.current_time"]
+symbol = "webAudioCurrentTime"
+opener = "AudioContext"
+result = "f64"
+
+[functions."tela:audio.destination"]
+symbol = "webAudioDestination"
+opener = "AudioContext"
+result = "AudioNode"
+
+[functions."tela:audio.create_gain"]
+symbol = "webAudioCreateGain"
+opener = "AudioContext"
+result = "AudioNode"
+
+[functions."tela:audio.set_gain"]
+symbol = "webAudioSetGain"
+opener = "AudioNode, f64"
+result = "void"
+
+[functions."tela:audio.create_block_node"]
+symbol = "webAudioCreateBlockNode"
+opener = "AudioContext, int, BlockHandler"
+result = "AudioNode"
+
+[functions."tela:audio.load_worklet"]
+symbol = "webAudioLoadWorklet"
+opener = "AudioContext, string"
+result = "void"
+
+[functions."tela:audio.create_worklet_node"]
+symbol = "webAudioCreateWorkletNode"
+opener = "AudioContext, string"
+result = "AudioNode"
+
+[functions."tela:audio.post_message"]
+symbol = "webAudioPostMessage"
+opener = "AudioNode, string, f64"
+result = "void"
+
+[functions."tela:audio.set_message_handler"]
+symbol = "webAudioSetMessageHandler"
+opener = "AudioNode, MessageHandler"
+result = "void"
+
+[functions."tela:audio.create_analyser"]
+symbol = "webAudioCreateAnalyser"
+opener = "AudioContext"
+result = "AudioNode"
+
+[functions."tela:audio.set_fft_size"]
+symbol = "webAudioSetFftSize"
+opener = "AudioNode, int"
+result = "void"
+
+[functions."tela:audio.frequency_data"]
+symbol = "webAudioFrequencyData"
+opener = "AudioNode"
+result = "list<f64>"
+
+[functions."tela:audio.time_data"]
+symbol = "webAudioTimeData"
+opener = "AudioNode"
+result = "list<f64>"
+
+[functions."tela:audio.connect"]
+symbol = "webAudioConnect"
+opener = "AudioNode, AudioNode"
+result = "void"
+
+[functions."tela:audio.disconnect"]
+symbol = "webAudioDisconnect"
+opener = "AudioNode, AudioNode"
+result = "void"

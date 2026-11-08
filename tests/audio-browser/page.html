@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<!--
+  tela:audio real-browser check (manual; no automated browser harness exists
+  in this repo). It drives runtime/audio.ts in a real browser: the context
+  lifecycle after a user gesture, a main-thread block source, an analyser
+  reading the block source's 1 kHz tone, a real AudioWorklet (tone-worklet.js,
+  a hand-written processor that follows the Vox worklet contract) steered by
+  {key, value} messages and posting Float64Array telemetry, a rejected module
+  load, the node-kind check, and context close. The master gain is 0, so the
+  page makes no sound.
+
+  Run from the tela repo root:
+    tsc --target ES2022 --module ES2022 --lib ES2022,DOM,DOM.Iterable --strict \
+        --outDir /tmp/tela-audio-browser runtime/audio.ts
+    cp tests/audio-browser/* /tmp/tela-audio-browser/
+    (cd /tmp/tela-audio-browser && python3 -m http.server 8741 --bind 127.0.0.1)
+  then open http://127.0.0.1:8741/page.html, click the button, and read the
+  JSON. Expected on a 48 kHz context: state_after_resume "running",
+  time_advances true, block_frames [1024], block_calls about 33,
+  peak_hz about 1000 (within one bin), worklet_last [1500, 1024, 1],
+  worklet_peak_hz 1500, missing_module "rejected: ...", state_after_close
+  "closed". The worklet needs a secure context (localhost counts).
+-->
+<html><head><meta charset="utf-8"><title>tela:audio browser check</title></head>
+<body>
+<button id="go" style="font-size:24px;padding:20px">Start audio test (silent: master gain 0)</button>
+<pre id="out">not started</pre>
+<script type="module">
+import * as A from "./audio.js";
+const results = {};
+const out = document.getElementById("out");
+const log = (k, v) => { results[k] = v; out.textContent = JSON.stringify(results, null, 1); };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+document.getElementById("go").addEventListener("click", async () => {
+  try {
+    const ctx = A.webAudioCreateContext();
+    A.webAudioResume(ctx);
+    await sleep(300);
+    log("state_after_resume", A.webAudioState(ctx));
+    const rate = A.webAudioSampleRate(ctx);
+    log("sample_rate", rate);
+    const t0 = A.webAudioCurrentTime(ctx);
+    await sleep(300);
+    log("time_advances", A.webAudioCurrentTime(ctx) > t0);
+
+    // graph: block(1 kHz sine) -> analyser ; analyser -> gain(0) -> destination
+    const master = A.webAudioCreateGain(ctx);
+    A.webAudioSetGain(master, 0);
+    A.webAudioConnect(master, A.webAudioDestination(ctx));
+    const analyser = A.webAudioCreateAnalyser(ctx);
+    A.webAudioSetFftSize(analyser, 2048);
+    A.webAudioConnect(analyser, master);
+    const seen = [];
+    let phase = 0;
+    const step = (2 * Math.PI * 1000) / rate;
+    const block = A.webAudioCreateBlockNode(ctx, 1024, (frames) => {
+      seen.push(frames);
+      const s = new Array(frames);
+      for (let i = 0; i < frames; i += 1) { s[i] = 0.5 * Math.sin(phase); phase += step; }
+      return s;
+    });
+    A.webAudioConnect(block, analyser);
+    await sleep(700);
+    log("block_calls", seen.length);
+    log("block_frames", [...new Set(seen)]);
+    const spec = A.webAudioFrequencyData(analyser);
+    const wave = A.webAudioTimeData(analyser);
+    let peak = 0;
+    for (let i = 1; i < spec.length; i += 1) if (spec[i] > spec[peak]) peak = i;
+    log("fft_bins", spec.length);
+    log("wave_len", wave.length);
+    log("peak_hz", peak * rate / 2048);
+    log("peak_db", spec[peak]);
+    log("wave_max", Math.max(...wave));
+    log("is_plain_array", Array.isArray(spec) && Array.isArray(wave));
+
+    // worklet route
+    await A.webAudioLoadWorklet(ctx, "tone-worklet.js");
+    const voice = A.webAudioCreateWorkletNode(ctx, "tone-test");
+    const msgs = [];
+    A.webAudioSetMessageHandler(voice, (data) => msgs.push(data));
+    A.webAudioPostMessage(voice, "pitch", 1500);
+    const analyser2 = A.webAudioCreateAnalyser(ctx);
+    A.webAudioSetFftSize(analyser2, 2048);
+    A.webAudioConnect(voice, analyser2);
+    A.webAudioConnect(analyser2, master);
+    await sleep(700);
+    log("worklet_messages", msgs.length);
+    log("worklet_last", msgs[msgs.length - 1]);
+    log("worklet_plain_array", msgs.length > 0 && Array.isArray(msgs[0]));
+    const spec2 = A.webAudioFrequencyData(analyser2);
+    let peak2 = 0;
+    for (let i = 1; i < spec2.length; i += 1) if (spec2[i] > spec2[peak2]) peak2 = i;
+    log("worklet_peak_hz", peak2 * rate / 2048);
+
+    // failures
+    try { await A.webAudioLoadWorklet(ctx, "missing-worklet.js"); log("missing_module", "no error"); }
+    catch (e) { log("missing_module", "rejected: " + String(e.message || e).slice(0, 80)); }
+    try { A.webAudioSetGain(voice, 1); } catch (e) { log("wrong_kind", e.message); }
+
+    A.webAudioClose(ctx);
+    await sleep(300);
+    log("state_after_close", A.webAudioState(ctx));
+    try { A.webAudioConnect(voice, master); } catch (e) { log("after_close_handle", e.message); }
+    log("done", true);
+  } catch (e) {
+    log("error", String(e && e.stack || e));
+  }
+});
+</script>
+</body></html>

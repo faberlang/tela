@@ -57,6 +57,12 @@ const MODULES: ModuleSpec[] = [
   // the la `Canvas2dContext`'s lower-d spelling) → folded off the
   // `WebCanvas2d` type prefix → `WebCanvas2dContext`.
   { prefix: "tela:canvas2d", fabFile: "src/canvas2d.fab", runtimeFile: "runtime/canvas2d.ts", typePrefix: "WebCanvas2d", moduleToken: "Canvas2D" },
+  // tela:audio (tela-audio lane): the Web Audio surface joins the bijection
+  // cross-check. The moduleToken fold: the classes are `AudioContext` and
+  // `AudioNode`, folded off the `WebAudio` type prefix → `WebAudioContext`
+  // and `WebAudioNode`. Its fns carry list<f64> results and handler-typed
+  // parameters, which the opener/result check (e) compares as plain text.
+  { prefix: "tela:audio", fabFile: "src/audio.fab", runtimeFile: "runtime/audio.ts", typePrefix: "WebAudio", moduleToken: "Audio" },
 ];
 
 /** TS counterpart name for a class: WebDom + class, folding a redundant module token. */
@@ -181,10 +187,10 @@ function parseFab(source: string): FabFile {
   return { classes, typi, fns };
 }
 
-/** "Element ∪ null" -> "Element"; "FetchResponse ⇥ string" -> "FetchResponse". */
+/** "Element ∪ none" -> "Element"; "FetchResponse ⇥ string" -> "FetchResponse". */
 function normalizeFabType(raw: string): string {
   return raw
-    .replace(/\s*∪\s*null\s*$/, "")
+    .replace(/\s*∪\s*(?:null|none)\s*$/, "")
     .replace(/\s*⇥\s*\w+\s*$/, "")
     .trim();
 }

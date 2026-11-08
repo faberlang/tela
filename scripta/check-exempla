@@ -481,6 +481,17 @@ BROWSER_DRIVER
 echo "check-exempla: TS lane (emit + module-graph assembly + tsc + node runtime gate)"
 for f in "$ROOT"/exempla/*.fab; do
   name="$(basename "$f" .fab)"
+  # exempla/audio.fab is check-only: it calls tela:audio fns whose signatures
+  # name handler type aliases, and `faber emit` of a single consumer file skips
+  # every export of that shape (WARN014 NominalTypeUnsupported, then SEM010 on
+  # the call), so the TS lane cannot emit it. The `faber check` pass above
+  # covers it; tests/audio-runtime-test.ts covers the runtime. Repro:
+  # tests/gaps/handler-alias-emit.fab. Remove this case once `faber emit`
+  # accepts the alias-typed exports.
+  if [[ "$name" == "audio" ]]; then
+    echo "check-exempla: ${name}: check-only (TS lane skipped, see tests/gaps/handler-alias-emit.fab)"
+    continue
+  fi
   # Emit the exempla to its own module file: exempla/browser.fab emits
   # ./tela-*.js imports too, which must not clobber the library modules.
   "$FABER_BIN" emit --library-home "$FABER_LIBRARY_HOME" -t ts --locale en "$f" -o "$SCRATCH/exempla-$name.ts" >/dev/null
