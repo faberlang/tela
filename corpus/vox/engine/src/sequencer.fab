@@ -1,0 +1,666 @@
+# sequencer.fab: the phoneme and note sequencer of the Vox engine (Speak, Sing).
+#
+# It lives inside the engine and is driven by the engine's control tick (about
+# 0.7 ms), not by the page: the page only sends an ordered stream of numeric
+# messages (voice.fab, keys seq_*) that load a list of items, then seq_play.
+# The sequencer plays on the audio clock, so a 10 ms stop burst is 10 ms of
+# the engine's own time whatever the page, the port or the browser does, and
+# the worklet route, the main-thread block route and the native WAV tool
+# render the same audio.
+#
+# An ITEM is one thing the message stream names: a phoneme (phones.fab), its
+# duration, its pitch. play() compiles the items into SEGMENTS, each a target
+# for twelve CHANNELS (the engine's articulator and source controls) and a
+# ramp time per channel. A stop becomes closure, burst and aspiration
+# segments; a diphthong two vowel segments; a vowel before a nasal gets a
+# partly lowered velum. Playing is a follower: at every segment start each
+# channel's present value becomes the "from" and the segment's target the
+# "to", and the channel moves between them with a smoothstep over its ramp
+# time. Segments are short, ramps are longer than some segments, and the
+# result is coarticulation: a gesture that has not finished when the next
+# segment starts carries on under it.
+#
+# Coarticulation rules, all in expand():
+#   - A consonant's tongue body is "transparent": it takes the posture of the
+#     next vowel (or glide, or /r/) in the same breath group, else the last
+#     one (Ohman's model: the vowel-to-vowel movement runs through the
+#     consonant). A velar's place follows that vowel's tongue_x.
+#   - The tip constriction is its own gesture and ramps in log area, so the
+#     time spent between 0.25 and 0.02 cm^2 (where turbulence exists) is a
+#     fixed share of the ramp, not of the exponential approach.
+#   - The velum starts lowering on the vowel before a nasal.
+#   - Voicing, noise, aspiration and loudness are four more channels with
+#     their own ramps, so voiced and voiceless sounds crossfade.
+# The engine has no air pressure; the noise envelope of a burst is a channel.
+#
+# Durations: an item with beats > 0 (a sung nucleus) lasts
+# beats * 60000 / tempo - minus milliseconds, minus being the consonant time
+# it shares its note with; any other item lasts ms / rate, ms defaulting to
+# the phoneme's nominal duration. Both are resolved when the item's segment
+# starts, so seq_tempo and seq_rate take effect on the notes still to come.
+
+import from "engine:phones" phones
+
+@ public
+const int CH_TX = 0
+
+@ public
+const int CH_TH = 1
+
+@ public
+const int CH_LIPS = 2
+
+@ public
+const int CH_JAW = 3
+
+@ public
+const int CH_VEL = 4
+
+@ public
+const int CH_PLACE = 5
+
+# Natural log of the tip constriction area in cm^2.
+@ public
+const int CH_AREA = 6
+
+@ public
+const int CH_VOICE = 7
+
+@ public
+const int CH_NOISE = 8
+
+@ public
+const int CH_ASP = 9
+
+@ public
+const int CH_AMP = 10
+
+# MIDI note number, fractional.
+@ public
+const int CH_PITCH = 11
+
+@ public
+const int N_CH = 12
+
+# Values in the sequencer block of the telemetry (index 0 of the block).
+@ public
+const int SEQ_TEL = 16
+
+# ln(12): a tip area of 12 cm^2 is "no constriction" (articulation.fab: >= 9).
+const f64 AREA_OPEN = 2.4849066497880004
+
+# ln(0.02): a closed tip, the smallest area the tract model keeps.
+const f64 AREA_SHUT = -3.912023005428146
+
+# A target that has not been set; compile fills it from the segment before.
+const f64 HOLD = -1000000000.0
+
+# Frication is injected at a narrow constriction and radiates through it, so
+# it needs a large noise gain to be heard at a sensible level beside the
+# voice (a fitted level, by the measured rms of /s/ against its vowel).
+const f64 FRIC_SCALE = 1.2
+
+# Shortest sung nucleus, milliseconds.
+const f64 MIN_NUCLEUS = 60.0
+
+fn soften(f64 x) → f64 {
+    let f64 c ← x ⤒ 0.0 ⤓ 1.0
+    return c * c * (3.0 - 2.0 * c)
+}
+
+fn blank(f64 v) → list<f64> {
+    mut list<f64> out ← empty
+    for range 0 ‥ N_CH let c {
+        out.append(v)
+    }
+    return out
+}
+
+@ public
+class Item {
+    mut int ph = 0
+    mut f64 ms = 0.0
+    mut f64 beats = 0.0
+    mut f64 minus = 0.0
+    mut f64 pitch = 60.0
+    mut f64 glide = 0.0
+}
+
+@ public
+class Seg {
+    mut list<f64> tgt = empty
+    mut list<f64> rmp = empty
+    # The item's nominal total, its sung length, its shared consonant time.
+    mut f64 ms = 0.0
+    mut f64 beats = 0.0
+    mut f64 minus = 0.0
+    # This segment's share of the item.
+    mut f64 frac = 1.0
+    mut int ph = 0
+    mut int item = 0
+
+    # Why: a HOLD target takes the value the segment before ended on.
+    fn settle(list<f64> last) → void {
+        for range 0 ‥ N_CH let c {
+            if self.tgt[c] ≺ -999999999.0 {
+                self.tgt[c] ← last[c]
+            }
+        }
+    }
+
+    fn put(int ch, f64 value, f64 ramp) → void {
+        self.tgt[ch] ← value
+        self.rmp[ch] ← ramp
+    }
+
+    fn body(f64 tx, f64 th, f64 lips, f64 jaw, f64 ramp) → void {
+        self.put(CH_TX, tx, ramp)
+        self.put(CH_TH, th, ramp)
+        self.put(CH_LIPS, lips, ramp)
+        self.put(CH_JAW, jaw, ramp)
+    }
+
+    # Why: the tip constriction, area in cm^2 (ramped in log area).
+    fn tip(f64 place, f64 area, f64 place_ramp, f64 area_ramp) → void {
+        self.put(CH_PLACE, place, place_ramp)
+        self.put(CH_AREA, area.ln(), area_ramp)
+    }
+
+    fn tip_open(f64 ramp) → void {
+        self.put(CH_AREA, AREA_OPEN, ramp)
+    }
+
+    # Why: the four source channels with their standard ramps.
+    fn source(f64 voice, f64 noise, f64 asp, f64 amp) → void {
+        self.put(CH_VOICE, voice, 0.012)
+        self.put(CH_NOISE, noise, 0.006)
+        self.put(CH_ASP, asp, 0.008)
+        self.put(CH_AMP, amp, 0.015)
+    }
+}
+
+@ public
+class Sequencer {
+    mut list<Item> items = empty
+    mut Item pend
+    mut list<Seg> segs = empty
+    # Compile: the targets of the segment pushed last.
+    mut list<f64> last = empty
+    # Playing: present value, segment-start value, target and ramp (s) per channel.
+    mut list<f64> cur = empty
+    mut list<f64> src = empty
+    mut list<f64> dst = empty
+    mut list<f64> rmp = empty
+    mut int idx = 0
+    # Seconds into the segment, the segment's length, seconds since play.
+    mut f64 t = 0.0
+    mut f64 dur = 0.0
+    mut f64 elapsed = 0.0
+    mut bool active = false
+    mut f64 tempo = 120.0
+    mut f64 rate = 1.0
+    mut f64 level = 0.8
+
+    # Why: one control message of the stream (voice.fab forwards every key it
+    # does not know). Unknown keys are ignored.
+    fn message(string key, f64 value) → void {
+        switch key {
+            case "seq_clear" {
+                self.items ← empty
+                self.pend ← Item { }
+            }
+            case "seq_phone" { self.pend.ph ← value.round() ⤒ 0 ⤓ 40 }
+            case "seq_ms" { self.pend.ms ← value ⤒ 0.0 ⤓ 20000.0 }
+            case "seq_beats" { self.pend.beats ← value ⤒ 0.0 ⤓ 64.0 }
+            case "seq_minus" { self.pend.minus ← value ⤒ 0.0 ⤓ 20000.0 }
+            case "seq_pitch" { self.pend.pitch ← value ⤒ 0.0 ⤓ 127.0 }
+            case "seq_glide" { self.pend.glide ← value ⤒ 0.0 ⤓ 1000.0 }
+            case "seq_item" { self.commit() }
+            case "seq_tempo" { self.tempo ← value ⤒ 20.0 ⤓ 400.0 }
+            case "seq_rate" { self.rate ← value ⤒ 0.25 ⤓ 4.0 }
+            case "seq_level" { self.level ← value ⤒ 0.0 ⤓ 1.0 }
+            case "seq_play" { self.play() }
+            case "seq_stop" { self.stop() }
+            default { }
+        }
+    }
+
+    # Why: append the pending item. Pitch is carried to the next item; the
+    # rest start again from the phoneme's own defaults.
+    fn commit() → void {
+        self.items.append(Item {
+            ph = self.pend.ph,
+            ms = self.pend.ms,
+            beats = self.pend.beats,
+            minus = self.pend.minus,
+            pitch = self.pend.pitch,
+            glide = self.pend.glide
+        })
+        self.pend.ms ← 0.0
+        self.pend.beats ← 0.0
+        self.pend.minus ← 0.0
+        self.pend.glide ← 0.0
+    }
+
+    # Why: the posture a transparent consonant takes: the nearest vowel, glide
+    # or /r/ after item i in the same breath group (a pause ends the search),
+    # else the nearest before it, else schwa.
+    fn context(int i) → int {
+        let int ahead ← self.context_ahead(i)
+        if ahead ≥ 0 then return ahead
+        let int behind ← self.context_behind(i)
+        if behind ≥ 0 then return behind
+        return phones.P_AX
+    }
+
+    fn context_ahead(int i) → int {
+        let int n ← self.items.length()
+        mut int j ← i + 1
+        while j ≺ n {
+            let int id ← self.items[j].ph
+            let int k ← phones.phone(id).kind
+            if k ≡ phones.KIND_SILENCE then return -1
+            if k ≡ phones.KIND_VOWEL or k ≡ phones.KIND_DIPHTHONG or k ≡ phones.KIND_GLIDE or id ≡ phones.P_R then return id
+            j ← j + 1
+        }
+        return -1
+    }
+
+    # Why: looking back, a diphthong has ended on its second vowel.
+    fn context_behind(int i) → int {
+        mut int j ← i - 1
+        while j ≥ 0 {
+            let int id ← self.items[j].ph
+            let phones.Phone p ← phones.phone(id)
+            if p.kind ≡ phones.KIND_SILENCE then return -1
+            if p.kind ≡ phones.KIND_DIPHTHONG then return p.part2
+            if p.kind ≡ phones.KIND_VOWEL or p.kind ≡ phones.KIND_GLIDE or id ≡ phones.P_R then return id
+            j ← j - 1
+        }
+        return -1
+    }
+
+    fn pitch_ramp(int i) → f64 {
+        if self.items[i].glide ≻ 0.0 then return self.items[i].glide / 1000.0
+        return 0.07
+    }
+
+    # Why: a fresh segment for item i with the given share of its duration.
+    fn fresh(int i, f64 ms, f64 frac) → Seg {
+        return Seg {
+            tgt = blank(HOLD),
+            rmp = blank(0.02),
+            ms = ms,
+            beats = self.items[i].beats,
+            minus = self.items[i].minus,
+            frac = frac,
+            ph = self.items[i].ph,
+            item = i
+        }
+    }
+
+    # Why: append the segment; its HOLD targets were settled against the segment
+    # before (Seg.settle) and its targets are what the next one holds.
+    # gap 33: `push` takes the segment unmarked and does not write to it; a `mut`
+    # parameter that is appended to a list is E0507 on the Rust target.
+    fn push(Seg s) → void {
+        for range 0 ‥ N_CH let c {
+            self.last[c] ← s.tgt[c]
+        }
+        self.segs.append(s)
+    }
+
+    # Why: a tip place ramp of zero when the tip was open (the place can jump
+    # unheard), a short one when it was already constricted.
+    fn place_ramp() → f64 {
+        if self.last[CH_AREA] ≻ 2.0 then return 0.0
+        return 0.015
+    }
+
+    # Why: the item's nominal duration in ms: its own, else the phoneme's.
+    fn nominal(int i) → f64 {
+        if self.items[i].ms ≻ 0.0 then return self.items[i].ms
+        return phones.phone(self.items[i].ph).ms
+    }
+
+    fn expand(int i) → void {
+        let int kind ← phones.phone(self.items[i].ph).kind
+        if kind ≡ phones.KIND_VOWEL {
+            self.expand_vowel(i)
+        }
+        elif kind ≡ phones.KIND_DIPHTHONG {
+            self.expand_diphthong(i)
+        }
+        elif kind ≡ phones.KIND_STOP {
+            self.expand_stop(i)
+        }
+        elif kind ≡ phones.KIND_AFFRICATE {
+            self.expand_affricate(i)
+        }
+        elif kind ≡ phones.KIND_FRICATIVE {
+            self.expand_fricative(i)
+        }
+        else {
+            self.expand_sonorant(i)
+        }
+    }
+
+    fn nasal_follows(int i) → bool {
+        if i + 1 ≥ self.items.length() then return false
+        return phones.phone(self.items[i + 1].ph).kind ≡ phones.KIND_NASAL
+    }
+
+    fn expand_vowel(int i) → void {
+        let phones.Phone p ← phones.phone(self.items[i].ph)
+        mut Seg s ← self.fresh(i, self.nominal(i), 1.0)
+        s.body(p.tx, p.th, p.lips, p.jaw, 0.045)
+        s.put(CH_VEL, self.nasal_follows(i) ✓ 0.4 ✗ 0.0, 0.04)
+        s.tip_open(0.02)
+        s.source(1.0, 0.0, 0.0, 1.0)
+        s.put(CH_PITCH, self.items[i].pitch, self.pitch_ramp(i))
+        s.settle(self.last)
+        self.push(s)
+    }
+
+    # Why: spoken, 55% on the start posture and a glide that fills the rest;
+    # sung, the start posture holds and the glide is at the end.
+    fn expand_diphthong(int i) → void {
+        let phones.Phone p ← phones.phone(self.items[i].ph)
+        let phones.Phone q ← phones.phone(p.part2)
+        let f64 ms ← self.nominal(i)
+        let bool sung ← self.items[i].beats ≻ 0.0
+        let f64 f1 ← sung ✓ 0.8 ✗ 0.55
+        let bool nasal ← self.nasal_follows(i)
+        mut Seg a ← self.fresh(i, ms, f1)
+        a.body(p.tx, p.th, p.lips, p.jaw, 0.045)
+        a.put(CH_VEL, nasal ✓ 0.2 ✗ 0.0, 0.04)
+        a.tip_open(0.02)
+        a.source(1.0, 0.0, 0.0, 1.0)
+        a.put(CH_PITCH, self.items[i].pitch, self.pitch_ramp(i))
+        a.settle(self.last)
+        self.push(a)
+        mut Seg b ← self.fresh(i, ms, 1.0 - f1)
+        let f64 glide ← sung ✓ 0.10 ✗ 0.9 * (1.0 - f1) * ms / self.rate / 1000.0
+        b.body(q.tx, q.th, q.lips, q.jaw, glide)
+        b.put(CH_VEL, nasal ✓ 0.4 ✗ 0.0, 0.04)
+        b.put(CH_PITCH, self.items[i].pitch, self.pitch_ramp(i))
+        b.settle(self.last)
+        self.push(b)
+    }
+
+    # Why: closure while the vowel's voicing dies away, a release through the
+    # turbulent range of areas (the burst), then, voiceless only, aspiration.
+    fn expand_stop(int i) → void {
+        let phones.Phone p ← phones.phone(self.items[i].ph)
+        let phones.Phone cx ← phones.phone(self.context(i))
+        let f64 ms ← self.nominal(i)
+        let bool v ← p.voiced
+        mut Seg c ← self.fresh(i, ms, v ✓ 0.60 ✗ 0.55)
+        c.body(cx.tx, cx.th, cx.lips, cx.jaw, 0.05)
+        c.tip(p.place + p.slope * cx.tx, 0.02, self.place_ramp(), v ✓ 0.014 ✗ 0.018)
+        c.put(CH_VEL, 0.0, 0.03)
+        c.source(v ✓ 0.45 ✗ 0.0, 0.0, 0.0, 1.0)
+        c.put(CH_PITCH, self.items[i].pitch, self.pitch_ramp(i))
+        c.settle(self.last)
+        self.push(c)
+        mut Seg r ← self.fresh(i, ms, v ✓ 0.40 ✗ 0.12)
+        r.tip_open(v ✓ 0.011 ✗ 0.014)
+        r.source(v ✓ 1.0 ✗ 0.0, p.gain * 1.5, 0.0, 1.0)
+        r.put(CH_NOISE, p.gain * 1.5, 0.002)
+        r.settle(self.last)
+        self.push(r)
+        if not v {
+            mut Seg a ← self.fresh(i, ms, 0.33)
+            a.source(0.0, 0.0, 0.2, 1.0)
+            a.put(CH_NOISE, 0.0, 0.03)
+            a.put(CH_ASP, 0.2, 0.006)
+            a.settle(self.last)
+            self.push(a)
+        }
+    }
+
+    # Why: a stop closure that is released into a fricative constriction.
+    fn expand_affricate(int i) → void {
+        let phones.Phone p ← phones.phone(self.items[i].ph)
+        let phones.Phone cx ← phones.phone(self.context(i))
+        let f64 ms ← self.nominal(i)
+        let bool v ← p.voiced
+        mut Seg c ← self.fresh(i, ms, 0.40)
+        c.body(cx.tx, cx.th, cx.lips, cx.jaw, 0.05)
+        c.tip(p.place, 0.02, self.place_ramp(), 0.016)
+        c.put(CH_VEL, 0.0, 0.03)
+        c.source(v ✓ 0.45 ✗ 0.0, 0.0, 0.0, 1.0)
+        c.put(CH_PITCH, self.items[i].pitch, self.pitch_ramp(i))
+        c.settle(self.last)
+        self.push(c)
+        mut Seg r ← self.fresh(i, ms, 0.60)
+        r.tip(p.place, p.area, 0.0, 0.012)
+        r.source(v ✓ 0.7 ✗ 0.0, p.gain * FRIC_SCALE, v ✓ 0.0 ✗ 0.1, 1.0)
+        r.put(CH_NOISE, p.gain * FRIC_SCALE, 0.004)
+        r.settle(self.last)
+        self.push(r)
+    }
+
+    fn expand_fricative(int i) → void {
+        let phones.Phone p ← phones.phone(self.items[i].ph)
+        let phones.Phone cx ← phones.phone(self.context(i))
+        let bool v ← p.voiced
+        mut Seg s ← self.fresh(i, self.nominal(i), 1.0)
+        s.body(cx.tx, cx.th, cx.lips, cx.jaw, 0.05)
+        s.tip(p.place, p.area, self.place_ramp(), 0.022)
+        s.put(CH_VEL, 0.0, 0.03)
+        s.source(v ✓ 0.6 ✗ 0.0, p.gain * FRIC_SCALE, v ✓ 0.0 ✗ 0.15, 1.0)
+        s.put(CH_NOISE, p.gain * FRIC_SCALE, 0.010)
+        s.put(CH_PITCH, self.items[i].pitch, self.pitch_ramp(i))
+        s.settle(self.last)
+        self.push(s)
+    }
+
+    # Why: silence, /h/, nasals, liquids and glides: one segment each.
+    fn expand_sonorant(int i) → void {
+        let phones.Phone p ← phones.phone(self.items[i].ph)
+        let phones.Phone cx ← phones.phone(self.context(i))
+        mut Seg s ← self.fresh(i, self.nominal(i), 1.0)
+        s.put(CH_PITCH, self.items[i].pitch, self.pitch_ramp(i))
+        if p.kind ≡ phones.KIND_SILENCE {
+            s.source(0.0, 0.0, 0.0, 0.0)
+        }
+        elif p.kind ≡ phones.KIND_ASPIRATE {
+            s.body(cx.tx, cx.th, cx.lips, cx.jaw, 0.05)
+            s.tip_open(0.02)
+            s.put(CH_VEL, 0.0, 0.03)
+            s.source(0.0, 0.0, 0.3, 1.0)
+            s.put(CH_ASP, 0.3, 0.010)
+        }
+        elif p.kind ≡ phones.KIND_NASAL {
+            s.body(cx.tx, cx.th, cx.lips, cx.jaw, 0.05)
+            s.tip(p.place + p.slope * cx.tx, 0.02, self.place_ramp(), 0.020)
+            s.put(CH_VEL, 1.0, 0.035)
+            s.source(1.0, 0.0, 0.0, 0.6)
+        }
+        elif p.kind ≡ phones.KIND_LIQUID {
+            # L is a tip contact under the next vowel's body; R has its own body.
+            if self.items[i].ph ≡ phones.P_R {
+                s.body(p.tx, p.th, p.lips, p.jaw, 0.05)
+                s.tip_open(0.02)
+            }
+            else {
+                s.body(cx.tx, cx.th, cx.lips, cx.jaw, 0.05)
+                s.tip(p.place, p.area, self.place_ramp(), 0.025)
+            }
+            s.put(CH_VEL, 0.0, 0.03)
+            s.source(1.0, 0.0, 0.0, 0.8)
+        }
+        else {
+            # Glides: the posture of /u/ or /i/, held briefly.
+            s.body(p.tx, p.th, p.lips, p.jaw, 0.04)
+            s.tip_open(0.02)
+            s.put(CH_VEL, 0.0, 0.03)
+            s.source(1.0, 0.0, 0.0, 0.8)
+        }
+        s.settle(self.last)
+        self.push(s)
+    }
+
+    # Why: compile the items into segments: 50 ms of silence to reach the first
+    # posture, every item, then 80 ms to fade out.
+    fn compile() → void {
+        self.segs ← empty
+        for range 0 ‥ N_CH let c {
+            self.last[c] ← self.cur[c]
+        }
+        let int n ← self.items.length()
+        mut Seg lead ← Seg { tgt = blank(HOLD), rmp = blank(0.02), ms = 50.0, ph = 0, item = -1 }
+        if n ≻ 0 {
+            let phones.Phone cx ← phones.phone(self.context(-1))
+            lead.body(cx.tx, cx.th, cx.lips, cx.jaw, 0.05)
+            lead.put(CH_PITCH, self.items[0].pitch, 0.04)
+        }
+        lead.tip_open(0.03)
+        lead.put(CH_VEL, 0.0, 0.03)
+        lead.source(0.0, 0.0, 0.0, 0.0)
+        lead.settle(self.last)
+        self.push(lead)
+        for range 0 ‥ n let i {
+            self.expand(i)
+        }
+        self.fade_out(n)
+    }
+
+    fn fade_out(int item) → void {
+        mut Seg e ← Seg { tgt = blank(HOLD), rmp = blank(0.02), ms = 80.0, ph = 0, item = item }
+        e.source(0.0, 0.0, 0.0, 0.0)
+        e.put(CH_AMP, 0.0, 0.04)
+        e.settle(self.last)
+        self.push(e)
+    }
+
+    # Why: a segment's length in seconds, with the present tempo and rate.
+    fn seconds(int k) → f64 {
+        mut f64 total ← self.segs[k].ms / self.rate
+        if self.segs[k].beats ≻ 0.0 {
+            total ← (self.segs[k].beats * 60000.0 / self.tempo - self.segs[k].minus / self.rate) ⤒ MIN_NUCLEUS
+        }
+        return total * self.segs[k].frac / 1000.0
+    }
+
+    # Why: start segment idx: its targets and ramps become the channels'.
+    fn enter() → void {
+        for range 0 ‥ N_CH let c {
+            self.src[c] ← self.cur[c]
+            self.dst[c] ← self.segs[self.idx].tgt[c]
+            self.rmp[c] ← self.segs[self.idx].rmp[c]
+        }
+        self.dur ← self.seconds(self.idx)
+    }
+
+    fn evaluate() → void {
+        for range 0 ‥ N_CH let c {
+            mut f64 k ← 1.0
+            if self.rmp[c] ≻ 0.0 {
+                k ← soften(self.t / self.rmp[c])
+            }
+            self.cur[c] ← self.src[c] + (self.dst[c] - self.src[c]) * k
+        }
+    }
+
+    # Why: set the channel values to the engine's present controls so the first
+    # segment moves from where the tract is. Only when not playing.
+    fn seed(list<f64> now) → void {
+        if self.active then return
+        for range 0 ‥ N_CH let c {
+            self.cur[c] ← now[c]
+        }
+    }
+
+    fn play() → void {
+        if self.items.length() ≡ 0 then return
+        self.compile()
+        self.idx ← 0
+        self.t ← 0.0
+        self.elapsed ← 0.0
+        self.enter()
+        self.active ← true
+    }
+
+    # Why: end the sound at once with a fade, keeping the posture.
+    fn stop() → void {
+        if not self.active then return
+        for range 0 ‥ N_CH let c {
+            self.last[c] ← self.cur[c]
+        }
+        self.segs ← empty
+        self.fade_out(self.items.length())
+        self.idx ← 0
+        self.t ← 0.0
+        self.enter()
+    }
+
+    # Why: advance the clock by dt seconds (a control tick), moving across
+    # segment boundaries, and update the channel values. After the last
+    # segment the values stay at its targets and active turns false.
+    fn tick(f64 dt) → void {
+        if not self.active then return
+        self.t ← self.t + dt
+        self.elapsed ← self.elapsed + dt
+        while self.t ≥ self.dur {
+            if self.idx + 1 ≥ self.segs.length() {
+                self.t ← self.dur
+                self.evaluate()
+                self.active ← false
+                return
+            }
+            self.t ← self.t - self.dur
+            self.idx ← self.idx + 1
+            self.enter()
+        }
+        self.evaluate()
+    }
+
+    # Why: the sequencer block of the telemetry (voice.fab documents it).
+    fn snapshot() → list<f64> {
+        mut list<f64> out ← empty
+        if self.active {
+            out.append(1.0)
+            out.append(self.segs[self.idx].item ↦ f64)
+            out.append(self.segs[self.idx].ph ↦ f64)
+            mut f64 progress ← 0.0
+            if self.dur ≻ 0.0 {
+                progress ← (self.t / self.dur) ⤒ 0.0 ⤓ 1.0
+            }
+            out.append(progress)
+        }
+        else {
+            out.append(0.0)
+            out.append(-1.0)
+            out.append(0.0)
+            out.append(0.0)
+        }
+        out.append(self.elapsed)
+        out.append(self.items.length() ↦ f64)
+        out.append(self.cur[CH_PITCH])
+        out.append(self.cur[CH_TX])
+        out.append(self.cur[CH_TH])
+        out.append(self.cur[CH_LIPS])
+        out.append(self.cur[CH_JAW])
+        out.append(self.cur[CH_VEL])
+        out.append(self.cur[CH_PLACE])
+        out.append(self.cur[CH_AREA].exp())
+        out.append(self.cur[CH_VOICE])
+        out.append(self.cur[CH_NOISE])
+        return out
+    }
+}
+
+# Why: a sequencer at rest, all channels zero, silent.
+@ public
+fn make_sequencer() → Sequencer {
+    return Sequencer {
+        pend = Item { },
+        last = blank(0.0),
+        cur = blank(0.0),
+        src = blank(0.0),
+        dst = blank(0.0),
+        rmp = blank(0.0)
+    }
+}

@@ -25,8 +25,11 @@ fn sounding(state.App app) → bool {
     return app.held.length() ≻ 0 or app.sustain
 }
 
+# gap 34: this function is not called `send`: a call to any function of that name
+# makes the compiler append the sermo stream prelude to the calling module, and
+# two such modules collide in `faber check .` (PKG001 package_ts_merge_collision).
 @ public
-fn send(state.App app, string key, f64 value) → void {
+fn post(state.App app, string key, f64 value) → void {
     if not app.started then return
     if app.route ≡ "worklet" {
         let audio.AudioNode ∪ none source ← app.source
@@ -47,29 +50,48 @@ fn send(state.App app, string key, f64 value) → void {
 fn send_breath(state.App app) → void {
     mut f64 b ← 0.0
     if sounding(app) then b ← app.breath
-    send(app, "breath", b)
+    post(app, "breath", b)
 }
 
 @ public
 fn send_pitch(state.App app) → void {
-    send(app, "pitch", notes.note_hz(app.pitch_note))
+    post(app, "pitch", notes.note_hz(app.pitch_note))
+}
+
+# Loudness, speech rate and tempo of the sequencer (Speak and Sing). The
+# breath slider is the loudness while a sequence plays.
+@ public
+fn send_sequence_settings(state.App app) → void {
+    post(app, "seq_level", app.breath)
+    post(app, "seq_rate", app.rate)
+    post(app, "seq_tempo", app.tempo)
 }
 
 # Everything the voice needs to match the page; sent once the audio starts.
 @ public
 fn send_all(state.App app) → void {
-    send(app, "body", app.body ↦ f64)
-    send(app, "mode", app.mode ↦ f64)
-    send(app, "pressed", app.pressed)
-    send(app, "vibrato_cents", app.vibrato)
-    send(app, "aspiration", app.aspiration)
-    send(app, "tongue_x", app.tongue_x)
-    send(app, "tongue_h", app.tongue_h)
-    send(app, "lips", app.lips)
-    send(app, "jaw", app.jaw)
-    send(app, "velum", app.velum)
+    post(app, "body", app.body ↦ f64)
+    post(app, "mode", app.mode ↦ f64)
+    post(app, "pressed", app.pressed)
+    post(app, "vibrato_cents", app.vibrato)
+    post(app, "aspiration", app.aspiration)
+    post(app, "tongue_x", app.tongue_x)
+    post(app, "tongue_h", app.tongue_h)
+    post(app, "lips", app.lips)
+    post(app, "jaw", app.jaw)
+    post(app, "velum", app.velum)
     send_pitch(app)
     send_breath(app)
+    send_sequence_settings(app)
+}
+
+# Why: a Speak or Sing program asked for before the route was up goes out now.
+fn flush(mut state.App app) → void {
+    for range 0 ‥ app.pending_keys.length() let i {
+        post(app, app.pending_keys[i], app.pending_values[i])
+    }
+    app.pending_keys ← empty
+    app.pending_values ← empty
 }
 
 @ public
@@ -130,6 +152,7 @@ fn run(mut state.App app) async → void {
         app.route ← "block"
     }
     send_all(app)
+    flush(mut app)
 }
 
 # Once per animation frame: the latest telemetry and spectrum.

@@ -25,6 +25,7 @@ import from "engine:tract" tract
 import from "engine:noise" noise
 import from "engine:articulation" art
 import from "engine:formants" formants
+import from "engine:sequencer" sequencer
 
 # gap 04: the built-in float methods (.sin(), .cos(), .exp(), .sqrt(), .power())
 # are used instead of norma:math, which does not link on the ts target.
@@ -37,6 +38,11 @@ const int CTRL_STEPS = 32
 
 # Articulators glide to new targets with this time constant, seconds.
 const f64 ART_TAU = 0.025
+
+# While the sequencer plays it shapes every movement itself (smoothstep ramps,
+# sequencer.fab), so the waveguide only needs to follow closely: stop bursts
+# are a few milliseconds of area change.
+const f64 SEQ_ART_TAU = 0.0015
 
 # Source smoothing time constant, seconds.
 const f64 AMP_TAU = 0.006
@@ -65,7 +71,7 @@ const int MODE_HOLD = 2
 
 # Telemetry layout (see voice.fab for the documented contract).
 @ public
-const int TEL_VERSION = 1
+const int TEL_VERSION = 2
 
 @ public
 const int TEL_N_WAVE = 64
@@ -86,7 +92,10 @@ const int TEL_FLOW = 89
 const int TEL_DERIV = 153
 
 @ public
-const int TEL_LENGTH = 217
+const int TEL_SEQ = 217
+
+@ public
+const int TEL_LENGTH = 233
 
 fn soft_clip(f64 v) → f64 {
     let f64 c ← v ⤒ -3.0 ⤓ 3.0
@@ -98,6 +107,7 @@ class Engine {
     mut body.Body anatomy
     mut glottis.Glottis source
     mut tract.Tract waveguide
+    mut sequencer.Sequencer seq
     mut noise.Noise asp_noise
     mut noise.Noise turb_noise
     mut list<f64> target_area = empty
@@ -126,6 +136,8 @@ class Engine {
     mut f64 tract_rate = 88000.0
     mut f64 ratio = 1.9955
     mut f64 art_a = 0.03
+    mut f64 art_a_seq = 0.2
+    mut int seq_count = 0
     mut f64 amp_k = 0.004
 
     # Dirty flags.
@@ -185,6 +197,7 @@ class Engine {
         self.waveguide.dx ← self.anatomy.length_cm / (body.N_SEC ↦ f64)
         self.ratio ← rate / self.sample_rate
         self.art_a ← 1.0 - (-(CTRL_STEPS ↦ f64) / (ART_TAU * rate)).exp()
+        self.art_a_seq ← 1.0 - (-(CTRL_STEPS ↦ f64) / (SEQ_ART_TAU * rate)).exp()
         self.amp_k ← 1.0 - (-1.0 / (AMP_TAU * rate)).exp()
         self.hp_a ← 1.0 - 2.0 * PI * 25.0 / rate
         self.lp_on ← self.ratio ≻ 1.0
@@ -215,6 +228,14 @@ class Engine {
         let f64 f0t ← self.pitch * (vib * LN2).exp()
         self.f0_cur ← self.f0_cur + (f0t - self.f0_cur) * 0.15
 
+        # The sequencer, while it plays, owns the articulators, the pitch and
+        # the source levels; the Play-mode controls come back when it ends.
+        let bool seq_on ← self.seq.active
+        if seq_on {
+            self.seq.tick(dt)
+            self.apply_sequence()
+        }
+
         if self.dirty_rd {
             self.source.rebuild(0.3 * ((1.0 - self.pressed) * LN9).exp())
             self.dirty_rd ← false
@@ -224,9 +245,22 @@ class Engine {
             self.target_nasal ← art.nasal_areas(self.velum)
             self.dirty_art ← false
         }
-        self.waveguide.glide(self.target_area, self.target_nasal, self.art_a)
+        if seq_on {
+            self.waveguide.glide(self.target_area, self.target_nasal, self.art_a_seq)
+        }
+        else {
+            self.waveguide.glide(self.target_area, self.target_nasal, self.art_a)
+        }
 
-        # Turbulence: noise at the narrowest oral section from the velum on.
+        # gap 32: a mutating method call inside the arguments of another one
+        # (`self.f(self.g())`) is E0499 on the Rust target; a local first is not.
+        let f64 level ← self.turbulence_site()
+        self.source_levels(level, seq_on)
+    }
+
+    # Why: turbulence noise sits at the narrowest oral section from the velum on;
+    # returns its strength for that narrowness (0 when it is wide).
+    fn turbulence_site() → f64 {
         mut f64 amin ← 99.0
         mut int imin ← 0
         for range 10 ‥ body.N_SEC let i {
@@ -242,12 +276,36 @@ class Engine {
             level ← 2.6 * x.sqrt() * (1.0 - x)
         }
         self.turb_idx ← imin
+        return level
+    }
 
+    # Why: the source amplitude targets for the mode (or the sequence).
+    fn source_levels(f64 level, bool seq_on) → void {
         let f64 b ← self.breath
         mut f64 tv ← 0.0
         mut f64 ta ← 0.0
         mut f64 tt ← 0.0
-        if self.mode ≡ MODE_VOICE {
+        if seq_on {
+            # Voicing, aspiration and noise are channels of the sequence; the
+            # glottis opens as voicing falls. Whisper mode whispers the
+            # sequence: no voicing, the voiced parts become breath.
+            let f64 vo0 ← self.seq.cur[sequencer.CH_VOICE] ⤒ 0.0 ⤓ 1.0
+            mut f64 vo ← vo0
+            mut f64 asp ← self.seq.cur[sequencer.CH_ASP] ⤒ 0.0
+            if self.mode ≡ MODE_WHISPER {
+                vo ← 0.0
+                asp ← asp ⤒ vo0
+            }
+            let f64 sb ← (self.seq.cur[sequencer.CH_AMP] ⤒ 0.0 ⤓ 1.0) * self.seq.level
+            let f64 open ← 1.0 - vo
+            tv ← SRC_VOICE * (sb * 1.3).sqrt() * sb * vo
+            ta ← SRC_ASPIRATION * sb * ((0.08 + 0.9 * self.aspiration + 0.2 * (1.0 - self.pressed)) * vo + 6.0 * asp)
+            tt ← SRC_TURBULENCE * self.turbulence * level * sb * (self.seq.cur[sequencer.CH_NOISE] ⤒ 0.0)
+            self.rg_a ← RG_CLOSED + (RG_WHISPER - RG_CLOSED) * open
+            self.rg_b ← (RG_CLOSED - RG_OPEN) * vo
+            self.voiced_mod ← open
+        }
+        elif self.mode ≡ MODE_VOICE {
             tv ← SRC_VOICE * (b * 1.3).sqrt() * b
             ta ← SRC_ASPIRATION * b * (0.08 + 0.9 * self.aspiration + 0.2 * (1.0 - self.pressed))
             tt ← SRC_TURBULENCE * self.turbulence * level * b
@@ -272,6 +330,21 @@ class Engine {
         self.amp_t_t ← tt
     }
 
+    # Why: copy the sequence's channel values into the engine's controls.
+    fn apply_sequence() → void {
+        let list<f64> c ← self.seq.cur
+        self.tongue_x ← c[sequencer.CH_TX] ⤒ 0.0 ⤓ 1.0
+        self.tongue_h ← c[sequencer.CH_TH] ⤒ 0.0 ⤓ 1.0
+        self.lips ← c[sequencer.CH_LIPS] ⤒ 0.0 ⤓ 1.0
+        self.jaw ← c[sequencer.CH_JAW] ⤒ 0.0 ⤓ 1.0
+        self.velum ← c[sequencer.CH_VEL] ⤒ 0.0 ⤓ 1.0
+        self.tip_place ← c[sequencer.CH_PLACE] ⤒ 0.0 ⤓ 1.0
+        self.tip_area ← c[sequencer.CH_AREA].exp() ⤓ 99.0
+        self.dirty_art ← true
+        let f64 hz ← 440.0 * ((c[sequencer.CH_PITCH] - 69.0) / 12.0 * LN2).exp()
+        self.pitch ← hz ⤒ self.anatomy.pitch_min ⤓ self.anatomy.pitch_max
+    }
+
     # Why: one waveguide step, the whole source and output chain at tract rate.
     fn tract_sample() → f64 {
         if self.tick ≥ CTRL_STEPS {
@@ -293,7 +366,9 @@ class Engine {
         let f64 asp ← (an - self.asp_prev) * 0.5
         self.asp_prev ← an
         let f64 tn ← self.turb_noise.next()
-        let f64 turb ← (tn - self.turb_prev) * 0.5
+        # A gentle high-pass tilt (first difference with weight 0.7): frication
+        # has little energy below 1 kHz, and a plain difference was too bright.
+        let f64 turb ← (tn - 0.7 * self.turb_prev) * 0.6
         self.turb_prev ← tn
 
         let f64 src ← self.amp_v * e + self.amp_a * asp * pulse
@@ -387,7 +462,36 @@ class Engine {
         for range 0 ‥ TEL_N_WAVE let i {
             t.append(self.source.deriv[(i * tn) / TEL_N_WAVE])
         }
+        for from self.seq.snapshot() let v {
+            t.append(v)
+        }
         return t
+    }
+
+    # Why: a sequencer control message (voice.fab forwards the seq_* keys).
+    # seq_play first seeds the sequence from where the tract is now, so the
+    # first movement starts there.
+    fn seq_message(string key, f64 value) → void {
+        # gap 03: delegating to the field alone emits `&self`; a store of its own
+        # makes the method `&mut self`.
+        self.seq_count ← self.seq_count + 1
+        if key ≡ "seq_play" {
+            mut list<f64> now ← empty
+            now.append(self.tongue_x)
+            now.append(self.tongue_h)
+            now.append(self.lips)
+            now.append(self.jaw)
+            now.append(self.velum)
+            now.append(self.tip_place)
+            now.append(self.tip_area.ln())
+            now.append(0.0)
+            now.append(0.0)
+            now.append(0.0)
+            now.append(0.0)
+            now.append(69.0 + 12.0 * (self.pitch / 440.0).ln() / LN2)
+            self.seq.seed(now)
+        }
+        self.seq.message(key, value)
     }
 
     fn set_sample_rate(f64 sr) → void {
@@ -487,6 +591,7 @@ fn make_engine(int kind, f64 sample_rate) → Engine {
         anatomy = anatomy,
         source = glottis.Glottis { },
         waveguide = tract.make_tract(rate, anatomy.length_cm / (body.N_SEC ↦ f64)),
+        seq = sequencer.make_sequencer(),
         asp_noise = noise.Noise { seed = 1234567 },
         turb_noise = noise.Noise { seed = 7654321 },
         pitch = anatomy.pitch_default,

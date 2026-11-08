@@ -1,0 +1,25 @@
+# gap 35: `dom.element(selector)` checks and is missing from the ts facade.
+#
+# Run (from gaps/35-dom-element-ts-facade):   faber check .      ok
+#                                             faber build .      fails
+# Actual:   error: browser product TypeScript check failed:
+#           faber-ts/main.ts(L,C): error TS2339: Property 'element' does not
+#           exist on type 'typeof import(".../faber-ts/tela-dom")'.
+# Why:      tela/src/dom.fab declares `fn element(string selector) → Element`
+#           (the page-wide lookup beside `require(scope, selector)`), but the
+#           generated tela-dom module has no `element`. `dom.require` works.
+# Expected: `element` builds, or tela:dom does not declare it.
+# Plain formulation: `dom.require(scope, selector)` on an element inside the
+# controller's scope (ui.fab sets the activity class on `.stage`, a wrapper
+# inside #vox-app, instead of on the root).
+
+import from "tela:web" web
+import from "tela:dom" dom
+
+@ WebController { selector = "#app" }
+fn start(dom.Scope scope) → list<dom.Subscription> {
+    let dom.Element root ← dom.element("#app")
+    dom.class_add(root, "ready")
+    let list<dom.Subscription> subs ← empty
+    return subs
+}

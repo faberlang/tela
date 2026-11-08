@@ -81,6 +81,18 @@ fn oral_areas(f64 tongue_x, f64 tongue_h, f64 lips, f64 jaw, f64 tip_place, f64 
     let f64 d_lip ← (lip_area / (PI / 4.0)).sqrt()
     let f64 ell ← 0.04 + 0.08 * (1.0 - lp)
 
+    # The tip constriction is a raised-cosine dip around tip_place. Section
+    # centres sit on a grid, so the dip is scaled so that its deepest section
+    # always reaches tip_area whatever the place (an unscaled dip between two
+    # sections reached only about 0.6 of the way, and a "narrow" fricative
+    # stayed too wide to make turbulence).
+    mut f64 tip_peak ← 1.0
+    if tip_area ≺ 9.0 {
+        let int nearest ← ((tip_place * (body.N_SEC ↦ f64) - 0.5).round() ⤒ 0 ⤓ body.N_SEC - 1)
+        let f64 un ← ((nearest ↦ f64) + 0.5) / (body.N_SEC ↦ f64)
+        tip_peak ← bump((un - tip_place) / 0.035) ⤒ 0.05
+    }
+
     mut list<f64> out ← empty
     for range 0 ‥ body.N_SEC let i {
         let f64 u ← ((i ↦ f64) + 0.5) / (body.N_SEC ↦ f64)
@@ -111,8 +123,8 @@ fn oral_areas(f64 tongue_x, f64 tongue_h, f64 lips, f64 jaw, f64 tip_place, f64 
 
         mut f64 a ← (PI / 4.0) * d * d
         if tip_area ≺ 9.0 {
-            let f64 tb ← bump((u - tip_place) / 0.035)
-            a ← lerp(a, a ⤓ tip_area, tb)
+            let f64 tb ← bump((u - tip_place) / 0.035) / tip_peak
+            a ← lerp(a, a ⤓ tip_area, tb ⤓ 1.0)
         }
         out.append(a ⤒ 0.02)
     }

@@ -1,0 +1,16 @@
+# tela is a path dependency on the worktree this repro lives in; the roots are
+# relative to this file.
+
+[[package]]
+name = "tela"
+version = "0.0.0"
+source = "path"
+package_root = "../../../.."
+kind = "lib"
+target_language = "ts"
+target_triple = "browser"
+target_manifest = ""
+interface_root = "../../../../src"
+artifact = ""
+crate = "tela"
+rustc = ""

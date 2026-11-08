@@ -4,18 +4,19 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Vox — a vocal tract you can play</title>
-    <!-- The generated modules import the bare name "@faber/runtime" (gap 26);
-         build.sh copies the compiled runtime to dist/runtime for this map. -->
-    <script type="importmap">
-      { "imports": { "@faber/runtime": "../runtime/index.js", "@faber/runtime/": "../runtime/" } }
-    </script>
     <link rel="icon" href="../public/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="../styles/main.css" />
   </head>
   <body>
     <main id="vox-app">
+      <div class="stage act-play">
       <header class="bar panel-header">
         <span class="brand">VOX</span>
+        <div class="choices activity" role="group" aria-label="Activity">
+          <button class="choice c-activity on" type="button">Play</button>
+          <button class="choice c-activity" type="button">Speak</button>
+          <button class="choice c-activity" type="button">Sing</button>
+        </div>
         <button class="start" type="button">Start audio</button>
         <label class="volume-box">volume
           <input class="volume" type="range" min="0" max="1" step="0.01" value="0.35" />
@@ -96,6 +97,71 @@
           <button class="key white" type="button" style="left:93.333%;width:6.667%"><span></span></button>
         </div>
       </section>
+
+      <section class="panel panel-speak seq" aria-label="Speak">
+        <div class="seq-main">
+          <label class="seq-field"><span class="name">phonemes</span>
+            <textarea class="speak-text" rows="3" spellcheck="false" autocomplete="off">HH AH0 L OW1 , / W ER1 L D .</textarea></label>
+          <div class="seq-row">
+            <select class="speak-preset" aria-label="Preset phrase">
+              <option value="0">preset</option><option value="1">preset</option><option value="2">preset</option><option value="3">preset</option>
+              <option value="4">preset</option><option value="5">preset</option><option value="6">preset</option><option value="7">preset</option>
+            </select>
+            <button class="speak-go start" type="button">Speak</button>
+            <button class="speak-stop" type="button">Stop</button>
+          </div>
+          <label class="ctl"><span class="name">rate</span>
+            <input class="s-rate" type="range" min="0.5" max="1.6" step="0.05" value="1" />
+            <output class="o-rate">1.00x</output></label>
+          <div class="seq-state"><span class="speak-now">ready</span> <span class="speak-note seq-error"></span></div>
+        </div>
+        <div class="seq-help">
+          <h2>notation</h2>
+          <p>ARPAbet as CMUdict writes it, sounds separated by spaces. Lower case works too.</p>
+          <table>
+            <tr><th>vowels</th><td>IY beet, IH bit, EH bed, AE cat, AA father, AO thought, UH book, UW boot, AH cut, ER bird, AX about</td></tr>
+            <tr><th>glides</th><td>EY say, OW go, AY my, AW cow, OY boy; W way, Y yes</td></tr>
+            <tr><th>stops</th><td>P B T D K G; affricates CH church, JH judge</td></tr>
+            <tr><th>fricatives</th><td>F V; TH thin, DH this; S Z; SH ship, ZH measure; HH hat</td></tr>
+            <tr><th>nasals, liquids</th><td>M N NG (sing); L R</td></tr>
+            <tr><th>marks</th><td>a digit after a vowel: 1 stressed, 2 medium (default), 0 unstressed. , pause that goes on; . pause that falls; ? pause that rises; ! falls hard. / is a word break (no sound). Intonation follows the pitch slider and the stress digits.</td></tr>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel panel-sing seq" aria-label="Sing">
+        <div class="seq-main">
+          <label class="seq-field"><span class="name">score</span>
+            <textarea class="sing-text" rows="3" spellcheck="false" autocomplete="off">C4:1:T.W.IH.NG C4:1:K.AH.L G4:1:T.W.IH.NG G4:1:K.AH.L A4:1:L.IH.T A4:1:T.AH.L G4:2:S.T.AA.R</textarea></label>
+          <div class="seq-row">
+            <select class="sing-preset" aria-label="Preset tune">
+              <option value="0">tune</option><option value="1">tune</option><option value="2">tune</option><option value="3">tune</option>
+            </select>
+            <select class="sing-key" aria-label="Register">
+              <option value="-12" selected>low (-12)</option><option value="0">as written</option><option value="12">high (+12)</option>
+            </select>
+            <button class="sing-go start" type="button">Sing</button>
+            <button class="sing-stop" type="button">Stop</button>
+          </div>
+          <label class="ctl"><span class="name">tempo</span>
+            <input class="s-tempo" type="range" min="40" max="200" step="1" value="96" />
+            <output class="o-tempo">96 bpm</output></label>
+          <div class="seq-state"><span class="sing-now">ready</span> <span class="sing-note seq-error"></span></div>
+        </div>
+        <div class="seq-help">
+          <h2>notation</h2>
+          <p>Notes separated by spaces, each <b>NOTE:BEATS:SYLLABLE</b>.</p>
+          <table>
+            <tr><th>NOTE</th><td>a pitch name: A to G, then # or b, then the octave (C4 is middle C); or R for a rest</td></tr>
+            <tr><th>BEATS</th><td>length in beats: 1, 0.5, 1.5, 2 ... the tempo slider sets the beats per minute</td></tr>
+            <tr><th>SYLLABLE</th><td>the sounds of one syllable, ARPAbet joined by dots: T.W.IH.NG. Its first vowel is held for the note; the sounds before it start ahead of the beat, those after it close the note.</td></tr>
+            <tr><th>rest</th><td>R:2 is two beats of silence</td></tr>
+            <tr><th>sounds</th><td>the same set as Speak: IY IH EH AE AA AO UH UW AH ER AX, EY OW AY AW OY, P B T D K G CH JH F V TH DH S Z SH ZH HH M N NG L R W Y</td></tr>
+          </table>
+          <p>Pitch glides from note to note without a break. Vibrato, breath and the body come from the voice controls.</p>
+        </div>
+      </section>
+      </div>
     </main>
 
     <script type="module">

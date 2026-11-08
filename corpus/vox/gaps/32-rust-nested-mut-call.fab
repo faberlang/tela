@@ -1,0 +1,37 @@
+# gap 32: Rust target, a mutating method call inside the arguments of another
+# mutating method call on the same object.
+#
+# Run:      faber check 32-rust-nested-mut-call.fab                ok
+#           faber run 32-rust-nested-mut-call.fab                  prints 2
+#           faber run -t ts 32-rust-nested-mut-call.fab            prints 2
+#           faber build -t rust 32-rust-nested-mut-call.fab        rustc fails
+# Actual (rust): the call is emitted as `self.take(self.bump())` and rustc rejects it,
+#     error[E0499]: cannot borrow `*self` as mutable more than once at a time
+# (Rust's two-phase borrows allow only shared reads in the arguments.)
+# Expected: the emitter hoists the inner call into a local first, as the plain
+# formulation below does.
+# Plain formulation: `let int v ← self.bump()` then `self.take(v)`.
+# Marked `# gap 32` in engine/src/engine.fab (Engine.control_tick).
+
+class Counter {
+    mut int n = 0
+
+    fn bump() → int {
+        self.n ← self.n + 1
+        return self.n
+    }
+
+    fn take(int v) → void {
+        self.n ← self.n + v
+    }
+
+    fn nested() → void {
+        self.take(self.bump())
+    }
+}
+
+main {
+    mut Counter c ← Counter { }
+    c.nested()
+    print c.n
+}

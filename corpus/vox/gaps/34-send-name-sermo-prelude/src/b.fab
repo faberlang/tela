@@ -1,0 +1,6 @@
+import from "./synth" synth
+
+@ public
+fn b() → void {
+    synth.send("b", 1.0)
+}

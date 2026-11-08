@@ -24,7 +24,7 @@ html, body {
   color: var(--text);
 }
 
-#vox-app {
+#vox-app, .stage {
   position: fixed;
   inset: 0;
 }
@@ -176,3 +176,53 @@ output { color: var(--text); text-align: right; }
 }
 
 .key.down { background: var(--live); color: #0a0e13; border-color: var(--live); }
+
+/* Activities: Play, Speak, Sing share the views and the controls and differ in
+   the strip along the bottom. The strip is placed by the controller; only the
+   one for the current activity shows. */
+
+.panel-speak, .panel-sing { display: none; }
+.act-speak .panel-keys, .act-sing .panel-keys { display: none; }
+.act-speak .panel-speak, .act-sing .panel-sing {
+  display: grid;
+  grid-template-columns: minmax(380px, 44%) 1fr;
+  column-gap: 26px;
+  padding: 12px 18px;
+  overflow: hidden;
+}
+
+.activity { margin-left: 8px; gap: 6px; }
+
+.seq-main { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.seq-field { display: flex; flex-direction: column; gap: 4px; }
+
+textarea, select {
+  font: inherit;
+  color: var(--text);
+  background: #0a0e13;
+  border: 1px solid var(--dim);
+  border-radius: 2px;
+}
+
+textarea { resize: none; padding: 6px 8px; width: 100%; box-sizing: border-box; line-height: 1.5; }
+select { padding: 4px 6px; }
+textarea:focus-visible, select:focus-visible { outline: 1px solid var(--live); outline-offset: 2px; }
+
+.seq-row { display: flex; align-items: center; gap: 8px; }
+.seq-state { color: var(--label); }
+.seq-state .seq-error { color: #e8806a; margin-left: 12px; }
+
+.seq-help { overflow: auto; min-width: 0; color: var(--label); line-height: 1.45; }
+.seq-help h2 {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: normal;
+  letter-spacing: 0.2em;
+  color: var(--label);
+  text-transform: uppercase;
+}
+.seq-help p { margin: 0 0 6px; }
+.seq-help b { color: var(--text); font-weight: normal; }
+.seq-help table { border-collapse: collapse; }
+.seq-help th { text-align: left; vertical-align: top; padding: 1px 14px 1px 0; color: var(--text); font-weight: normal; white-space: nowrap; }
+.seq-help td { padding: 1px 0; }

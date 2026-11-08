@@ -23,25 +23,44 @@ class Layout {
     let Rect spectrum
     let Rect vowel
     let Rect controls
-    let Rect keys
+    let Rect dock
 }
 
 @ public
 const f64 HEADER_H = 52.0
 
+# The strip along the bottom: the keyboard in Play, the Speak or Sing panel
+# (text, presets, notation help) otherwise.
 @ public
 const f64 KEYS_H = 118.0
+
+@ public
+const f64 DOCK_H = 236.0
+
+@ public
+const int ACT_PLAY = 0
+
+@ public
+const int ACT_SPEAK = 1
+
+@ public
+const int ACT_SING = 2
 
 fn rect(f64 x, f64 y, f64 w, f64 h) → Rect {
     return Rect { x = x, y = y, w = w, h = h }
 }
 
-# Why: the window is split into a header, a keyboard strip, the anatomy view on
-# the left and, on the right, a 2x2 grid of signal views over the controls.
+# Why: the window is split into a header, a bottom strip (taller for Speak and
+# Sing), the anatomy view on the left and, on the right, a 2x2 grid of signal
+# views over the controls.
 @ public
-fn compute(f64 width, f64 height) → Layout {
+fn compute(f64 width, f64 height, int activity) → Layout {
     let f64 main_top ← HEADER_H
-    let f64 main_h ← height - HEADER_H - KEYS_H
+    mut f64 dock_h ← KEYS_H
+    if activity ≢ ACT_PLAY {
+        dock_h ← DOCK_H
+    }
+    let f64 main_h ← height - HEADER_H - dock_h
     let f64 left_w ← (width * 0.46) ⤓ 640.0
     let f64 right_x ← left_w
     let f64 right_w ← width - left_w
@@ -56,7 +75,7 @@ fn compute(f64 width, f64 height) → Layout {
         spectrum = rect(right_x, main_top + cell_h, cell_w, cell_h),
         vowel = rect(right_x + cell_w, main_top + cell_h, cell_w, cell_h),
         controls = rect(right_x, main_top + grid_h, right_w, main_h - grid_h),
-        keys = rect(0.0, height - KEYS_H, width, KEYS_H)
+        dock = rect(0.0, height - dock_h, width, dock_h)
     }
 }
 

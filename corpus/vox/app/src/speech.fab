@@ -1,0 +1,191 @@
+# speech.fab: the Speak and Sing panels.
+#
+# The page does not time anything. A press of Speak or Sing turns the text
+# into one program of numeric messages (engine/src/score.fab), sends it to the
+# voice in order, and the voice's sequencer plays it on the audio clock
+# (engine/src/sequencer.fab). What the page does afterwards is watch: the
+# telemetry says which item is sounding and where the articulators are, and
+# the views follow.
+
+import from "tela:dom" dom
+import from "engine:score" score
+import from "engine:presets" presets
+import from "./state" state
+import from "./synth" synth
+import from "./telemetry" telemetry
+import from "./ink" ink
+
+fn say(dom.Scope scope, string selector, string text) → void {
+    dom.text_set(dom.require(scope, selector), text)
+}
+
+# Why: put the preset names on the page's option elements, so the names live
+# in engine/src/presets.fab only.
+fn name_options(dom.Scope scope, string selector, bool tunes) → void {
+    let list<dom.Element> options ← dom.all(scope, selector)
+    mut int count ← presets.phrase_count()
+    if tunes {
+        count ← presets.tune_count()
+    }
+    for range 0 ‥ options.length() let i {
+        if i ≺ count {
+            if tunes {
+                dom.text_set(options[i], presets.tune_name(i))
+            }
+            else {
+                dom.text_set(options[i], presets.phrase_name(i))
+            }
+        }
+    }
+}
+
+# Why: send a program now, or hold it until the audio is up (the first press
+# of Speak can be the click that starts the audio).
+fn launch(dom.Scope scope, mut state.App app, score.Score sc, string note) → void {
+    if sc.problem.length() ≻ 0 {
+        say(scope, note, sc.problem)
+        return
+    }
+    say(scope, note, "")
+    app.labels ← copy sc.labels
+    app.seq_busy ← true
+    app.seq_seen ← false
+    if app.route ≡ "idle" {
+        app.pending_keys ← empty
+        app.pending_values ← empty
+        for from sc.msgs let m {
+            app.pending_keys.append(m.key)
+            app.pending_values.append(m.value)
+        }
+        synth.start(mut app)
+        say(scope, ".panel-header .start", "Audio running")
+        dom.class_add(dom.require(scope, ".panel-header .start"), "running")
+    }
+    else {
+        synth.send_sequence_settings(app)
+        for from sc.msgs let m {
+            synth.post(app, m.key, m.value)
+        }
+    }
+}
+
+fn halt(mut state.App app) → void {
+    app.pending_keys ← empty
+    app.pending_values ← empty
+    synth.post(app, "seq_stop", 0.0)
+}
+
+fn bind_slider(dom.Scope scope, string selector, (f64) → void apply) → dom.Subscription {
+    return dom.on_input(dom.require(scope, selector), (dom.Element el, string text) → void ∴ do {
+        apply(text ↦ f64 ⊥ 0.0)
+    })
+}
+
+# Why: a sung line is easiest to hear in a comfortable register; the tunes are
+# written around middle C, so the male body sings them an octave down.
+@ public
+fn default_key(dom.Scope scope, int body) → void {
+    mut string key ← "0"
+    if body ≡ 0 {
+        key ← "-12"
+    }
+    dom.value_set(dom.require(scope, ".sing-key"), key)
+}
+
+@ public
+fn wire(dom.Scope scope, mut state.App app) → list<dom.Subscription> {
+    mut list<dom.Subscription> subs ← empty
+    name_options(scope, ".speak-preset option", false)
+    name_options(scope, ".sing-preset option", true)
+    default_key(scope, app.body)
+
+    # Speak: presets fill the text; Speak sends it.
+    subs.append(dom.on_input(dom.require(scope, ".speak-preset"), (dom.Element el, string text) → void ∴ do {
+        let int i ← text ↦ int ⊥ 0
+        dom.value_set(dom.require(scope, ".speak-text"), presets.phrase_text(i))
+    }))
+    subs.append(dom.on(dom.require(scope, ".speak-go"), "click", (dom.DomEvent e) → void ∴ do {
+        let string text ← dom.input_value(dom.require(scope, ".speak-text"))
+        let score.Score sc ← score.speak(text, app.pitch_note)
+        launch(scope, mut app, sc, ".speak-note")
+    }))
+    subs.append(dom.on(dom.require(scope, ".speak-stop"), "click", (dom.DomEvent e) → void ∴ do {
+        halt(mut app)
+    }))
+    subs.append(bind_slider(scope, ".s-rate", (f64 v) → void ∴ do {
+        app.rate ← v
+        synth.post(app, "seq_rate", v)
+        say(scope, ".o-rate", "§x"(ink.hundredths(v)))
+    }))
+
+    # Sing: presets fill the score and the tempo; Sing sends it.
+    subs.append(dom.on_input(dom.require(scope, ".sing-preset"), (dom.Element el, string text) → void ∴ do {
+        let int i ← text ↦ int ⊥ 0
+        dom.value_set(dom.require(scope, ".sing-text"), presets.tune_text(i))
+        let f64 bpm ← presets.tune_tempo(i)
+        app.tempo ← bpm
+        dom.value_set(dom.require(scope, ".s-tempo"), ink.whole(bpm))
+        say(scope, ".o-tempo", "§ bpm"(ink.whole(bpm)))
+        synth.post(app, "seq_tempo", bpm)
+    }))
+    subs.append(dom.on(dom.require(scope, ".sing-go"), "click", (dom.DomEvent e) → void ∴ do {
+        let string text ← dom.input_value(dom.require(scope, ".sing-text"))
+        let f64 shift ← dom.input_value(dom.require(scope, ".sing-key")) ↦ f64 ⊥ 0.0
+        let score.Score sc ← score.sing(text, shift)
+        launch(scope, mut app, sc, ".sing-note")
+    }))
+    subs.append(dom.on(dom.require(scope, ".sing-stop"), "click", (dom.DomEvent e) → void ∴ do {
+        halt(mut app)
+    }))
+    subs.append(bind_slider(scope, ".s-tempo", (f64 v) → void ∴ do {
+        app.tempo ← v
+        synth.post(app, "seq_tempo", v)
+        say(scope, ".o-tempo", "§ bpm"(ink.whole(v)))
+    }))
+    return subs
+}
+
+# Why: per frame, follow the sequence. While it plays the articulator values
+# the voice reports become the page's, so the handles and the jaw line move
+# with the sound; the "now" line names the item sounding; when the voice
+# reports it stopped, the program is done.
+@ public
+fn watch(dom.Scope scope, mut state.App app) → void {
+    if app.tel_count ≡ 0 then return
+    let bool playing ← telemetry.seq(app.tel, telemetry.SEQ_PLAYING) ≻ 0.5
+    if playing {
+        app.seq_seen ← true
+        app.tongue_x ← telemetry.seq(app.tel, telemetry.SEQ_TX)
+        app.tongue_h ← telemetry.seq(app.tel, telemetry.SEQ_TH)
+        app.lips ← telemetry.seq(app.tel, telemetry.SEQ_LIPS)
+        app.jaw ← telemetry.seq(app.tel, telemetry.SEQ_JAW)
+        app.velum ← telemetry.seq(app.tel, telemetry.SEQ_VELUM)
+    }
+    elif app.seq_busy and app.seq_seen {
+        app.seq_busy ← false
+        app.seq_seen ← false
+    }
+    show_now(scope, mut app, playing)
+}
+
+fn show_now(dom.Scope scope, mut state.App app, bool playing) → void {
+    mut string text ← "ready"
+    if playing {
+        let int which ← telemetry.seq(app.tel, telemetry.SEQ_ITEM) ↦ int via HalfEven ⊥ -1
+        if which ≥ 0 and which ≺ app.labels.length() {
+            text ← "sounding: §"(app.labels[which])
+        }
+        else {
+            text ← "sounding"
+        }
+    }
+    elif app.seq_busy {
+        text ← "starting"
+    }
+    if app.now ≡ text then return
+    # gap 30: the line is shown before it is stored; storing a string into a
+    # field of a `mut` parameter and then reading it again is SEM052.
+    say(scope, ".speak-now", text)
+    say(scope, ".sing-now", text)
+    app.now ← text
+}

@@ -1,0 +1,129 @@
+# fit-vowels: search the articulation grid for the closest adult-male formant
+# pattern of each vowel in phones.fab that has no hand-fitted preset in
+# vowels.fab. Same method as the cardinal vowels (articulation.fab, vowels.fab):
+# F1 and F2 of the area function (formants.fab) against Peterson and Barney
+# (1952) male means, F3 as a tie-break where a target gives one.
+#
+#   faber run tools/fit-vowels
+#
+# Output: one line per target, `name tx th lips jaw -> F1 F2 F3`. The numbers
+# are pasted into phones.fab; they are a fit under this tract model, not
+# measurements. A coarse grid over (tongue_x, tongue_h, lips, jaw) is scored
+# once, then each target is refined on a finer grid around its coarse winner.
+
+import from "engine:body" body
+import from "engine:articulation" art
+import from "engine:formants" formants
+
+class Target {
+    let string name
+    let f64 f1
+    let f64 f2
+    let f64 f3
+    let f64 lips_lo
+    let f64 lips_hi
+    # A hand-interpolated starting guess between the cardinal vowels; the fit
+    # prefers articulations near it, because the area function has many
+    # (tongue, jaw, lips) combinations with the same F1 and F2.
+    let f64 sx
+    let f64 sh
+    let f64 sl
+    let f64 sj
+}
+
+fn score(Target t, f64 tx, f64 th, f64 lp, f64 jw) → list<f64> {
+    let list<f64> areas ← art.oral_areas(tx, th, lp, jw, 0.9, 99.0)
+    let list<f64> f ← formants.estimate(areas, 17.5)
+    let f64 e1 ← (f[0] - t.f1) / t.f1
+    let f64 e2 ← (f[1] - t.f2) / t.f2
+    mut f64 cost ← 2.0 * e1 * e1 + e2 * e2
+    if t.f3 ≻ 0.0 {
+        let f64 e3 ← (f[2] - t.f3) / t.f3
+        cost ← cost + 0.5 * e3 * e3
+    }
+    let f64 dx ← tx - t.sx
+    let f64 dh ← th - t.sh
+    let f64 dl ← lp - t.sl
+    let f64 dj ← jw - t.sj
+    cost ← cost + 0.02 * (dx * dx + dh * dh + dl * dl + 0.5 * dj * dj)
+    if lp ≺ t.lips_lo {
+        cost ← cost + (t.lips_lo - lp)
+    }
+    if lp ≻ t.lips_hi {
+        cost ← cost + (lp - t.lips_hi)
+    }
+    return [cost, f[0], f[1], f[2]]
+}
+
+fn fit(Target t) → void {
+    mut f64 best ← 1.0e9
+    mut f64 bx ← 0.0
+    mut f64 bh ← 0.0
+    mut f64 bl ← 0.0
+    mut f64 bj ← 0.0
+    let list<f64> lipset ← [0.06, 0.2, 0.4, 0.6, 0.8, 1.0]
+    for range 0 ‥ 11 let ix {
+        for range 0 ‥ 11 let ih {
+            for from lipset let lp {
+                for range 0 ‥ 6 let ij {
+                    let f64 tx ← (ix ↦ f64) / 10.0
+                    let f64 th ← (ih ↦ f64) / 10.0
+                    let f64 jw ← (ij ↦ f64) / 5.0
+                    let list<f64> s ← score(t, tx, th, lp, jw)
+                    if s[0] ≺ best {
+                        best ← s[0]
+                        bx ← tx
+                        bh ← th
+                        bl ← lp
+                        bj ← jw
+                    }
+                }
+            }
+        }
+    }
+    # Refine: tongue_x/h +-0.1 in 0.025 steps, lips +-0.2 in 0.05, jaw +-0.2 in 0.1.
+    let f64 cx ← bx
+    let f64 ch ← bh
+    let f64 cl ← bl
+    let f64 cj ← bj
+    for range -4 ‥ 5 let ix {
+        for range -4 ‥ 5 let ih {
+            for range -4 ‥ 5 let il {
+                for range -2 ‥ 3 let ij {
+                    let f64 tx ← (cx + (ix ↦ f64) * 0.025) ⤒ 0.0 ⤓ 1.0
+                    let f64 th ← (ch + (ih ↦ f64) * 0.025) ⤒ 0.0 ⤓ 1.0
+                    let f64 lp ← (cl + (il ↦ f64) * 0.05) ⤒ 0.0 ⤓ 1.0
+                    let f64 jw ← (cj + (ij ↦ f64) * 0.1) ⤒ 0.0 ⤓ 1.0
+                    let list<f64> s ← score(t, tx, th, lp, jw)
+                    if s[0] ≺ best {
+                        best ← s[0]
+                        bx ← tx
+                        bh ← th
+                        bl ← lp
+                        bj ← jw
+                    }
+                }
+            }
+        }
+    }
+    let list<f64> r ← score(t, bx, bh, bl, bj)
+    print "§ tx=§ th=§ lips=§ jaw=§ -> F1 § F2 § F3 § (target § § §)"(t.name, bx, bh, bl, bj, r[1].round(), r[2].round(), r[3].round(), t.f1, t.f2, t.f3)
+}
+
+main {
+    # Peterson and Barney 1952 male means (F3 only where it decides the vowel).
+    let list<Target> targets ← [
+        Target { name = "IH", f1 = 390.0, f2 = 1990.0, f3 = 0.0, lips_lo = 0.5, lips_hi = 1.0, sx = 1.0, sh = 0.7, sl = 0.9, sj = 0.15 },
+        Target { name = "EH", f1 = 530.0, f2 = 1840.0, f3 = 0.0, lips_lo = 0.5, lips_hi = 1.0, sx = 1.0, sh = 0.3, sl = 1.0, sj = 0.5 },
+        Target { name = "AE", f1 = 660.0, f2 = 1720.0, f3 = 0.0, lips_lo = 0.5, lips_hi = 1.0, sx = 0.9, sh = 0.1, sl = 1.0, sj = 0.7 },
+        Target { name = "AO", f1 = 570.0, f2 = 840.0, f3 = 0.0, lips_lo = 0.0, lips_hi = 0.4, sx = 0.0, sh = 0.35, sl = 0.3, sj = 0.7 },
+        Target { name = "UH", f1 = 440.0, f2 = 1020.0, f3 = 0.0, lips_lo = 0.0, lips_hi = 0.4, sx = 0.2, sh = 0.65, sl = 0.15, sj = 0.4 },
+        Target { name = "AH", f1 = 640.0, f2 = 1190.0, f3 = 0.0, lips_lo = 0.5, lips_hi = 1.0, sx = 0.3, sh = 0.15, sl = 0.8, sj = 0.7 },
+        Target { name = "ER", f1 = 490.0, f2 = 1350.0, f3 = 1690.0, lips_lo = 0.2, lips_hi = 0.7, sx = 0.5, sh = 0.6, sl = 0.4, sj = 0.3 },
+        Target { name = "AX", f1 = 500.0, f2 = 1500.0, f3 = 0.0, lips_lo = 0.3, lips_hi = 0.7, sx = 0.5, sh = 0.5, sl = 0.5, sj = 0.4 },
+        Target { name = "W", f1 = 300.0, f2 = 700.0, f3 = 0.0, lips_lo = 0.0, lips_hi = 0.2, sx = 0.1, sh = 0.75, sl = 0.05, sj = 0.4 }
+    ]
+    for from targets let t {
+        fit(t)
+    }
+}

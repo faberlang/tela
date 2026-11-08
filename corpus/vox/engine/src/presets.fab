@@ -1,0 +1,63 @@
+# presets.fab: the example phrases and tunes of the page, as data.
+#
+# Phrases are Speak text (score.fab speak()); tunes are Sing text with a
+# tempo in beats per minute (score.fab sing()). The tunes are traditional
+# melodies in the public domain, written out here from the plain melody.
+
+@ public
+fn phrase_count() → int {
+    return 8
+}
+
+@ public
+fn phrase_name(int i) → string {
+    if i ≡ 0 then return "Hello, world."
+    if i ≡ 1 then return "How are you?"
+    if i ≡ 2 then return "She sells seashells."
+    if i ≡ 3 then return "Peter Piper picked a peck."
+    if i ≡ 4 then return "Mama made me a lemon."
+    if i ≡ 5 then return "Yes, no, maybe so."
+    if i ≡ 6 then return "The jolly judge's yellow jacket"
+    return "Vowels"
+}
+
+@ public
+fn phrase_text(int i) → string {
+    if i ≡ 0 then return "HH AH0 L OW1 , / W ER1 L D ."
+    if i ≡ 1 then return "HH AW1 / AA0 R / Y UW1 ?"
+    if i ≡ 2 then return "SH IY1 / S EH1 L Z / S IY1 / SH EH1 L Z ."
+    if i ≡ 3 then return "P IY1 T ER0 / P AY1 P ER0 / P IH1 K T / AH0 / P EH1 K ."
+    if i ≡ 4 then return "M AA1 M AH0 / M EY1 D / M IY1 / AH0 / L EH1 M AH0 N ."
+    if i ≡ 5 then return "Y EH1 S , / N OW1 , / M EY1 B IY0 / S OW1 ."
+    if i ≡ 6 then return "DH AH0 / JH AA1 L IY0 / JH AH1 JH IH0 Z / Y EH1 L OW0 / JH AE1 K AH0 T ."
+    return "IY1 , IH1 , EH1 , AE1 , AA1 , AO1 , UH1 , UW1 , AH1 , ER1 ."
+}
+
+@ public
+fn tune_count() → int {
+    return 4
+}
+
+@ public
+fn tune_name(int i) → string {
+    if i ≡ 0 then return "Twinkle, Twinkle, Little Star"
+    if i ≡ 1 then return "Ode to Joy (la)"
+    if i ≡ 2 then return "Mary Had a Little Lamb"
+    return "Vowel scale"
+}
+
+@ public
+fn tune_tempo(int i) → f64 {
+    if i ≡ 0 then return 96.0
+    if i ≡ 1 then return 112.0
+    if i ≡ 2 then return 108.0
+    return 84.0
+}
+
+@ public
+fn tune_text(int i) → string {
+    if i ≡ 0 then return "C4:1:T.W.IH.NG C4:1:K.AH.L G4:1:T.W.IH.NG G4:1:K.AH.L A4:1:L.IH.T A4:1:T.AH.L G4:2:S.T.AA.R F4:1:HH.AW F4:1:AY E4:1:W.AH.N E4:1:D.ER D4:1:W.AH.T D4:1:Y.UW C4:2:AA.R"
+    if i ≡ 1 then return "E4:1:L.AA E4:1:L.AA F4:1:L.AA G4:1:L.AA G4:1:L.AA F4:1:L.AA E4:1:L.AA D4:1:L.AA C4:1:L.AA C4:1:L.AA D4:1:L.AA E4:1:L.AA E4:1.5:L.AA D4:0.5:L.AA D4:2:L.AA"
+    if i ≡ 2 then return "E4:1:M.EH D4:1:R.IY C4:1:HH.AE.D D4:1:AH E4:1:L.IH.T E4:1:T.AH.L E4:2:L.AE.M D4:1:L.IH.T D4:1:T.AH.L D4:2:L.AE.M E4:1:L.IH.T G4:1:T.AH.L G4:2:L.AE.M"
+    return "C4:1:IY D4:1:EH E4:1:AA F4:1:AO G4:1:UW A4:1:AH B4:1:IH C5:2:AE"
+}

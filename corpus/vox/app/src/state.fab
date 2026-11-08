@@ -7,10 +7,8 @@
 import from "tela:audio" audio
 import from "tela:canvas2d" canvas
 import from "engine:voice" voice
+import from "engine:engine" eng
 import from "./layout" layout
-
-@ public
-const int TEL_LENGTH = 217
 
 # What the player is grabbing in the anatomy view.
 @ public
@@ -58,7 +56,7 @@ class App {
     mut f64 volume = 0.35
     mut f64 sample_rate = 44100.0
 
-    # Latest voice telemetry (217 values) and the analyser's spectrum.
+    # Latest voice telemetry (eng.TEL_LENGTH values) and the analyser's spectrum.
     mut list<f64> tel
     mut list<f64> spectrum
     mut int tel_count = 0
@@ -79,6 +77,26 @@ class App {
     mut f64 jaw = 0.4
     mut f64 velum = 0.0
 
+    # Which of Play, Speak, Sing (layout.ACT_*) the page is in, and the window
+    # size the layout was computed for.
+    mut int activity = 0
+    mut f64 win_w = 1280.0
+    mut f64 win_h = 800.0
+
+    # Speak and Sing. A sequence is one program of messages for the voice
+    # (engine/src/score.fab). Sent before the audio is ready, it waits in
+    # pending_* and goes out when the route is up. labels names each item for
+    # the "now" line; seq_busy runs from seq_play until the voice reports it
+    # finished (seq_seen is "has reported it playing").
+    mut list<string> pending_keys
+    mut list<f64> pending_values
+    mut list<string> labels
+    mut bool seq_busy = false
+    mut bool seq_seen = false
+    mut string now = ""
+    mut f64 rate = 1.0
+    mut f64 tempo = 96.0
+
     # Playing.
     mut int octave = 0
     mut list<int> held
@@ -89,19 +107,25 @@ class App {
 @ public
 fn make_app(layout.Layout place) → App {
     mut list<f64> tel ← empty
-    for range 0 ‥ TEL_LENGTH let i {
+    for range 0 ‥ eng.TEL_LENGTH let i {
         tel.append(0.0)
     }
     let list<f64> spectrum ← empty
     let list<f64> trail_f1 ← empty
     let list<f64> trail_f2 ← empty
     let list<int> held ← empty
+    let list<string> pending_keys ← empty
+    let list<f64> pending_values ← empty
+    let list<string> labels ← empty
     return App {
         place = place,
         tel = tel,
         spectrum = spectrum,
         trail_f1 = trail_f1,
         trail_f2 = trail_f2,
-        held = held
+        held = held,
+        pending_keys = pending_keys,
+        pending_values = pending_values,
+        labels = labels
     }
 }

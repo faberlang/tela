@@ -1,0 +1,7 @@
+import from "./a" a
+import from "./b" b
+
+main {
+    a.a()
+    b.b()
+}

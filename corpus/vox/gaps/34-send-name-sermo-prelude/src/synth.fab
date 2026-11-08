@@ -1,0 +1,4 @@
+@ public
+fn send(string key, f64 value) → void {
+    print "§ §"(key, value)
+}

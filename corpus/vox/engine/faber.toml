@@ -8,9 +8,6 @@ provider = "engine"
 
 [paths]
 source = "src"
-# gap 27: a locked path library's sibling imports resolve only through
-# library_home on the browser-app product emit.
-library_home = ".."
 
 [build]
 kind = "lib"

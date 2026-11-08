@@ -1,6 +1,13 @@
-# render-wav: render the vowels /a e i o u/ (male body, 110 Hz, about 1 s
-# each) to mono 16-bit 44.1 kHz WAV files, vowel-a.wav ... vowel-u.wav, in the
-# directory given as the first argument (default ./vox-wav).
+# render-wav: render to mono 16-bit 44.1 kHz WAV files, in the directory given
+# as the first argument (default ./vox-wav):
+#   vowel-a.wav ... vowel-u.wav   the vowels /a e i o u/ (male body, 110 Hz, 1 s)
+#   speech-0.wav ... speech-7.wav the Speak presets (presets.fab), male body
+#   song-0.wav ... song-3.wav     the Sing presets, male body, an octave down
+# A second argument is Speak text: only that is rendered, to speech-custom.wav
+# (for trying a phoneme string; a third argument sets the speech rate).
+# Speech and song go through the same message stream the page sends to the
+# worklet (score.fab -> Voice.message) and the same Voice.process blocks of 128
+# frames, so what the file holds is what the worklet route plays.
 #
 # Needs the native file leaf (norma:fs), so build it for a native target:
 #   faber build tools/render-wav -t rust --release -o <dir>
@@ -9,6 +16,9 @@
 
 import from "engine:engine" eng
 import from "engine:vowels" vowels
+import from "engine:voice" voice
+import from "engine:score" score
+import from "engine:presets" presets
 import from "norma:fs" fs
 import from "norma:process" process
 
@@ -71,14 +81,59 @@ fn render_vowel(string name) → list<f64> {
     return samples
 }
 
-main {
-    let list<string> args ← process.argv()
-    let string dir ← args.length() ≻ 0 ✓ args[0] ✗ "vox-wav"
-    do {
-        fs.create_dir(dir)
-    } catch err {
-        print "note: could not create §, continuing"(dir)
+# Why: play a Score through a fresh Voice, block by block like the worklet, until
+# the telemetry says the sequencer has finished, then 0.3 s of tail. The
+# telemetry (which estimates formants) is read every 4410 frames only.
+fn render_score(score.Score sc, f64 rate, f64 tempo, f64 level) → list<f64> {
+    # gap 03b: `mut` is needed for the message calls, yet WARN013 says unnecessary.
+    mut voice.Voice v ← voice.create()
+    v.message("seq_level", level)
+    v.message("seq_rate", rate)
+    v.message("seq_tempo", tempo)
+    for from sc.msgs let m {
+        v.message(m.key, m.value)
     }
+    mut list<f64> samples ← empty
+    mut bool playing ← true
+    mut int chunks ← 0
+    while playing and chunks ≺ 600 {
+        for range 0 ‥ 34 let b {
+            samples.extend(v.process(128, SR))
+        }
+        chunks ← chunks + 1
+        let list<f64> tel ← v.telemetry()
+        playing ← tel[eng.TEL_SEQ] ≻ 0.5
+    }
+    samples.extend(v.process(13230, SR))
+    return samples
+}
+
+fn stats(string name, list<f64> samples) → void {
+    mut f64 peak ← 0.0
+    mut f64 sumsq ← 0.0
+    for from samples let x {
+        if x.abs() ≻ peak {
+            peak ← x.abs()
+        }
+        sumsq ← sumsq + x * x
+    }
+    let f64 rms ← (sumsq / (samples.length() ↦ f64)).sqrt()
+    print "§: § s, peak §, rms §"(name, (samples.length() ↦ f64) / SR, peak, rms)
+}
+
+fn write_wav(string dir, string name, list<f64> samples) → void {
+    let string path ← "§/§.wav"(dir, name)
+    do {
+        fs.write_bytes(path, wav(samples))
+        stats(path, samples)
+    } catch err {
+        print "failed to write §"(path)
+        process.exit_process(1)
+    }
+}
+
+# Why: the vowels, then every Speak and Sing preset.
+fn render_all(string dir) → void {
     # gap 09: a literal list in the `for` head breaks the Rust target; a typed name does not.
     let list<string> names ← ["a", "e", "i", "o", "u"]
     for from names let name {
@@ -91,5 +146,51 @@ main {
             print "failed to write §"(path)
             process.exit_process(1)
         }
+    }
+    for range 0 ‥ presets.phrase_count() let i {
+        # Male speaking line near 110 Hz (MIDI 45), 46 for the intonation line.
+        let score.Score sc ← score.speak(presets.phrase_text(i), 46.0)
+        if sc.problem.length() ≻ 0 {
+            print "speech §: §"(i, sc.problem)
+            process.exit_process(1)
+        }
+        write_wav(dir, "speech-§"(i), render_score(sc, 1.0, 120.0, 0.8))
+    }
+    for range 0 ‥ presets.tune_count() let i {
+        let score.Score sc ← score.sing(presets.tune_text(i), -12.0)
+        if sc.problem.length() ≻ 0 {
+            print "song §: §"(i, sc.problem)
+            process.exit_process(1)
+        }
+        write_wav(dir, "song-§"(i), render_score(sc, 1.0, presets.tune_tempo(i), 0.8))
+    }
+}
+
+fn render_custom(string dir, string text, f64 rate) → void {
+    let score.Score sc ← score.speak(text, 46.0)
+    if sc.problem.length() ≻ 0 {
+        print "speech: §"(sc.problem)
+        process.exit_process(1)
+    }
+    write_wav(dir, "speech-custom", render_score(sc, rate, 120.0, 0.8))
+}
+
+main {
+    let list<string> args ← process.argv()
+    let string dir ← args.length() ≻ 0 ✓ args[0] ✗ "vox-wav"
+    do {
+        fs.create_dir(dir)
+    } catch err {
+        print "note: could not create §, continuing"(dir)
+    }
+    if args.length() ≻ 1 {
+        mut f64 rate ← 1.0
+        if args.length() ≻ 2 {
+            rate ← args[2] ↦ f64 ⊥ 1.0
+        }
+        render_custom(dir, args[1], rate)
+    }
+    else {
+        render_all(dir)
     }
 }

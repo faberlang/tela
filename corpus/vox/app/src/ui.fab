@@ -10,6 +10,7 @@ import from "./notes" notes
 import from "./ink" ink
 import from "./anatomy" anatomy
 import from "./views" views
+import from "./speech" speech
 
 const int TRAIL = 40
 
@@ -37,7 +38,9 @@ fn place_all(dom.Scope scope, ref state.App app) → void {
     let layout.Layout p ← app.place
     put(scope, ".panel-header", p.header)
     put(scope, ".panel-controls", p.controls)
-    put(scope, ".panel-keys", p.keys)
+    put(scope, ".panel-keys", p.dock)
+    put(scope, ".panel-speak", p.dock)
+    put(scope, ".panel-sing", p.dock)
     put_canvas(scope, ".v-anatomy", p.anatomy, app.dpr)
     put_canvas(scope, ".v-tube", p.tube, app.dpr)
     put_canvas(scope, ".v-glottal", p.glottal, app.dpr)
@@ -73,6 +76,7 @@ fn frame(dom.Scope scope, mut state.App app, state.Surfaces s) → void {
     views.glottal(s.glottal, app, p.glottal)
     views.spectrum(s.spectrum, app, p.spectrum)
     views.vowels(s.vowel, app, p.vowel)
+    speech.watch(scope, mut app)
     show_status(scope, mut app)
 }
 
@@ -138,17 +142,17 @@ fn wire_controls(dom.Scope scope, mut state.App app) → list<dom.Subscription> 
     }))
     subs.append(on_slider(scope, ".s-pressed", (f64 v) → void ∴ do {
         app.pressed ← v
-        synth.send(app, "pressed", v)
+        synth.post(app, "pressed", v)
         readout(scope, ".o-pressed", ink.hundredths(v))
     }))
     subs.append(on_slider(scope, ".s-vibrato", (f64 v) → void ∴ do {
         app.vibrato ← v
-        synth.send(app, "vibrato_cents", v)
+        synth.post(app, "vibrato_cents", v)
         readout(scope, ".o-vibrato", "§ cents"(ink.whole(v)))
     }))
     subs.append(on_slider(scope, ".s-aspiration", (f64 v) → void ∴ do {
         app.aspiration ← v
-        synth.send(app, "aspiration", v)
+        synth.post(app, "aspiration", v)
         readout(scope, ".o-aspiration", ink.hundredths(v))
     }))
 
@@ -156,7 +160,7 @@ fn wire_controls(dom.Scope scope, mut state.App app) → list<dom.Subscription> 
     for range 0 ‥ modes.length() let i {
         subs.append(dom.on(modes[i], "click", (dom.DomEvent e) → void ∴ do {
             app.mode ← i
-            synth.send(app, "mode", i ↦ f64)
+            synth.post(app, "mode", i ↦ f64)
             mark_choice(modes, i)
         }))
     }
@@ -169,9 +173,10 @@ fn wire_controls(dom.Scope scope, mut state.App app) → list<dom.Subscription> 
             app.pitch_note ← notes.base_midi(i, 0)
             dom.value_set(dom.require(scope, ".s-pitch"), ink.whole(app.pitch_note))
             readout(scope, ".o-pitch", pitch_text(app.pitch_note))
-            synth.send(app, "body", i ↦ f64)
+            synth.post(app, "body", i ↦ f64)
             synth.send_pitch(app)
             mark_choice(bodies, i)
+            speech.default_key(scope, i)
         }))
     }
     return subs
@@ -195,7 +200,57 @@ fn wire_header(dom.Scope scope, mut state.App app) → list<dom.Subscription> {
     subs.append(on_slider(scope, ".volume", (f64 v) → void ∴ do {
         synth.set_volume(mut app, v)
     }))
+
+    # Play / Speak / Sing.
+    let list<dom.Element> activities ← dom.all(scope, ".c-activity")
+    for range 0 ‥ activities.length() let i {
+        subs.append(dom.on(activities[i], "click", (dom.DomEvent e) → void ∴ do {
+            set_activity(scope, mut app, i)
+            mark_choice(activities, i)
+        }))
+    }
     return subs
+}
+
+# Why: the three activities share the views and the controls and differ in the
+# strip along the bottom (keys, Speak panel, Sing panel). Leaving Play lets go
+# of every key; leaving Speak or Sing, or moving between them, stops the
+# sequence.
+fn set_activity(dom.Scope scope, mut state.App app, int activity) → void {
+    if activity ≡ app.activity then return
+    let int was ← app.activity
+    app.activity ← activity
+    # gap 35: `dom.element("#vox-app")` does not build; the class goes on a wrapper
+    # (`.stage`) inside the controller's scope.
+    let dom.Element root ← dom.require(scope, ".stage")
+    for from ["act-play", "act-speak", "act-sing"] let name {
+        dom.class_remove(root, name)
+    }
+    mut string now ← "act-play"
+    if activity ≡ layout.ACT_SPEAK {
+        now ← "act-speak"
+    }
+    elif activity ≡ layout.ACT_SING {
+        now ← "act-sing"
+    }
+    dom.class_add(root, now)
+    if was ≡ layout.ACT_PLAY {
+        for from dom.all(scope, ".key") let key {
+            dom.class_remove(key, "down")
+        }
+        app.held ← empty
+        app.sustain ← false
+        dom.class_remove(dom.require(scope, ".sustain"), "on")
+        synth.send_breath(app)
+    }
+    else {
+        app.pending_keys ← empty
+        app.pending_values ← empty
+        synth.post(app, "seq_stop", 0.0)
+    }
+    synth.send_sequence_settings(app)
+    app.place ← layout.compute(app.win_w, app.win_h, activity)
+    place_all(scope, app)
 }
 
 # ---------------------------------------------------------------------------
@@ -305,11 +360,11 @@ fn wire_keys(dom.Scope scope, mut state.App app) → list<dom.Subscription> {
 # ---------------------------------------------------------------------------
 
 fn send_articulation(state.App app) → void {
-    synth.send(app, "tongue_x", app.tongue_x)
-    synth.send(app, "tongue_h", app.tongue_h)
-    synth.send(app, "lips", app.lips)
-    synth.send(app, "jaw", app.jaw)
-    synth.send(app, "velum", app.velum)
+    synth.post(app, "tongue_x", app.tongue_x)
+    synth.post(app, "tongue_h", app.tongue_h)
+    synth.post(app, "lips", app.lips)
+    synth.post(app, "jaw", app.jaw)
+    synth.post(app, "velum", app.velum)
 }
 
 @ public

@@ -1,4 +1,4 @@
-# telemetry.fab: reading the voice's 217-value snapshot.
+# telemetry.fab: reading the voice's snapshot (eng.TEL_LENGTH values).
 #
 # The layout is the engine's (engine/src/voice.fab documents it, engine.fab
 # names the offsets); the reads here use those named offsets. Before the audio
@@ -71,6 +71,33 @@ fn at(ref list<f64> tel, int index) → f64 {
     return tel[index]
 }
 
+# The sequencer block (engine/src/voice.fab): k counts from eng.TEL_SEQ.
+@ public
+const int SEQ_PLAYING = 0
+
+@ public
+const int SEQ_ITEM = 1
+
+@ public
+const int SEQ_TX = 7
+
+@ public
+const int SEQ_TH = 8
+
+@ public
+const int SEQ_LIPS = 9
+
+@ public
+const int SEQ_JAW = 10
+
+@ public
+const int SEQ_VELUM = 11
+
+@ public
+fn seq(ref list<f64> tel, int k) → f64 {
+    return at(tel, eng.TEL_SEQ + k)
+}
+
 # A snapshot made from the controls, for the time before the audio runs.
 @ public
 fn preview(ref state.App app) → list<f64> {
@@ -102,6 +129,12 @@ fn preview(ref state.App app) → list<f64> {
         t.append(a)
     }
     for range 0 ‥ eng.TEL_N_WAVE * 2 let i {
+        t.append(0.0)
+    }
+    # The sequencer block: not playing.
+    t.append(0.0)
+    t.append(-1.0)
+    for range 0 ‥ eng.TEL_LENGTH - eng.TEL_SEQ - 2 let i {
         t.append(0.0)
     }
     return t

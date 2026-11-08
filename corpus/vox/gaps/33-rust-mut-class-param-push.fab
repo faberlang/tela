@@ -1,0 +1,40 @@
+# gap 33: Rust target, a class passed as a `mut` parameter and then appended to a
+# list is moved out of the reference.
+#
+# Run:      faber check 33-rust-mut-class-param-push.fab           ok
+#           faber run 33-rust-mut-class-param-push.fab             prints 6
+#           faber run -t ts 33-rust-mut-class-param-push.fab       prints 6
+#           faber build -t rust 33-rust-mut-class-param-push.fab   rustc fails
+# Actual (rust): `mut Item it` is a `&mut Item`, and the append is emitted as
+#     self.items.push((*p_it));
+#   error[E0507]: cannot move out of `*p_it` which is behind a mutable reference
+# Expected: the parameter is taken by value, or the push clones it.
+# Without `mut` the write through the name is SEM056, so a function that both
+# edits an object and stores it needs the plain formulation: edit the object
+# through a method of its own before the call (`it.settle()`), then pass it
+# unmarked.
+# Marked `# gap 33` in engine/src/sequencer.fab (Sequencer.push).
+
+class Item {
+    mut int v = 0
+
+    fn settle() → void {
+        self.v ← self.v + 1
+    }
+}
+
+class Bag {
+    mut list<Item> items = empty
+
+    fn push(mut Item it) → void {
+        it.v ← it.v + 6
+        self.items.append(it)
+    }
+}
+
+main {
+    mut Bag b ← Bag { }
+    mut Item it ← Item { }
+    b.push(mut it)
+    print b.items[0].v
+}

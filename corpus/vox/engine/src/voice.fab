@@ -37,11 +37,37 @@
 #   turbulence     fricative noise gain          0 .. 4, default 1
 #   gain           master gain                   0 .. 4, default 1
 #
-# Telemetry layout (Float64Array of TEL_LENGTH = 217 values; the TEL_*
+# Sequencer keys (Speak and Sing; sequencer.fab explains the model, score.fab
+# turns text into this stream). The sequencer runs inside the engine on its
+# control tick; the stream only loads it. Items are loaded in order, each as
+# the fields that differ from the defaults, then a seq_item that appends it:
+#
+#   seq_clear      0                             forget the loaded items (a sequence
+#                                                already playing is not touched)
+#   seq_phone      phoneme id 0 .. 40            phones.fab (0 is a pause)
+#   seq_ms         duration, ms                  default: the phoneme's own
+#   seq_beats      sung length, beats            the item lasts beats*60000/tempo - minus
+#   seq_minus      ms of the note's consonants   taken off a sung vowel
+#   seq_pitch      MIDI note, fractional         carried to the next item
+#   seq_glide      pitch glide into the item, ms default 70
+#   seq_item       0                             append the item with those fields
+#   seq_tempo      beats per minute 20 .. 400    live: applies to items still to come
+#   seq_rate       speech rate 0.25 .. 4         live, scales every ms
+#   seq_level      loudness 0 .. 1               live (replaces breath while playing)
+#   seq_play       0                             compile the items and start; the
+#                                                articulators, pitch and source are the
+#                                                sequence's until it ends
+#   seq_stop       0                             fade out and end
+#
+# While a sequence plays, vibrato_*, pressed, aspiration, body and mode keep
+# their meaning (mode 1 whispers the sequence); tongue_x .. velum, pitch,
+# breath and tip_* are overwritten by it every control tick.
+#
+# Telemetry layout (Float64Array of TEL_LENGTH = 233 values; the TEL_*
 # constants in engine.fab name the offsets):
 #
 #   index    count  meaning
-#   0        1      layout version (1)
+#   0        1      layout version (2)
 #   1        1      oral section count (44)
 #   2        1      nasal section count (29)
 #   3        1      glottal waveform points (64)
@@ -60,6 +86,12 @@
 #   60..88   29     nasal area function, velum to nostrils, cm^2
 #   89..152  64     glottal flow over one period, 0..1 of its peak
 #   153..216 64     glottal flow derivative over one period, peak negative = -1
+#   217..232 16     sequencer (TEL_SEQ): 217 playing (0 or 1), 218 item index
+#                   (-1 none; the loaded item the sound belongs to), 219 phoneme
+#                   id, 220 progress through the segment 0..1, 221 seconds since
+#                   seq_play, 222 items loaded, 223 pitch (MIDI), 224..228
+#                   tongue_x, tongue_h, lips, jaw, velum as the sequence has them,
+#                   229 tip place, 230 tip area cm^2, 231 voicing 0..1, 232 noise
 
 import from "engine:engine" eng
 
@@ -100,7 +132,7 @@ class Voice {
             case "tip_area" { self.engine.set_tip_area(value) }
             case "turbulence" { self.engine.set_turbulence(value) }
             case "gain" { self.engine.set_gain(value) }
-            default { }
+            default { self.engine.seq_message(key, value) }
         }
     }
 

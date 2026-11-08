@@ -1,0 +1,198 @@
+# phones.fab: the phoneme set of the Vox sequencer (Speak and Sing).
+#
+# Every phoneme is a row of articulator targets in the engine's own control
+# space (articulation.fab): a body posture (tongue_x, tongue_h, lips, jaw),
+# a tip constriction (place along the tract, area in cm^2), whether the
+# glottis voices it, and a nominal duration. The sequencer (sequencer.fab)
+# turns a run of rows into smooth movement; this file is only data.
+#
+# The symbols are ARPAbet as CMUdict writes it: two letters for most vowels
+# and consonants (see symbol() below, the page lists them with examples).
+#
+# Vowel bodies. The five cardinal vowels are the hand-fitted ones of
+# vowels.fab (/a/ is AA, /i/ is IY, /u/ is UW; /e/ and /o/ are the starts of
+# EY and OW). The others were fitted by tools/fit-vowels against Peterson and
+# Barney (1952) adult-male means; the achieved F1 / F2 under this tract model
+# are beside each row. Where the model cannot reach a target (low front
+# vowels, the low F3 of /r/) the nearest fit is kept.
+#
+# Consonants use the tip constriction on top of a body that is "transparent":
+# it takes the posture of the neighbouring vowel (sequencer.fab, context), so
+# a consonant between two vowels carries their tongue movement through it
+# (Ohman's model of coarticulation). Places are fractions of the tract from
+# the glottis: lips 0.985, teeth 0.94, alveolar ridge 0.895, post-alveolar
+# 0.80, velum 0.62 + 0.15 * tongue_x of the neighbouring vowel.
+
+@ public
+const int KIND_SILENCE = 0
+
+@ public
+const int KIND_VOWEL = 1
+
+@ public
+const int KIND_DIPHTHONG = 2
+
+@ public
+const int KIND_STOP = 3
+
+@ public
+const int KIND_AFFRICATE = 4
+
+@ public
+const int KIND_FRICATIVE = 5
+
+@ public
+const int KIND_ASPIRATE = 6
+
+@ public
+const int KIND_NASAL = 7
+
+@ public
+const int KIND_LIQUID = 8
+
+@ public
+const int KIND_GLIDE = 9
+
+@ public
+const int P_SIL = 0
+
+@ public
+const int P_AX = 11
+
+@ public
+const int P_L = 37
+
+@ public
+const int P_R = 38
+
+@ public
+const int N_PHONES = 41
+
+@ public
+class Phone {
+    let string symbol = ""
+    let int kind = 0
+    let f64 tx = 0.5
+    let f64 th = 0.5
+    let f64 lips = 0.5
+    let f64 jaw = 0.4
+    # Tip constriction: place along the tract, area in cm^2 (>= 9: none).
+    # slope: the place moves by this much per unit of the neighbouring
+    # vowel's tongue_x (velars sit further forward before front vowels).
+    let f64 place = 0.9
+    let f64 area = 99.0
+    let f64 slope = 0.0
+    # Strength of the burst or frication noise, 0 .. 1.
+    let f64 gain = 1.0
+    let bool voiced = true
+    # Nominal duration, milliseconds, at speech rate 1.
+    let f64 ms = 80.0
+    # Diphthongs: the vowel the glide ends on.
+    let int part2 = 0
+}
+
+# Why: the table. Rows are looked up by id; ids are stable (the message stream
+# of the sequencer carries them).
+@ public
+fn phone(int id) → Phone {
+    if id ≺ 12 then return vowel_phone(id)
+    if id ≺ 17 then return diphthong_phone(id)
+    if id ≺ 25 then return stop_phone(id)
+    if id ≺ 33 then return fricative_phone(id)
+    return sonorant_phone(id)
+}
+
+fn vowel_phone(int id) → Phone {
+    # Vowels (body: tx th lips jaw; F1 / F2 under the tract model).
+    if id ≡ 1 then return Phone { symbol = "IY", kind = 1, tx = 1.0, th = 0.9, lips = 0.8, jaw = 0.0, ms = 120.0 }
+    if id ≡ 2 then return Phone { symbol = "IH", kind = 1, tx = 0.9, th = 0.6, lips = 0.9, jaw = 0.3, ms = 85.0 }
+    if id ≡ 3 then return Phone { symbol = "EH", kind = 1, tx = 1.0, th = 0.05, lips = 1.0, jaw = 0.3, ms = 100.0 }
+    if id ≡ 4 then return Phone { symbol = "AE", kind = 1, tx = 0.65, th = 0.0, lips = 1.0, jaw = 0.4, ms = 130.0 }
+    if id ≡ 5 then return Phone { symbol = "AA", kind = 1, tx = 0.0, th = 0.1, lips = 1.0, jaw = 0.9, ms = 130.0 }
+    if id ≡ 6 then return Phone { symbol = "AO", kind = 1, tx = 0.0, th = 0.4, lips = 0.4, jaw = 1.0, ms = 130.0 }
+    if id ≡ 7 then return Phone { symbol = "UH", kind = 1, tx = 0.225, th = 0.675, lips = 0.2, jaw = 0.6, ms = 90.0 }
+    if id ≡ 8 then return Phone { symbol = "UW", kind = 1, tx = 0.2, th = 0.7, lips = 0.06, jaw = 0.5, ms = 125.0 }
+    if id ≡ 9 then return Phone { symbol = "AH", kind = 1, tx = 0.35, th = 0.175, lips = 0.8, jaw = 0.7, ms = 95.0 }
+    if id ≡ 10 then return Phone { symbol = "ER", kind = 1, tx = 0.2, th = 1.0, lips = 0.65, jaw = 1.0, ms = 130.0 }
+    if id ≡ 11 then return Phone { symbol = "AX", kind = 1, tx = 0.5, th = 0.45, lips = 0.7, jaw = 0.3, ms = 60.0 }
+
+    return Phone { symbol = "SIL", kind = 0, voiced = false, ms = 100.0 }
+}
+
+fn diphthong_phone(int id) → Phone {
+    # Diphthongs: the row is the start posture, part2 the vowel it glides to.
+    if id ≡ 12 then return Phone { symbol = "EY", kind = 2, tx = 1.0, th = 0.4, lips = 1.0, jaw = 0.4, part2 = 2, ms = 160.0 }
+    if id ≡ 13 then return Phone { symbol = "OW", kind = 2, tx = 0.0, th = 0.4, lips = 0.2, jaw = 0.5, part2 = 7, ms = 160.0 }
+    if id ≡ 14 then return Phone { symbol = "AY", kind = 2, tx = 0.0, th = 0.1, lips = 1.0, jaw = 0.9, part2 = 2, ms = 180.0 }
+    if id ≡ 15 then return Phone { symbol = "AW", kind = 2, tx = 0.0, th = 0.1, lips = 1.0, jaw = 0.9, part2 = 7, ms = 180.0 }
+    if id ≡ 16 then return Phone { symbol = "OY", kind = 2, tx = 0.0, th = 0.4, lips = 0.4, jaw = 1.0, part2 = 2, ms = 190.0 }
+
+    return Phone { symbol = "SIL", kind = 0, voiced = false, ms = 100.0 }
+}
+
+fn stop_phone(int id) → Phone {
+    # Stops: closure, release burst, then aspiration (voiceless only).
+    if id ≡ 17 then return Phone { symbol = "P", kind = 3, place = 0.985, area = 0.02, gain = 0.6, voiced = false, ms = 100.0 }
+    if id ≡ 18 then return Phone { symbol = "B", kind = 3, place = 0.985, area = 0.02, gain = 0.5, ms = 80.0 }
+    if id ≡ 19 then return Phone { symbol = "T", kind = 3, place = 0.895, area = 0.02, gain = 1.0, voiced = false, ms = 100.0 }
+    if id ≡ 20 then return Phone { symbol = "D", kind = 3, place = 0.895, area = 0.02, gain = 0.8, ms = 80.0 }
+    if id ≡ 21 then return Phone { symbol = "K", kind = 3, place = 0.62, slope = 0.15, area = 0.02, gain = 0.9, voiced = false, ms = 105.0 }
+    if id ≡ 22 then return Phone { symbol = "G", kind = 3, place = 0.62, slope = 0.15, area = 0.02, gain = 0.7, ms = 85.0 }
+    # Affricates: closure, then release into a fricative constriction.
+    if id ≡ 23 then return Phone { symbol = "CH", kind = 4, place = 0.80, area = 0.12, gain = 1.0, voiced = false, ms = 115.0 }
+    if id ≡ 24 then return Phone { symbol = "JH", kind = 4, place = 0.80, area = 0.12, gain = 0.8, ms = 95.0 }
+
+    return Phone { symbol = "SIL", kind = 0, voiced = false, ms = 100.0 }
+}
+
+fn fricative_phone(int id) → Phone {
+    # Fricatives: a narrow tip constriction and turbulence noise.
+    if id ≡ 25 then return Phone { symbol = "F", kind = 5, place = 0.985, area = 0.07, gain = 1.6, voiced = false, ms = 100.0 }
+    if id ≡ 26 then return Phone { symbol = "V", kind = 5, place = 0.985, area = 0.10, gain = 0.8, ms = 70.0 }
+    if id ≡ 27 then return Phone { symbol = "TH", kind = 5, place = 0.94, area = 0.08, gain = 0.6, voiced = false, ms = 95.0 }
+    if id ≡ 28 then return Phone { symbol = "DH", kind = 5, place = 0.94, area = 0.10, gain = 0.5, ms = 55.0 }
+    if id ≡ 29 then return Phone { symbol = "S", kind = 5, place = 0.895, area = 0.10, gain = 1.0, voiced = false, ms = 110.0 }
+    if id ≡ 30 then return Phone { symbol = "Z", kind = 5, place = 0.895, area = 0.12, gain = 0.8, ms = 90.0 }
+    if id ≡ 31 then return Phone { symbol = "SH", kind = 5, place = 0.80, area = 0.14, gain = 0.9, voiced = false, ms = 115.0 }
+    if id ≡ 32 then return Phone { symbol = "ZH", kind = 5, place = 0.80, area = 0.16, gain = 0.75, ms = 90.0 }
+
+    return Phone { symbol = "SIL", kind = 0, voiced = false, ms = 100.0 }
+}
+
+fn sonorant_phone(int id) → Phone {
+    # Aspirate: noise at the glottis through the posture of the next vowel.
+    if id ≡ 33 then return Phone { symbol = "HH", kind = 6, voiced = false, ms = 70.0 }
+
+    # Nasals: oral closure and a lowered velum.
+    if id ≡ 34 then return Phone { symbol = "M", kind = 7, place = 0.985, area = 0.02, ms = 75.0 }
+    if id ≡ 35 then return Phone { symbol = "N", kind = 7, place = 0.895, area = 0.02, ms = 70.0 }
+    if id ≡ 36 then return Phone { symbol = "NG", kind = 7, place = 0.62, slope = 0.15, area = 0.02, ms = 80.0 }
+
+    # Liquids. L is a tip contact with the body of the neighbouring vowel; R
+    # carries its own body (a bunched, rounded posture).
+    if id ≡ 37 then return Phone { symbol = "L", kind = 8, place = 0.895, area = 0.5, ms = 70.0 }
+    if id ≡ 38 then return Phone { symbol = "R", kind = 8, tx = 0.2, th = 1.0, lips = 0.5, jaw = 1.0, ms = 70.0 }
+
+    # Glides: the postures of UW and IY, held briefly.
+    if id ≡ 39 then return Phone { symbol = "W", kind = 9, tx = 0.1, th = 0.75, lips = 0.06, jaw = 0.5, ms = 65.0 }
+    if id ≡ 40 then return Phone { symbol = "Y", kind = 9, tx = 1.0, th = 0.95, lips = 0.7, jaw = 0.0, ms = 60.0 }
+
+    return Phone { symbol = "SIL", kind = 0, voiced = false, ms = 100.0 }
+}
+
+# Why: symbol -> id for the text parsers; -1 when the symbol is not in the set.
+# Case-insensitive.
+@ public
+fn lookup(string symbol) → int {
+    let string up ← symbol.uppercase()
+    for range 1 ‥ N_PHONES let id {
+        if phone(id).symbol ≡ up then return id
+    }
+    return -1
+}
+
+# Why: id -> symbol for the page's "now sounding" display.
+@ public
+fn symbol(int id) → string {
+    return phone(id).symbol
+}

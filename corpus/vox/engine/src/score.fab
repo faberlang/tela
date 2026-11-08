@@ -1,0 +1,462 @@
+# score.fab: text -> sequencer messages, for Speak and Sing.
+#
+# The worklet takes numbers only, so the text notations are turned into the
+# ordered {key, value} stream of sequencer.fab here, in the engine library: the
+# page, the native WAV tool and any test all call the same two functions and
+# so play the same notes. A Score holds the messages to send in order, a label
+# per item for a "now sounding" display, and the first problem found.
+#
+# SPEAK notation (speak()): ARPAbet as CMUdict writes it, separated by spaces.
+#   AH0 L OW1          a vowel may end in a stress digit: 1 primary,
+#                      2 secondary (also the default), 0 unstressed
+#   , . ? !            a pause with an intonation: , continues, . falls,
+#                      ? rises, ! falls hard
+#   / or |             a word break; for reading only, it makes no sound
+# Intonation is made from the stress marks: stressed vowels sit 2.5 semitones
+# above the line, unstressed ones 0.5 below it, the line falls 2.5 semitones
+# over a phrase, a phrase-final vowel is longer, and the last vowel falls
+# (. !) or rises (?). Unstressed vowels are shorter.
+#
+# SING notation (sing()): notes separated by spaces, each NOTE:BEATS:SYLLABLE.
+#   C4:1:T.W.IH.NG     pitch name (A-G, # or b, octave; C4 = middle C), length
+#                      in beats, syllable = ARPAbet symbols joined by dots
+#   R:2                a rest of 2 beats
+# The syllable's first vowel is the nucleus and takes the note's length; the
+# consonants before it start ahead of the beat, borrowing from the previous
+# note's tail, so each vowel lands on its beat; consonants after it take the
+# end of the note. Pitch glides between notes (legato).
+
+import from "engine:phones" phones
+
+@ public
+class Msg {
+    let string key
+    let f64 value
+}
+
+@ public
+class Score {
+    mut list<Msg> msgs = empty
+    mut list<string> labels = empty
+    mut string problem = ""
+
+    fn add(string key, f64 value) → void {
+        self.msgs.append(Msg { key = key, value = value })
+    }
+
+    # Why: one item of the sequence; zero ms, beats, minus and glide mean "unset".
+    fn item(int ph, f64 ms, f64 beats, f64 minus, f64 pitch, f64 glide, string label) → void {
+        self.add("seq_phone", ph ↦ f64)
+        if ms ≻ 0.0 {
+            self.add("seq_ms", ms)
+        }
+        if beats ≻ 0.0 {
+            self.add("seq_beats", beats)
+        }
+        if minus ≻ 0.0 {
+            self.add("seq_minus", minus)
+        }
+        self.add("seq_pitch", pitch)
+        if glide ≻ 0.0 {
+            self.add("seq_glide", glide)
+        }
+        self.add("seq_item", 0.0)
+        self.labels.append(label)
+    }
+}
+
+# Why: a string as one-character strings (slicing a string can fail; this
+# cannot).
+fn chars_of(string s) → list<string> {
+    mut list<string> out ← empty
+    for from s let c {
+        out.append(c ↦ string)
+    }
+    return out
+}
+
+fn join_chars(list<string> cs, int from, int to) → string {
+    mut string out ← ""
+    for range from ‥ to let i {
+        out ← out + cs[i]
+    }
+    return out
+}
+
+# One word of the Speak text. ph -1: unknown symbol, -2: nothing (a word
+# break); mark 0 a phoneme, 1 to 4 a pause for , . ? !
+class Tok {
+    let int ph
+    let int stress
+    let int mark
+    let string label
+}
+
+fn parse_token(string raw) → Tok {
+    let string up ← raw.uppercase()
+    if up ≡ "," then return Tok { ph = 0, stress = 0, mark = 1, label = "," }
+    if up ≡ "." then return Tok { ph = 0, stress = 0, mark = 2, label = "." }
+    if up ≡ "?" then return Tok { ph = 0, stress = 0, mark = 3, label = "?" }
+    if up ≡ "!" then return Tok { ph = 0, stress = 0, mark = 4, label = "!" }
+    if up ≡ "/" or up ≡ "|" then return Tok { ph = -2, stress = 0, mark = 0, label = up }
+    let list<string> cs ← chars_of(up)
+    let int n ← cs.length()
+    mut string base ← up
+    mut int stress ← 2
+    if n ≥ 2 {
+        let int d ← cs[n - 1] ↦ int ⊥ -1
+        if d ≥ 0 {
+            stress ← d ⤓ 2
+            base ← join_chars(cs, 0, n - 1)
+        }
+    }
+    return Tok { ph = phones.lookup(base), stress = stress, mark = 0, label = up }
+}
+
+fn spaced(string text) → string {
+    mut string t ← text.replace("\n", " ").replace("\t", " ")
+    t ← t.replace(",", " , ").replace(".", " . ").replace("?", " ? ").replace("!", " ! ")
+    return t
+}
+
+fn tokens(string text) → list<Tok> {
+    mut list<Tok> out ← empty
+    for from spaced(text).split(" ") let word {
+        if word.length() ≡ 0 then continue
+        let Tok t ← parse_token(word)
+        if t.ph ≢ -2 {
+            out.append(t)
+        }
+    }
+    return out
+}
+
+fn is_vowel(int ph) → bool {
+    let int k ← phones.phone(ph).kind
+    return k ≡ phones.KIND_VOWEL or k ≡ phones.KIND_DIPHTHONG
+}
+
+# Pause length for a mark, ms.
+fn pause_ms(int mark) → f64 {
+    if mark ≡ 1 then return 170.0
+    return 320.0
+}
+
+# Why: the pitch (MIDI) of vowel number vi of nv in a phrase that ends in
+# `mark`: the declining line, the stress accent, the ending.
+fn vowel_pitch(int stress, int vi, int nv, int mark, f64 base) → f64 {
+    mut f64 x ← 0.0
+    if nv ≻ 1 {
+        x ← (vi ↦ f64) / ((nv - 1) ↦ f64)
+    }
+    mut f64 p ← base + 1.0 - 2.5 * x
+    if stress ≡ 1 {
+        p ← p + 2.5
+    }
+    elif stress ≡ 2 {
+        p ← p + 1.0
+    }
+    else {
+        p ← p - 0.5
+    }
+    if vi ≡ nv - 1 {
+        if mark ≡ 3 {
+            p ← p + 3.5
+        }
+        elif mark ≡ 1 {
+            p ← p + 0.8
+        }
+        elif mark ≡ 4 {
+            p ← p - 1.0
+        }
+        else {
+            p ← p - 2.0
+        }
+    }
+    elif vi ≡ nv - 2 and mark ≡ 3 {
+        p ← p + 1.5
+    }
+    return p
+}
+
+# Why: how much longer or shorter than nominal a vowel is.
+fn vowel_factor(int stress, bool final) → f64 {
+    mut f64 f ← 1.0
+    if stress ≡ 1 {
+        f ← 1.2
+    }
+    elif stress ≡ 0 {
+        f ← 0.7
+    }
+    if final {
+        f ← f * 1.3
+    }
+    return f
+}
+
+# Why: a consonant has no accent of its own; it takes the pitch of the next
+# vowel in the phrase, else of the one before it.
+fn borrow_pitch(list<f64> pitch, int k, f64 base) → f64 {
+    let int n ← pitch.length()
+    for range k + 1 ‥ n let j {
+        if pitch[j] ≥ 0.0 then return pitch[j]
+    }
+    for range 0 ‥ k let j {
+        if pitch[k - 1 - j] ≥ 0.0 then return pitch[k - 1 - j]
+    }
+    return base
+}
+
+# Why: one phrase, tokens a up to b, then its pause. mark 0 is the end of the
+# text without punctuation, which falls like a full stop.
+fn emit_phrase(mut Score sc, list<Tok> toks, int a, int b, int mark, f64 base) → void {
+    mut int nv ← 0
+    for range a ‥ b let k {
+        if is_vowel(toks[k].ph) {
+            nv ← nv + 1
+        }
+    }
+    mut list<f64> pitch ← empty
+    mut list<f64> factor ← empty
+    mut int vi ← 0
+    for range a ‥ b let k {
+        if is_vowel(toks[k].ph) {
+            pitch.append(vowel_pitch(toks[k].stress, vi, nv, mark, base))
+            factor.append(vowel_factor(toks[k].stress, vi ≡ nv - 1))
+            vi ← vi + 1
+        }
+        else {
+            pitch.append(-1.0)
+            factor.append(0.0)
+        }
+    }
+    mut f64 last ← base
+    for range a ‥ b let k {
+        mut f64 ms ← 0.0
+        mut f64 p ← pitch[k - a]
+        if p ≺ 0.0 {
+            p ← borrow_pitch(pitch, k - a, base)
+        }
+        else {
+            ms ← (phones.phone(toks[k].ph).ms * factor[k - a]).round() ↦ f64
+        }
+        sc.item(toks[k].ph, ms, 0.0, 0.0, p, 0.0, toks[k].label)
+        last ← p
+    }
+    if mark ≻ 0 {
+        sc.item(0, pause_ms(mark), 0.0, 0.0, last, 0.0, toks[b].label)
+    }
+}
+
+# Why: the messages that speak `text` with a base pitch (MIDI note) for the
+# intonation line. They end with seq_play. An unknown symbol sets problem and
+# leaves no messages.
+@ public
+fn speak(string text, f64 base_midi) → Score {
+    mut Score sc ← Score { }
+    let list<Tok> toks ← tokens(text)
+    let int n ← toks.length()
+    if n ≡ 0 {
+        sc.problem ← "nothing to say"
+        return sc
+    }
+    for from toks let t {
+        if t.ph ≡ -1 {
+            sc.problem ← "unknown phoneme §"(t.label)
+            return sc
+        }
+    }
+    sc.add("seq_clear", 0.0)
+    mut int a ← 0
+    for range 0 ‥ n let k {
+        if toks[k].mark ≻ 0 {
+            emit_phrase(mut sc, toks, a, k, toks[k].mark, base_midi)
+            a ← k + 1
+        }
+    }
+    if a ≺ n {
+        emit_phrase(mut sc, toks, a, n, 0, base_midi)
+    }
+    sc.add("seq_play", 0.0)
+    return sc
+}
+
+# One note of the Sing text; pitch -1 is a rest.
+class Note {
+    let f64 pitch
+    let f64 beats
+    let list<int> ph
+    let string label
+}
+
+fn letter_semitone(string c) → int {
+    if c ≡ "C" then return 0
+    if c ≡ "D" then return 2
+    if c ≡ "E" then return 4
+    if c ≡ "F" then return 5
+    if c ≡ "G" then return 7
+    if c ≡ "A" then return 9
+    if c ≡ "B" then return 11
+    return -100
+}
+
+# Why: a pitch name (C4, F#3, Bb4) as a MIDI note number; -1 when it is not one.
+fn pitch_of(string name) → f64 {
+    let list<string> cs ← chars_of(name)
+    let int n ← cs.length()
+    if n ≺ 2 then return -1.0
+    let int letter ← letter_semitone(cs[0].uppercase())
+    if letter ≺ 0 then return -1.0
+    mut int acc ← 0
+    mut int at ← 1
+    if cs[1] ≡ "#" {
+        acc ← 1
+        at ← 2
+    }
+    elif cs[1] ≡ "b" {
+        acc ← -1
+        at ← 2
+    }
+    if at ≥ n then return -1.0
+    let int oct ← join_chars(cs, at, n) ↦ int ⊥ -99
+    if oct ≺ -1 then return -1.0
+    return (12 * (oct + 1) + letter + acc) ↦ f64
+}
+
+# Why: a syllable (ARPAbet symbols joined by dots) as phoneme ids; an unknown
+# symbol is the id 0 in its place.
+fn parse_syllable(string text) → list<int> {
+    mut list<int> ids ← empty
+    for from text.split(".") let sym {
+        let list<string> cs ← chars_of(sym.uppercase())
+        mut string base ← sym.uppercase()
+        let int n ← cs.length()
+        if n ≥ 2 {
+            let int d ← cs[n - 1] ↦ int ⊥ -1
+            if d ≥ 0 {
+                base ← join_chars(cs, 0, n - 1)
+            }
+        }
+        let int id ← phones.lookup(base)
+        ids.append(id ≺ 1 ✓ 0 ✗ id)
+    }
+    return ids
+}
+
+fn bad_note(string raw) → Note {
+    return Note { pitch = -2.0, beats = 0.0, ph = empty, label = raw }
+}
+
+# Why: a note token; a pitch of -2 (and the token as label) when it does not
+# parse.
+fn parse_note(string raw) → Note {
+    let list<string> parts ← raw.split(":")
+    if parts.length() ≺ 2 then return bad_note(raw)
+    let string head ← parts[0]
+    mut f64 pitch ← -1.0
+    if head.uppercase() ≢ "R" {
+        pitch ← pitch_of(head)
+        if pitch ≺ 0.0 then return bad_note(raw)
+    }
+    let f64 beats ← parts[1] ↦ f64 ⊥ -1.0
+    if beats ≤ 0.0 then return bad_note(raw)
+    mut list<int> ids ← empty
+    if pitch ≥ 0.0 {
+        if parts.length() ≺ 3 then return bad_note(raw)
+        ids ← parse_syllable(parts[2])
+        for from ids let id {
+            if id ≡ 0 then return bad_note(raw)
+        }
+    }
+    return Note { pitch = pitch, beats = beats, ph = ids, label = raw }
+}
+
+# Why: index of the syllable's nucleus: its first vowel; failing that the last
+# sound that can carry pitch (a hummed M, N or L); failing that the last.
+fn nucleus_of(Note nt) → int {
+    let int n ← nt.ph.length()
+    for range 0 ‥ n let k {
+        if is_vowel(nt.ph[k]) then return k
+    }
+    for range 0 ‥ n let k {
+        let int j ← n - 1 - k
+        let int kind ← phones.phone(nt.ph[j]).kind
+        if kind ≡ phones.KIND_NASAL or kind ≡ phones.KIND_LIQUID or kind ≡ phones.KIND_GLIDE then return j
+    }
+    return n - 1
+}
+
+# Why: milliseconds of consonants before the nucleus, which start ahead of the
+# beat.
+fn onset_ms(Note nt) → f64 {
+    if nt.pitch ≺ 0.0 then return 0.0
+    mut f64 total ← 0.0
+    for range 0 ‥ nucleus_of(nt) let k {
+        total ← total + phones.phone(nt.ph[k]).ms
+    }
+    return total
+}
+
+fn coda_ms(Note nt) → f64 {
+    if nt.pitch ≺ 0.0 then return 0.0
+    mut f64 total ← 0.0
+    for range nucleus_of(nt) + 1 ‥ nt.ph.length() let k {
+        total ← total + phones.phone(nt.ph[k]).ms
+    }
+    return total
+}
+
+# Why: the messages that sing `text`, every pitch moved by `transpose`
+# semitones. They end with seq_play. A token that does not parse sets problem.
+@ public
+fn sing(string text, f64 transpose) → Score {
+    mut Score sc ← Score { }
+    mut list<Note> notes ← empty
+    for from text.replace("\n", " ").replace("\t", " ").split(" ") let word {
+        if word.length() ≡ 0 then continue
+        let Note nt ← parse_note(word)
+        if nt.pitch ≺ -1.5 {
+            sc.problem ← "cannot read §"(nt.label)
+            return sc
+        }
+        notes.append(nt)
+    }
+    let int n ← notes.length()
+    if n ≡ 0 {
+        sc.problem ← "no notes"
+        return sc
+    }
+    sc.add("seq_clear", 0.0)
+    mut f64 line ← 60.0 + transpose
+    for range 0 ‥ n let i {
+        let Note nt ← notes[i]
+        mut f64 next_onset ← 0.0
+        if i + 1 ≺ n {
+            next_onset ← onset_ms(notes[i + 1])
+        }
+        if nt.pitch ≺ 0.0 {
+            sc.item(0, 0.0, nt.beats, next_onset, line, 0.0, "rest")
+        }
+        else {
+            let f64 pitch ← nt.pitch + transpose
+            let int nuc ← nucleus_of(nt)
+            let int count ← nt.ph.length()
+            for range 0 ‥ count let k {
+                let int id ← nt.ph[k]
+                mut f64 glide ← 0.0
+                if k ≡ 0 and i ≻ 0 {
+                    glide ← 90.0
+                }
+                if k ≡ nuc {
+                    sc.item(id, 0.0, nt.beats, coda_ms(nt) + next_onset, pitch, glide, phones.symbol(id))
+                }
+                else {
+                    sc.item(id, 0.0, 0.0, 0.0, pitch, glide, phones.symbol(id))
+                }
+            }
+            line ← pitch
+        }
+    }
+    sc.add("seq_play", 0.0)
+    return sc
+}
