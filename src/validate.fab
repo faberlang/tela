@@ -78,7 +78,7 @@ fn valid_tag_name(string name) → bool {
     let string letters ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     let string tag_chars ← "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_."
     if name.length() ≡ 0 then return false
-    let string first_char ← name.slice(0, 1)
+    let string first_char ← name.slice(0, 1) ⊥ ""
     if not letters.contains(first_char) then return false
     # Stay-with-reason (list-predicate-twins LPT-7): string-char fold over
     # the indexed string (per-char slice) — outside the LPT-1 all/any
@@ -87,7 +87,7 @@ fn valid_tag_name(string name) → bool {
     # until then.
     mut int i ← 1
     while i ≺ name.length() {
-        let string ch ← name.slice(i, i + 1)
+        let string ch ← name.slice(i, i + 1) ⊥ ""
         if not tag_chars.contains(ch) then return false
         i ← i + 1
     }
@@ -108,7 +108,7 @@ fn valid_attribute_name(string name) → bool {
     # is admitted.
     mut int i ← 0
     while i ≺ name.length() {
-        let string ch ← name.slice(i, i + 1)
+        let string ch ← name.slice(i, i + 1) ⊥ ""
         if not attr_chars.contains(ch) then return false
         i ← i + 1
     }

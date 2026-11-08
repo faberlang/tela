@@ -230,7 +230,7 @@ fn escape(string s, bool in_attribute) → string {
     mut string accum ← ""
     mut int i ← 0
     while i ≺ s.length() {
-        let string c ← s.slice(i, i + 1)
+        let string c ← s.slice(i, i + 1) ⊥ ""
         # Sequential independent ifs (NOT an elif chain): the TS emitter
         # compiles elif chains whose bodies are single-statement assignments
         # into a returned conditional expression (undefined at runtime — a
@@ -520,7 +520,7 @@ fn token_property_name(string name) → string {
     mut string accum ← "--"
     mut int i ← 0
     while i ≺ name.length() {
-        let string c ← name.slice(i, i + 1)
+        let string c ← name.slice(i, i + 1) ⊥ ""
         if c ≡ "." {
             accum ← accum + "-"
         }
@@ -778,14 +778,14 @@ fn topological_order(list<Order> orders, list<string> identities) → list<strin
 fn unclean_style_text(string text) → bool {
     mut int i ← 0
     while i ≺ text.length() {
-        let string c ← text.slice(i, i + 1)
+        let string c ← text.slice(i, i + 1) ⊥ ""
         if c ≡ "{" then return true
         if c ≡ "}" then return true
         if c ≡ ";" then return true
         if c ≡ "\n" then return true
         if c ≡ "<" {
             if i + 1 ≺ text.length() {
-                if text.slice(i + 1, i + 2) ≡ "/" then return true
+                if (text.slice(i + 1, i + 2) ⊥ "") ≡ "/" then return true
             }
         }
         i ← i + 1
