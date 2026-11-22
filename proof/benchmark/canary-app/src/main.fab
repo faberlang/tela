@@ -204,7 +204,7 @@ fn wrapped_identity(int index) → string {
 fn index_in(string text, string fragment) → int {
     mut int i ← 0
     while not (i + fragment.length() ≻ text.length()) {
-        if text.slice(i, i + fragment.length()) ≡ fragment {
+        if (text.slice(i, i + fragment.length()) ⊥ "") ≡ fragment {
             return i
         }
         i ← i + 1
