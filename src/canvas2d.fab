@@ -28,7 +28,7 @@
 # surface of the stub marker — the `print` bodies emit console.log in TS,
 # never executed; the runtime does the work, C8), redde → return. `f64`
 # is a language scalar width spelling (the fractus widths) — never
-# localizes (the `⇥`-glyph rule). `@ annotatio` does not appear in this
+# localizes (the `⇥`-glyph rule). `@ annotation` does not appear in this
 # module (the la canvas2d.fab had no annotation).
 #
 # fix:<id> markers:
